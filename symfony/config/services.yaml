@@ -1,0 +1,23 @@
+parameters:
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/Kernel.php'
+
+    App\Catalog\Domain\Repository\ProductRepositoryInterface:
+        class: App\Catalog\Infrastructure\Persistence\DoctrineProductRepository
+
+    App\Catalog\Domain\Repository\CategoryRepositoryInterface:
+        class: App\Catalog\Infrastructure\Persistence\DoctrineCategoryRepository
+
+    App\Pricing\Domain\Repository\PriceRuleRepositoryInterface:
+        class: App\Pricing\Infrastructure\Persistence\DoctrinePriceRuleRepository
+
+    App\Pricing\Domain\Repository\PriceListRepositoryInterface:
+        class: App\Pricing\Infrastructure\Persistence\DoctrinePriceListRepository
