@@ -1,0 +1,13 @@
+---
+description: Контекст проекта Zaborprofil для агентов
+alwaysApply: true
+---
+
+# Zaborprofil — контекст проекта
+
+- **Стек:** Next.js (frontend + Payload CMS) + Symfony 8 (API + EasyAdmin). MySQL (Symfony), SQLite (Payload).
+- **Главная документация для агентов:** см. корневой `AGENTS.md` — структура, API, админки, запуск, частые задачи.
+- **Каталог (товары, категории):** сущности в `symfony/src/Catalog/`, API в `symfony/src/Controller/Api/CatalogController.php`, админка — EasyAdmin `symfony/src/Controller/Admin/`, URL `/admin`.
+- **Контент сайта (страницы, блоки):** Payload в Next.js, `nextjs/collections/`, `nextjs/blocks/`, админка — `/admin` в Next.js (например localhost:3000/admin).
+- **Клиент к API:** `nextjs/lib/api/client.ts`; базовый URL из `NEXT_PUBLIC_API_URL`.
+- Сущности Doctrine, используемые в EasyAdmin (связи), должны иметь `__toString()`.

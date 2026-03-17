@@ -1,0 +1,13 @@
+---
+description: Правила для Next.js и Payload CMS
+globs: nextjs/**/*.ts,nextjs/**/*.tsx
+alwaysApply: false
+---
+
+# Next.js и Payload — Zaborprofil
+
+- **Next.js 16** (App Router), **Payload CMS 3** встроен в приложение. Конфиг Payload: `payload.config.ts`; коллекции в `collections/`, блоки в `blocks/`.
+- **API бэкенда:** вызовы через `lib/api/client.ts`; базовый URL — `NEXT_PUBLIC_API_URL` (по умолчанию http://localhost:8080). Не дублировать прямые fetch к Symfony API без учёта этого клиента.
+- **Payload Admin:** маршрут `/admin` в Next.js. Import map для Lexical: реэкспорт из `app/(payload)/admin/importMap.js` в `importMap.ts`; при ошибках RscEntryLexicalField проверить наличие сгенерированного `importMap.js`.
+- **Коллекции:** Pages (layout = blocks: Hero, Text, FAQ, CTA, Grid), Users, Media, Articles, Cases, Navigation. Новый блок — файл в `blocks/`, подключение в `collections/Pages.ts` и при необходимости в конфиге.
+- TypeScript: строгие типы; типы ответов API синхронизировать с контрактами Symfony или описать в `client.ts`.

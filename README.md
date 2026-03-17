@@ -72,6 +72,11 @@ docker compose up -d
 | POST | /api/chat | AI chat |
 | GET | /api/documents/quote/{id} | PDF quote |
 
+## Documentation for agents and Cursor
+
+- **AGENTS.md** — контекст проекта для AI-агентов и Cursor: стек, структура, API, админки, запуск, частые задачи.
+- **.cursor/rules/** — правила Cursor (обзор проекта, Symfony, Next.js/Payload) в формате `.mdc`.
+
 ## Project Structure
 
 ```
