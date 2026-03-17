@@ -76,6 +76,7 @@ docker compose up -d
 
 - **AGENTS.md** — контекст проекта для AI-агентов и Cursor: стек, структура, API, админки, запуск, частые задачи.
 - **.cursor/rules/** — правила Cursor (обзор проекта, Symfony, Next.js/Payload) в формате `.mdc`.
+- **docs/plan-content-design-zaborprofil.md** — план переноса контента и дизайна с zaborprofil.ru (Payload-страницы, блоки, layout, наполнение).
 
 ## Project Structure
 
