@@ -1,14 +1,35 @@
-# Environment
-.env
-.env.local
-.env.*.local
+/.env.local
+/.env.*.local
+/vendor/
+/var/
+/public_html/build/
+/public_html/bundles/
+/public_html/uploads/*
+!/public_html/uploads/.gitkeep
+/node_modules/
+/coverage/
+/.phpunit.cache/
+/.phpunit.result.cache
+/npm-debug.log*
+/yarn-debug.log*
+/yarn-error.log*
 
-# IDE / OS
-.idea/
-.vscode/
-*.swp
-.DS_Store
-Thumbs.db
+###> symfony/framework-bundle ###
+/.env.local
+/.env.local.php
+/.env.*.local
+/config/secrets/prod/prod.decrypt.private.php
+/public_html/bundles/
+/var/
+/vendor/
+###< symfony/framework-bundle ###
 
-# Logs
-*.log
+###> friendsofphp/php-cs-fixer ###
+/.php-cs-fixer.php
+/.php-cs-fixer.cache
+###< friendsofphp/php-cs-fixer ###
+
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.cache/
+###< phpunit/phpunit ###

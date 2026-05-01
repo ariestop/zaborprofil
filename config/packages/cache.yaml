@@ -1,0 +1,32 @@
+framework:
+    cache:
+        app: cache.adapter.redis
+        system: cache.adapter.system
+        default_redis_provider: '%env(REDIS_URL)%'
+        pools:
+            cache.public_page:
+                adapter: cache.app
+                default_lifetime: 3600
+            cache.settings:
+                adapter: cache.app
+                default_lifetime: 86400
+            cache.menu:
+                adapter: cache.app
+                default_lifetime: 86400
+            cache.seo:
+                adapter: cache.app
+                default_lifetime: 86400
+
+when@test:
+    framework:
+        cache:
+            app: cache.adapter.array
+            pools:
+                cache.public_page:
+                    adapter: cache.adapter.array
+                cache.settings:
+                    adapter: cache.adapter.array
+                cache.menu:
+                    adapter: cache.adapter.array
+                cache.seo:
+                    adapter: cache.adapter.array

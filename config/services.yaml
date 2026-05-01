@@ -1,0 +1,14 @@
+parameters:
+    app.site_url: '%env(SITE_URL)%'
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/Kernel.php'
+            - '../src/Module/*/Domain/Entity/'
+            - '../src/Module/*/Infrastructure/Doctrine/Entity/'

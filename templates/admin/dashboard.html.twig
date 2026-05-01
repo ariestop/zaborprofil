@@ -1,0 +1,16 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Админ-панель{% endblock %}
+
+{% block body %}
+    <main class="min-h-screen bg-slate-100">
+        <section class="mx-auto max-w-6xl px-6 py-10">
+            <p class="text-sm font-semibold uppercase tracking-wide text-emerald-700">Zaborprofil Admin</p>
+            <h1 class="mt-2 text-3xl font-bold text-slate-950">Панель управления</h1>
+            <p class="mt-4 max-w-2xl text-slate-700">
+                Это минимальная защищенная страница первого этапа. Полноценный Vue-интерфейс админки будет развиваться отдельным этапом.
+            </p>
+            <div id="admin-app" class="mt-8"></div>
+        </section>
+    </main>
+{% endblock %}

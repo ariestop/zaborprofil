@@ -1,92 +1,57 @@
-# Zaborprofil Platform
+# Zaborprofil CMS Engine
 
-Production-grade B2B/B2C platform replacing zaborprofil.ru. Built with Next.js, Symfony, and Payload CMS.
+Новый Symfony CMS Engine для корпоративного сайта [zaborprofil.ru](https://zaborprofil.ru).
 
-## Architecture
+Проект заменяет WordPress, но не импортирует WordPress-контент автоматически. Контент переносится вручную через будущую кастомную админ-панель.
 
-- **Next.js** (App Router) - Frontend UI
-- **Symfony** (PHP 8.4) - Business logic, API, calculation engine
-- **Payload CMS** - Content (pages, SEO, media)
-- **MySQL 8.0** - Business data (Symfony)
-- **SQLite** - CMS data (Payload)
-- **Redis** - Cache and queues
-- **S3/MinIO** - Document storage
+## Стек
 
-## Quick Start
+- PHP `>=8.4`
+- Symfony `8.x`
+- PostgreSQL `>=18`
+- Redis
+- Doctrine ORM / DBAL
+- Symfony Security, Messenger, Validator, Serializer, Mailer
+- Twig
+- Tailwind CSS
+- Vite
+- Vue 3 для админ-панели
+- PHPUnit, PHPStan, PHP-CS-Fixer, Rector
 
-### Prerequisites
+Docker намеренно не используется. Проект рассчитан на обычный VPS: Nginx, PHP-FPM, PostgreSQL, Redis, systemd и Git-based deploy.
 
-- PHP 8.4+
-- Node.js 20+
-- MySQL 8.0
-- Composer
+## Структура
 
-### Symfony Backend
+- `public_html/` — web root, здесь лежит `index.php`.
+- `src/Shared/` — общие контракты, инфраструктура и UI-адаптеры.
+- `src/Module/` — модули модульного монолита.
+- `assets/site/` — frontend публичного сайта.
+- `assets/admin/` — Vue entrypoint будущей админки.
+- `templates/` — Twig-шаблоны.
+- `docs/` — документация на русском языке.
+
+## Быстрый старт
 
 ```bash
-cd symfony
-cp .env .env.local
-# Edit .env.local: set DATABASE_URL for MySQL
 composer install
-php bin/console doctrine:migrations:migrate --no-interaction
-php bin/console app:seed-data
-php -S localhost:8080 -t public
-```
-
-### Next.js Frontend
-
-```bash
-cd nextjs
-cp .env.example .env.local
-# Set NEXT_PUBLIC_API_URL=http://localhost:8080
 npm install
-npm run dev
+npm run build
+php bin/console doctrine:migrations:migrate
 ```
 
-Open http://localhost:3000
-
-### Payload CMS Admin
-
-Payload is integrated in the Next.js app. After starting Next.js:
-
-- Admin panel: http://localhost:3000/admin
-- Create first user to access the CMS
-
-### Docker (optional)
+Проверка:
 
 ```bash
-docker compose up -d
+php bin/console about
+php bin/console router:match /health
+vendor/bin/phpunit
 ```
 
-## API Endpoints
+Откройте:
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | /api/catalog | Categories + products |
-| GET | /api/product/{slug} | Product by slug |
-| POST | /api/calculate | Calculate price |
-| POST | /api/estimate | Create estimate |
-| GET | /api/estimate/{id} | Get estimate |
-| POST | /api/order | Create order |
-| POST | /api/lead | Create lead |
-| POST | /api/chat | AI chat |
-| GET | /api/documents/quote/{id} | PDF quote |
+- `/health`
+- `/admin/login`
 
-## Documentation for agents and Cursor
+## Следующий этап
 
-- **AGENTS.md** — контекст проекта для AI-агентов и Cursor: стек, структура, API, админки, запуск, частые задачи.
-- **.cursor/rules/** — правила Cursor (обзор проекта, Symfony, Next.js/Payload) в формате `.mdc`.
-- **docs/plan-content-design-zaborprofil.md** — план переноса контента и дизайна с zaborprofil.ru (Payload-страницы, блоки, layout, наполнение).
-
-## Project Structure
-
-```
-├── nextjs/          # Next.js + Payload CMS
-├── symfony/         # Symfony API
-├── docker/          # Dockerfiles
-└── docker-compose.yml
-```
-
-## License
-
-Proprietary
+После фундамента реализуются базовые модули `Shared`, `User`, `Auth`, `Admin`, а затем `Content/Page/PageBlock`.
