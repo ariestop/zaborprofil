@@ -1,0 +1,15 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ page.title }}{% endblock %}
+
+{% block body %}
+    <main class="mx-auto max-w-6xl px-6 py-12">
+        <h1 class="text-4xl font-bold tracking-tight text-slate-950">{{ page.h1 }}</h1>
+
+        <div class="mt-10 space-y-10">
+            {% for block in blocks %}
+                {{ block|raw }}
+            {% endfor %}
+        </div>
+    </main>
+{% endblock %}

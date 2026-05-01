@@ -26,4 +26,16 @@
 - `Admin` — dashboard.
 - `Auth` — вход в админ-панель.
 - `User` — минимальная модель администратора.
+- `Content` — Page/PageBlock, Admin API, публичный Twig renderer.
 - Остальные модули зарезервированы README-файлами и будут реализованы по этапам.
+
+## Content Engine
+
+`Content` следует Clean Architecture:
+
+- `Domain` содержит `Page`, `PageBlock`, enum и repository interfaces.
+- `Application` содержит команды, handlers и DTO для сценариев.
+- `Infrastructure` содержит Doctrine repositories.
+- `UI` содержит Admin API и публичный renderer.
+
+Публичный catch-all route имеет низкий priority и открывает только опубликованные страницы по `Page.path`. Черновики и архивные страницы возвращают `404`.

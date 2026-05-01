@@ -16,6 +16,7 @@ doctrine:
                 prefix: 'App'
                 alias: App
 
+
 when@prod:
     doctrine:
         orm:

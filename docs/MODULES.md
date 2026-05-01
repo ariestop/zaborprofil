@@ -7,6 +7,21 @@
 - `Auth` — авторизация администраторов.
 - `User` — администраторы, роли и будущая связь с клиентами/партнерами.
 
+## Content Engine
+
+Модуль `Content` реализует базовое контентное ядро:
+
+- `Page` — страница с ручным `path`, `slug`, `h1`, статусом и типом.
+- `PageBlock` — блок страницы с `content` и `settings` в JSONB.
+- `PageStatus`, `PageType`, `BlockType` — enum для ключевых состояний и типов.
+- `PageRepositoryInterface`, `PageBlockRepositoryInterface` — доменные контракты.
+- `DoctrinePageRepository`, `DoctrinePageBlockRepository` — инфраструктурные реализации.
+- Application commands и handlers для создания, обновления, публикации, архивации, управления блоками и сортировки.
+- Admin API под `/admin/api/content/...`.
+- Публичный Twig renderer опубликованных страниц.
+
+Публичный renderer открывает только страницы со статусом `published`. Черновики и архивные страницы возвращают `404`.
+
 ## Следующие модули CMS
 
 - `Content`

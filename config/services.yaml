@@ -12,3 +12,9 @@ services:
             - '../src/Kernel.php'
             - '../src/Module/*/Domain/Entity/'
             - '../src/Module/*/Infrastructure/Doctrine/Entity/'
+
+    App\Module\Content\Domain\Repository\PageRepositoryInterface:
+        alias: App\Module\Content\Infrastructure\Repository\DoctrinePageRepository
+
+    App\Module\Content\Domain\Repository\PageBlockRepositoryInterface:
+        alias: App\Module\Content\Infrastructure\Repository\DoctrinePageBlockRepository

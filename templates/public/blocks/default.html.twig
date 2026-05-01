@@ -1,0 +1,8 @@
+<section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" data-block-type="{{ block.type }}">
+    <h2 class="text-2xl font-semibold text-slate-950">{{ block.name }}</h2>
+    {% if block.content.text is defined %}
+        <div class="prose mt-4 max-w-none text-slate-700">
+            {{ block.content.text|nl2br }}
+        </div>
+    {% endif %}
+</section>
