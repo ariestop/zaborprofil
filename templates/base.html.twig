@@ -4,7 +4,35 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{% block title %}ЗаборПрофиль{% endblock %}</title>
-        {% block stylesheets %}{% endblock %}
+        {% block meta_description %}
+            {% if meta_description is defined and meta_description %}
+                <meta name="description" content="{{ meta_description }}">
+            {% endif %}
+        {% endblock %}
+        {% block meta_robots %}
+            <meta name="robots" content="{{ meta_robots is defined and meta_robots ? meta_robots : 'index, follow' }}">
+        {% endblock %}
+        {% block canonical_url %}
+            {% if canonical_url is defined and canonical_url %}
+                <link rel="canonical" href="{{ canonical_url }}">
+            {% endif %}
+        {% endblock %}
+        {% block meta_open_graph %}
+            <meta property="og:site_name" content="ЗаборПрофиль">
+            <meta property="og:type" content="{{ og_type is defined and og_type ? og_type : 'website' }}">
+            <meta property="og:title" content="{{ og_title is defined and og_title ? og_title : block('title') }}">
+            {% if og_description is defined and og_description %}
+                <meta property="og:description" content="{{ og_description }}">
+            {% elseif meta_description is defined and meta_description %}
+                <meta property="og:description" content="{{ meta_description }}">
+            {% endif %}
+            {% if canonical_url is defined and canonical_url %}
+                <meta property="og:url" content="{{ canonical_url }}">
+            {% endif %}
+        {% endblock %}
+        {% block stylesheets %}
+            {{ vite_entry_link_tags('assets/site/app.ts') }}
+        {% endblock %}
     </head>
     <body class="min-h-screen bg-slate-50 text-slate-950">
         {% block body %}{% endblock %}

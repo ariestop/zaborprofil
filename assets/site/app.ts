@@ -1,1 +1,1 @@
-import './styles/app.css'
+import '../shared/styles/app.css'

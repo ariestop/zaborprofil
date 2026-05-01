@@ -1,6 +1,6 @@
 import { createApp } from 'vue'
 import AdminShell from './components/AdminShell.vue'
-import '../site/styles/app.css'
+import '../shared/styles/app.css'
 
 const root = document.getElementById('admin-app')
 
