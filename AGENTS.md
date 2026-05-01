@@ -20,7 +20,7 @@
 - Vue 3 для будущей админ-панели
 - PHPUnit, PHPStan, PHP-CS-Fixer, Rector
 
-Docker не используется. Проект рассчитан на VPS: Nginx, PHP-FPM, PostgreSQL, Redis, systemd и Git-based deploy.
+Docker используется только для local development. Staging и production должны оставаться native VPS stack: Nginx, PHP-FPM, PostgreSQL, Redis, systemd и Git-based release deploy.
 
 ## Структура
 
@@ -38,7 +38,8 @@ Docker не используется. Проект рассчитан на VPS: 
 - Контроллеры должны быть тонкими: request -> DTO/валидация -> use case -> response.
 - Не размещать бизнес-логику в контроллерах.
 - Не превращать Doctrine Entity в god object.
-- Не добавлять WordPress importer, shortcode parser, EAV без необходимости, Docker или EasyAdmin как основную админку.
+- Не добавлять WordPress importer, shortcode parser, EAV без необходимости или EasyAdmin как основную админку.
+- Не делать Docker обязательной зависимостью для staging или production.
 - Публичный сайт должен оставаться SSR на Symfony + Twig, не SPA.
 - Все PHP-файлы должны использовать `declare(strict_types=1)`.
 - Документация пишется на русском языке.

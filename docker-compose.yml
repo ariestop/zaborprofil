@@ -1,0 +1,110 @@
+#checkov:skip=CKV_SECRET_6: Local Docker development credentials only.
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    command: >
+      sh -lc "mkdir -p var/cache var/log public_html/uploads
+      && chown -R www-data:www-data var public_html/uploads
+      && php-fpm"
+    user: root
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${APP_ENV:-dev}
+      APP_DEBUG: ${APP_DEBUG:-1}
+      APP_SECRET: ${APP_SECRET}
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      MESSENGER_TRANSPORT_DSN: ${MESSENGER_TRANSPORT_DSN}
+      MAILER_DSN: ${MAILER_DSN}
+      SITE_URL: ${SITE_URL:-http://localhost}
+      DEFAULT_URI: ${DEFAULT_URI:-http://localhost}
+      XDEBUG_MODE: ${XDEBUG_MODE:-off}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./:/var/www/html
+      - uploads_data:/var/www/html/public_html/uploads
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - ${HTTP_PORT:-80}:80
+    volumes:
+      - ./:/var/www/html:ro
+      - uploads_data:/var/www/html/public_html/uploads:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-zaborprofil}
+      POSTGRES_USER: ${POSTGRES_USER:-zaborprofil}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-zaborprofil}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - ping
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  node:
+    build:
+      context: .
+      dockerfile: docker/node/Dockerfile
+    working_dir: /var/www/html
+    command:
+      - tail
+      - -f
+      - /dev/null
+    volumes:
+      - ./:/var/www/html
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - ${MAILPIT_PORT:-8025}:8025
+
+  adminer:
+    image: adminer:latest
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - ${ADMINER_PORT:-8080}:8080
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads_data:

@@ -1,0 +1,94 @@
+name: Deploy
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - develop
+      - staging
+    tags:
+      - v*
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DEPLOY_REF: ${{ github.ref_name }}
+
+jobs:
+  deploy-staging:
+    name: Deploy Staging
+    runs-on: ubuntu-latest
+    environment: staging
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/staging' || startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Upload deploy scripts
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.STAGING_SSH_HOST }}
+          username: ${{ secrets.STAGING_SSH_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          port: ${{ secrets.STAGING_SSH_PORT || 22 }}
+          source: tools/deploy/*
+          target: /tmp/zaborprofil-deploy
+          strip_components: 2
+
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.STAGING_SSH_HOST }}
+          username: ${{ secrets.STAGING_SSH_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          port: ${{ secrets.STAGING_SSH_PORT || 22 }}
+          script: |
+            set -euo pipefail
+            chmod +x /tmp/zaborprofil-deploy/*.sh
+            BRANCH="${STAGING_BRANCH:-${{ env.DEPLOY_REF }}}" \
+            APP_ROOT="${STAGING_APP_ROOT:-/var/www/zaborprofil}" \
+            HEALTH_URL="${STAGING_HEALTH_URL:-https://staging.zaborprofil.ru/health}" \
+            /tmp/zaborprofil-deploy/deploy-staging.sh
+
+  deploy-production:
+    name: Deploy Production
+    runs-on: ubuntu-latest
+    environment: production
+    needs:
+      - deploy-staging
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Upload deploy scripts
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.PRODUCTION_SSH_HOST }}
+          username: ${{ secrets.PRODUCTION_SSH_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_SSH_PORT || 22 }}
+          source: tools/deploy/*
+          target: /tmp/zaborprofil-deploy
+          strip_components: 2
+
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PRODUCTION_SSH_HOST }}
+          username: ${{ secrets.PRODUCTION_SSH_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_SSH_PORT || 22 }}
+          script: |
+            set -euo pipefail
+            chmod +x /tmp/zaborprofil-deploy/*.sh
+            BRANCH="${PRODUCTION_BRANCH:-${{ env.DEPLOY_REF }}}" \
+            APP_ROOT="${PRODUCTION_APP_ROOT:-/var/www/zaborprofil}" \
+            HEALTH_URL="${PRODUCTION_HEALTH_URL:-https://zaborprofil.ru/health}" \
+            CONFIRM_STAGING_DEPLOYED=yes \
+            /tmp/zaborprofil-deploy/deploy-production.sh

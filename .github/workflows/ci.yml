@@ -1,11 +1,20 @@
 name: CI
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:
       - main
       - master
+      - develop
+      - staging
   pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   backend:
@@ -54,6 +63,9 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
 
+      - name: Composer audit
+        run: composer audit --no-interaction
+
       - name: PHP syntax check
         run: composer check:syntax
 
@@ -88,6 +100,9 @@ jobs:
 
       - name: Install Node dependencies
         run: npm ci
+
+      - name: NPM audit
+        run: npm audit --audit-level=high
 
       - name: Build frontend
         run: npm run build

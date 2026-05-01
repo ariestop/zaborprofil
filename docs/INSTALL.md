@@ -1,6 +1,22 @@
 # Установка
 
-## Требования
+Основной способ локальной разработки — Docker Compose. Native установка нужна для MAMP/OSPanel или диагностики production-like окружения без контейнеров.
+
+## Docker
+
+```bash
+cp .env.local.example .env.local
+make build
+make up
+make composer-install
+make npm-install
+make migrate
+make npm-build
+```
+
+Подробно: `docs/LOCAL_DOCKER.md`.
+
+## Native требования
 
 - PHP `>=8.4`
 - PHP extensions: `ctype`, `iconv`, `intl`, `mbstring`, `pdo_pgsql`, `redis`

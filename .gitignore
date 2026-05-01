@@ -1,5 +1,9 @@
 /.env.local
 /.env.*.local
+/.env.staging
+/.env.production
+/.DS_Store
+/public_html/.DS_Store
 /vendor/
 /var/
 /public_html/build/

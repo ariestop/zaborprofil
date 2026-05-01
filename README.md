@@ -18,7 +18,7 @@
 - Vue 3 для админ-панели
 - PHPUnit, PHPStan, PHP-CS-Fixer, Rector
 
-Docker намеренно не используется. Проект рассчитан на обычный VPS: Nginx, PHP-FPM, PostgreSQL, Redis, systemd и Git-based deploy.
+Docker используется только для локальной разработки. Staging и production разворачиваются на VPS без Docker: Nginx, PHP-FPM, PostgreSQL, Redis, systemd и Git-based release deploy.
 
 ## Структура
 
@@ -40,7 +40,30 @@ Docker намеренно не используется. Проект рассч
 - Twig renderer блоков с базовыми partials.
 - Unit, Integration и Functional тесты для Content Engine.
 
-## Быстрый старт
+## Быстрый старт через Docker
+
+```bash
+cp .env.local.example .env.local
+make build
+make up
+make composer-install
+make npm-install
+make migrate
+make npm-build
+make health
+```
+
+Откройте:
+
+- `http://localhost`
+- `http://localhost/admin`
+- `http://localhost/health`
+- `http://localhost:8025` — Mailpit
+- `http://localhost:8080` — Adminer
+
+Подробнее: `docs/LOCAL_DOCKER.md`.
+
+## Native запуск без Docker
 
 ```bash
 composer install
@@ -61,6 +84,26 @@ vendor/bin/phpunit
 
 - `/health`
 - `/admin/login`
+
+## Deploy
+
+Staging и production деплоятся без Docker через release-based структуру:
+
+```text
+/var/www/zaborprofil/
+├── releases/
+├── shared/
+└── current -> releases/<timestamp>
+```
+
+Production deploy разрешен только после успешного staging deploy, с backup перед миграциями и health-check после переключения релиза.
+
+Документация:
+
+- `docs/STAGING.md`
+- `docs/PRODUCTION.md`
+- `docs/DEPLOY.md`
+- `docs/CI_CD.md`
 
 ## Content Engine
 
