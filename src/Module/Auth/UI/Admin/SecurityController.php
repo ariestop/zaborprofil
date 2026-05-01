@@ -21,7 +21,7 @@ final class SecurityController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/logout', name: 'admin_logout', methods: ['POST', 'GET'])]
+    #[Route('/admin/logout', name: 'admin_logout', methods: ['POST'])]
     public function logout(): never
     {
         throw new LogicException('Logout is intercepted by Symfony Security.');

@@ -2,6 +2,10 @@
 
 {% block title %}Вход в админ-панель{% endblock %}
 
+{% block meta_robots %}
+    <meta name="robots" content="noindex, nofollow">
+{% endblock %}
+
 {% block body %}
     <main class="flex min-h-screen items-center justify-center px-6 py-12">
         <form method="post" action="{{ path('admin_login') }}" class="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">

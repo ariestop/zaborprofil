@@ -2,15 +2,40 @@
 
 {% block title %}Админ-панель{% endblock %}
 
+{% block meta_robots %}
+    <meta name="robots" content="noindex, nofollow">
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <meta name="admin-csrf-token" content="{{ csrf_token('admin_api') }}">
+    <meta name="admin-csrf-header" content="X-CSRF-Token">
+{% endblock %}
+
 {% block body %}
     <main class="min-h-screen bg-slate-100">
         <section class="mx-auto max-w-6xl px-6 py-10">
-            <p class="text-sm font-semibold uppercase tracking-wide text-emerald-700">Zaborprofil Admin</p>
-            <h1 class="mt-2 text-3xl font-bold text-slate-950">Панель управления</h1>
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-sm font-semibold uppercase tracking-wide text-emerald-700">Zaborprofil Admin</p>
+                    <h1 class="mt-2 text-3xl font-bold text-slate-950">Панель управления</h1>
+                </div>
+                <form method="post" action="{{ path('admin_logout') }}">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+                    <button type="submit" class="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                        Выйти
+                    </button>
+                </form>
+            </div>
             <p class="mt-4 max-w-2xl text-slate-700">
                 Это минимальная защищенная страница первого этапа. Полноценный Vue-интерфейс админки будет развиваться отдельным этапом.
             </p>
             <div id="admin-app" class="mt-8"></div>
         </section>
     </main>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ vite_entry_script_tags('assets/admin/app.ts') }}
 {% endblock %}

@@ -16,4 +16,19 @@ final class AdminLoginTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Вход в админ-панель');
     }
+
+    public function testLoginPageIncludesViteSiteAssets(): void
+    {
+        $client = self::createClient();
+        $client->request('GET', '/admin/login');
+
+        self::assertResponseIsSuccessful();
+
+        $html = (string) $client->getResponse()->getContent();
+        self::assertMatchesRegularExpression(
+            '#<link rel="stylesheet" href="/build/assets/site-[^"]+\.css">#',
+            $html,
+            'Compiled site CSS must be linked from the public layout.',
+        );
+    }
 }
