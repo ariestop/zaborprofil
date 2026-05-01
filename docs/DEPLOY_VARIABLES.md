@@ -12,7 +12,7 @@ Deploy scripts читают переменные окружения. Значе�
 - `PHP_BIN` — путь к PHP, по умолчанию `php`.
 - `COMPOSER_BIN` — путь к Composer, по умолчанию `composer`.
 - `NPM_BIN` — путь к npm, по умолчанию `npm`.
-- `PHP_FPM_SERVICE` — systemd unit PHP-FPM, по умолчанию `php8.4-fpm`.
+- `PHP_FPM_SERVICE` — systemd unit PHP-FPM, по умолчанию `php8.5-fpm`.
 - `NGINX_SERVICE` — systemd unit Nginx, по умолчанию `nginx`.
 - `WORKER_SERVICE` — systemd unit Messenger worker, по умолчанию `zaborprofil-messenger`.
 

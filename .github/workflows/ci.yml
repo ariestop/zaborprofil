@@ -52,7 +52,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: '8.5'
           extensions: ctype, iconv, intl, mbstring, opcache, pdo_pgsql, redis
           coverage: none
           tools: composer:v2
@@ -78,8 +78,30 @@ jobs:
       - name: Rector dry run
         run: composer check:rector
 
+      - name: Use PostgreSQL for test environment
+        run: cp .env.test.ci .env.test.local
+
       - name: Doctrine migrations status
         run: php bin/console doctrine:migrations:status --env=test --no-interaction
+
+      - name: Run Doctrine migrations on the CI Postgres
+        run: php bin/console doctrine:migrations:migrate --env=test --no-interaction --allow-no-migration
+
+      - name: Doctrine schema validation
+        run: php bin/console doctrine:schema:validate --env=test --no-interaction --skip-sync
+
+      - name: Symfony container linter
+        run: php bin/console lint:container --env=test --no-interaction
+
+      - name: Twig templates linter
+        run: php bin/console lint:twig templates --env=test --no-interaction
+
+      - name: Deploy scripts shell syntax check
+        run: |
+          set -e
+          for script in tools/deploy/*.sh; do
+            bash -n "$script"
+          done
 
       - name: PHPUnit
         run: composer test
@@ -95,7 +117,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: 25.9.0
           cache: npm
 
       - name: Install Node dependencies

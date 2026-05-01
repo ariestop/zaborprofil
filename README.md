@@ -6,14 +6,22 @@
 
 ## Стек
 
-- PHP `>=8.4`
-- Symfony `8.x`
+Минимальные зафиксированные версии runtime:
+
+- PHP `>=8.5`
+- Node.js `>=25.9.0`
+- npm `>=11.12.1` (входит в состав Node.js 25.9.0)
+- nginx `>=1.30.0`
 - PostgreSQL `>=18`
-- Redis
+- Redis `>=8`
+
+Прочее:
+
+- Symfony `8.x`
 - Doctrine ORM / DBAL
 - Symfony Security, Messenger, Validator, Serializer, Mailer
 - Twig
-- Tailwind CSS
+- Tailwind CSS (`@tailwindcss/typography`)
 - Vite
 - Vue 3 для админ-панели
 - PHPUnit, PHPStan, PHP-CS-Fixer, Rector

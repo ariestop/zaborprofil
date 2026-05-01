@@ -4,10 +4,11 @@ Staging разворачивается на VPS без Docker и должен б
 
 ## Stack
 
-- Nginx.
-- PHP-FPM 8.4.
-- PostgreSQL 18 или ближайшая стабильная версия.
-- Redis с паролем.
+- Nginx `>=1.30.0`.
+- PHP-FPM `>=8.5`.
+- Node.js `>=25.9.0` (npm `>=11.12.1`) для сборки frontend на VPS.
+- PostgreSQL `>=18` или ближайшая стабильная версия.
+- Redis `>=8` с паролем.
 - systemd worker для Symfony Messenger.
 - SSL для `staging.zaborprofil.ru`.
 - Отдельная staging database.
@@ -58,7 +59,14 @@ Document root:
 /var/www/zaborprofil/current/public_html
 ```
 
-Неизвестные URL должны идти в `index.php`. Для закрытого staging включите basic auth или IP allowlist.
+Неизвестные URL должны идти в `index.php`.
+
+Шаблон `tools/deploy/templates/nginx-staging.conf` уже содержит:
+
+- Basic Auth (`auth_basic`) — staging закрыт от случайного публичного доступа.
+- `add_header X-Robots-Tag "noindex, nofollow, noarchive" always;` — staging не индексируется поисковиками.
+- `location = /robots.txt` — отдает `User-agent: *\nDisallow: /\n`, перекрывая возможный application-уровневый robots.txt.
+- `location = /health` с `auth_basic off` — deploy health-check не требует учетных данных.
 
 Templates:
 
@@ -68,6 +76,9 @@ Templates:
 Установка:
 
 ```bash
+sudo apt-get install -y apache2-utils
+sudo htpasswd -c /etc/nginx/.htpasswd-zaborprofil-staging zaborprofil
+
 sudo cp tools/deploy/templates/nginx-staging.conf /etc/nginx/sites-available/zaborprofil-staging.conf
 sudo ln -sfn /etc/nginx/sites-available/zaborprofil-staging.conf /etc/nginx/sites-enabled/zaborprofil-staging.conf
 sudo nginx -t
@@ -77,6 +88,8 @@ sudo cp tools/deploy/templates/zaborprofil-messenger-staging.service /etc/system
 sudo systemctl daemon-reload
 sudo systemctl enable --now zaborprofil-messenger-staging.service
 ```
+
+Если нужен IP allowlist вместо Basic Auth — замените `auth_basic`/`auth_basic_user_file` в шаблоне на `allow <ip>; deny all;`.
 
 ## Deploy
 

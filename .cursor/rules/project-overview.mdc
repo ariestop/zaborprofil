@@ -9,7 +9,7 @@ alwaysApply: true
 - Do not build WordPress importers, shortcode parsers, Laravel code, Docker setup, or EasyAdmin as the primary admin UI.
 - The app lives at repository root. The web root is `public_html/`, not Symfony's default `public/`.
 - Public pages must be server-rendered with Symfony + Twig for SEO; do not turn the public site into a pure SPA.
-- The target stack is PHP `>=8.4`, Symfony `8.x`, PostgreSQL `>=18`, Redis, Doctrine, Twig, Tailwind CSS, Vite, Vue 3 admin UI.
+- The target stack is PHP `>=8.5`, Node.js `>=25.9.0` (npm `>=11.12.1`), nginx `>=1.30.0`, Symfony `8.x`, PostgreSQL `>=18`, Redis `>=8`, Doctrine, Twig, Tailwind CSS, Vite, Vue 3 admin UI.
 - Documentation must be written in Russian.
 
 ## Main Directories

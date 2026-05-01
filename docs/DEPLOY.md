@@ -9,15 +9,16 @@ Staging и production разворачиваются без Docker. Docker ис�
 ├── releases/
 ├── shared/
 │   ├── .env.local
-│   ├── public/uploads/
-│   └── var/log/
-└── current -> releases/current-release
+│   ├── public_html/uploads/
+│   ├── var/log/
+│   └── backups/
+└── current -> releases/<timestamp>
 ```
 
 ## Серверные компоненты
 
 - Nginx
-- PHP-FPM `>=8.4`
+- PHP-FPM `>=8.5`
 - PostgreSQL `>=18`
 - Redis
 - systemd worker для Symfony Messenger

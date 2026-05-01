@@ -6,7 +6,21 @@ Docker нужен только для локальной разработки н
 
 - Docker Desktop или Docker Engine с Compose v2.
 - На Windows проект лучше хранить внутри WSL2, например `~/projects/zaborprofil`, а не на диске `C:`.
-- Свободные порты: `80`, `5432`, `6379`, `8025`, `8080`, `5173`.
+- Свободные порты на хосте по умолчанию: `80` (Nginx), `15432` (PostgreSQL), `16379` (Redis), `8025` (Mailpit), `8080` (Adminer), `5173` (Vite dev).
+
+PostgreSQL и Redis намеренно публикуются на нестандартных портах хоста (`15432`/`16379`), чтобы не конфликтовать с локально установленными `postgres`/`redis`. Внутри Docker-сети сервисы доступны по штатным `5432`/`6379`. Хост-порты можно переопределить в `.env.local`:
+
+```dotenv
+POSTGRES_PORT=15432
+REDIS_PORT=16379
+HTTP_PORT=80
+```
+
+Подключиться к Postgres с хоста:
+
+```bash
+psql "postgresql://zaborprofil:zaborprofil@127.0.0.1:15432/zaborprofil"
+```
 
 Если порт `80` занят, укажите другой порт в `.env.local`:
 
@@ -39,11 +53,11 @@ make health
 
 ## Контейнеры
 
-- `app` — PHP-FPM 8.4, Composer, Symfony CLI, PHP extensions.
-- `nginx` — web server с root `public_html/`.
+- `app` — PHP-FPM 8.5 (`php:8.5-fpm-bookworm`, плавающий patch внутри 8.5.x), Composer, Symfony CLI, PHP extensions.
+- `nginx` — `nginx:1.30.0-alpine`, web server с root `public_html/`.
 - `postgres` — PostgreSQL 18.
 - `redis` — Redis 8.
-- `node` — Node.js LTS для Vite/npm.
+- `node` — `node:25.9.0-bookworm` (включает npm 11.12.1) для Vite/npm.
 - `mailpit` — тестирование писем.
 - `adminer` — управление PostgreSQL.
 

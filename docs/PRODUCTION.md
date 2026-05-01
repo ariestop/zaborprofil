@@ -4,10 +4,11 @@ Production разворачивается только после успешно
 
 ## Stack
 
-- Nginx.
-- PHP-FPM 8.4.
-- PostgreSQL 18 или ближайшая стабильная версия.
-- Redis с authentication и отдельной production DB.
+- Nginx `>=1.30.0`.
+- PHP-FPM `>=8.5`.
+- Node.js `>=25.9.0` (npm `>=11.12.1`) для сборки frontend на VPS.
+- PostgreSQL `>=18` или ближайшая стабильная версия.
+- Redis `>=8` с authentication и отдельной production DB.
 - systemd workers для Symfony Messenger.
 - SSL для `zaborprofil.ru`.
 - Release-based deploy через Git.
@@ -132,7 +133,7 @@ sudo chown -R www-data:www-data /var/www/zaborprofil/shared/public_html/uploads
 После restore:
 
 ```bash
-sudo systemctl reload-or-restart php8.4-fpm
+sudo systemctl reload-or-restart php8.5-fpm
 sudo systemctl reload nginx
 sudo systemctl restart zaborprofil-messenger
 tools/deploy/health-check.sh https://zaborprofil.ru/health

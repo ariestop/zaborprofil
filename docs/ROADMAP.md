@@ -3,7 +3,7 @@
 ## Этап 1
 
 - Symfony 8 skeleton.
-- PHP 8.4 constraint.
+- PHP 8.5 constraint.
 - PostgreSQL, Redis, Doctrine, Security.
 - PHPUnit, PHPStan, PHP-CS-Fixer, Rector.
 - Vite, Tailwind CSS, Vue 3 entrypoint.
@@ -45,7 +45,7 @@
 
 Готово:
 
-- Docker Compose для local development: PHP-FPM 8.4, Nginx, PostgreSQL 18, Redis, Node.js, Mailpit, Adminer.
+- Docker Compose для local development: PHP-FPM 8.5, Nginx 1.30.0, PostgreSQL 18, Redis 8, Node.js 25.9.0, Mailpit, Adminer.
 - `Makefile` для локальных команд разработки и quality pipeline.
 - Health-check `/health` с проверкой приложения, database, Redis/cache и storage.
 - GitHub Actions CI для backend/frontend проверок.
