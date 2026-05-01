@@ -2,6 +2,7 @@ name: Deploy
 
 permissions:
   contents: read
+  actions: read
 
 on:
   push:
@@ -20,10 +21,58 @@ env:
   DEPLOY_REF: ${{ github.ref_name }}
 
 jobs:
+  verify-ci:
+    name: Verify CI passed
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require successful CI run for current SHA
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const sha = context.sha;
+            core.info(`Checking CI workflow runs for SHA ${sha}`);
+
+            const runs = await github.paginate(
+              github.rest.actions.listWorkflowRunsForRepo,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                head_sha: sha,
+                per_page: 100,
+              },
+            );
+
+            const ciRuns = runs.filter(
+              (r) => r.name === 'CI' && (r.event === 'push' || r.event === 'workflow_dispatch'),
+            );
+            if (ciRuns.length === 0) {
+              core.setFailed(
+                `No CI workflow run found for SHA ${sha}. Deploy is gated on a successful CI run.`,
+              );
+              return;
+            }
+
+            const latest = ciRuns
+              .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+              .at(0);
+
+            core.info(`Latest CI run: id=${latest.id} status=${latest.status} conclusion=${latest.conclusion} url=${latest.html_url}`);
+
+            if (latest.status !== 'completed' || latest.conclusion !== 'success') {
+              core.setFailed(
+                `CI run for SHA ${sha} is ${latest.status}/${latest.conclusion}. Deploy refused.`,
+              );
+              return;
+            }
+
+            core.info('CI is green for current SHA. Proceeding with deploy.');
+
   deploy-staging:
     name: Deploy Staging
     runs-on: ubuntu-latest
     environment: staging
+    needs:
+      - verify-ci
     if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/staging' || startsWith(github.ref, 'refs/tags/v')
     steps:
       - name: Checkout

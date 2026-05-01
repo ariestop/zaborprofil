@@ -1,6 +1,14 @@
 COMPOSE ?= docker compose
 COMPOSE_ENV_FILE := $(if $(wildcard .env.local),--env-file .env.local,)
 COMPOSE := $(COMPOSE) $(COMPOSE_ENV_FILE)
+
+# Expose .env.local values (SITE_URL, HTTP_PORT, etc.) to make targets like
+# `make health` so the developer experience matches the value the user put
+# in their .env.local without requiring an extra `source` step.
+ifneq (,$(wildcard .env.local))
+include .env.local
+export
+endif
 PHP = $(COMPOSE) exec -T --user www-data app
 PHP_SHELL = $(COMPOSE) exec --user www-data app
 NODE = $(COMPOSE) exec -T node

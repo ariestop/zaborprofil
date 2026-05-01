@@ -1,5 +1,7 @@
 parameters:
     app.site_url: '%env(SITE_URL)%'
+    app.vite.manifest_path: '%kernel.project_dir%/public_html/build/.vite/manifest.json'
+    app.vite.public_build_path: /build
 
 services:
     _defaults:
@@ -7,14 +9,28 @@ services:
         autoconfigure: true
 
     App\:
-        resource: '../src/'
+        resource: ../src/
         exclude:
-            - '../src/Kernel.php'
-            - '../src/Module/*/Domain/Entity/'
-            - '../src/Module/*/Infrastructure/Doctrine/Entity/'
+            - ../src/Kernel.php
+            - ../src/Module/*/Domain/Entity/
+            - ../src/Module/*/Infrastructure/Doctrine/Entity/
 
     App\Module\Content\Domain\Repository\PageRepositoryInterface:
         alias: App\Module\Content\Infrastructure\Repository\DoctrinePageRepository
 
     App\Module\Content\Domain\Repository\PageBlockRepositoryInterface:
         alias: App\Module\Content\Infrastructure\Repository\DoctrinePageBlockRepository
+
+    App\Shared\UI\Twig\ViteAssetExtension:
+        arguments:
+            $manifestPath: '%app.vite.manifest_path%'
+            $publicBuildPath: '%app.vite.public_build_path%'
+
+    App\Module\Seo\UI\Web\RobotsController:
+        arguments:
+            $environment: '%kernel.environment%'
+            $siteUrl: '%app.site_url%'
+
+    App\Module\Seo\UI\Web\SitemapController:
+        arguments:
+            $siteUrl: '%app.site_url%'

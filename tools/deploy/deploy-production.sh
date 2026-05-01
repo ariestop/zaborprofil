@@ -14,4 +14,8 @@ BRANCH="${BRANCH:-master}"
 APP_ENV="${APP_ENV:-prod}"
 HEALTH_URL="${HEALTH_URL:-https://zaborprofil.ru/health}"
 
+# Production worker installed from
+# tools/deploy/templates/zaborprofil-messenger.service.
+export WORKER_SERVICE="${WORKER_SERVICE:-zaborprofil-messenger}"
+
 deploy_release "$BRANCH" "$APP_ENV" "$HEALTH_URL" "yes"
