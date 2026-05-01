@@ -1,0 +1,39 @@
+---
+description: Symfony and Clean Architecture conventions for backend code
+globs: "{src,config,migrations,tests}/**/*.{php,yaml}"
+alwaysApply: false
+---
+
+# Symfony Backend Rules
+
+- Use `declare(strict_types=1)` in every PHP file.
+- Keep controllers thin: parse request, validate DTO/input, call application use case, return response.
+- Put business behavior in `Application` and `Domain` layers, not in controllers or Twig.
+- Prefer typed DTOs, enums, value objects, and explicit exceptions over arrays and magic strings.
+- Use Doctrine repositories and migrations deliberately; add indexes and constraints for lookup fields.
+- Do not create shared abstractions before at least one real use case proves they are needed.
+- Use PSR-3 logging for operational events and suspicious behavior.
+
+## Module Shape
+
+Each module should evolve toward:
+
+- `Domain`
+- `Application`
+- `Infrastructure`
+- `UI`
+
+Domain code must not depend on Symfony controllers, Doctrine repositories, Twig, or HTTP details.
+
+## Checks
+
+After backend changes, run the relevant subset:
+
+```bash
+composer check:syntax
+vendor/bin/phpstan analyse
+vendor/bin/php-cs-fixer fix --dry-run --diff
+vendor/bin/rector process --dry-run
+vendor/bin/phpunit
+```
+

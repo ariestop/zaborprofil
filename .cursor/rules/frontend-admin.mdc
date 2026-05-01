@@ -1,0 +1,29 @@
+---
+description: Vite, Tailwind, Twig, and Vue admin frontend conventions
+globs: "{assets,templates}/**/*.{ts,vue,css,twig}"
+alwaysApply: false
+---
+
+# Frontend Rules
+
+- Public frontend lives in `assets/site/` and should stay minimal for fast SSR pages.
+- Admin frontend lives in `assets/admin/` and uses Vue 3 with Vite.
+- Tailwind CSS is the default styling layer.
+- Keep public Twig templates SEO-friendly and accessible.
+- Do not move public rendering into a SPA.
+- Avoid adding heavy UI dependencies unless they clearly improve the custom admin UX.
+
+## Assets
+
+- Vite build output goes to `public_html/build`.
+- Do not commit generated build assets unless explicitly requested.
+- Keep reusable public blocks as Twig partials under `templates/public/blocks/` when PageBlock rendering is implemented.
+
+## Checks
+
+After frontend changes, run:
+
+```bash
+npm run build
+```
+

@@ -1,0 +1,27 @@
+---
+description: VPS deployment and environment constraints
+globs: "{.github,docs,config,public_html,tools}/**/*"
+alwaysApply: false
+---
+
+# DevOps Rules
+
+- Docker is intentionally not used.
+- Target deployment is a regular VPS with Nginx, PHP-FPM, PostgreSQL, Redis, systemd, SSL, and Git-based releases.
+- `public_html/` is the only web root.
+- Runtime secrets belong in `.env.local` on the server, not in committed files.
+- Keep `var/`, `vendor/`, `node_modules/`, generated assets, logs, and uploads out of Git.
+- Messenger workers should be managed by systemd in production.
+- Deployment docs must stay in Russian.
+
+## Server Layout
+
+Use release-based deploy:
+
+```text
+/var/www/zaborprofil/
+├── releases/
+├── shared/
+└── current -> releases/current-release
+```
+

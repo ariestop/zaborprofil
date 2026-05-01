@@ -1,0 +1,23 @@
+---
+description: Core project context for Zaborprofil Symfony CMS Engine
+alwaysApply: true
+---
+
+# Project Overview
+
+- This repository is a new Symfony CMS Engine for `zaborprofil.ru`, replacing WordPress.
+- Do not build WordPress importers, shortcode parsers, Laravel code, Docker setup, or EasyAdmin as the primary admin UI.
+- The app lives at repository root. The web root is `public_html/`, not Symfony's default `public/`.
+- Public pages must be server-rendered with Symfony + Twig for SEO; do not turn the public site into a pure SPA.
+- The target stack is PHP `>=8.4`, Symfony `8.x`, PostgreSQL `>=18`, Redis, Doctrine, Twig, Tailwind CSS, Vite, Vue 3 admin UI.
+- Documentation must be written in Russian.
+
+## Main Directories
+
+- `src/Shared/` contains shared contracts, value objects, infrastructure adapters, and shared UI entrypoints.
+- `src/Module/` contains bounded modules of the modular monolith.
+- `templates/` contains Twig templates.
+- `assets/site/` contains public site assets.
+- `assets/admin/` contains Vue admin assets.
+- `docs/` contains Russian project documentation.
+

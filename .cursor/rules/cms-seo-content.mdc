@@ -1,0 +1,24 @@
+---
+description: CMS, content blocks, public rendering, and SEO rules
+globs: "{src/Module,src/Shared,templates,docs}/**/*"
+alwaysApply: false
+---
+
+# CMS And SEO Rules
+
+- URL paths must be manually controllable to preserve old SEO URLs.
+- Do not store a whole page as one HTML field. Pages are composed from typed blocks.
+- PageBlock content can use JSONB, but each block type needs a DTO, validator, Twig partial, and future Vue editor component.
+- Public rendering is Symfony + Twig SSR with minimal JavaScript.
+- SEO is critical: title, description, h1, canonical, robots, OpenGraph, schema.org, breadcrumbs, sitemap, and redirects must be explicit.
+- Drafts and service pages must not leak into sitemap or indexable public output.
+- Preserve clean HTML, correct heading hierarchy, lazy images, alt text, and accessible markup.
+
+## Forbidden Shortcuts
+
+- No WordPress importer.
+- No shortcode parser.
+- No blind WordPress database mapping.
+- No monolithic `Page` god entity.
+- No broad EAV model unless a specific use case requires it.
+
