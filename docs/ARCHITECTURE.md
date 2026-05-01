@@ -39,3 +39,25 @@
 - `UI` содержит Admin API и публичный renderer.
 
 Публичный catch-all route имеет низкий priority и открывает только опубликованные страницы по `Page.path`. Черновики и архивные страницы возвращают `404`.
+
+### Поток Публикации
+
+```mermaid
+flowchart LR
+    adminUser[Admin User] --> adminApi[Admin API]
+    adminApi --> appHandler[Application Handler]
+    appHandler --> domainModel[Page and PageBlock]
+    domainModel --> doctrineRepo[Doctrine Repository]
+    doctrineRepo --> postgres[(PostgreSQL)]
+    publicRequest[Public Request] --> publicRenderer[Public Page Renderer]
+    publicRenderer --> doctrineRepo
+    publicRenderer --> twigBlocks[Twig Block Renderer]
+```
+
+### Правила Публичного Рендера
+
+- Страница ищется по нормализованному `Page.path`.
+- Показывается только `PageStatus::Published`.
+- `PageBlock` выводятся по `position`.
+- Отключенные блоки `is_enabled=false` не передаются в Twig renderer.
+- Для неизвестного типа partial используется `templates/public/blocks/default.html.twig`.

@@ -38,3 +38,39 @@
 Блоки выводятся по `position`. Отключенные блоки не попадают в публичный рендер.
 
 Черновики публично не показываются. Чтобы страница открылась по своему URL, ее нужно опубликовать.
+
+## Статусы Страниц
+
+- `draft` — черновик, публично не открывается.
+- `published` — опубликованная страница, доступна по `path`.
+- `archived` — архивная страница, публично не открывается.
+
+## Типы Страниц
+
+Поддерживаются базовые типы:
+
+- `page`
+- `landing`
+- `service`
+- `category`
+- `portfolio_index`
+- `contacts`
+- `prices`
+- `system`
+
+## Типы Блоков
+
+В enum уже заведены основные типы блоков: `hero`, `text`, `text_image`, `image`, `gallery`, `video`, `price_cards`, `feature_grid`, `steps`, `faq`, `cta_form`, `telegram_cta`, `contacts`, `map`, `portfolio_grid`, `seo_text`, `html_embed`, `table`, `accordion`, `quote`, `before_after`, `calculator_placeholder`.
+
+Сейчас Twig partials добавлены для `hero`, `text`, `seo_text` и fallback `default`. Остальные partials будут расширяться при разработке визуального редактора и публичного дизайна.
+
+## URL
+
+`path` задается вручную и должен сохранять SEO-совместимость со старым сайтом, например:
+
+- `/zabor-jaluzi/`
+- `/zabor-iz-profnastila/`
+- `/fasad/profnastil/`
+- `/contacts/`
+
+`slug` валидируется отдельно и должен состоять из латинских букв в нижнем регистре, цифр и дефисов.

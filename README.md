@@ -30,6 +30,16 @@ Docker намеренно не используется. Проект рассч
 - `templates/` — Twig-шаблоны.
 - `docs/` — документация на русском языке.
 
+## Реализовано
+
+- Базовый Symfony 8 каркас без Docker.
+- Авторизация админки через Symfony Security.
+- Health-check `/health`.
+- Content Engine: `Page`, `PageBlock`, enum статусов/типов, Doctrine repositories, Admin API.
+- Публичный Twig renderer опубликованных страниц по `Page.path`.
+- Twig renderer блоков с базовыми partials.
+- Unit, Integration и Functional тесты для Content Engine.
+
 ## Быстрый старт
 
 ```bash
@@ -52,6 +62,14 @@ vendor/bin/phpunit
 - `/health`
 - `/admin/login`
 
+## Content Engine
+
+Admin API доступен под `/admin/api/content/...` и защищен текущим admin firewall.
+
+Публичный URL открывает опубликованную страницу по `Page.path`. Черновики и архивные страницы публично не показываются и возвращают `404`.
+
+Подробнее: `docs/CONTENT_ENGINE.md`.
+
 ## Следующий этап
 
-После фундамента реализуются базовые модули `Shared`, `User`, `Auth`, `Admin`, а затем `Content/Page/PageBlock`.
+Следующий этап — расширить админку и перейти к SEO, sitemap, robots, redirects и Media Library.

@@ -6,6 +6,7 @@
 - `Admin` — dashboard и будущая shell-админка.
 - `Auth` — авторизация администраторов.
 - `User` — администраторы, роли и будущая связь с клиентами/партнерами.
+- `Content` — базовое контентное ядро Page/PageBlock.
 
 ## Content Engine
 
@@ -24,9 +25,6 @@
 
 ## Следующие модули CMS
 
-- `Content`
-- `Page`
-- `PageBlock`
 - `Media`
 - `Seo`
 - `Menu`
