@@ -28,19 +28,20 @@ final readonly class ReorderPageBlocksHandler
         $pageId = $this->contentId->fromString($command->pageId);
         $this->pages->get($pageId);
 
-        $outputs = [];
+        $reordered = [];
         foreach ($command->blockIds as $position => $blockId) {
             $block = $this->blocks->get($this->contentId->fromString($blockId));
 
-            if (!$block->page()->id()->equals($pageId)) {
+            if ((string) $block->page()->id() !== $pageId) {
                 throw new InvalidArgumentException('Block does not belong to the page.');
             }
 
             $block->moveTo($position);
-            $this->blocks->save($block);
-            $outputs[] = PageBlockOutput::fromBlock($block);
+            $reordered[] = $block;
         }
 
-        return $outputs;
+        $this->blocks->saveAll($reordered);
+
+        return array_map(static fn ($block): PageBlockOutput => PageBlockOutput::fromBlock($block), $reordered);
     }
 }

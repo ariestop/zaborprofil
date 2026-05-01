@@ -15,9 +15,15 @@ use Symfony\Component\Uid\Ulid;
 
 #[ORM\Entity(repositoryClass: \App\Module\Content\Infrastructure\Repository\DoctrinePageRepository::class)]
 #[ORM\Table(name: 'content_pages')]
-#[ORM\UniqueConstraint(name: 'uniq_content_pages_path', columns: ['path'])]
 #[ORM\Index(name: 'idx_content_pages_status', columns: ['status'])]
 #[ORM\Index(name: 'idx_content_pages_parent_id', columns: ['parent_id'])]
+#[ORM\Index(name: 'idx_content_pages_deleted_at', columns: ['deleted_at'])]
+// Path uniqueness is enforced by a PARTIAL unique index defined in migration
+// Version20260501000300 (`uniq_content_pages_path_active WHERE deleted_at IS
+// NULL`). Doctrine ORM attribute mapping does not support partial unique
+// indexes, so the constraint is intentionally NOT declared here. Application
+// code MUST rely on `PageRepositoryInterface::existsByPath()` to reject
+// duplicate live paths.
 final class Page
 {
     #[ORM\Id]

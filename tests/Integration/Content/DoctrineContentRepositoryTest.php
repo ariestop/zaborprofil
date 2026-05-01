@@ -10,6 +10,7 @@ use App\Module\Content\Domain\Enum\BlockType;
 use App\Module\Content\Domain\Enum\PageType;
 use App\Module\Content\Domain\Repository\PageBlockRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
+use App\Tests\Support\Database\SchemaTestHelper;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -19,14 +20,7 @@ final class DoctrineContentRepositoryTest extends KernelTestCase
     protected function setUp(): void
     {
         self::bootKernel();
-        $entityManager = $this->entityManager();
-        $connection = $entityManager->getConnection();
-
-        $connection->executeStatement('DROP TABLE IF EXISTS content_page_blocks');
-        $connection->executeStatement('DROP TABLE IF EXISTS content_pages');
-        $connection->executeStatement('CREATE TABLE content_pages (id CHAR(26) NOT NULL PRIMARY KEY, parent_id CHAR(26) DEFAULT NULL, type VARCHAR(32) NOT NULL, title VARCHAR(255) NOT NULL, slug VARCHAR(180) NOT NULL, path VARCHAR(512) NOT NULL, h1 VARCHAR(255) NOT NULL, status VARCHAR(32) NOT NULL, template VARCHAR(120) NOT NULL, sort_order INTEGER NOT NULL, indexable BOOLEAN NOT NULL, published_at DATETIME DEFAULT NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL, deleted_at DATETIME DEFAULT NULL)');
-        $connection->executeStatement('CREATE UNIQUE INDEX uniq_content_pages_path ON content_pages (path)');
-        $connection->executeStatement('CREATE TABLE content_page_blocks (id CHAR(26) NOT NULL PRIMARY KEY, page_id CHAR(26) NOT NULL, type VARCHAR(64) NOT NULL, name VARCHAR(180) NOT NULL, position INTEGER NOT NULL, is_enabled BOOLEAN NOT NULL, content CLOB NOT NULL, settings CLOB NOT NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL)');
+        SchemaTestHelper::recreateSchema($this->entityManager());
     }
 
     public function testPublishedPageCanBeLoadedByPathWithBlocks(): void
@@ -46,8 +40,25 @@ final class DoctrineContentRepositoryTest extends KernelTestCase
         self::assertNotNull($loadedPage);
         self::assertSame('Заборы', $loadedPage->title());
         self::assertTrue($pages->existsByPath('/zabory/'));
-        self::assertCount(1, $blocks->findByPage($page->id()));
-        self::assertSame(['title' => 'Hero'], $blocks->findByPage($page->id())[0]->content());
+        self::assertCount(1, $blocks->findByPage((string) $page->id()));
+        self::assertSame(['title' => 'Hero'], $blocks->findByPage((string) $page->id())[0]->content());
+    }
+
+    public function testExistsByPathIgnoresSoftDeletedPagesSoEditorCanReusePath(): void
+    {
+        $pages = $this->pageRepository();
+
+        $page = new Page(PageType::Landing, 'Старый', 'old-page', '/recyclable/', 'Старый');
+        $pages->save($page);
+        self::assertTrue($pages->existsByPath('/recyclable/'));
+
+        $page->delete();
+        $pages->save($page);
+
+        self::assertFalse(
+            $pages->existsByPath('/recyclable/'),
+            'A soft-deleted page must not block reuse of its path by a fresh page.',
+        );
     }
 
     private function entityManager(): EntityManagerInterface

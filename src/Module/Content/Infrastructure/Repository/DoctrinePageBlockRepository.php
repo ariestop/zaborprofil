@@ -27,6 +27,19 @@ final class DoctrinePageBlockRepository extends ServiceEntityRepository implemen
         $this->getEntityManager()->flush();
     }
 
+    public function saveAll(iterable $blocks): void
+    {
+        $entityManager = $this->getEntityManager();
+
+        $entityManager->wrapInTransaction(function () use ($blocks, $entityManager): void {
+            foreach ($blocks as $block) {
+                $entityManager->persist($block);
+            }
+
+            $entityManager->flush();
+        });
+    }
+
     public function remove(PageBlock $block): void
     {
         $block->page()->removeBlock($block);
@@ -34,21 +47,21 @@ final class DoctrinePageBlockRepository extends ServiceEntityRepository implemen
         $this->getEntityManager()->flush();
     }
 
-    public function get(Ulid $id): PageBlock
+    public function get(string $id): PageBlock
     {
         return $this->findById($id) ?? throw new ContentNotFoundException('Page block not found.');
     }
 
-    public function findById(Ulid $id): ?PageBlock
+    public function findById(string $id): ?PageBlock
     {
-        return $this->findOneBy(['id' => $id]);
+        return $this->findOneBy(['id' => Ulid::fromString($id)]);
     }
 
     /**
      * @return list<PageBlock>
      */
-    public function findByPage(Ulid $pageId): array
+    public function findByPage(string $pageId): array
     {
-        return $this->findBy(['page' => $pageId], ['position' => 'ASC']);
+        return $this->findBy(['page' => Ulid::fromString($pageId)], ['position' => 'ASC']);
     }
 }

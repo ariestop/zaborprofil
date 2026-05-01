@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional\Content;
 
+use App\Module\Admin\Infrastructure\Http\AdminApiCsrfSubscriber;
 use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Tests\Support\Database\SchemaTestHelper;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
+use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 
 final class AdminContentApiTest extends WebTestCase
 {
@@ -22,7 +26,7 @@ final class AdminContentApiTest extends WebTestCase
         $this->prepareDatabase();
         $client->loginUser($this->createAdminUser('admin@example.test'));
 
-        $client->jsonRequest('POST', '/admin/api/content/pages', [
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/content/pages', [
             'type' => 'landing',
             'title' => 'Забор жалюзи',
             'slug' => 'zabor-jaluzi',
@@ -34,7 +38,7 @@ final class AdminContentApiTest extends WebTestCase
         self::assertResponseStatusCodeSame(201);
         $pageId = $this->stringFromResponse($client->getResponse()->getContent() ?: '', 'id');
 
-        $client->jsonRequest('POST', \sprintf('/admin/api/content/pages/%s/blocks', $pageId), [
+        $this->jsonRequestWithCsrf($client, 'POST', \sprintf('/admin/api/content/pages/%s/blocks', $pageId), [
             'type' => 'hero',
             'name' => 'Главный экран',
             'position' => 0,
@@ -45,7 +49,7 @@ final class AdminContentApiTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(201);
 
-        $client->jsonRequest('POST', \sprintf('/admin/api/content/pages/%s/publish', $pageId));
+        $this->jsonRequestWithCsrf($client, 'POST', \sprintf('/admin/api/content/pages/%s/publish', $pageId));
         self::assertResponseIsSuccessful();
 
         $client->request('GET', '/zabor-jaluzi/');
@@ -61,7 +65,7 @@ final class AdminContentApiTest extends WebTestCase
         $this->prepareDatabase();
         $client->loginUser($this->createAdminUser('editor@example.test'));
 
-        $client->jsonRequest('POST', '/admin/api/content/pages', [
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/content/pages', [
             'type' => 'landing',
             'title' => 'Черновик',
             'slug' => 'draft-page',
@@ -76,19 +80,26 @@ final class AdminContentApiTest extends WebTestCase
         self::assertResponseStatusCodeSame(404);
     }
 
+    public function testAdminApiRejectsRequestWithoutCsrfToken(): void
+    {
+        $client = self::createClient();
+        $this->prepareDatabase();
+        $client->loginUser($this->createAdminUser('csrf@example.test'));
+
+        $client->jsonRequest('POST', '/admin/api/content/pages', [
+            'type' => 'landing',
+            'title' => 'No CSRF',
+            'slug' => 'no-csrf',
+            'path' => '/no-csrf/',
+            'h1' => 'No CSRF',
+        ]);
+
+        self::assertResponseStatusCodeSame(403);
+    }
+
     private function prepareDatabase(): void
     {
-        $entityManager = $this->entityManager();
-        $connection = $entityManager->getConnection();
-
-        $connection->executeStatement('DROP TABLE IF EXISTS content_page_blocks');
-        $connection->executeStatement('DROP TABLE IF EXISTS content_pages');
-        $connection->executeStatement('DROP TABLE IF EXISTS admin_users');
-        $connection->executeStatement('CREATE TABLE admin_users (id CHAR(26) NOT NULL PRIMARY KEY, email VARCHAR(180) NOT NULL, active BOOLEAN NOT NULL, roles CLOB NOT NULL, password_hash VARCHAR(255) NOT NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL)');
-        $connection->executeStatement('CREATE UNIQUE INDEX uniq_admin_users_email ON admin_users (email)');
-        $connection->executeStatement('CREATE TABLE content_pages (id CHAR(26) NOT NULL PRIMARY KEY, parent_id CHAR(26) DEFAULT NULL, type VARCHAR(32) NOT NULL, title VARCHAR(255) NOT NULL, slug VARCHAR(180) NOT NULL, path VARCHAR(512) NOT NULL, h1 VARCHAR(255) NOT NULL, status VARCHAR(32) NOT NULL, template VARCHAR(120) NOT NULL, sort_order INTEGER NOT NULL, indexable BOOLEAN NOT NULL, published_at DATETIME DEFAULT NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL, deleted_at DATETIME DEFAULT NULL)');
-        $connection->executeStatement('CREATE UNIQUE INDEX uniq_content_pages_path ON content_pages (path)');
-        $connection->executeStatement('CREATE TABLE content_page_blocks (id CHAR(26) NOT NULL PRIMARY KEY, page_id CHAR(26) NOT NULL, type VARCHAR(64) NOT NULL, name VARCHAR(180) NOT NULL, position INTEGER NOT NULL, is_enabled BOOLEAN NOT NULL, content CLOB NOT NULL, settings CLOB NOT NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL)');
+        SchemaTestHelper::recreateSchema($this->entityManager());
     }
 
     private function createAdminUser(string $email): AdminUser
@@ -121,5 +132,23 @@ final class AdminContentApiTest extends WebTestCase
         }
 
         return $payload[$key];
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function jsonRequestWithCsrf(KernelBrowser $client, string $method, string $uri, array $payload = []): void
+    {
+        $tokenManager = self::getContainer()->get('security.csrf.token_manager');
+
+        if (!$tokenManager instanceof CsrfTokenManagerInterface) {
+            throw new LogicException('CSRF token manager service is not available.');
+        }
+
+        $token = $tokenManager->getToken(AdminApiCsrfSubscriber::TOKEN_ID)->getValue();
+
+        $client->jsonRequest($method, $uri, $payload, [
+            'HTTP_'.str_replace('-', '_', strtoupper(AdminApiCsrfSubscriber::HEADER_NAME)) => $token,
+        ]);
     }
 }

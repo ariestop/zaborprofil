@@ -28,14 +28,14 @@ final class DoctrinePageRepository extends ServiceEntityRepository implements Pa
         $this->getEntityManager()->flush();
     }
 
-    public function get(Ulid $id): Page
+    public function get(string $id): Page
     {
         return $this->findById($id) ?? throw new ContentNotFoundException('Page not found.');
     }
 
-    public function findById(Ulid $id): ?Page
+    public function findById(string $id): ?Page
     {
-        return $this->findOneBy(['id' => $id]);
+        return $this->findOneBy(['id' => $this->toUlid($id)]);
     }
 
     public function findOneByPath(string $path): ?Page
@@ -52,28 +52,53 @@ final class DoctrinePageRepository extends ServiceEntityRepository implements Pa
         ]);
     }
 
-    public function existsByPath(string $path, ?Ulid $excludeId = null): bool
+    /**
+     * @return list<Page>
+     */
+    public function findAllPublishedIndexable(): array
+    {
+        /** @var list<Page> $result */
+        $result = $this->createQueryBuilder('page')
+            ->andWhere('page.status = :status')
+            ->andWhere('page.deletedAt IS NULL')
+            ->andWhere('page.indexable = :indexable')
+            ->setParameter('status', PageStatus::Published)
+            ->setParameter('indexable', true)
+            ->orderBy('page.path', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        return $result;
+    }
+
+    public function existsByPath(string $path, ?string $excludeId = null): bool
     {
         $builder = $this->createQueryBuilder('page')
             ->select('COUNT(page.id)')
             ->andWhere('page.path = :path')
+            ->andWhere('page.deletedAt IS NULL')
             ->setParameter('path', $this->normalizePath($path));
 
-        if ($excludeId !== null) {
+        if (null !== $excludeId) {
             $builder
                 ->andWhere('page.id != :excludeId')
-                ->setParameter('excludeId', $excludeId);
+                ->setParameter('excludeId', $this->toUlid($excludeId));
         }
 
         return (int) $builder->getQuery()->getSingleScalarResult() > 0;
+    }
+
+    private function toUlid(string $id): Ulid
+    {
+        return Ulid::fromString($id);
     }
 
     private function normalizePath(string $path): string
     {
         $normalized = trim($path);
 
-        if ($normalized !== '' && !str_starts_with($normalized, '/')) {
-            return '/' . $normalized;
+        if ('' !== $normalized && !str_starts_with($normalized, '/')) {
+            return '/'.$normalized;
         }
 
         return $normalized;
