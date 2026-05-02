@@ -6,6 +6,7 @@ namespace App\Module\Content\Domain\Entity;
 
 use App\Module\Content\Domain\Enum\PageStatus;
 use App\Module\Content\Domain\Enum\PageType;
+use App\Shared\Domain\Trait\HasSoftDelete;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -26,6 +27,8 @@ use Symfony\Component\Uid\Ulid;
 // duplicate live paths.
 final class Page
 {
+    use HasSoftDelete;
+
     #[ORM\Id]
     #[ORM\Column(type: 'ulid', unique: true)]
     private Ulid $id;
@@ -69,9 +72,6 @@ final class Page
 
     #[ORM\Column]
     private DateTimeImmutable $updatedAt;
-
-    #[ORM\Column(nullable: true)]
-    private ?DateTimeImmutable $deletedAt = null;
 
     /**
      * @var Collection<int, PageBlock>
@@ -176,11 +176,6 @@ final class Page
         return $this->updatedAt;
     }
 
-    public function deletedAt(): ?DateTimeImmutable
-    {
-        return $this->deletedAt;
-    }
-
     /**
      * @return list<PageBlock>
      */
@@ -235,7 +230,7 @@ final class Page
 
     public function delete(): void
     {
-        $this->deletedAt = new DateTimeImmutable();
+        $this->markDeleted();
         $this->archive();
     }
 
