@@ -4,24 +4,33 @@ declare(strict_types=1);
 
 namespace App\Module\Seo\UI\Admin;
 
+use App\Module\Auth\Domain\Security\AdminPermission;
 use App\Module\Seo\Domain\Entity\Redirect;
 use App\Module\Seo\Domain\Repository\RedirectRepositoryInterface;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Throwable;
 
 #[Route('/admin/api/seo/redirects')]
 final readonly class RedirectApiController
 {
-    public function __construct(private RedirectRepositoryInterface $redirects)
+    public function __construct(
+        private RedirectRepositoryInterface $redirects,
+        private AuthorizationCheckerInterface $authorizationChecker,
+    )
     {
     }
 
     #[Route('', name: 'admin_api_seo_redirects_list', methods: ['GET'])]
     public function list(): JsonResponse
     {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::SEO_EDIT)) {
+            return $this->accessDenied();
+        }
+
         return new JsonResponse(array_map(
             self::redirectToArray(...),
             $this->redirects->findAllOrdered(),
@@ -31,6 +40,10 @@ final readonly class RedirectApiController
     #[Route('', name: 'admin_api_seo_redirects_create', methods: ['POST'])]
     public function create(Request $request): JsonResponse
     {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::SEO_EDIT)) {
+            return $this->accessDenied();
+        }
+
         try {
             $payload = $this->payload($request);
             $sourcePath = $this->string($payload, 'sourcePath');
@@ -56,6 +69,10 @@ final readonly class RedirectApiController
     #[Route('/{sourcePath}', name: 'admin_api_seo_redirects_update', requirements: ['sourcePath' => '.+'], methods: ['PUT'])]
     public function update(string $sourcePath, Request $request): JsonResponse
     {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::SEO_EDIT)) {
+            return $this->accessDenied();
+        }
+
         try {
             $redirect = $this->redirects->findBySourcePath('/'.$sourcePath);
             if ($redirect === null) {
@@ -74,6 +91,14 @@ final readonly class RedirectApiController
         } catch (Throwable $exception) {
             return new JsonResponse(['error' => $exception->getMessage()], 422);
         }
+    }
+
+    private function accessDenied(): JsonResponse
+    {
+        return new JsonResponse([
+            'error' => 'Access denied.',
+            'code' => 'ACCESS_DENIED',
+        ], 403);
     }
 
     /**

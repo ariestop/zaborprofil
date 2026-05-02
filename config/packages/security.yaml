@@ -8,6 +8,13 @@ security:
                 class: App\Module\User\Infrastructure\Doctrine\Entity\AdminUser
                 property: email
 
+    role_hierarchy:
+        ROLE_SUPER_ADMIN: [ROLE_ADMIN, ROLE_ALLOWED_TO_SWITCH]
+        ROLE_ADMIN: [ROLE_EDITOR, ROLE_SEO, ROLE_MANAGER]
+        ROLE_EDITOR: []
+        ROLE_SEO: []
+        ROLE_MANAGER: []
+
     firewalls:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js|build)/

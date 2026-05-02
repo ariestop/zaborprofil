@@ -4,24 +4,33 @@ declare(strict_types=1);
 
 namespace App\Module\Settings\UI\Admin;
 
+use App\Module\Auth\Domain\Security\AdminPermission;
 use App\Module\Settings\Application\Service\SettingsService;
 use App\Module\Settings\Domain\Entity\Setting;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Throwable;
 
 #[Route('/admin/api/settings')]
 final readonly class SettingsApiController
 {
-    public function __construct(private SettingsService $settings)
+    public function __construct(
+        private SettingsService $settings,
+        private AuthorizationCheckerInterface $authorizationChecker,
+    )
     {
     }
 
     #[Route('', name: 'admin_api_settings_list', methods: ['GET'])]
     public function list(Request $request): JsonResponse
     {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::SETTINGS_EDIT)) {
+            return $this->accessDenied();
+        }
+
         $scope = $request->query->get('scope');
         $scope = \is_string($scope) && $scope !== '' ? $scope : null;
 
@@ -34,6 +43,10 @@ final readonly class SettingsApiController
     #[Route('/{scope}/{key}', name: 'admin_api_settings_upsert', requirements: ['scope' => '[a-z][a-z0-9_.-]+', 'key' => '[a-z][a-z0-9_.-]+'], methods: ['PUT'])]
     public function upsert(string $scope, string $key, Request $request): JsonResponse
     {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::SETTINGS_EDIT)) {
+            return $this->accessDenied();
+        }
+
         try {
             $payload = $this->payload($request);
             if (!array_key_exists('value', $payload)) {
@@ -54,9 +67,21 @@ final readonly class SettingsApiController
     #[Route('/{scope}/{key}', name: 'admin_api_settings_delete', requirements: ['scope' => '[a-z][a-z0-9_.-]+', 'key' => '[a-z][a-z0-9_.-]+'], methods: ['DELETE'])]
     public function delete(string $scope, string $key): JsonResponse
     {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::SETTINGS_EDIT)) {
+            return $this->accessDenied();
+        }
+
         $this->settings->delete($scope, $key);
 
         return new JsonResponse(null, 204);
+    }
+
+    private function accessDenied(): JsonResponse
+    {
+        return new JsonResponse([
+            'error' => 'Access denied.',
+            'code' => 'ACCESS_DENIED',
+        ], 403);
     }
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Module\Content\UI\Admin;
 
+use App\Module\Auth\Domain\Security\AdminPermission;
 use App\Module\Content\Application\Command\ArchivePageCommand;
 use App\Module\Content\Application\Command\CreatePageCommand;
 use App\Module\Content\Application\Command\PublishPageCommand;
@@ -15,6 +16,7 @@ use App\Module\Content\Application\Handler\UpdatePageHandler;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Throwable;
 
 #[Route('/admin/api/content/pages')]
@@ -23,12 +25,17 @@ final readonly class PageApiController
     public function __construct(
         private JsonRequest $jsonRequest,
         private ContentApiResponder $responder,
+        private AuthorizationCheckerInterface $authorizationChecker,
     ) {
     }
 
     #[Route('', name: 'admin_api_content_page_create', methods: ['POST'])]
     public function create(Request $request, CreatePageHandler $handler): JsonResponse
     {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_CREATE)) {
+            return $this->accessDenied();
+        }
+
         try {
             $payload = $this->jsonRequest->payload($request);
             $page = $handler(new CreatePageCommand(
@@ -52,6 +59,10 @@ final readonly class PageApiController
     #[Route('/{id}', name: 'admin_api_content_page_update', methods: ['PUT'])]
     public function update(string $id, Request $request, UpdatePageHandler $handler): JsonResponse
     {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_EDIT)) {
+            return $this->accessDenied();
+        }
+
         try {
             $payload = $this->jsonRequest->payload($request);
             $page = $handler(new UpdatePageCommand(
@@ -76,6 +87,10 @@ final readonly class PageApiController
     #[Route('/{id}/publish', name: 'admin_api_content_page_publish', methods: ['POST'])]
     public function publish(string $id, PublishPageHandler $handler): JsonResponse
     {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_PUBLISH)) {
+            return $this->accessDenied();
+        }
+
         try {
             return new JsonResponse($handler(new PublishPageCommand($id))->toArray());
         } catch (Throwable $exception) {
@@ -86,10 +101,22 @@ final readonly class PageApiController
     #[Route('/{id}/archive', name: 'admin_api_content_page_archive', methods: ['POST'])]
     public function archive(string $id, ArchivePageHandler $handler): JsonResponse
     {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_DELETE)) {
+            return $this->accessDenied();
+        }
+
         try {
             return new JsonResponse($handler(new ArchivePageCommand($id))->toArray());
         } catch (Throwable $exception) {
             return $this->responder->error($exception);
         }
+    }
+
+    private function accessDenied(): JsonResponse
+    {
+        return new JsonResponse([
+            'error' => 'Access denied.',
+            'code' => 'ACCESS_DENIED',
+        ], 403);
     }
 }

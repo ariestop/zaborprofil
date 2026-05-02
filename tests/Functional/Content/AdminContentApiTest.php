@@ -11,7 +11,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 
 final class AdminContentApiTest extends WebTestCase
 {
@@ -139,16 +138,19 @@ final class AdminContentApiTest extends WebTestCase
      */
     private function jsonRequestWithCsrf(KernelBrowser $client, string $method, string $uri, array $payload = []): void
     {
-        $tokenManager = self::getContainer()->get('security.csrf.token_manager');
+        $client->request('GET', '/admin/dashboard');
+        self::assertResponseIsSuccessful();
 
-        if (!$tokenManager instanceof CsrfTokenManagerInterface) {
-            throw new LogicException('CSRF token manager service is not available.');
+        $html = (string) $client->getResponse()->getContent();
+        if (!preg_match('/<meta name="admin-csrf-token" content="([^"]+)">/', $html, $matches)) {
+            throw new LogicException('Admin CSRF token meta tag was not rendered.');
         }
 
-        $token = $tokenManager->getToken(AdminApiCsrfSubscriber::TOKEN_ID)->getValue();
+        $token = $matches[1];
 
         $client->jsonRequest($method, $uri, $payload, [
             'HTTP_'.str_replace('-', '_', strtoupper(AdminApiCsrfSubscriber::HEADER_NAME)) => $token,
+            'HTTP_ORIGIN' => 'https://zaborprofil.test',
         ]);
     }
 }

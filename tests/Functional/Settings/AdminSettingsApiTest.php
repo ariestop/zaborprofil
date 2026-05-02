@@ -81,6 +81,7 @@ final class AdminSettingsApiTest extends WebTestCase
 
         $client->jsonRequest($method, $uri, $payload, [
             'HTTP_'.str_replace('-', '_', strtoupper(AdminApiCsrfSubscriber::HEADER_NAME)) => $token,
+            'HTTP_ORIGIN' => 'https://zaborprofil.test',
         ]);
     }
 }

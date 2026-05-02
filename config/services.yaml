@@ -21,6 +21,12 @@ services:
     App\Module\Content\Domain\Repository\PageBlockRepositoryInterface:
         alias: App\Module\Content\Infrastructure\Repository\DoctrinePageBlockRepository
 
+    App\Module\Settings\Domain\Repository\SettingRepositoryInterface:
+        alias: App\Module\Settings\Infrastructure\Doctrine\Repository\DoctrineSettingRepository
+
+    App\Module\Seo\Domain\Repository\RedirectRepositoryInterface:
+        alias: App\Module\Seo\Infrastructure\Doctrine\Repository\DoctrineRedirectRepository
+
     App\Shared\UI\Twig\ViteAssetExtension:
         arguments:
             $manifestPath: '%app.vite.manifest_path%'
@@ -34,3 +40,11 @@ services:
     App\Module\Seo\UI\Web\SitemapController:
         arguments:
             $siteUrl: '%app.site_url%'
+
+    App\Module\Admin\Infrastructure\Http\AdminApiOriginSubscriber:
+        arguments:
+            $siteUrl: '%app.site_url%'
+
+    App\Shared\Infrastructure\Http\SecurityHeadersSubscriber:
+        arguments:
+            $environment: '%kernel.environment%'
