@@ -44,7 +44,7 @@ final class ViteAssetExtension extends AbstractExtension
 
         $tags = '';
         foreach ($cssFiles as $cssFile) {
-            $tags .= sprintf(
+            $tags .= \sprintf(
                 '<link rel="stylesheet" href="%s">',
                 htmlspecialchars($this->publicBuildPath.'/'.$cssFile, \ENT_QUOTES | \ENT_HTML5, 'UTF-8'),
             );
@@ -65,7 +65,7 @@ final class ViteAssetExtension extends AbstractExtension
         $url = $this->publicBuildPath.'/'.$file;
 
         return new Markup(
-            sprintf(
+            \sprintf(
                 '<script type="module" src="%s"></script>',
                 htmlspecialchars($url, \ENT_QUOTES | \ENT_HTML5, 'UTF-8'),
             ),
@@ -81,7 +81,7 @@ final class ViteAssetExtension extends AbstractExtension
         $manifest = $this->loadManifest();
 
         if (!isset($manifest[$entry]) || !\is_array($manifest[$entry])) {
-            throw new \RuntimeException(sprintf(
+            throw new \RuntimeException(\sprintf(
                 'Vite manifest does not contain entry "%s". Run `npm run build`.',
                 $entry,
             ));
@@ -152,7 +152,7 @@ final class ViteAssetExtension extends AbstractExtension
         }
 
         if (!is_file($this->manifestPath)) {
-            throw new \RuntimeException(sprintf(
+            throw new \RuntimeException(\sprintf(
                 'Vite manifest not found at "%s". Run `npm run build` to generate it.',
                 $this->manifestPath,
             ));
@@ -160,17 +160,17 @@ final class ViteAssetExtension extends AbstractExtension
 
         $raw = file_get_contents($this->manifestPath);
         if (false === $raw) {
-            throw new \RuntimeException(sprintf('Vite manifest at "%s" is unreadable.', $this->manifestPath));
+            throw new \RuntimeException(\sprintf('Vite manifest at "%s" is unreadable.', $this->manifestPath));
         }
 
         try {
             $decoded = json_decode($raw, true, 32, \JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
-            throw new \RuntimeException(sprintf('Vite manifest at "%s" contains invalid JSON.', $this->manifestPath), 0, $e);
+            throw new \RuntimeException(\sprintf('Vite manifest at "%s" contains invalid JSON.', $this->manifestPath), 0, $e);
         }
 
         if (!\is_array($decoded)) {
-            throw new \RuntimeException(sprintf('Vite manifest at "%s" must decode to an object.', $this->manifestPath));
+            throw new \RuntimeException(\sprintf('Vite manifest at "%s" must decode to an object.', $this->manifestPath));
         }
 
         /** @var array<string, array<string, mixed>> $decoded */

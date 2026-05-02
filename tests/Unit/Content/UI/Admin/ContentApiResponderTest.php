@@ -39,7 +39,7 @@ final class ContentApiResponderTest extends TestCase
 
     public function testReturnsGeneric500AndDoesNotLeakExceptionMessage(): void
     {
-        $logger = new class extends AbstractLogger {
+        $logger = new class () extends AbstractLogger {
             /**
              * @var list<array{level: string, context: array<string, mixed>}>
              */
