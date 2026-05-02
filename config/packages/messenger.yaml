@@ -8,15 +8,16 @@ framework:
                 options:
                     table_name: messenger_messages
             failed:
-                dsn: 'doctrine://default?queue_name=failed'
+                dsn: doctrine://default?queue_name=failed
                 options:
                     table_name: messenger_messages
 
-        routing: { }
+        routing:
+            App\Shared\Infrastructure\Logging\Message\SendTelegramLogMessage: async
 
 when@test:
     framework:
         messenger:
             transports:
-                async: 'in-memory://'
-                failed: 'in-memory://'
+                async: in-memory://
+                failed: in-memory://

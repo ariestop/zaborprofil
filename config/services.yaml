@@ -2,6 +2,7 @@ parameters:
     app.site_url: '%env(SITE_URL)%'
     app.vite.manifest_path: '%kernel.project_dir%/public_html/build/.vite/manifest.json'
     app.vite.public_build_path: /build
+    app.release_info_path: '%kernel.project_dir%/var/release-info.json'
 
 services:
     _defaults:
@@ -48,3 +49,22 @@ services:
     App\Shared\Infrastructure\Http\SecurityHeadersSubscriber:
         arguments:
             $environment: '%kernel.environment%'
+
+    App\Shared\Infrastructure\Logging\Processor\RequestProcessor:
+        tags:
+            - { name: monolog.processor }
+
+    App\Shared\Infrastructure\Logging\Processor\UserProcessor:
+        tags:
+            - { name: monolog.processor }
+
+    App\Shared\Infrastructure\Logging\Processor\ReleaseProcessor:
+        arguments:
+            $environment: '%kernel.environment%'
+            $releaseInfoPath: '%app.release_info_path%'
+        tags:
+            - { name: monolog.processor }
+
+    App\Shared\Infrastructure\Logging\Processor\PiiRedactorProcessor:
+        tags:
+            - { name: monolog.processor }

@@ -1,14 +1,65 @@
 monolog:
     channels:
-        - security
         - audit
+        - admin
+        - seo
+        - lead
+        - media
+        - deploy
+        - business
+        - critical
 
     handlers:
         main:
             type: stream
-            path: '%kernel.logs_dir%/%kernel.environment%.log'
+            path: '%kernel.logs_dir%/app.log'
             level: debug
             channels: ['!event']
+        security:
+            type: stream
+            path: '%kernel.logs_dir%/security.log'
+            level: info
+            channels: [security]
+        admin:
+            type: stream
+            path: '%kernel.logs_dir%/admin.log'
+            level: info
+            channels: [admin]
+        audit:
+            type: stream
+            path: '%kernel.logs_dir%/audit.log'
+            level: info
+            channels: [audit]
+        seo:
+            type: stream
+            path: '%kernel.logs_dir%/seo.log'
+            level: info
+            channels: [seo]
+        lead:
+            type: stream
+            path: '%kernel.logs_dir%/lead.log'
+            level: info
+            channels: [lead]
+        media:
+            type: stream
+            path: '%kernel.logs_dir%/media.log'
+            level: info
+            channels: [media]
+        deploy:
+            type: stream
+            path: '%kernel.logs_dir%/deploy.log'
+            level: info
+            channels: [deploy]
+        business:
+            type: stream
+            path: '%kernel.logs_dir%/business.log'
+            level: info
+            channels: [business]
+        critical:
+            type: service
+            id: App\Shared\Infrastructure\Logging\TelegramErrorHandler
+            level: error
+            channels: ['!event', '!doctrine', '!console']
         console:
             type: console
             process_psr_3_messages: false
@@ -25,5 +76,6 @@ when@prod:
                 buffer_size: 50
             nested:
                 type: stream
-                path: '%kernel.logs_dir%/%kernel.environment%.log'
+                path: '%kernel.logs_dir%/critical.log'
                 level: debug
+                formatter: monolog.formatter.json
