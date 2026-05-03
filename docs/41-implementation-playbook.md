@@ -629,7 +629,7 @@ yes/no — новые шаги в release script, рестарт worker'ов
 7. **Создать application service / use case** — если нужен сбор/расчёт данных (например, listing услуг). DTO `…View` возвращается в контроллер.
 8. **Создать Twig template** в `templates/front/<area>/<page>.html.twig`. Расширяет общий layout, использует partial-блоки. Бизнес-логику в шаблон не пускать.
 9. **Добавить breadcrumbs** через общий механизм (Twig partial / view model property `breadcrumbs`).
-10. **Добавить meta title / description / canonical / OG / robots** через единый SEO-блок (см. [26-seo-architecture](26-seo-architecture.md)). На сегодня в `Page` есть только `title` + `h1` + `indexable`; description/canonical/og/jsonLd — целевое (`SeoMetadata`). Если фича требует description/canonical/og — это **отдельная задача** «расширение SEO-полей Page» и должна включать миграцию + изменение `PublicPageController` + тесты.
+10. **Добавить meta title / description / canonical / OG / robots** через единый SEO-блок (см. [26-seo-architecture](26-seo-architecture.md)). В `Page` уже есть `title`, `h1`, `indexable`, `metaDescription`, `canonicalUrl`, OpenGraph-поля и `jsonLd`; новые публичные страницы должны переиспользовать этот контракт и покрываться functional-тестами.
 11. **Добавить sitemap impact.**
     - Если страница динамическая (`Page` entity) — она автоматически попадает в sitemap (см. [SEO_GUIDE.md](legacy/SEO_GUIDE.md)).
     - Если код-страница — добавить в `SitemapController` или новый `SitemapSourceProviderInterface`.

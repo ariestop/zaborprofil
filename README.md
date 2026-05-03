@@ -2,7 +2,7 @@
 
 Новый Symfony CMS Engine для корпоративного сайта [zaborprofil.ru](https://zaborprofil.ru).
 
-Проект заменяет WordPress, но не импортирует WordPress-контент автоматически. Контент переносится вручную через будущую кастомную админ-панель.
+Проект заменяет WordPress, но не импортирует WordPress-контент автоматически. Контент переносится вручную через кастомную админ-панель.
 
 ## Стек
 
@@ -34,7 +34,7 @@ Docker используется только для локальной разр�
 - `src/Shared/` — общие контракты, инфраструктура и UI-адаптеры.
 - `src/Module/` — модули модульного монолита.
 - `assets/site/` — frontend публичного сайта.
-- `assets/admin/` — Vue entrypoint будущей админки.
+- `assets/admin/` — Vue 3 SPA админ-панели.
 - `templates/` — Twig-шаблоны.
 - `docs/` — документация на русском языке.
 
@@ -45,19 +45,19 @@ Docker используется только для локальной разр�
 - Health-check `/health`, `/health/live`, `/health/ready` и diagnostics API.
 - Content Engine: `Page`, `PageBlock`, enum статусов/типов, Doctrine repositories, Admin API.
 - Публичный Twig renderer опубликованных страниц по `Page.path` с SEO metadata и `cache.public_page`.
-- SEO base: redirects, sitemap, robots, canonical, OpenGraph, JSON-LD.
-- Settings, Maintenance Mode, Audit Log, Business Events и базовый Vue admin shell.
+- Preview links для черновиков с `noindex,nofollow`.
+- SEO base: redirects, sitemap index/chunks, robots manager, canonical guard, OpenGraph, JSON-LD, SEO audit и pre-publish checklist.
+- Media Library с безопасной загрузкой, re-encode изображений и WebP/AVIF variants.
+- Управляемые меню `header`, `footer`, `service`, breadcrumbs и JSON-LD `BreadcrumbList`.
+- Lead pipeline: публичная lead-форма, anti-spam, consent snapshot, email/Telegram notifications.
+- Settings, Maintenance Mode, Audit Log, Business Events и Vue admin shell.
+- Dev/QA readiness: `make init`, расширенный `make quality`, `app:smoke:test`.
 - Unit, Integration и Functional тесты для ключевых CMS-сценариев.
 
 ## Быстрый старт через Docker
 
 ```bash
-make build
-make up
-make composer-install
-make npm-install
-make migrate
-make npm-build
+make init
 make health
 ```
 
@@ -121,6 +121,6 @@ Admin API доступен под `/admin/api/content/...` и защищен т�
 
 Подробнее: `docs/CONTENT_ENGINE.md`.
 
-## Следующий этап
+## Дальше
 
-Следующий этап — довести launch-ready контентный сайт: preview для черновиков, Vue UI страниц/блоков, Media Library, управляемые меню, Lead-формы и pre-launch DevOps safety. Канонический порядок работ зафиксирован в `docs/45-roadmap-and-extension-points.md` и `docs/FEATURES_PLAN.md`.
+W0-W11 из `docs/FEATURES_PLAN.md` реализованы. Дальнейшие направления: staging smoke deploy, restore rehearsal, monitoring/release readiness и следующий крупный продуктовый этап `Catalog / Product / Variant`. Канонический порядок работ зафиксирован в `docs/45-roadmap-and-extension-points.md` и `docs/FEATURES_PLAN.md`.

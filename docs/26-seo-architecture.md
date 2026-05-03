@@ -134,7 +134,7 @@
 ### 4.3 Конвенции
 
 - `title`: 30–65 символов, со своим брендом в конце через ` — `.
-- `description` (целевое): 140–160 символов, без обрезаний посередине предложения.
+- `description`: 140–160 символов, без обрезаний посередине предложения.
 - `h1`: один на страницу, может отличаться от title (h1 — для пользователя, title — для SERP).
 
 ### 4.4 Anti-patterns
@@ -305,7 +305,6 @@ flowchart LR
 <meta property="og:locale"      content="ru_RU">
 <meta property="og:site_name"   content="ЗаборПрофиль">
 
-{# Twitter Cards — целевое, в layout пока не добавлены #}
 <meta name="twitter:card"        content="summary_large_image">
 <meta name="twitter:title"       content="{{ og_title|default(page.title) }}">
 {% if og_description is defined and og_description %}
@@ -366,7 +365,7 @@ flowchart LR
 </script>
 ```
 
-### 9.3 `BreadcrumbList` на внутренних страницах (целевое)
+### 9.3 `BreadcrumbList` на внутренних страницах
 
 ```html
 <script type="application/ld+json">

@@ -9,27 +9,28 @@
 - Symfony 8.1+ каркас (composer constraint `^8.1`).
 - Auth + RBAC + AdminPermissionVoter.
 - Content Engine: Page / PageBlock + admin API + публичный SSR.
-- SEO base: redirects (`Redirect` entity + `RedirectKernelSubscriber` + `PagePathChangeListener`), sitemap, robots.
+- SEO base: redirects (`Redirect` entity + `RedirectKernelSubscriber` + `PagePathChangeListener`), sitemap index/chunks, robots manager, canonical guard, OpenGraph, JSON-LD, SEO audit.
 - Settings + Twig extension + `SettingsService` с кэшированием через `cache.app`.
 - Logging: каналы, processors (`PiiRedactor`, `RequestId`), Telegram critical через async Messenger (Doctrine transport).
 - Healthcheck `/health`.
+- Preview links для черновиков с `noindex,nofollow`.
+- Public page cache с tag-aware invalidation.
+- Media Library: безопасные upload/list/delete, image re-encode, WebP/AVIF variants.
+- Menu: управляемые позиции `header`, `footer`, `service`, breadcrumbs, JSON-LD `BreadcrumbList`.
+- Leads: публичная SSR-форма, anti-spam, consent snapshot, email/Telegram notifications.
+- Dev/QA readiness: `make init`, расширенный `make quality`, `app:smoke:test`.
 - CI/CD: lint + phpstan + rector + phpunit + npm build + deploy gate.
 - Docker для local dev, native deploy для VPS.
 
-### Этап 1 — следующий (целевое)
+### Этап 1 — release readiness (следующий)
 
-- **Расширение SEO-полей Page** ([ADR-0010](adr/0010-seo-first-cms-architecture.md), [26-seo-architecture.md](26-seo-architecture.md)): добавить в `Page` `metaDescription`, `canonicalOverride`, `ogTitle`, `ogDescription`, `ogImage`, `jsonLd` (или embedded `SeoMetadata`); пробросить из `PublicPageController` в Twig; учесть `Page.indexable` в `<meta name="robots">`. Functional-тесты на наличие canonical/description/robots.
-- **Кэширование публичного рендера**: подключить `cache.public_page` к `PublicPageController` с инвалидацией в Content-handler'ах. Integration-тесты cache hit/miss.
-- **Vue 3 admin SPA shell** ([ADR-0012](adr/0012-admin-shell-spa-pattern.md)): редуцировать `templates/admin/dashboard.html.twig` до shell-маунтинга; перенести CRUD страниц/блоков на Vue Router + JSON API.
-- Media модуль: загрузки, image processing, варианты.
-- Menu модуль: управляемые меню для разных позиций.
-- Расширение SEO: `app:seo:audit`, JSON-LD, OpenGraph управление, breadcrumbs.
-- Sitemap chunking.
-- Audit log базовый (publish, delete, role change).
-- Lead модуль с антиспамом и email-нотификациями.
-- Расширение тестов: SEO checks, security smoke.
+- Выполнить первый staging smoke deploy.
+- Настроить GitHub Environments и secrets для staging/production.
+- Провести restore rehearsal: PostgreSQL dump restore + uploads archive restore.
+- Задокументировать реальные VPS значения `PHP_FPM_SERVICE`, `WORKER_SERVICE`, paths и retention.
+- Добавить monitoring/log rotation/alerting для PHP-FPM, Nginx, Messenger, PostgreSQL и Redis.
 
-### Этап 2
+### Этап 2 — Catalog / Commerce
 
 - Catalog: Category, Product, Variant.
 - Корзина и заказ.

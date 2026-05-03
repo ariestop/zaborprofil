@@ -141,6 +141,10 @@
 
 ## Оставшиеся задачи на будущее
 
+Активных Wave-задач W0-W11 не осталось. Следующие направления вынесены в
+release readiness и продуктовый roadmap: staging smoke deploy, restore
+rehearsal, monitoring, затем `Catalog / Product / Variant`.
+
 ## Отложено до публичного запуска
 
 - Notification Center;

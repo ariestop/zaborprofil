@@ -1,6 +1,6 @@
 # Заявки
 
-W10 добавляет публичный lead pipeline.
+Модуль предоставляет публичный lead pipeline.
 
 ## Public API
 

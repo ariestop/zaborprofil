@@ -25,7 +25,7 @@
 - Symfony Security, Messenger, Validator, Serializer, Mailer
 - Twig для публичного SSR
 - Tailwind CSS (`@tailwindcss/typography`), Vite
-- Vue 3 для будущей админ-панели
+- Vue 3 для админ-панели
 - PHPUnit, PHPStan, PHP-CS-Fixer, Rector
 
 Docker используется только для local development. Staging и production должны оставаться native VPS stack: Nginx, PHP-FPM, PostgreSQL, Redis, systemd и Git-based release deploy.
@@ -37,7 +37,7 @@ Docker используется только для local development. Staging �
 - `src/Module/` — модули модульного монолита.
 - `templates/` — Twig-шаблоны публичного сайта и админки.
 - `assets/site/` — frontend публичного сайта.
-- `assets/admin/` — Vue 3 entrypoint будущей админки.
+- `assets/admin/` — Vue 3 entrypoint админ-панели.
 - `docs/` — документация на русском языке.
 
 ## Архитектурные правила

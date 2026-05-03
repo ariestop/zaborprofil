@@ -18,14 +18,12 @@
 
 ## Этап 2
 
-Частично готово: есть базовые `User`, `Auth`, `Admin`.
+Готово: есть `User`, `Auth`, `Admin`, RBAC, `AdminPermissionVoter`, UserChecker для неактивных администраторов и audit/security hooks для ключевых admin/API-сценариев.
 
 Дальше:
 
 - seed-команда администратора;
-- UserChecker для неактивных администраторов;
-- расширенная матрица ролей и прав;
-- audit hooks для действий в админке.
+- 2FA TOTP перед публичным запуском.
 
 ## Этап 3
 
@@ -33,19 +31,18 @@
 
 ## Этап 4
 
-Готово базово: опубликованные страницы открываются по `Page.path`, блоки рендерятся через Twig partials.
+Готово: опубликованные страницы открываются по `Page.path`, блоки рендерятся через Twig partials, preview links показывают черновики с `noindex,nofollow`, публичный layout выводит меню, breadcrumbs и lead-форму.
 
 Дальше:
 
 - расширить набор Twig partials для всех типов блоков;
-- добавить preview mode;
 - добавить полноценный Vue block editor.
 
 ## Этапы 5-13
 
-Фактический baseline уже включает SEO metadata, redirects, sitemap, robots, settings, audit log и Vue admin shell.
+Фактический baseline уже включает SEO metadata, redirects, sitemap index/chunks, robots manager, settings, audit log, Vue admin shell, Media Library, Menu, Leads, cache invalidation, preview links, DevOps safety и Dev/QA readiness.
 
-Следующие приоритеты: preview links, расширение Vue UI для страниц и блоков, Media Library, Menu, Lead forms, staging smoke deploy, backup/restore rehearsal, monitoring и release readiness.
+Следующие приоритеты: staging smoke deploy, backup/restore rehearsal, monitoring, GitHub Environments/secrets и следующий крупный продуктовый этап `Catalog / Product / Variant`.
 
 ## Инфраструктура и deploy
 
@@ -59,6 +56,7 @@
 - Native VPS deploy scripts без Docker: staging, production, rollback, health-check.
 - Templates для Nginx и systemd Messenger workers.
 - Документация по local Docker, staging, production, deploy, CI/CD и restore backup.
+- `make init`, расширенный `make quality` и `app:smoke:test` для release readiness.
 
 Дальше:
 

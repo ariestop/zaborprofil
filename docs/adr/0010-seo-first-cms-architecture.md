@@ -22,7 +22,7 @@ CMS строится как **SEO-first**:
 
 1. **URL-стратегия.** `Page.path` задаётся вручную; partial unique index на живых записях.
 2. **SSR через Twig.** Никакой SPA для публичной зоны.
-3. **Управляемые SEO-поля.** Title/description/h1/canonical/robots/indexable — в Domain (`Page` + целевое embedded `SeoMetadata`).
+3. **Управляемые SEO-поля.** Title/description/h1/canonical/robots/indexable — в Domain (`Page`; выделение embedded `SeoMetadata` остаётся возможным future refactor).
 4. **Redirects как first-class entity.** `Module\Seo\Domain\Entity\Redirect` + `RedirectKernelSubscriber` обрабатывают 301/302 до Router.
 5. **Sitemap + robots.** Контроллеры в `Module\Seo\UI\Web`. На staging robots = `Disallow: /`.
 6. **Защита черновиков.** `Draft`/`Archived` всегда возвращают 404 публично.

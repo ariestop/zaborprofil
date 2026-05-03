@@ -22,8 +22,8 @@ templates/
 
 `base.html.twig`:
 
-- `<head>`: title (фактически), meta description / canonical / og (блоки определены, но переменные пока не передаются — целевое, см. [26-seo-architecture](26-seo-architecture.md)), `<meta name="robots">` (сейчас захардкожен `index, follow`), Vite manifest links через `vite_entry_link_tags`. CSRF meta для admin рендерится в `templates/admin/*` (не в `base.html.twig`).
-- `<header>`, `<footer>` — partial’ы или inline.
+- `<head>`: title, meta description, canonical, robots, OpenGraph, Twitter card image и JSON-LD blocks; SEO-переменные передаются из публичных контроллеров (см. [26-seo-architecture](26-seo-architecture.md)).
+- `<header>`, `<footer>` и service navigation рендерят управляемые `menu_items(position)`.
 - Tailwind classes — Atomic подход.
 
 ## Page render
