@@ -1,0 +1,20 @@
+{
+  "assets/admin/app.ts": {
+    "file": "assets/admin-test.js",
+    "name": "admin",
+    "src": "assets/admin/app.ts",
+    "isEntry": true,
+    "imports": [
+      "assets/site/app.ts"
+    ]
+  },
+  "assets/site/app.ts": {
+    "file": "assets/site-test.js",
+    "name": "site",
+    "src": "assets/site/app.ts",
+    "isEntry": true,
+    "css": [
+      "assets/site-test.css"
+    ]
+  }
+}
