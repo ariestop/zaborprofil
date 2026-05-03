@@ -21,7 +21,7 @@ SEO является критичной частью проекта.
 - `/robots.txt` в production управляется через `PUT /admin/api/seo/robots`; вне production всегда отдается `Disallow: /`.
 - `app:seo:audit` проверяет страницы пакетно или по `--page-id`; P0/P1 ошибки блокируют публикацию.
 - `GET /admin/api/seo/audit/pages/{id}` возвращает текущий audit report для редактора.
-- Публичные страницы кэшируются через `cache.public_page`; изменения страниц, блоков и SEO сбрасывают соответствующий cache tag.
+- Публичные страницы кэшируются через `cache.public_page`; изменения страниц, блоков, SEO metadata, settings, robots.txt и redirects сбрасывают соответствующий cache tag.
 - Управляемые меню доступны через `menu_items(position)` и могут использоваться для breadcrumbs/навигации.
 
 ## SEO-аудит

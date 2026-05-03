@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Module\Settings\UI\Admin;
 
 use App\Module\Auth\Domain\Security\AdminPermission;
+use App\Module\Content\Application\Service\PublicPageCacheInvalidator;
 use App\Module\Settings\Application\Service\SettingsService;
 use App\Module\Settings\Domain\Entity\Setting;
 use InvalidArgumentException;
@@ -20,6 +21,7 @@ final readonly class SettingsApiController
     public function __construct(
         private SettingsService $settings,
         private AuthorizationCheckerInterface $authorizationChecker,
+        private PublicPageCacheInvalidator $publicPageCache,
     ) {
     }
 
@@ -57,7 +59,10 @@ final readonly class SettingsApiController
                 throw new InvalidArgumentException('Field "description" must be a string or null.');
             }
 
-            return new JsonResponse(self::settingToArray($this->settings->set($scope, $key, $payload['value'], $description)));
+            $setting = $this->settings->set($scope, $key, $payload['value'], $description);
+            $this->publicPageCache->invalidateAll();
+
+            return new JsonResponse(self::settingToArray($setting));
         } catch (Throwable $exception) {
             return new JsonResponse(['error' => $exception->getMessage()], 422);
         }
@@ -71,6 +76,7 @@ final readonly class SettingsApiController
         }
 
         $this->settings->delete($scope, $key);
+        $this->publicPageCache->invalidateAll();
 
         return new JsonResponse(null, 204);
     }

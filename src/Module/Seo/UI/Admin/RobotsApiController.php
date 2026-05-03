@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Module\Seo\UI\Admin;
 
 use App\Module\Auth\Domain\Security\AdminPermission;
+use App\Module\Content\Application\Service\PublicPageCacheInvalidator;
 use App\Module\Seo\Application\Service\RobotsTxtManager;
 use App\Module\Settings\Application\Service\SettingsService;
 use InvalidArgumentException;
@@ -21,6 +22,7 @@ final readonly class RobotsApiController
         private RobotsTxtManager $robots,
         private SettingsService $settings,
         private AuthorizationCheckerInterface $authorizationChecker,
+        private PublicPageCacheInvalidator $publicPageCache,
     ) {
     }
 
@@ -59,6 +61,7 @@ final readonly class RobotsApiController
             } else {
                 $this->settings->set(RobotsTxtManager::SCOPE, RobotsTxtManager::KEY, $normalized, 'Custom robots.txt content.');
             }
+            $this->publicPageCache->invalidateAll();
 
             return $this->show();
         } catch (Throwable $exception) {

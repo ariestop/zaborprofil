@@ -5,12 +5,17 @@ declare(strict_types=1);
 namespace App\Tests\Functional\Settings;
 
 use App\Module\Admin\Infrastructure\Http\AdminApiCsrfSubscriber;
+use App\Module\Content\Application\Service\PublicPageCacheKey;
+use App\Module\Content\Application\Service\PublicPagePathNormalizer;
 use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
 use App\Tests\Support\Database\SchemaTestHelper;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
+use Psr\Cache\CacheItemPoolInterface;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Contracts\Cache\ItemInterface;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 
 final class AdminSettingsApiTest extends WebTestCase
 {
@@ -43,6 +48,29 @@ final class AdminSettingsApiTest extends WebTestCase
         self::assertSame('ЗаборПрофиль', $payload[0]['value'] ?? null);
     }
 
+    public function testUpdatingSettingsInvalidatesPublicPageCache(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+        $client->loginUser($this->createAdminUser('settings-cache@example.test'));
+
+        $key = PublicPageCacheKey::forPath(PublicPagePathNormalizer::normalize('/settings-cache/'));
+        $this->tagAwareCache($client)->get($key, static function (ItemInterface $item): string {
+            $item->tag([PublicPageCacheKey::globalTag()]);
+
+            return 'cached';
+        });
+        self::assertTrue($this->cacheItemPool($client)->getItem($key)->isHit());
+
+        $this->jsonRequestWithCsrf($client, 'PUT', '/admin/api/settings/site/name', [
+            'value' => 'ЗаборПрофиль',
+            'description' => 'Название сайта',
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertFalse($this->cacheItemPool($client)->getItem($key)->isHit());
+    }
+
     private function createAdminUser(string $email): AdminUser
     {
         $entityManager = $this->entityManager();
@@ -62,6 +90,28 @@ final class AdminSettingsApiTest extends WebTestCase
         }
 
         return $entityManager;
+    }
+
+    private function tagAwareCache(KernelBrowser $client): TagAwareCacheInterface
+    {
+        $pool = $client->getContainer()->get('cache.public_page');
+
+        if (!$pool instanceof TagAwareCacheInterface) {
+            throw new LogicException('cache.public_page pool service is not available.');
+        }
+
+        return $pool;
+    }
+
+    private function cacheItemPool(KernelBrowser $client): CacheItemPoolInterface
+    {
+        $pool = $client->getContainer()->get('cache.public_page');
+
+        if (!$pool instanceof CacheItemPoolInterface) {
+            throw new LogicException('cache.public_page pool service is not available.');
+        }
+
+        return $pool;
     }
 
     /**

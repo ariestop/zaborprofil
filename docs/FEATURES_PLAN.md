@@ -91,14 +91,16 @@
 - Pre-Publish Checklist с блокировкой P0/P1 ошибок;
 - рекомендации P2 без блокировки публикации.
 
-## Оставшиеся задачи на будущее
-
 ### W8 Cache invalidation and preview links
 
-- tag-aware cache для публичных страниц;
-- правила инвалидации для страниц, блоков, настроек, SEO и redirects;
-- preview links для черновиков;
-- `X-Robots-Tag: noindex,nofollow` для preview.
+Состав:
+
+- tag-aware cache для публичных страниц через `cache.public_page`;
+- правила инвалидации для страниц, блоков, SEO metadata, settings, robots и redirects;
+- preview links для черновиков через HMAC token;
+- `X-Robots-Tag: noindex,nofollow` и `<meta name="robots" content="noindex, nofollow">` для preview.
+
+## Оставшиеся задачи на будущее
 
 ### W9 Media
 

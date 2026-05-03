@@ -134,6 +134,15 @@ API защищен admin firewall и предназначен для будущ�
 - блоки с `isEnabled=false` не выводятся;
 - Twig partial выбирается по `BlockType`.
 
+Публичный рендер кэшируется через `cache.public_page`:
+
+- cache key строится от нормализованного `Page.path`;
+- cache item получает глобальный tag и path-specific tag;
+- изменения страниц, блоков и SEO metadata сбрасывают path-specific cache;
+- изменения settings, robots.txt и redirects сбрасывают глобальный public page cache tag.
+
+Preview-ссылки создаются через `GET /admin/api/content/pages/{id}/preview-link` и подписываются HMAC-токеном. Preview доступен для draft/published/archived страниц по `/_preview/content/pages/{id}/{token}` и всегда отдаёт `X-Robots-Tag: noindex,nofollow` + meta robots `noindex, nofollow`.
+
 Текущие partials:
 
 - `templates/public/blocks/hero.html.twig`

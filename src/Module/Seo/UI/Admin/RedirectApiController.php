@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Module\Seo\UI\Admin;
 
 use App\Module\Auth\Domain\Security\AdminPermission;
+use App\Module\Content\Application\Service\PublicPageCacheInvalidator;
 use App\Module\Seo\Domain\Entity\Redirect;
 use App\Module\Seo\Domain\Repository\RedirectRepositoryInterface;
 use InvalidArgumentException;
@@ -20,6 +21,7 @@ final readonly class RedirectApiController
     public function __construct(
         private RedirectRepositoryInterface $redirects,
         private AuthorizationCheckerInterface $authorizationChecker,
+        private PublicPageCacheInvalidator $publicPageCache,
     ) {
     }
 
@@ -58,6 +60,7 @@ final readonly class RedirectApiController
             );
 
             $this->redirects->save($redirect);
+            $this->publicPageCache->invalidateAll();
 
             return new JsonResponse(self::redirectToArray($redirect), 201);
         } catch (Throwable $exception) {
@@ -85,6 +88,7 @@ final readonly class RedirectApiController
                 $this->bool($payload, 'isActive', $redirect->isActive()),
             );
             $this->redirects->save($redirect);
+            $this->publicPageCache->invalidateAll();
 
             return new JsonResponse(self::redirectToArray($redirect));
         } catch (Throwable $exception) {
