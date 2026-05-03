@@ -19,11 +19,18 @@ interface PageRepositoryInterface
 
     public function findById(string $id): ?Page;
 
+    public function findPreviewById(string $id): ?Page;
+
     public function findOneByPath(string $path): ?Page;
 
     public function findPublishedByPath(string $path): ?Page;
 
     public function existsByPath(string $path, ?string $excludeId = null): bool;
+
+    /**
+     * @return list<Page>
+     */
+    public function findAllForAdmin(): array;
 
     /**
      * Returns every published, non-deleted, indexable page in stable order so

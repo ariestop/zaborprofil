@@ -7,6 +7,7 @@ framework:
             cache.public_page:
                 adapter: cache.app
                 default_lifetime: 3600
+                tags: true
             cache.settings:
                 adapter: cache.app
                 default_lifetime: 86400
@@ -24,6 +25,7 @@ when@test:
             pools:
                 cache.public_page:
                     adapter: cache.adapter.array
+                    tags: true
                 cache.settings:
                     adapter: cache.adapter.array
                 cache.menu:

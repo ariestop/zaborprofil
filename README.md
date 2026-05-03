@@ -40,13 +40,14 @@ Docker используется только для локальной разр�
 
 ## Реализовано
 
-- Базовый Symfony 8 каркас без Docker.
-- Авторизация админки через Symfony Security.
-- Health-check `/health`.
+- Symfony 8 CMS-каркас с Docker local development и native VPS deploy scripts.
+- Авторизация админки через Symfony Security, RBAC и `AdminPermissionVoter`.
+- Health-check `/health`, `/health/live`, `/health/ready` и diagnostics API.
 - Content Engine: `Page`, `PageBlock`, enum статусов/типов, Doctrine repositories, Admin API.
-- Публичный Twig renderer опубликованных страниц по `Page.path`.
-- Twig renderer блоков с базовыми partials.
-- Unit, Integration и Functional тесты для Content Engine.
+- Публичный Twig renderer опубликованных страниц по `Page.path` с SEO metadata и `cache.public_page`.
+- SEO base: redirects, sitemap, robots, canonical, OpenGraph, JSON-LD.
+- Settings, Maintenance Mode, Audit Log, Business Events и базовый Vue admin shell.
+- Unit, Integration и Functional тесты для ключевых CMS-сценариев.
 
 ## Быстрый старт через Docker
 
@@ -123,4 +124,4 @@ Admin API доступен под `/admin/api/content/...` и защищен т�
 
 ## Следующий этап
 
-Следующий этап — расширить админку и перейти к SEO, sitemap, robots, redirects и Media Library.
+Следующий этап — довести launch-ready контентный сайт: preview для черновиков, Vue UI страниц/блоков, Media Library, управляемые меню, Lead-формы и pre-launch DevOps safety. Канонический порядок работ зафиксирован в `docs/45-roadmap-and-extension-points.md` и `docs/FEATURES_PLAN.md`.

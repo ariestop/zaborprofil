@@ -86,7 +86,7 @@
 
 ### W8 Cache invalidation and preview links
 
-- tag-aware cache;
+- tag-aware cache для публичных страниц;
 - правила инвалидации для страниц, блоков, настроек, SEO и redirects;
 - preview links для черновиков;
 - `X-Robots-Tag: noindex,nofollow` для preview.
@@ -98,6 +98,13 @@
 - WebP/AVIF/thumbnails;
 - EXIF strip;
 - Safe SVG policy.
+
+### W9.1 Menu
+
+- управляемые меню для header/footer/service navigation;
+- breadcrumbs для публичных страниц;
+- sitemap sources и chunking;
+- кэш меню с инвалидацией.
 
 ### W10 Leads
 

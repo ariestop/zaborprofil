@@ -38,7 +38,8 @@
 14. `lint:container --env=test`.
 15. `lint:twig templates --env=test`.
 16. Bash syntax check для `tools/deploy/*.sh`.
-17. `composer test` (PHPUnit).
+17. `php bin/console app:smoke:test --env=test`.
+18. `composer test` (PHPUnit).
 
 #### Frontend job
 
@@ -103,6 +104,7 @@ GitHub Environments дают:
 - Twig lint.
 - Deploy scripts syntax.
 - PHPUnit (Postgres).
+- `app:smoke:test` для базовой release readiness.
 - npm audit.
 - npm/Vite build (включая vue-tsc).
 

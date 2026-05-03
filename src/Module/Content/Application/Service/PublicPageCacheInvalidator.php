@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Module\Content\Application\Service;
 
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Contracts\Cache\CacheInterface;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 
 /**
  * Invalidates {@see CachedPublicPageResolver} entries when Content handlers
@@ -18,7 +18,7 @@ final readonly class PublicPageCacheInvalidator
 {
     public function __construct(
         #[Autowire(service: 'cache.public_page')]
-        private CacheInterface $cache,
+        private TagAwareCacheInterface $cache,
     ) {
     }
 
@@ -26,6 +26,7 @@ final readonly class PublicPageCacheInvalidator
     {
         $normalized = PublicPagePathNormalizer::normalize($path);
         $this->cache->delete(PublicPageCacheKey::forPath($normalized));
+        $this->cache->invalidateTags([PublicPageCacheKey::tagForPath($normalized)]);
     }
 
     /**
@@ -44,6 +45,12 @@ final readonly class PublicPageCacheInvalidator
 
             $seen[$normalized] = true;
             $this->cache->delete(PublicPageCacheKey::forPath($normalized));
+            $this->cache->invalidateTags([PublicPageCacheKey::tagForPath($normalized)]);
         }
+    }
+
+    public function invalidateAll(): void
+    {
+        $this->cache->invalidateTags([PublicPageCacheKey::globalTag()]);
     }
 }

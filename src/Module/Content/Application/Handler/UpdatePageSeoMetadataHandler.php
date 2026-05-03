@@ -9,6 +9,7 @@ use App\Module\Content\Application\DTO\PageOutput;
 use App\Module\Content\Application\Service\ContentId;
 use App\Module\Content\Application\Service\PublicPageCacheInvalidator;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
+use App\Module\Seo\Application\Service\CanonicalUrlGuard;
 
 final readonly class UpdatePageSeoMetadataHandler
 {
@@ -16,12 +17,14 @@ final readonly class UpdatePageSeoMetadataHandler
         private PageRepositoryInterface $pages,
         private ContentId $contentId,
         private PublicPageCacheInvalidator $publicPageCache,
+        private CanonicalUrlGuard $canonicalUrlGuard,
     ) {
     }
 
     public function __invoke(UpdatePageSeoMetadataCommand $command): PageOutput
     {
         $page = $this->pages->get($this->contentId->fromString($command->id));
+        $this->canonicalUrlGuard->assertAllowed($command->canonicalUrl);
 
         $page->updateSeoMetadata(
             $command->metaDescription,

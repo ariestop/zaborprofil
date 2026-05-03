@@ -1,5 +1,9 @@
 # Roadmap
 
+> Актуальный источник истины для продолжения разработки — `docs/45-roadmap-and-extension-points.md`
+> и `docs/FEATURES_PLAN.md`. Этот файл оставлен как краткая историческая
+> сводка этапов и не должен противоречить фактическому baseline.
+
 ## Этап 1
 
 - Symfony 8 skeleton.
@@ -39,7 +43,9 @@
 
 ## Этапы 5-13
 
-Следующие приоритеты: SEO metadata, sitemap, robots, redirects, media, lead forms, portfolio, settings, menu, audit log, Vue admin UI и deploy-документация.
+Фактический baseline уже включает SEO metadata, redirects, sitemap, robots, settings, audit log и Vue admin shell.
+
+Следующие приоритеты: preview links, расширение Vue UI для страниц и блоков, Media Library, Menu, Lead forms, staging smoke deploy, backup/restore rehearsal, monitoring и release readiness.
 
 ## Инфраструктура и deploy
 

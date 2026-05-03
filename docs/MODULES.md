@@ -25,14 +25,14 @@
 
 ## Следующие модули CMS
 
-- `Media`
-- `Seo`
-- `Menu`
-- `Settings`
-- `Lead`
+- `Media` — базовая Media Library, безопасные uploads и metadata.
+- `Seo` — redirects, sitemap, robots, canonical/OG/JSON-LD.
+- `Menu` — управляемые позиции меню и Twig helper `menu_items(position)`.
+- `Settings` — настройки сайта с кэшем.
+- `Lead` — публичные заявки, consent snapshot и статусы обработки.
 - `Portfolio`
-- `Redirect`
-- `AuditLog`
+- `Redirect` — входит в модуль `Seo`.
+- `AuditLog` — журнал админских действий.
 
 ## Зарезервированные модули
 

@@ -1,8 +1,10 @@
 parameters:
+    empty_string: ''
     app.site_url: '%env(SITE_URL)%'
     app.vite.manifest_path: '%kernel.project_dir%/public_html/build/.vite/manifest.json'
     app.vite.public_build_path: /build
     app.release_info_path: '%kernel.project_dir%/var/release-info.json'
+    app.media_upload_dir: '%kernel.project_dir%/public_html/uploads/media'
 
 services:
     _defaults:
@@ -25,6 +27,10 @@ services:
     App\Module\Content\Domain\Repository\PageBlockRepositoryInterface:
         alias: App\Module\Content\Infrastructure\Repository\DoctrinePageBlockRepository
 
+    App\Module\Content\Application\Service\PagePreviewToken:
+        arguments:
+            $secret: '%kernel.secret%'
+
     App\Module\Settings\Domain\Repository\SettingRepositoryInterface:
         alias: App\Module\Settings\Infrastructure\Doctrine\Repository\DoctrineSettingRepository
 
@@ -34,10 +40,31 @@ services:
     App\Module\AuditLog\Domain\Repository\AuditLogRepositoryInterface:
         alias: App\Module\AuditLog\Infrastructure\Doctrine\Repository\DoctrineAuditLogRepository
 
+    App\Module\Media\Domain\Repository\MediaAssetRepositoryInterface:
+        alias: App\Module\Media\Infrastructure\Doctrine\Repository\DoctrineMediaAssetRepository
+
+    App\Module\Media\UI\Admin\MediaApiController:
+        arguments:
+            $mediaUploadDir: '%app.media_upload_dir%'
+
+    App\Module\Menu\Domain\Repository\MenuItemRepositoryInterface:
+        alias: App\Module\Menu\Infrastructure\Doctrine\Repository\DoctrineMenuItemRepository
+
+    App\Module\Lead\Domain\Repository\LeadRepositoryInterface:
+        alias: App\Module\Lead\Infrastructure\Doctrine\Repository\DoctrineLeadRepository
+
+    App\Module\Lead\UI\Web\LeadApiController:
+        arguments:
+            $leadNotificationEmail: '%env(default:empty_string:LEAD_NOTIFICATION_EMAIL)%'
+
     App\Shared\UI\Twig\ViteAssetExtension:
         arguments:
             $manifestPath: '%app.vite.manifest_path%'
             $publicBuildPath: '%app.vite.public_build_path%'
+
+    App\Shared\UI\Console\SmokeTestCommand:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
 
     App\Module\Seo\UI\Web\RobotsController:
         arguments:
@@ -45,6 +72,10 @@ services:
             $siteUrl: '%app.site_url%'
 
     App\Module\Seo\UI\Web\SitemapController:
+        arguments:
+            $siteUrl: '%app.site_url%'
+
+    App\Module\Seo\Application\Service\CanonicalUrlGuard:
         arguments:
             $siteUrl: '%app.site_url%'
 

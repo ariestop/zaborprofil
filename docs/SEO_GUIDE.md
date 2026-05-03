@@ -6,9 +6,18 @@ SEO является критичной частью проекта.
 
 - URL страниц задаются вручную и могут повторять старые URL WordPress-сайта.
 - `title`, `description`, `h1`, `canonical`, `robots` управляются из админки.
+- Canonical URL должен принадлежать домену из `SITE_URL`; внешний canonical отклоняется guard-ом.
 - Черновики не попадают в sitemap.
+- Preview-ссылки всегда получают `noindex,nofollow`.
 - Служебные страницы должны получать `noindex`.
 - Изменение URL должно сопровождаться 301 redirect.
+
+## Текущая SEO-база
+
+- `Page.indexable` управляет `<meta name="robots">`.
+- `Page.metaDescription`, `canonicalUrl`, `ogTitle`, `ogDescription`, `ogImage`, `ogType`, `jsonLd` выводятся в Twig `<head>`.
+- Публичные страницы кэшируются через `cache.public_page`; изменения страниц, блоков и SEO сбрасывают соответствующий cache tag.
+- Управляемые меню доступны через `menu_items(position)` и могут использоваться для breadcrumbs/навигации.
 
 ## Будущий SEO-аудит
 

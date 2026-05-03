@@ -183,6 +183,30 @@ final class AdminContentApiTest extends WebTestCase
         self::assertStringNotContainsString('<meta name="description"', $html);
     }
 
+    public function testCanonicalUrlMustBelongToSiteHost(): void
+    {
+        $client = self::createClient();
+        $this->prepareDatabase();
+        $client->loginUser($this->createAdminUser('canonical@example.test'));
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/content/pages', [
+            'type' => 'landing',
+            'title' => 'Canonical guard',
+            'slug' => 'canonical-guard',
+            'path' => '/canonical-guard/',
+            'h1' => 'Canonical guard',
+        ]);
+        self::assertResponseStatusCodeSame(201);
+        $pageId = $this->stringFromResponse((string) $client->getResponse()->getContent(), 'id');
+
+        $this->jsonRequestWithCsrf($client, 'PUT', \sprintf('/admin/api/content/pages/%s/seo', $pageId), [
+            'canonicalUrl' => 'https://example.com/canonical-guard/',
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('Canonical URL must belong to the configured SITE_URL host.', (string) $client->getResponse()->getContent());
+    }
+
     public function testPublishingAPageInvalidatesPublicPageCache(): void
     {
         $client = self::createClient();
@@ -221,6 +245,34 @@ final class AdminContentApiTest extends WebTestCase
             $this->cachePool($client)->getItem($key)->isHit(),
             'UpdatePageSeoMetadataHandler must invalidate the public page cache for the page path.',
         );
+    }
+
+    public function testDraftPageCanBePreviewedWithNoindexHeader(): void
+    {
+        $client = self::createClient();
+        $this->prepareDatabase();
+        $client->loginUser($this->createAdminUser('preview@example.test'));
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/content/pages', [
+            'type' => 'landing',
+            'title' => 'Preview draft',
+            'slug' => 'preview-draft',
+            'path' => '/preview-draft/',
+            'h1' => 'Preview draft',
+        ]);
+        self::assertResponseStatusCodeSame(201);
+        $pageId = $this->stringFromResponse((string) $client->getResponse()->getContent(), 'id');
+
+        $this->jsonRequestWithCsrf($client, 'GET', \sprintf('/admin/api/content/pages/%s/preview-link', $pageId));
+        self::assertResponseIsSuccessful();
+        $previewUrl = $this->stringFromResponse((string) $client->getResponse()->getContent(), 'previewUrl');
+
+        $client->request('GET', $previewUrl);
+
+        self::assertResponseIsSuccessful();
+        self::assertResponseHeaderSame('X-Robots-Tag', 'noindex,nofollow');
+        self::assertStringContainsString('<meta name="robots" content="noindex, nofollow">', (string) $client->getResponse()->getContent());
+        self::assertSelectorTextContains('h1', 'Preview draft');
     }
 
     public function testAdminApiRejectsRequestWithoutCsrfToken(): void

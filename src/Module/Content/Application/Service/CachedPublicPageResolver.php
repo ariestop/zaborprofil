@@ -6,8 +6,8 @@ namespace App\Module\Content\Application\Service;
 
 use Symfony\Component\DependencyInjection\Attribute\AsDecorator;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
+use Symfony\Contracts\Cache\TagAwareCacheInterface;
 
 /**
  * Caches resolved {@see PublicPageView} per normalized path.
@@ -25,7 +25,7 @@ final readonly class CachedPublicPageResolver implements PublicPageResolverInter
     public function __construct(
         private PublicPageResolverInterface $inner,
         #[Autowire(service: 'cache.public_page')]
-        private CacheInterface $cache,
+        private TagAwareCacheInterface $cache,
     ) {
     }
 
@@ -36,6 +36,7 @@ final readonly class CachedPublicPageResolver implements PublicPageResolverInter
 
         return $this->cache->get($key, function (ItemInterface $item) use ($normalized): ?PublicPageView {
             $item->expiresAfter(self::DEFAULT_TTL_SECONDS);
+            $item->tag([PublicPageCacheKey::globalTag(), PublicPageCacheKey::tagForPath($normalized)]);
 
             return $this->inner->resolve($normalized);
         });

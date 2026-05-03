@@ -38,6 +38,14 @@ final class DoctrinePageRepository extends ServiceEntityRepository implements Pa
         return $this->findOneBy(['id' => $this->toUlid($id)]);
     }
 
+    public function findPreviewById(string $id): ?Page
+    {
+        return $this->findOneBy([
+            'id' => $this->toUlid($id),
+            'deletedAt' => null,
+        ]);
+    }
+
     public function findOneByPath(string $path): ?Page
     {
         return $this->findOneBy(['path' => $this->normalizePath($path)]);
@@ -86,6 +94,22 @@ final class DoctrinePageRepository extends ServiceEntityRepository implements Pa
         }
 
         return (int) $builder->getQuery()->getSingleScalarResult() > 0;
+    }
+
+    /**
+     * @return list<Page>
+     */
+    public function findAllForAdmin(): array
+    {
+        /** @var list<Page> $result */
+        $result = $this->createQueryBuilder('page')
+            ->andWhere('page.deletedAt IS NULL')
+            ->orderBy('page.updatedAt', 'DESC')
+            ->addOrderBy('page.path', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        return $result;
     }
 
     private function toUlid(string $id): Ulid

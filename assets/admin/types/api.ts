@@ -67,3 +67,80 @@ export interface AuditLogEntryItem {
   oldValues: Record<string, unknown>
   newValues: Record<string, unknown>
 }
+
+export interface PageSeoPayload {
+  metaDescription: string | null
+  canonicalUrl: string | null
+  ogTitle: string | null
+  ogDescription: string | null
+  ogImage: string | null
+  ogType: string | null
+  jsonLd: Record<string, unknown>[] | null
+}
+
+export interface ContentPageItem {
+  id: string
+  type: string
+  title: string
+  slug: string
+  path: string
+  h1: string
+  status: 'draft' | 'published' | 'archived'
+  template: string
+  sortOrder: number
+  isIndexable: boolean
+  publishedAt: string | null
+  seo: PageSeoPayload
+}
+
+export interface ContentBlockItem {
+  id: string
+  pageId: string
+  type: string
+  name: string
+  position: number
+  isEnabled: boolean
+  content: Record<string, unknown>
+  settings: Record<string, unknown>
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ContentPageDetail extends ContentPageItem {
+  blocks: ContentBlockItem[]
+}
+
+export interface MediaAssetItem {
+  id: string
+  originalName: string
+  filename: string
+  publicPath: string
+  mimeType: string
+  size: number
+  width: number | null
+  height: number | null
+  createdAt: string
+}
+
+export interface MenuItem {
+  id: string
+  position: string
+  label: string
+  url: string
+  sortOrder: number
+  isActive: boolean
+  updatedAt: string
+}
+
+export interface LeadItem {
+  id: string
+  source: string
+  name: string
+  phone: string
+  email: string | null
+  message: string | null
+  consentSnapshot: Record<string, unknown>
+  status: 'new' | 'in_progress' | 'done' | 'spam'
+  createdAt: string
+  updatedAt: string
+}

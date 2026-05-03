@@ -115,6 +115,7 @@ php bin/console doctrine:migrations:status
 php bin/console doctrine:query:sql "SELECT 1"
 php bin/console messenger:stats
 php bin/console messenger:failed:show
+php bin/console app:smoke:test
 php bin/console cache:clear --env=prod --no-warmup
 php bin/console cache:warmup --env=prod
 ```

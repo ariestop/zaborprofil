@@ -17,4 +17,14 @@ final class PublicPageCacheKey
     {
         return self::PREFIX . hash('xxh128', $normalizedPath);
     }
+
+    public static function globalTag(): string
+    {
+        return self::PREFIX . 'all';
+    }
+
+    public static function tagForPath(string $normalizedPath): string
+    {
+        return self::PREFIX . 'path.' . hash('xxh128', $normalizedPath);
+    }
 }

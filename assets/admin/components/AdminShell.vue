@@ -3,8 +3,12 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { currentRouteName, navigateTo, routes, type AdminRouteName } from '../router'
 import { initializeAuthStore, useAuthStore } from '../stores/auth'
 import AuditLogView from '../views/AuditLogView.vue'
+import ContentPagesView from '../views/ContentPagesView.vue'
 import DashboardView from '../views/DashboardView.vue'
+import LeadsView from '../views/LeadsView.vue'
 import MaintenanceView from '../views/MaintenanceView.vue'
+import MediaLibraryView from '../views/MediaLibraryView.vue'
+import MenuView from '../views/MenuView.vue'
 import RedirectsView from '../views/RedirectsView.vue'
 import SettingsView from '../views/SettingsView.vue'
 import SystemHealthView from '../views/SystemHealthView.vue'
@@ -86,6 +90,10 @@ function isActive(name: AdminRouteName): boolean {
 
       <main>
         <DashboardView v-if="routeName === 'dashboard'" />
+        <ContentPagesView v-else-if="routeName === 'content'" />
+        <MediaLibraryView v-else-if="routeName === 'media'" />
+        <MenuView v-else-if="routeName === 'menu'" />
+        <LeadsView v-else-if="routeName === 'leads'" />
         <SettingsView v-else-if="routeName === 'settings'" />
         <RedirectsView v-else-if="routeName === 'redirects'" />
         <SystemHealthView v-else-if="routeName === 'systemHealth'" />

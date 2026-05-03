@@ -97,7 +97,9 @@ rsync -av \
 Каждые 3 месяца:
 
 - Полный restore на staging из последнего production dump;
-- Проверка количества Page/PageBlock, sitemap, login.
+- Проверка количества Page/PageBlock, MediaAsset, MenuItem и Lead;
+- Проверка sitemap, login, preview links, Media Library и публичной lead-формы;
+- Запуск `php bin/console app:smoke:test` после переключения на восстановленную БД.
 
 ## Что нельзя
 
