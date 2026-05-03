@@ -7,6 +7,17 @@ export interface SettingItem {
   updatedAt: string
 }
 
+export interface MigrationItem {
+  version: string
+  file: string
+  description: string
+  isApplied: boolean
+  executedAt: string | null
+  executionTime: number | null
+  canApply: boolean
+  canRollback: boolean
+}
+
 export interface RedirectItem {
   id: string
   sourcePath: string

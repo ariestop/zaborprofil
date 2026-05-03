@@ -1,9 +1,11 @@
-export type AdminRouteName = 'dashboard' | 'content' | 'media' | 'menu' | 'leads' | 'settings' | 'redirects' | 'systemHealth' | 'maintenance' | 'auditLog'
+export type AdminRouteName = 'dashboard' | 'content' | 'media' | 'menu' | 'leads' | 'settings' | 'settingsMigrations' | 'redirects' | 'systemHealth' | 'maintenance' | 'auditLog'
 
 export interface AdminRoute {
   name: AdminRouteName
   path: string
   title: string
+  navTitle?: string
+  parentName?: AdminRouteName
 }
 
 export const routes: AdminRoute[] = [
@@ -13,6 +15,7 @@ export const routes: AdminRoute[] = [
   { name: 'menu', path: '/admin/menu', title: 'Меню' },
   { name: 'leads', path: '/admin/leads', title: 'Заявки' },
   { name: 'settings', path: '/admin/settings', title: 'Настройки' },
+  { name: 'settingsMigrations', path: '/admin/settings/migrations', title: 'Настройки → Миграции', navTitle: 'Миграции', parentName: 'settings' },
   { name: 'redirects', path: '/admin/seo/redirects', title: 'Редиректы' },
   { name: 'systemHealth', path: '/admin/system/health', title: 'Health Center' },
   { name: 'maintenance', path: '/admin/system/maintenance', title: 'Maintenance' },

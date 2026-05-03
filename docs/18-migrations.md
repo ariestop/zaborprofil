@@ -58,7 +58,7 @@ final class Version20260601120000 extends AbstractMigration
 }
 ```
 
-> Поле `description` через `getDescription()` обязательно — оно отображается в `doctrine:migrations:list` и помогает дежурному понять, что делает миграция.
+> Поле `description` через `getDescription()` обязательно: это описание выводится в админке `Настройки → Миграции` и должно подробно объяснять, что делает миграция и зачем она нужна.
 
 ---
 

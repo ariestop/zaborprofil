@@ -9,6 +9,7 @@ import LeadsView from '../views/LeadsView.vue'
 import MaintenanceView from '../views/MaintenanceView.vue'
 import MediaLibraryView from '../views/MediaLibraryView.vue'
 import MenuView from '../views/MenuView.vue'
+import MigrationsView from '../views/MigrationsView.vue'
 import RedirectsView from '../views/RedirectsView.vue'
 import SettingsView from '../views/SettingsView.vue'
 import SystemHealthView from '../views/SystemHealthView.vue'
@@ -42,8 +43,10 @@ onBeforeUnmount(() => {
 
 const pageTitle = computed(() => routes.find((route) => route.name === routeName.value)?.title ?? 'Панель управления')
 
-function isActive(name: AdminRouteName): boolean {
-  return routeName.value === name
+function isRouteActive(routeNameToCheck: AdminRouteName): boolean {
+  const route = routes.find((item) => item.name === routeName.value)
+
+  return routeName.value === routeNameToCheck || route?.parentName === routeNameToCheck
 }
 </script>
 
@@ -78,12 +81,13 @@ function isActive(name: AdminRouteName): boolean {
             :key="route.name"
             type="button"
             :class="[
-              'flex w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition',
-              isActive(route.name) ? 'bg-emerald-50 text-emerald-800' : 'text-slate-700 hover:bg-slate-50',
+              'flex w-full rounded-lg py-2 text-left font-medium transition',
+              route.parentName ? 'px-6 text-xs' : 'px-3 text-sm',
+              isRouteActive(route.name) ? 'bg-emerald-50 text-emerald-800' : 'text-slate-700 hover:bg-slate-50',
             ]"
             @click="navigateTo(route.path)"
           >
-            {{ route.title }}
+            {{ route.navTitle ?? route.title }}
           </button>
         </nav>
       </aside>
@@ -95,6 +99,7 @@ function isActive(name: AdminRouteName): boolean {
         <MenuView v-else-if="routeName === 'menu'" />
         <LeadsView v-else-if="routeName === 'leads'" />
         <SettingsView v-else-if="routeName === 'settings'" />
+        <MigrationsView v-else-if="routeName === 'settingsMigrations'" />
         <RedirectsView v-else-if="routeName === 'redirects'" />
         <SystemHealthView v-else-if="routeName === 'systemHealth'" />
         <MaintenanceView v-else-if="routeName === 'maintenance'" />
