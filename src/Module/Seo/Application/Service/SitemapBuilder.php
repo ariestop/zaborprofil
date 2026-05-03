@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Module\Seo\Application\Service;
 
-use App\Module\Content\Domain\Entity\Page;
-use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use App\Module\Catalog\Domain\Entity\Product;
 use App\Module\Catalog\Domain\Repository\ProductRepositoryInterface;
+use App\Module\Content\Domain\Entity\Page;
+use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use InvalidArgumentException;
 
 final readonly class SitemapBuilder

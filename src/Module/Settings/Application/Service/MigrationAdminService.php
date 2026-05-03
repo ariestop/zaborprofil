@@ -69,7 +69,7 @@ final readonly class MigrationAdminService
 
         return [
             'status' => 'applied',
-            'executedCount' => count($plan),
+            'executedCount' => \count($plan),
         ];
     }
 
@@ -97,7 +97,7 @@ final readonly class MigrationAdminService
 
         return [
             'status' => 'rolled_back',
-            'executedCount' => count($plan),
+            'executedCount' => \count($plan),
         ];
     }
 
