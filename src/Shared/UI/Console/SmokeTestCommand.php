@@ -32,6 +32,7 @@ final class SmokeTestCommand extends Command
             'route:admin_api_media_assets_index' => $this->routeExists('admin_api_media_assets_index'),
             'route:admin_api_menu_item_index' => $this->routeExists('admin_api_menu_item_index'),
             'route:admin_api_leads_index' => $this->routeExists('admin_api_leads_index'),
+            'route:admin_api_catalog_products_index' => $this->routeExists('admin_api_catalog_products_index'),
             'route:public_sitemap_xml' => $this->routeExists('public_sitemap_xml'),
             'route:public_robots_txt' => $this->routeExists('public_robots_txt'),
             'env:app_secret' => $this->envExists('APP_SECRET'),

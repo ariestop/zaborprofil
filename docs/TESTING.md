@@ -3,18 +3,13 @@
 ## Команды
 
 ```bash
-composer check:syntax
-composer validate --strict
-vendor/bin/php-cs-fixer fix --dry-run --diff
-vendor/bin/phpstan analyse
-vendor/bin/rector process --dry-run
-php bin/console doctrine:schema:validate --env=test --skip-sync
-php bin/console lint:container --env=test
-php bin/console lint:twig templates --env=test
-php bin/console app:smoke:test --env=test
-vendor/bin/phpunit
-npm run build
+make up
+make test-db
+make quality
 ```
+
+PHPUnit/Doctrine проверки локально запускаются только через Docker Compose и
+PostgreSQL service `postgres`. SQLite для тестов запрещён.
 
 ## Структура
 
@@ -31,7 +26,9 @@ npm run build
 - Integration-тесты Doctrine repositories;
 - Functional-тесты Admin API и публичного рендера опубликованной страницы.
 
-В `test` окружении Doctrine использует SQLite-файл в cache-каталоге, чтобы локальные тесты не зависели от доступности PostgreSQL. Production и dev окружения остаются на PostgreSQL.
+В `test` окружении Doctrine использует отдельную PostgreSQL БД
+`zaborprofil_test` из Docker Compose. Production, dev и test окружения должны
+проверяться на одном семействе СУБД; SQLite не используется.
 
 ## Content Engine
 
@@ -48,5 +45,6 @@ npm run build
 Перед запуском тестов можно очистить test cache:
 
 ```bash
-php bin/console cache:clear --env=test
+make test-db
+docker compose exec -T --user www-data app php bin/console cache:clear --env=test
 ```

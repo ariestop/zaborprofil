@@ -47,7 +47,8 @@
 - `createdAt`
 - `updatedAt`
 
-`content` и `settings` хранятся как JSONB в PostgreSQL. В тестовом окружении используется SQLite.
+`content` и `settings` хранятся как JSONB в PostgreSQL. Тестовое окружение также
+использует PostgreSQL из Docker Compose; SQLite для тестов запрещён.
 
 ## Статусы
 

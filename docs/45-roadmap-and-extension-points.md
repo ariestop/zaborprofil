@@ -41,7 +41,17 @@
 
 ### Этап 2 — Catalog / Commerce
 
-- Catalog: Category, Product, Variant.
+Частично готово:
+
+- Catalog core: `Category`, `Product`, `Variant`;
+- Admin API для категорий, товаров и вариантов;
+- базовая миграция и permissions `catalog.view` / `catalog.manage`.
+
+Дальше:
+
+- публичный SSR каталога и карточки товара;
+- sitemap source для опубликованных товаров;
+- SEO metadata / JSON-LD `Product` на уровне товара;
 - Корзина и заказ.
 - Customer (B2C) с регистрацией.
 - Public API v1.

@@ -936,6 +936,24 @@ ADR создаются в `docs/adr/000X-...md` с шаблоном (Context, De
 
 ## 17. Testing obligations
 
+### 17.0 Database rule for agents
+
+AI-агентам запрещено запускать PHPUnit, Doctrine schema validation,
+migrations status или functional tests на SQLite. Локальные проверки выполняются
+только внутри Docker Compose против PostgreSQL service `postgres` и отдельной
+БД `zaborprofil_test`.
+
+Канонический путь:
+
+```bash
+make up
+make test-db
+make test
+```
+
+Для точечных тестов использовать тот же PostgreSQL `DATABASE_URL` внутри
+контейнера `app`; `sqlite://` в командах агента запрещён.
+
 ### 17.1 Что должно быть покрыто
 
 - **Unit tests** — Domain (агрегаты, value objects, доменные сервисы), Application (use cases с моками).

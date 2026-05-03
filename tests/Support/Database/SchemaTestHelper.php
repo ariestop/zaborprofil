@@ -10,9 +10,9 @@ use Doctrine\ORM\Tools\SchemaTool;
 
 /**
  * Builds the test database schema directly from Doctrine metadata, instead of
- * hand-maintained CREATE TABLE statements. The same helper works against
- * SQLite (default `.env.test`) and PostgreSQL (CI), so functional and
- * integration tests no longer drift from the production migrations.
+ * hand-maintained CREATE TABLE statements. Tests must run against the
+ * PostgreSQL service from Docker Compose/CI so functional and integration
+ * tests do not drift from the production database engine.
  */
 final class SchemaTestHelper
 {

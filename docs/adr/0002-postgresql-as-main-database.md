@@ -33,15 +33,15 @@ CMS-движок требует:
 ## Последствия
 
 - В проекте используются Postgres-specific фичи (jsonb, partial unique). Кроссбазовость — не цель.
-- Тесты гоняются на Postgres в CI; локально допустим SQLite, но критичные тесты должны быть на Postgres.
+- Тесты гоняются на PostgreSQL в CI и локально через Docker Compose; SQLite для тестов запрещён.
 - Doctrine `server_version: '18'` зафиксировано в `doctrine.yaml`.
 - Backup-стратегия — `pg_dump --format=custom` + WAL (целевое для PITR).
-- В тестах jsonb может вести себя иначе, чем SQLite — это учитывается (см. `CONTENT_ENGINE.md`).
+- Тесты должны видеть поведение PostgreSQL jsonb, partial indexes и constraints без SQLite-расхождений.
 
 ## Альтернативы
 
 - **MySQL/MariaDB** — слабее по JSONB и partial indexes.
-- **SQLite** — только для тестов, не для production.
+- **SQLite** — не используется: кроссбазовость не является целью проекта.
 - **MongoDB / DynamoDB** — не реляционная модель, не подходит для CMS с сложной структурой.
 
 ## Когда пересмотреть

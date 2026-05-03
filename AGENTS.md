@@ -55,6 +55,19 @@ Docker используется только для local development. Staging �
 
 ## Проверки
 
+AI-агентам запрещено запускать PHPUnit/Doctrine проверки на SQLite. Локальные
+тесты всегда выполняются внутри Docker Compose против PostgreSQL service
+`postgres` и отдельной БД `zaborprofil_test`:
+
+```bash
+make test-db
+make test
+```
+
+Если нужен точечный PHPUnit, сначала поднять Docker (`make up`), создать test DB
+(`make test-db`) и запускать команду через `docker compose exec app` с
+PostgreSQL `DATABASE_URL`, а не через `sqlite://`.
+
 Перед завершением backend/frontend изменений по возможности запускать:
 
 ```bash
@@ -67,7 +80,8 @@ vendor/bin/phpunit
 npm run build
 ```
 
-Локально для Doctrine/PostgreSQL требуется включенное расширение PHP `pdo_pgsql`.
+Локально для Doctrine/PostgreSQL требуется включенное расширение PHP `pdo_pgsql`;
+в Docker оно уже входит в PHP runtime.
 
 Для пересоздания локальной dev-БД использовать `make reset-db`: команда применяет migrations и запускает `make fixtures`. Если fixtures ещё не подключены, fixture-шаг является безопасным no-op.
 

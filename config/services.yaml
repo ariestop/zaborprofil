@@ -35,6 +35,10 @@ services:
     App\Module\Settings\Domain\Repository\SettingRepositoryInterface:
         alias: App\Module\Settings\Infrastructure\Doctrine\Repository\DoctrineSettingRepository
 
+    App\Module\Settings\Application\Service\MigrationAdminService:
+        arguments:
+            $dependencyFactory: '@doctrine.migrations.dependency_factory'
+
     App\Module\Seo\Domain\Repository\RedirectRepositoryInterface:
         alias: App\Module\Seo\Infrastructure\Doctrine\Repository\DoctrineRedirectRepository
 
@@ -53,6 +57,15 @@ services:
 
     App\Module\Lead\Domain\Repository\LeadRepositoryInterface:
         alias: App\Module\Lead\Infrastructure\Doctrine\Repository\DoctrineLeadRepository
+
+    App\Module\Catalog\Domain\Repository\CategoryRepositoryInterface:
+        alias: App\Module\Catalog\Infrastructure\Doctrine\Repository\DoctrineCategoryRepository
+
+    App\Module\Catalog\Domain\Repository\ProductRepositoryInterface:
+        alias: App\Module\Catalog\Infrastructure\Doctrine\Repository\DoctrineProductRepository
+
+    App\Module\Catalog\Domain\Repository\VariantRepositoryInterface:
+        alias: App\Module\Catalog\Infrastructure\Doctrine\Repository\DoctrineVariantRepository
 
     App\Module\Lead\Application\AntiSpam\LeadAntiSpamChecker:
         arguments:

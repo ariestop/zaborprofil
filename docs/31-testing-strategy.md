@@ -57,7 +57,8 @@ tests/
 В `phpunit.xml` (или через `.env.test`):
 
 - `DATABASE_URL` — отдельная БД.
-- При локальном PHPUnit можно использовать SQLite (`sqlite:///%kernel.cache_dir%/test.db`), но фактический Postgres-stack даёт более реалистичные тесты.
+- Локальный PHPUnit запускается только против PostgreSQL service `postgres` из Docker Compose.
+- SQLite (`sqlite://...`) запрещён для агентов и локальных quality-прогонов.
 - В CI — Postgres-сервис (`.env.test.ci` подменяет `.env.test.local`).
 
 ## Schema setup

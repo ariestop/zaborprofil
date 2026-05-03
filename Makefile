@@ -14,9 +14,14 @@ PHP_SHELL = $(COMPOSE) exec --user www-data app
 NODE = $(COMPOSE) exec -T node
 POSTGRES = $(COMPOSE) exec -T postgres
 REDIS = $(COMPOSE) exec -T redis
-TEST_ENV = env APP_ENV=test APP_SECRET=test-secret DATABASE_URL='sqlite:///%kernel.cache_dir%/test.db' REDIS_URL=redis://redis:6379/1 MESSENGER_TRANSPORT_DSN=in-memory:// MAILER_DSN=null://null SITE_URL=https://zaborprofil.test DEFAULT_URI=https://zaborprofil.test
+POSTGRES_DB ?= zaborprofil
+POSTGRES_USER ?= zaborprofil
+POSTGRES_PASSWORD ?= zaborprofil
+TEST_DATABASE_NAME ?= $(POSTGRES_DB)_test
+TEST_DATABASE_URL ?= postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres:5432/$(TEST_DATABASE_NAME)?serverVersion=18&charset=utf8
+TEST_ENV = env APP_ENV=test APP_SECRET=test-secret DATABASE_URL='$(TEST_DATABASE_URL)' REDIS_URL=redis://redis:6379/1 MESSENGER_TRANSPORT_DSN=in-memory:// MAILER_DSN=null://null SITE_URL=https://zaborprofil.test DEFAULT_URI=https://zaborprofil.test
 
-.PHONY: init up down restart build shell composer-install npm-install npm-dev npm-build migrate migration fixtures test phpstan cs cs-fix rector quality smoke cache-clear logs db redis reset-db health
+.PHONY: init up down restart build shell composer-install npm-install npm-dev npm-build migrate migration fixtures test-db test phpstan cs cs-fix rector quality smoke cache-clear logs db redis reset-db health
 
 init: build up composer-install npm-install migrate npm-build smoke
 
@@ -56,7 +61,10 @@ migration:
 fixtures:
 	$(PHP) sh -lc 'php bin/console list doctrine:fixtures >/dev/null 2>&1 && php bin/console doctrine:fixtures:load --no-interaction || echo "Doctrine fixtures are not installed."'
 
-test:
+test-db:
+	$(POSTGRES) sh -lc 'createdb -U "$${POSTGRES_USER:-zaborprofil}" "$(TEST_DATABASE_NAME)" 2>/dev/null || true'
+
+test: test-db
 	$(PHP) $(TEST_ENV) php vendor/bin/phpunit
 
 phpstan:
@@ -71,7 +79,7 @@ cs-fix:
 rector:
 	$(PHP) php vendor/bin/rector process --dry-run --ansi
 
-quality:
+quality: test-db
 	$(PHP) composer validate --strict
 	$(PHP) composer check:syntax
 	$(PHP) php vendor/bin/php-cs-fixer fix --dry-run --diff --ansi
@@ -85,7 +93,7 @@ quality:
 	$(PHP) $(TEST_ENV) php bin/console app:smoke:test
 	$(NODE) npm run build
 
-smoke:
+smoke: test-db
 	$(PHP) $(TEST_ENV) php bin/console app:smoke:test
 
 cache-clear:

@@ -67,6 +67,6 @@
 - настроить staging protection: basic auth или IP allowlist;
 - проверить production deploy на тестовом `v*` tag после успешного staging;
 - провести restore rehearsal: database backup restore и uploads backup restore;
-- добавить отдельный PostgreSQL-backed integration job в CI, чтобы тесты проверяли не только SQLite;
+- поддерживать PostgreSQL-backed тесты в CI и локальном Docker без SQLite fallback;
 - документировать реальные VPS значения `PHP_FPM_SERVICE`, `WORKER_SERVICE`, paths и backup retention;
 - добавить monitoring/log rotation/alerting для PHP-FPM, Nginx, Messenger, PostgreSQL и Redis.

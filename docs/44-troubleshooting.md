@@ -102,9 +102,18 @@ php bin/console doctrine:schema:validate --skip-sync
 
 ## Тесты
 
-### `KernelTestCase` падает с `database is locked`
+### PHPUnit не может подключиться к test database
 
-SQLite не любит параллельные тесты. Использовать `--processes=1` или Postgres (через `.env.test.ci`).
+Тесты должны идти через PostgreSQL из Docker Compose:
+
+```bash
+make up
+make test-db
+make test
+```
+
+Если подключение падает, проверить `docker compose ps postgres`, `make test-db`
+и `DATABASE_URL` из `.env.test`. SQLite для локальных тестов запрещён.
 
 ### Functional test падает с `403 CSRF Invalid`
 
@@ -112,7 +121,8 @@ SQLite не любит параллельные тесты. Использова
 
 ### Tests падают only in CI
 
-Скорее всего из-за БД (Postgres vs SQLite) или timezone. Проверить `tests/bootstrap.php`, `phpunit.xml`.
+Скорее всего из-за различий env, timezone или версии PostgreSQL. Проверить
+`tests/bootstrap.php`, `phpunit.xml`, `.env.test.ci` и CI service `postgres`.
 
 ## Frontend
 

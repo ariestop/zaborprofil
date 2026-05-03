@@ -16,6 +16,8 @@ final class AdminPermission
     public const string MEDIA_DELETE = 'media.delete';
     public const string LEADS_VIEW = 'leads.view';
     public const string LEADS_MANAGE = 'leads.manage';
+    public const string CATALOG_VIEW = 'catalog.view';
+    public const string CATALOG_MANAGE = 'catalog.manage';
     public const string SETTINGS_EDIT = 'settings.edit';
     public const string USERS_MANAGE = 'users.manage';
     public const string SYSTEM_VIEW = 'system.view';
@@ -37,6 +39,8 @@ final class AdminPermission
             self::MEDIA_DELETE,
             self::LEADS_VIEW,
             self::LEADS_MANAGE,
+            self::CATALOG_VIEW,
+            self::CATALOG_MANAGE,
             self::SETTINGS_EDIT,
             self::USERS_MANAGE,
             self::SYSTEM_VIEW,
