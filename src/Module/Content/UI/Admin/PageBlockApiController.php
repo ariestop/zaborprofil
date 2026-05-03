@@ -13,6 +13,7 @@ use App\Module\Content\Application\Handler\CreatePageBlockHandler;
 use App\Module\Content\Application\Handler\DeletePageBlockHandler;
 use App\Module\Content\Application\Handler\ReorderPageBlocksHandler;
 use App\Module\Content\Application\Handler\UpdatePageBlockHandler;
+use App\Module\Content\Domain\ValueObject\PageVisibility;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -32,7 +33,7 @@ final readonly class PageBlockApiController
     #[Route('/pages/{pageId}/blocks', name: 'admin_api_content_page_block_create', methods: ['POST'])]
     public function create(string $pageId, Request $request, CreatePageBlockHandler $handler): JsonResponse
     {
-        if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_EDIT)) {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::BLOCKS_CREATE)) {
             return $this->accessDenied();
         }
 
@@ -46,6 +47,7 @@ final readonly class PageBlockApiController
                 $this->jsonRequest->object($payload, 'content'),
                 $this->jsonRequest->object($payload, 'settings'),
                 $this->jsonRequest->bool($payload, 'isEnabled', true),
+                PageVisibility::from($this->jsonRequest->string($payload, 'visibility', PageVisibility::Public->value)),
             ));
 
             return new JsonResponse($block->toArray(), 201);
@@ -57,7 +59,7 @@ final readonly class PageBlockApiController
     #[Route('/blocks/{id}', name: 'admin_api_content_page_block_update', methods: ['PUT'])]
     public function update(string $id, Request $request, UpdatePageBlockHandler $handler): JsonResponse
     {
-        if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_EDIT)) {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::BLOCKS_EDIT)) {
             return $this->accessDenied();
         }
 
@@ -70,6 +72,7 @@ final readonly class PageBlockApiController
                 $this->jsonRequest->object($payload, 'content'),
                 $this->jsonRequest->object($payload, 'settings'),
                 $this->jsonRequest->bool($payload, 'isEnabled', true),
+                PageVisibility::from($this->jsonRequest->string($payload, 'visibility', PageVisibility::Public->value)),
             ));
 
             return new JsonResponse($block->toArray());
@@ -81,7 +84,7 @@ final readonly class PageBlockApiController
     #[Route('/pages/{pageId}/blocks/reorder', name: 'admin_api_content_page_block_reorder', methods: ['POST'])]
     public function reorder(string $pageId, Request $request, ReorderPageBlocksHandler $handler): JsonResponse
     {
-        if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_EDIT)) {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::BLOCKS_REORDER)) {
             return $this->accessDenied();
         }
 
@@ -103,7 +106,7 @@ final readonly class PageBlockApiController
     #[Route('/blocks/{id}', name: 'admin_api_content_page_block_delete', methods: ['DELETE'])]
     public function delete(string $id, DeletePageBlockHandler $handler): JsonResponse
     {
-        if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_DELETE)) {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::BLOCKS_DELETE)) {
             return $this->accessDenied();
         }
 

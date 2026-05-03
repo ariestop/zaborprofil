@@ -28,6 +28,15 @@ services:
     App\Module\Content\Domain\Repository\PageBlockRepositoryInterface:
         alias: App\Module\Content\Infrastructure\Repository\DoctrinePageBlockRepository
 
+    App\Module\Content\Domain\Repository\PageRevisionRepositoryInterface:
+        alias: App\Module\Content\Infrastructure\Repository\DoctrinePageRevisionRepository
+
+    App\Module\Content\Domain\Repository\PagePublicationRepositoryInterface:
+        alias: App\Module\Content\Infrastructure\Repository\DoctrinePagePublicationRepository
+
+    App\Module\Content\Domain\Repository\PageTemplateRepositoryInterface:
+        alias: App\Module\Content\Infrastructure\Repository\DoctrinePageTemplateRepository
+
     App\Module\Content\Application\Service\PagePreviewToken:
         arguments:
             $secret: '%kernel.secret%'

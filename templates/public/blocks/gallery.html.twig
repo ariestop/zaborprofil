@@ -1,0 +1,17 @@
+<section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" data-block-type="gallery">
+    <h2 class="text-2xl font-semibold text-slate-950">{{ block.content.title|default(block.name) }}</h2>
+    <div class="mt-6 grid gap-4 md:grid-cols-3">
+        {% for item in block.content.items|default([]) %}
+            {% if item.image is defined %}
+                <figure>
+                    <img class="aspect-[4/3] w-full rounded-xl object-cover" src="{{ item.image }}" alt="{{ item.alt|default(item.caption|default(block.name)) }}" loading="lazy" decoding="async">
+                    {% if item.caption is defined %}
+                        <figcaption class="mt-2 text-sm text-slate-500">{{ item.caption }}</figcaption>
+                    {% endif %}
+                </figure>
+            {% endif %}
+        {% else %}
+            <p class="text-sm text-slate-500">Галерея будет добавлена редактором.</p>
+        {% endfor %}
+    </div>
+</section>

@@ -33,4 +33,21 @@ final readonly class PageBlockView
             $block->settings(),
         );
     }
+
+    /**
+     * @param array<string, mixed> $snapshot
+     */
+    public static function fromSnapshot(array $snapshot): self
+    {
+        $normalizer = new SnapshotValueNormalizer();
+
+        return new self(
+            $normalizer->string($snapshot['id'] ?? null),
+            $normalizer->string($snapshot['type'] ?? null, 'default'),
+            $normalizer->string($snapshot['name'] ?? null, 'Block'),
+            $normalizer->int($snapshot['position'] ?? null),
+            $normalizer->stringKeyedArray($snapshot['content'] ?? null),
+            $normalizer->stringKeyedArray($snapshot['settings'] ?? null),
+        );
+    }
 }

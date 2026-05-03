@@ -53,6 +53,8 @@ final class SmokeTestCommandTest extends TestCase
             'admin_api_media_assets_index',
             'admin_api_menu_item_index',
             'admin_api_leads_index',
+            'admin_api_catalog_products_index',
+            'catalog_public_index',
             'public_sitemap_xml',
             'public_robots_txt',
         ] as $name) {

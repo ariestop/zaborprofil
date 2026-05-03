@@ -1,0 +1,13 @@
+<section class="rounded-3xl bg-emerald-800 p-8 text-white" data-block-type="cta_form">
+    <div class="grid gap-8 md:grid-cols-[1fr_420px] md:items-start">
+        <div>
+            <h2 class="text-3xl font-bold">{{ block.content.title|default(block.name) }}</h2>
+            {% if block.content.text is defined %}
+                <p class="mt-4 text-lg leading-8 text-emerald-50">{{ block.content.text }}</p>
+            {% endif %}
+        </div>
+        <div class="rounded-2xl bg-white p-5 text-slate-950">
+            {% include 'public/partials/lead_form.html.twig' %}
+        </div>
+    </div>
+</section>

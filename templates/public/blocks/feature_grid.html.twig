@@ -1,0 +1,15 @@
+<section class="rounded-2xl bg-slate-50 p-6" data-block-type="feature_grid">
+    <h2 class="text-2xl font-semibold text-slate-950">{{ block.content.title|default(block.name) }}</h2>
+    <div class="mt-6 grid gap-4 md:grid-cols-3">
+        {% for item in block.content.items|default([]) %}
+            <article class="rounded-xl bg-white p-5 shadow-sm">
+                <h3 class="font-semibold text-slate-950">{{ item.title|default('Преимущество') }}</h3>
+                {% if item.text is defined %}
+                    <p class="mt-2 text-sm leading-6 text-slate-600">{{ item.text }}</p>
+                {% endif %}
+            </article>
+        {% else %}
+            <p class="text-sm text-slate-500">Преимущества будут добавлены редактором.</p>
+        {% endfor %}
+    </div>
+</section>

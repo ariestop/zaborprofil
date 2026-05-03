@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Module\Content\Domain\Entity;
 
 use App\Module\Content\Domain\Enum\BlockType;
+use App\Module\Content\Domain\ValueObject\PageVisibility;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use InvalidArgumentException;
@@ -36,6 +37,9 @@ final class PageBlock
     #[ORM\Column(name: 'is_enabled')]
     private bool $enabled = true;
 
+    #[ORM\Column(length: 32, enumType: PageVisibility::class)]
+    private PageVisibility $visibility = PageVisibility::Public;
+
     /**
      * @var array<string, mixed>
      */
@@ -66,6 +70,7 @@ final class PageBlock
         array $content = [],
         array $settings = [],
         bool $enabled = true,
+        PageVisibility $visibility = PageVisibility::Public,
     ) {
         if ($position < 0) {
             throw new InvalidArgumentException('Block position cannot be negative.');
@@ -79,6 +84,7 @@ final class PageBlock
         $this->content = $content;
         $this->settings = $settings;
         $this->enabled = $enabled;
+        $this->visibility = $visibility;
         $this->createdAt = new DateTimeImmutable();
         $this->updatedAt = new DateTimeImmutable();
 
@@ -115,6 +121,11 @@ final class PageBlock
         return $this->enabled;
     }
 
+    public function visibility(): PageVisibility
+    {
+        return $this->visibility;
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -145,13 +156,14 @@ final class PageBlock
      * @param array<string, mixed> $content
      * @param array<string, mixed> $settings
      */
-    public function update(BlockType $type, string $name, array $content, array $settings, bool $enabled): void
+    public function update(BlockType $type, string $name, array $content, array $settings, bool $enabled, ?PageVisibility $visibility = null): void
     {
         $this->type = $type;
         $this->name = self::required($name);
         $this->content = $content;
         $this->settings = $settings;
         $this->enabled = $enabled;
+        $this->visibility = $visibility ?? $this->visibility;
         $this->touch();
         $this->page->touch();
     }

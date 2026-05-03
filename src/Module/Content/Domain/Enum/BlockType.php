@@ -28,4 +28,6 @@ enum BlockType: string
     case Quote = 'quote';
     case BeforeAfter = 'before_after';
     case CalculatorPlaceholder = 'calculator_placeholder';
+    case ReviewCards = 'review_cards';
+    case Documents = 'documents';
 }

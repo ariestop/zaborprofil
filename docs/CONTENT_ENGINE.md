@@ -50,11 +50,54 @@
 `content` и `settings` хранятся как JSONB в PostgreSQL. Тестовое окружение также
 использует PostgreSQL из Docker Compose; SQLite для тестов запрещён.
 
+### PageRevision
+
+`PageRevision` — immutable snapshot страницы на момент публикации или rollback-checkpoint.
+
+Snapshot хранит:
+
+- базовые поля страницы: `title`, `h1`, `slug`, `path`, `type`, `template`;
+- SEO snapshot;
+- blocks snapshot;
+- settings snapshot;
+- автора, дату, комментарий и summary изменения.
+
+Публичный resolver сначала пытается отдать `publishedRevision` из `PagePublication`.
+Если у старой страницы еще нет publication state, используется прежний fallback на
+текущие `Page` + `PageBlock`. Это нужно для staged rollout без остановки сайта.
+
+### PagePublication
+
+`PagePublication` хранит указатели на:
+
+- current revision;
+- draft revision;
+- published revision;
+- scheduled revision;
+- last published/unpublished timestamps.
+
+Публикация создает новую revision и переключает `publishedRevision`.
+
+### PageTemplate
+
+`PageTemplate` описывает системные и пользовательские шаблоны страниц. Системные
+шаблоны создаются миграцией и не должны удаляться редакторами. При создании
+страницы из шаблона блоки копируются в editable draft state.
+
 ## Статусы
 
 - `draft` — черновик, публично не показывается.
+- `review` — ожидает проверки, публично не показывается.
+- `approved` — одобрено к публикации, но ещё не опубликовано.
 - `published` — опубликованная страница, доступна по `path`.
+- `scheduled` — запланировано к публикации.
+- `unpublished` — снято с публикации.
 - `archived` — архив, публично не показывается.
+- `deleted` — soft deleted.
+
+Переходы статусов проверяются `PageStatusTransitionPolicy`. Редактор может
+создавать и отправлять страницы на review; SEO может approve; admin/super admin
+управляют публикацией, снятием, архивом, restore и rollback.
 
 ## Admin API
 

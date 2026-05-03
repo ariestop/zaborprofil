@@ -96,11 +96,14 @@ export interface ContentPageItem {
   slug: string
   path: string
   h1: string
-  status: 'draft' | 'published' | 'archived'
+  status: 'draft' | 'review' | 'approved' | 'published' | 'scheduled' | 'unpublished' | 'archived' | 'deleted'
   template: string
   sortOrder: number
   isIndexable: boolean
+  visibility: 'public' | 'hidden' | 'unlisted'
   publishedAt: string | null
+  scheduledPublishAt: string | null
+  scheduledUnpublishAt: string | null
   seo: PageSeoPayload
 }
 
@@ -111,6 +114,7 @@ export interface ContentBlockItem {
   name: string
   position: number
   isEnabled: boolean
+  visibility: 'public' | 'hidden' | 'unlisted'
   content: Record<string, unknown>
   settings: Record<string, unknown>
   createdAt: string
@@ -119,6 +123,51 @@ export interface ContentBlockItem {
 
 export interface ContentPageDetail extends ContentPageItem {
   blocks: ContentBlockItem[]
+}
+
+export interface BlockSchemaItem {
+  type: string
+  label: string
+  description: string
+  requiredContentFields: string[]
+  recommendedPageTypes: string[]
+  defaultContent: Record<string, unknown>
+  defaultSettings: Record<string, unknown>
+  priority: string
+  seoImpact: string
+}
+
+export interface PageTemplateItem {
+  id: string
+  code: string
+  name: string
+  pageType: string
+  blocksSchema: Array<{
+    type: string
+    name: string
+    position: number
+    content: Record<string, unknown>
+    settings: Record<string, unknown>
+    isEnabled: boolean
+  }>
+  defaultSeo: Record<string, unknown>
+  defaultSettings: Record<string, unknown>
+  isSystem: boolean
+  isActive: boolean
+}
+
+export interface PageRevisionItem {
+  id: string
+  pageId: string
+  version: number
+  title: string
+  h1: string
+  path: string
+  type: string
+  template: string
+  createdAt: string
+  comment: string | null
+  changeSummary: Record<string, unknown>
 }
 
 export interface MediaAssetItem {

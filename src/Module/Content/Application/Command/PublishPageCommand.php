@@ -6,7 +6,9 @@ namespace App\Module\Content\Application\Command;
 
 final readonly class PublishPageCommand
 {
-    public function __construct(public string $id)
-    {
+    public function __construct(
+        public string $id,
+        public ?string $comment = null,
+    ) {
     }
 }

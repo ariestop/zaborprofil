@@ -6,6 +6,7 @@ namespace App\Module\Content\Domain\Entity;
 
 use App\Module\Content\Domain\Enum\PageStatus;
 use App\Module\Content\Domain\Enum\PageType;
+use App\Module\Content\Domain\ValueObject\PageVisibility;
 use App\Shared\Domain\Trait\HasSoftDelete;
 use DateTimeImmutable;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -64,6 +65,9 @@ final class Page
     #[ORM\Column]
     private bool $indexable = true;
 
+    #[ORM\Column(length: 32, enumType: PageVisibility::class)]
+    private PageVisibility $visibility = PageVisibility::Public;
+
     #[ORM\Column(name: 'meta_description', length: 320, nullable: true)]
     private ?string $metaDescription = null;
 
@@ -91,6 +95,21 @@ final class Page
     #[ORM\Column(nullable: true)]
     private ?DateTimeImmutable $publishedAt = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?DateTimeImmutable $scheduledPublishAt = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?DateTimeImmutable $scheduledUnpublishAt = null;
+
+    #[ORM\Column(length: 26, nullable: true)]
+    private ?string $createdBy = null;
+
+    #[ORM\Column(length: 26, nullable: true)]
+    private ?string $updatedBy = null;
+
+    #[ORM\Column(length: 26, nullable: true)]
+    private ?string $publishedBy = null;
+
     #[ORM\Column]
     private DateTimeImmutable $createdAt;
 
@@ -114,6 +133,8 @@ final class Page
         int $sortOrder = 0,
         bool $indexable = true,
         ?self $parent = null,
+        PageVisibility $visibility = PageVisibility::Public,
+        ?string $createdBy = null,
     ) {
         $this->id = new Ulid();
         $this->blocks = new ArrayCollection();
@@ -128,6 +149,9 @@ final class Page
         $this->template = self::required($template, 'Page template cannot be empty.');
         $this->sortOrder = $sortOrder;
         $this->indexable = $indexable;
+        $this->visibility = $visibility;
+        $this->createdBy = self::normalizeOptionalUlidString($createdBy, 'createdBy');
+        $this->updatedBy = $this->createdBy;
     }
 
     public function id(): Ulid
@@ -185,6 +209,11 @@ final class Page
         return $this->indexable;
     }
 
+    public function visibility(): PageVisibility
+    {
+        return $this->visibility;
+    }
+
     public function metaDescription(): ?string
     {
         return $this->metaDescription;
@@ -228,6 +257,31 @@ final class Page
         return $this->publishedAt;
     }
 
+    public function scheduledPublishAt(): ?DateTimeImmutable
+    {
+        return $this->scheduledPublishAt;
+    }
+
+    public function scheduledUnpublishAt(): ?DateTimeImmutable
+    {
+        return $this->scheduledUnpublishAt;
+    }
+
+    public function createdBy(): ?string
+    {
+        return $this->createdBy;
+    }
+
+    public function updatedBy(): ?string
+    {
+        return $this->updatedBy;
+    }
+
+    public function publishedBy(): ?string
+    {
+        return $this->publishedBy;
+    }
+
     public function createdAt(): DateTimeImmutable
     {
         return $this->createdAt;
@@ -264,6 +318,8 @@ final class Page
         int $sortOrder,
         bool $indexable,
         ?self $parent = null,
+        ?PageVisibility $visibility = null,
+        ?string $updatedBy = null,
     ): void {
         $this->parent = $parent;
         $this->type = $type;
@@ -274,6 +330,8 @@ final class Page
         $this->template = self::required($template, 'Page template cannot be empty.');
         $this->sortOrder = $sortOrder;
         $this->indexable = $indexable;
+        $this->visibility = $visibility ?? $this->visibility;
+        $this->updatedBy = self::normalizeOptionalUlidString($updatedBy, 'updatedBy');
         $this->touch();
     }
 
@@ -299,23 +357,70 @@ final class Page
         $this->touch();
     }
 
-    public function publish(): void
+    public function submitForReview(?string $updatedBy = null): void
     {
-        $this->status = PageStatus::Published;
-        $this->publishedAt ??= new DateTimeImmutable();
+        $this->status = PageStatus::Review;
+        $this->updatedBy = self::normalizeOptionalUlidString($updatedBy, 'updatedBy');
         $this->touch();
     }
 
-    public function archive(): void
+    public function approve(?string $updatedBy = null): void
+    {
+        $this->status = PageStatus::Approved;
+        $this->updatedBy = self::normalizeOptionalUlidString($updatedBy, 'updatedBy');
+        $this->touch();
+    }
+
+    public function publish(?string $publishedBy = null): void
+    {
+        $this->status = PageStatus::Published;
+        $this->publishedAt ??= new DateTimeImmutable();
+        $this->publishedBy = self::normalizeOptionalUlidString($publishedBy, 'publishedBy');
+        $this->updatedBy = $this->publishedBy ?? $this->updatedBy;
+        $this->scheduledPublishAt = null;
+        $this->touch();
+    }
+
+    public function schedule(DateTimeImmutable $publishAt, ?DateTimeImmutable $unpublishAt = null, ?string $updatedBy = null): void
+    {
+        if ($unpublishAt !== null && $unpublishAt <= $publishAt) {
+            throw new InvalidArgumentException('Scheduled unpublish date must be after publish date.');
+        }
+
+        $this->status = PageStatus::Scheduled;
+        $this->scheduledPublishAt = $publishAt;
+        $this->scheduledUnpublishAt = $unpublishAt;
+        $this->updatedBy = self::normalizeOptionalUlidString($updatedBy, 'updatedBy');
+        $this->touch();
+    }
+
+    public function unpublish(?string $updatedBy = null): void
+    {
+        $this->status = PageStatus::Unpublished;
+        $this->updatedBy = self::normalizeOptionalUlidString($updatedBy, 'updatedBy');
+        $this->touch();
+    }
+
+    public function archive(?string $updatedBy = null): void
     {
         $this->status = PageStatus::Archived;
+        $this->updatedBy = self::normalizeOptionalUlidString($updatedBy, 'updatedBy');
         $this->touch();
     }
 
     public function delete(): void
     {
         $this->markDeleted();
-        $this->archive();
+        $this->status = PageStatus::Deleted;
+        $this->touch();
+    }
+
+    public function restoreToDraft(?string $updatedBy = null): void
+    {
+        $this->deletedAt = null;
+        $this->status = PageStatus::Draft;
+        $this->updatedBy = self::normalizeOptionalUlidString($updatedBy, 'updatedBy');
+        $this->touch();
     }
 
     public function addBlock(PageBlock $block): void
@@ -377,6 +482,18 @@ final class Page
         }
 
         return $trimmed;
+    }
+
+    private static function normalizeOptionalUlidString(?string $value, string $field): ?string
+    {
+        $normalized = self::normalizeOptionalString($value, 26, $field);
+        if ($normalized === null) {
+            return null;
+        }
+
+        Ulid::fromString($normalized);
+
+        return $normalized;
     }
 
     private static function normalizeOptionalAbsoluteUrl(?string $value, string $field): ?string

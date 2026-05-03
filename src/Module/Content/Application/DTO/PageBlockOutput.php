@@ -19,6 +19,7 @@ final readonly class PageBlockOutput
         public string $name,
         public int $position,
         public bool $isEnabled,
+        public string $visibility,
         public array $content,
         public array $settings,
     ) {
@@ -33,6 +34,7 @@ final readonly class PageBlockOutput
             $block->name(),
             $block->position(),
             $block->isEnabled(),
+            $block->visibility()->value,
             $block->content(),
             $block->settings(),
         );
@@ -50,6 +52,7 @@ final readonly class PageBlockOutput
             'name' => $this->name,
             'position' => $this->position,
             'isEnabled' => $this->isEnabled,
+            'visibility' => $this->visibility,
             'content' => $this->content,
             'settings' => $this->settings,
         ];

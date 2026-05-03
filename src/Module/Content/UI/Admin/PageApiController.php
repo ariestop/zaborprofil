@@ -6,6 +6,7 @@ namespace App\Module\Content\UI\Admin;
 
 use App\Module\Auth\Domain\Security\AdminPermission;
 use App\Module\Content\Application\Command\ArchivePageCommand;
+use App\Module\Content\Application\Command\ChangePageStatusCommand;
 use App\Module\Content\Application\Command\CreatePageCommand;
 use App\Module\Content\Application\Command\PublishPageCommand;
 use App\Module\Content\Application\Command\UpdatePageCommand;
@@ -13,12 +14,14 @@ use App\Module\Content\Application\Command\UpdatePageSeoMetadataCommand;
 use App\Module\Content\Application\DTO\PageBlockOutput;
 use App\Module\Content\Application\DTO\PageOutput;
 use App\Module\Content\Application\Handler\ArchivePageHandler;
+use App\Module\Content\Application\Handler\ChangePageStatusHandler;
 use App\Module\Content\Application\Handler\CreatePageHandler;
 use App\Module\Content\Application\Handler\PublishPageHandler;
 use App\Module\Content\Application\Handler\UpdatePageHandler;
 use App\Module\Content\Application\Handler\UpdatePageSeoMetadataHandler;
 use App\Module\Content\Application\Service\ContentId;
 use App\Module\Content\Application\Service\PagePreviewToken;
+use App\Module\Content\Domain\ValueObject\PageVisibility;
 use App\Module\Content\Domain\Repository\PageBlockRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -90,6 +93,7 @@ final readonly class PageApiController
                 $this->jsonRequest->int($payload, 'sortOrder', 0),
                 $this->jsonRequest->bool($payload, 'isIndexable', true),
                 $this->jsonRequest->nullableString($payload, 'parentId'),
+                PageVisibility::from($this->jsonRequest->string($payload, 'visibility', PageVisibility::Public->value)),
             ));
 
             return new JsonResponse($page->toArray(), 201);
@@ -118,6 +122,7 @@ final readonly class PageApiController
                 $this->jsonRequest->int($payload, 'sortOrder', 0),
                 $this->jsonRequest->bool($payload, 'isIndexable', true),
                 $this->jsonRequest->nullableString($payload, 'parentId'),
+                PageVisibility::from($this->jsonRequest->string($payload, 'visibility', PageVisibility::Public->value)),
             ));
 
             return new JsonResponse($page->toArray());
@@ -153,14 +158,42 @@ final readonly class PageApiController
     }
 
     #[Route('/{id}/publish', name: 'admin_api_content_page_publish', methods: ['POST'])]
-    public function publish(string $id, PublishPageHandler $handler): JsonResponse
+    public function publish(string $id, Request $request, PublishPageHandler $handler): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_PUBLISH)) {
             return $this->accessDenied();
         }
 
         try {
-            return new JsonResponse($handler(new PublishPageCommand($id))->toArray());
+            $payload = $request->getContent() === '' ? [] : $this->jsonRequest->payload($request);
+
+            return new JsonResponse($handler(new PublishPageCommand($id, $this->jsonRequest->nullableString($payload, 'comment')))->toArray());
+        } catch (Throwable $exception) {
+            return $this->responder->error($exception);
+        }
+    }
+
+    #[Route('/{id}/status', name: 'admin_api_content_page_status', methods: ['PATCH'])]
+    public function changeStatus(string $id, Request $request, ChangePageStatusHandler $handler): JsonResponse
+    {
+        try {
+            $payload = $this->jsonRequest->payload($request);
+            $status = $this->jsonRequest->string($payload, 'status');
+            $permission = match ($status) {
+                'review' => AdminPermission::PAGES_SUBMIT_REVIEW,
+                'approved' => AdminPermission::PAGES_APPROVE,
+                'unpublished' => AdminPermission::PAGES_UNPUBLISH,
+                'scheduled' => AdminPermission::PAGES_SCHEDULE,
+                'archived' => AdminPermission::PAGES_ARCHIVE,
+                'deleted' => AdminPermission::PAGES_DELETE,
+                default => AdminPermission::PAGES_EDIT,
+            };
+
+            if (!$this->authorizationChecker->isGranted($permission)) {
+                return $this->accessDenied();
+            }
+
+            return new JsonResponse($handler(new ChangePageStatusCommand($id, $status))->toArray());
         } catch (Throwable $exception) {
             return $this->responder->error($exception);
         }

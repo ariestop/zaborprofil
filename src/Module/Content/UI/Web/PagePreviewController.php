@@ -8,6 +8,7 @@ use App\Module\Content\Application\Service\PageBlockView;
 use App\Module\Content\Application\Service\PagePreviewToken;
 use App\Module\Content\Application\Service\PublicPageView;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
+use App\Shared\Application\Logging\BusinessEventLogger;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -23,6 +24,7 @@ final class PagePreviewController extends AbstractController
         PageRepositoryInterface $pages,
         TwigBlockRenderer $blockRenderer,
         UrlGeneratorInterface $urlGenerator,
+        BusinessEventLogger $businessEvents,
     ): Response {
         if (!$previewToken->isValid($id, $token)) {
             throw $this->createNotFoundException('Preview not found.');
@@ -32,6 +34,11 @@ final class PagePreviewController extends AbstractController
         if ($page === null) {
             throw $this->createNotFoundException('Preview not found.');
         }
+
+        $businessEvents->log('page.previewViewed', [
+            'page_id' => $id,
+            'path' => $page->path(),
+        ]);
 
         $blocks = [];
         foreach ($page->enabledBlocks() as $block) {

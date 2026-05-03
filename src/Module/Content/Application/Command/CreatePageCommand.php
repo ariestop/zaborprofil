@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Module\Content\Application\Command;
 
+use App\Module\Content\Domain\ValueObject\PageVisibility;
+
 final readonly class CreatePageCommand
 {
     public function __construct(
@@ -16,6 +18,7 @@ final readonly class CreatePageCommand
         public int $sortOrder = 0,
         public bool $isIndexable = true,
         public ?string $parentId = null,
+        public PageVisibility $visibility = PageVisibility::Public,
     ) {
     }
 }

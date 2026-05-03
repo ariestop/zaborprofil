@@ -6,6 +6,9 @@
 
 - `Page`
 - `PageBlock`
+- `PageRevision`
+- `PagePublication`
+- `PageTemplate`
 - enum `PageStatus`, `PageType`, `BlockType`
 - repository interfaces
 - Doctrine repositories
@@ -13,7 +16,10 @@
 - Admin API
 - публичный Twig renderer
 
-`Page.path` уникален и задается вручную. Публичный renderer показывает только страницы в статусе `published`.
+`Page.path` уникален и задается вручную. Публичный renderer показывает только
+страницы в статусе `published`. Если у страницы есть `PagePublication` с
+`publishedRevision`, public resolver рендерит immutable snapshot; для старых
+страниц без publication state остается fallback на текущие `Page` + `PageBlock`.
 
 ## Структура
 
@@ -29,6 +35,11 @@
 - `PUT /admin/api/content/pages/{id}`
 - `POST /admin/api/content/pages/{id}/publish`
 - `POST /admin/api/content/pages/{id}/archive`
+- `PATCH /admin/api/content/pages/{id}/status`
+- `GET /admin/api/content/pages/{pageId}/revisions`
+- `POST /admin/api/content/pages/{pageId}/revisions/{revisionId}/rollback`
+- `GET /admin/api/content/templates`
+- `GET /admin/api/content/block-schemas`
 - `POST /admin/api/content/pages/{pageId}/blocks`
 - `PUT /admin/api/content/blocks/{id}`
 - `POST /admin/api/content/pages/{pageId}/blocks/reorder`

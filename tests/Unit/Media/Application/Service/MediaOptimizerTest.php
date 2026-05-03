@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
 
 final class MediaOptimizerTest extends TestCase
 {
-    private string $temporaryDirectory;
+    private ?string $temporaryDirectory = null;
 
     protected function setUp(): void
     {
@@ -23,11 +23,15 @@ final class MediaOptimizerTest extends TestCase
 
     protected function tearDown(): void
     {
-        $this->removeDirectory($this->temporaryDirectory);
+        if ($this->temporaryDirectory !== null) {
+            $this->removeDirectory($this->temporaryDirectory);
+        }
     }
 
     public function testCreatesWebpThumbnailVariantAndKeepsDimensions(): void
     {
+        self::assertNotNull($this->temporaryDirectory);
+
         $path = $this->temporaryDirectory.'/source.png';
         $image = imagecreatetruecolor(640, 480);
         imagepng($image, $path);

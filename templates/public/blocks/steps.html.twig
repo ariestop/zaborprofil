@@ -1,0 +1,16 @@
+<section class="rounded-2xl bg-slate-950 p-6 text-white" data-block-type="steps">
+    <h2 class="text-2xl font-semibold">{{ block.content.title|default(block.name) }}</h2>
+    <div class="mt-6 grid gap-4 md:grid-cols-4">
+        {% for item in block.content.items|default([]) %}
+            <article class="rounded-xl bg-white/10 p-5">
+                <p class="text-sm font-semibold text-emerald-200">Шаг {{ loop.index }}</p>
+                <h3 class="mt-2 font-semibold">{{ item.title|default('Этап') }}</h3>
+                {% if item.text is defined %}
+                    <p class="mt-2 text-sm leading-6 text-slate-200">{{ item.text }}</p>
+                {% endif %}
+            </article>
+        {% else %}
+            <p class="text-sm text-slate-300">Этапы будут добавлены редактором.</p>
+        {% endfor %}
+    </div>
+</section>

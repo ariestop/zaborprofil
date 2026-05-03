@@ -37,6 +37,7 @@ final readonly class CreatePageHandler
             $command->sortOrder,
             $command->isIndexable,
             $parent,
+            $command->visibility,
         );
 
         $this->pages->save($page);

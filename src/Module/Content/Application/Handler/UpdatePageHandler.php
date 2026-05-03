@@ -45,6 +45,7 @@ final readonly class UpdatePageHandler
             $command->sortOrder,
             $command->isIndexable,
             $parent,
+            $command->visibility,
         );
 
         $this->pages->save($page);

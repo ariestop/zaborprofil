@@ -28,6 +28,8 @@
 
 Docker используется только для локальной разработки. Staging и production разворачиваются на VPS без Docker: Nginx, PHP-FPM, PostgreSQL, Redis, systemd и Git-based release deploy.
 
+В локальной разработке PostgreSQL должен использоваться из Docker-контейнера `postgres`. Локально установленный на хосте PostgreSQL не используется для миграций, fixtures, тестов и `make quality`.
+
 ## Структура
 
 - `public_html/` — web root, здесь лежит `index.php`.
@@ -74,6 +76,8 @@ make health
 ## Единое dev-состояние БД
 
 Новый ПК разработки должен получать одинаковую структуру и базовые данные через Git: Doctrine migrations + dev fixtures/seed data. Docker images, Docker volumes и реальные backup-файлы БД в Git не хранятся.
+
+Локальная dev/test БД живёт в Docker. Команды `make migrate`, `make reset-db`, `make test-db`, `make test` и `make quality` выполняются через контейнеры и подключаются к PostgreSQL по `postgres:5432` внутри Docker-сети. С хоста к этой же БД можно подключаться через `127.0.0.1:15432`.
 
 Для пересоздания локальной БД используйте:
 

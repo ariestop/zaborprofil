@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Module\Seo\Application\Audit;
 
 use App\Module\Content\Domain\Entity\Page;
+use App\Module\Content\Domain\Entity\PageBlock;
+use App\Module\Content\Domain\Enum\BlockType;
 
 final readonly class SeoAuditEngine
 {
@@ -91,12 +93,46 @@ final readonly class SeoAuditEngine
      */
     private function contentIssues(Page $page): array
     {
-        if ($page->enabledBlocks() === []) {
-            return [
-                new SeoAuditIssue(SeoAuditSeverity::P2, 'seo.content.empty', 'Published page should contain at least one enabled content block.', 'blocks'),
-            ];
+        $issues = [];
+        $enabledBlocks = $page->enabledBlocks();
+        if ($enabledBlocks === []) {
+            $issues[] = new SeoAuditIssue(SeoAuditSeverity::P2, 'seo.content.empty', 'Published page should contain at least one enabled content block.', 'blocks');
         }
 
-        return [];
+        if ($page->type()->isCommercial() && !$this->hasBlock($enabledBlocks, BlockType::CtaForm)) {
+            $issues[] = new SeoAuditIssue(SeoAuditSeverity::P2, 'seo.content.cta_missing', 'Commercial pages should contain a CTA form block.', 'blocks');
+        }
+
+        if (\in_array($page->type()->value, ['landing', 'service', 'seo_landing'], true) && !$this->hasBlock($enabledBlocks, BlockType::SeoText)) {
+            $issues[] = new SeoAuditIssue(SeoAuditSeverity::P2, 'seo.content.seo_text_missing', 'Landing and service pages should contain an SEO text block.', 'blocks');
+        }
+
+        foreach ($enabledBlocks as $block) {
+            $content = $block->content();
+            if ($block->type() === BlockType::Faq && ($content['items'] ?? []) === []) {
+                $issues[] = new SeoAuditIssue(SeoAuditSeverity::P1, 'seo.content.faq_empty', 'FAQ block must contain at least one question and answer.', 'blocks');
+            }
+
+            $html = $content['html'] ?? '';
+            if ($block->type() === BlockType::HtmlEmbed && \is_string($html) && preg_match('/<\s*script\b/i', $html) === 1) {
+                $issues[] = new SeoAuditIssue(SeoAuditSeverity::P1, 'seo.security.html_embed_script', 'HTML embed cannot contain script tags.', 'blocks');
+            }
+        }
+
+        return $issues;
+    }
+
+    /**
+     * @param list<PageBlock> $blocks
+     */
+    private function hasBlock(array $blocks, BlockType $type): bool
+    {
+        foreach ($blocks as $block) {
+            if ($block->type() === $type) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
