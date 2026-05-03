@@ -49,12 +49,14 @@ final class UploadController
 }
 ```
 
-## Image processing (целевое)
+## Image processing
 
-- `intervention/image` или `imagine/imagine` для resize / WebP.
-- Генерация thumbnails — async через Messenger.
-- Хранение оригинала + произведённых вариантов.
-- Cache-Control `immutable` для производных.
+- `MediaOptimizer` использует GD для безопасной post-processing обработки без обязательной внешней зависимости.
+- Raster images переупаковываются после upload, чтобы убрать EXIF/metadata.
+- Для широких изображений создаются WebP/AVIF variants (`320`, `768`, `1280` width) в `public_html/uploads/media/variants/`.
+- AVIF/WebP variants зависят от доступных PHP encoders (`imageavif`, `imagewebp`).
+- Хранится оригинал + metadata произведённых вариантов в `media_assets.variants`.
+- Async generation через Messenger остаётся future extension point для больших библиотек.
 
 ## Path traversal protection
 

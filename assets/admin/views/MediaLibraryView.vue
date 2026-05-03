@@ -75,7 +75,19 @@ onMounted(loadAssets)
       <article v-for="asset in assets" :key="asset.id" class="rounded-xl border border-slate-200 p-4">
         <p class="font-medium text-slate-900">{{ asset.originalName }}</p>
         <a :href="asset.publicPath" target="_blank" rel="noreferrer" class="text-sm text-emerald-700">{{ asset.publicPath }}</a>
-        <p class="mt-1 text-xs text-slate-500">{{ asset.mimeType }} · {{ asset.size }} bytes</p>
+        <p class="mt-1 text-xs text-slate-500">{{ asset.mimeType }} · {{ asset.size }} bytes · {{ asset.width ?? '-' }}×{{ asset.height ?? '-' }}</p>
+        <div v-if="asset.variants.length > 0" class="mt-3 flex flex-wrap gap-2">
+          <a
+            v-for="variant in asset.variants"
+            :key="variant.publicPath"
+            :href="variant.publicPath"
+            target="_blank"
+            rel="noreferrer"
+            class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200"
+          >
+            {{ variant.type }} {{ variant.width }}w
+          </a>
+        </div>
       </article>
     </div>
   </section>

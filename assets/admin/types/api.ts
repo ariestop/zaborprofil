@@ -119,6 +119,14 @@ export interface MediaAssetItem {
   size: number
   width: number | null
   height: number | null
+  variants: Array<{
+    type: string
+    publicPath: string
+    width: number | null
+    height: number | null
+    mimeType: string
+    size: number
+  }>
   createdAt: string
 }
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Module\Media\UI\Admin;
 
 use App\Module\Auth\Domain\Security\AdminPermission;
+use App\Module\Media\Application\Service\MediaOptimizer;
 use App\Module\Media\Domain\Entity\MediaAsset;
 use App\Module\Media\Domain\Repository\MediaAssetRepositoryInterface;
 use App\Shared\Infrastructure\Upload\UploadValidator;
@@ -23,6 +24,7 @@ final readonly class MediaApiController
         private UploadValidator $uploadValidator,
         private AuthorizationCheckerInterface $authorizationChecker,
         private string $mediaUploadDir,
+        private MediaOptimizer $mediaOptimizer,
     ) {
     }
 
@@ -55,16 +57,25 @@ final readonly class MediaApiController
             if (!is_dir($this->mediaUploadDir) && !mkdir($this->mediaUploadDir, 0775, true) && !is_dir($this->mediaUploadDir)) {
                 return new JsonResponse(['error' => 'Media upload directory cannot be created.'], 500);
             }
-            $file->move($this->mediaUploadDir, $validated->safeFilename);
+            $storedFile = $file->move($this->mediaUploadDir, $validated->safeFilename);
+            $publicPath = '/uploads/media/'.$validated->safeFilename;
+            $optimized = $this->mediaOptimizer->optimize(
+                $storedFile->getPathname(),
+                $publicPath,
+                $validated->mimeType,
+                $validated->width,
+                $validated->height,
+            );
 
             $asset = new MediaAsset(
                 $file->getClientOriginalName(),
                 $validated->safeFilename,
-                '/uploads/media/'.$validated->safeFilename,
+                $publicPath,
                 $validated->mimeType,
-                $validated->size,
-                $validated->width,
-                $validated->height,
+                $optimized->size,
+                $optimized->width,
+                $optimized->height,
+                $optimized->variants,
             );
             $this->assets->save($asset);
 
@@ -82,7 +93,9 @@ final readonly class MediaApiController
         }
 
         try {
-            $this->assets->remove($this->assets->get($id));
+            $asset = $this->assets->get($id);
+            $this->removeAssetFiles($asset);
+            $this->assets->remove($asset);
 
             return new JsonResponse(null, 204);
         } catch (Throwable $exception) {
@@ -96,5 +109,35 @@ final readonly class MediaApiController
             'error' => 'Access denied.',
             'code' => 'ACCESS_DENIED',
         ], 403);
+    }
+
+    private function removeAssetFiles(MediaAsset $asset): void
+    {
+        $paths = [$asset->publicPath()];
+        foreach ($asset->variants() as $variant) {
+            $paths[] = $variant['publicPath'];
+        }
+
+        foreach ($paths as $publicPath) {
+            $absolutePath = $this->absoluteMediaPath($publicPath);
+            if ($absolutePath !== null && is_file($absolutePath)) {
+                unlink($absolutePath);
+            }
+        }
+    }
+
+    private function absoluteMediaPath(string $publicPath): ?string
+    {
+        $prefix = '/uploads/media/';
+        if (!str_starts_with($publicPath, $prefix)) {
+            return null;
+        }
+
+        $relativePath = substr($publicPath, \strlen($prefix));
+        if ($relativePath === '' || str_contains($relativePath, '..')) {
+            return null;
+        }
+
+        return rtrim($this->mediaUploadDir, '/').'/'.$relativePath;
     }
 }

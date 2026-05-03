@@ -100,15 +100,17 @@
 - preview links для черновиков через HMAC token;
 - `X-Robots-Tag: noindex,nofollow` и `<meta name="robots" content="noindex, nofollow">` для preview.
 
-## Оставшиеся задачи на будущее
-
 ### W9 Media
 
-- Media Library;
-- Media Optimizer на Imagick;
-- WebP/AVIF/thumbnails;
-- EXIF strip;
-- Safe SVG policy.
+Состав:
+
+- Media Library: upload/list/delete в админке;
+- Media Optimizer на GD: re-encode оригинала для strip metadata и генерация responsive variants;
+- WebP/AVIF thumbnails в `public_html/uploads/media/variants/` при поддержке PHP runtime;
+- EXIF/metadata strip через re-encode загруженных raster images;
+- Safe SVG policy: SVG запрещён по умолчанию, sanitization оставлена отдельным future extension point.
+
+## Оставшиеся задачи на будущее
 
 ### W9.1 Menu
 
