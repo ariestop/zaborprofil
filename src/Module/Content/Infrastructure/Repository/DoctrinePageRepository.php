@@ -11,6 +11,7 @@ use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Bridge\Doctrine\Types\UlidType;
 use Symfony\Component\Uid\Ulid;
 
 /**
@@ -107,7 +108,7 @@ final class DoctrinePageRepository extends ServiceEntityRepository implements Pa
         if (null !== $excludeId) {
             $builder
                 ->andWhere('page.id != :excludeId')
-                ->setParameter('excludeId', $this->toUlid($excludeId));
+                ->setParameter('excludeId', $this->toUlid($excludeId), UlidType::NAME);
         }
 
         return (int) $builder->getQuery()->getSingleScalarResult() > 0;

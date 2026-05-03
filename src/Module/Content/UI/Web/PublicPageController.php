@@ -29,7 +29,7 @@ final class PublicPageController extends AbstractController
         $page = $resolver->resolve($path);
 
         if ($page === null) {
-            throw $this->createNotFoundException('Page not found.');
+            return $this->notFoundResponse();
         }
 
         $blocks = [];
@@ -59,5 +59,14 @@ final class PublicPageController extends AbstractController
             'breadcrumbs' => $breadcrumbs,
             'json_ld_blocks' => $jsonLdBlocks,
         ]);
+    }
+
+    private function notFoundResponse(): Response
+    {
+        $response = $this->render('public/errors/not_found.html.twig');
+        $response->setStatusCode(Response::HTTP_NOT_FOUND);
+        $response->headers->set('X-Robots-Tag', 'noindex,nofollow');
+
+        return $response;
     }
 }

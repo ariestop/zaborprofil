@@ -66,6 +66,18 @@ final class PublicCatalogTest extends WebTestCase
         self::assertStringNotContainsString('/catalog/draft-product/', $xml);
     }
 
+    public function testMissingCatalogPageRendersSiteNotFoundPlaceholder(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+
+        $client->request('GET', '/catalog/missing-item/');
+
+        self::assertResponseStatusCodeSame(404);
+        self::assertSelectorTextContains('h1', 'Страница не найдена');
+        self::assertStringContainsString('<meta name="robots" content="noindex, nofollow">', (string) $client->getResponse()->getContent());
+    }
+
     private function createPublishedProduct(): Product
     {
         $entityManager = $this->entityManager();

@@ -11,12 +11,35 @@ const selected = ref<ContentPageDetail | null>(null)
 const selectedBlockId = ref<string | null>(null)
 const loading = ref(false)
 const saving = ref(false)
+const statusChanging = ref<string | null>(null)
 const error = ref<string | null>(null)
 const previewUrl = ref<string | null>(null)
 const seoAudit = ref<{ passed: boolean; issues: Array<{ severity: string; code: string; message: string; field: string }> } | null>(null)
 
+type PageStatus = ContentPageItem['status']
+
 const pageTypes = ['home', 'landing', 'service', 'product_category_landing', 'material_landing', 'portfolio_index', 'portfolio_item', 'contacts', 'prices', 'text_page', 'seo_landing', 'system_page']
-const statuses = ['draft', 'review', 'approved', 'published', 'scheduled', 'unpublished', 'archived']
+const statusTransitions: Record<PageStatus, PageStatus[]> = {
+  draft: ['review', 'approved', 'published', 'deleted'],
+  review: ['approved', 'draft', 'deleted'],
+  approved: ['published', 'scheduled', 'draft', 'deleted'],
+  published: ['unpublished', 'scheduled', 'archived', 'deleted'],
+  scheduled: ['published', 'draft', 'deleted'],
+  unpublished: ['draft', 'published', 'archived', 'deleted'],
+  archived: ['draft', 'deleted'],
+  deleted: ['draft'],
+}
+const hiddenStatusActions = new Set<PageStatus>(['published', 'scheduled', 'deleted'])
+const statusLabels: Record<PageStatus, string> = {
+  draft: 'Черновик',
+  review: 'На проверке',
+  approved: 'Одобрено',
+  published: 'Опубликовано',
+  scheduled: 'Запланировано',
+  unpublished: 'Снято',
+  archived: 'Архив',
+  deleted: 'Удалено',
+}
 
 const form = reactive({
   type: 'landing',
@@ -48,6 +71,20 @@ const blockForm = reactive({
 
 const selectedBlock = computed(() => selected.value?.blocks.find((block) => block.id === selectedBlockId.value) ?? null)
 const templatesForType = computed(() => templates.value.filter((template) => template.pageType === form.type))
+const availableStatusActions = computed(() => {
+  if (!selected.value) {
+    return []
+  }
+
+  return statusTransitions[selected.value.status].filter((status) => !hiddenStatusActions.has(status))
+})
+const canPublishSelected = computed(() => {
+  if (!selected.value || selected.value.status === 'published') {
+    return false
+  }
+
+  return statusTransitions[selected.value.status].includes('published')
+})
 
 function resetPageForm(): void {
   selected.value = null
@@ -159,6 +196,14 @@ function blockPayload(): Record<string, unknown> {
     content: parseObject(blockForm.content, 'Content'),
     settings: parseObject(blockForm.settings, 'Settings'),
   }
+}
+
+function statusLabel(status: PageStatus): string {
+  return statusLabels[status] ?? status
+}
+
+function statusButtonClass(): string {
+  return 'rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60'
 }
 
 async function loadBaseData(): Promise<void> {
@@ -309,24 +354,40 @@ function startNewBlock(type = 'hero'): void {
 }
 
 async function publishPage(): Promise<void> {
-  if (!selected.value) {
+  if (!selected.value || !canPublishSelected.value || statusChanging.value !== null) {
     return
   }
-  await apiRequest<ContentPageItem>(`/admin/api/content/pages/${selected.value.id}/publish`, {
-    method: 'POST',
-    body: { comment: 'Published from Page Engine editor' },
-  })
-  await loadPages()
-  await selectPage(selected.value.id)
+  error.value = null
+  statusChanging.value = 'published'
+  try {
+    await apiRequest<ContentPageItem>(`/admin/api/content/pages/${selected.value.id}/publish`, {
+      method: 'POST',
+      body: { comment: 'Published from Page Engine editor' },
+    })
+    await loadPages()
+    await selectPage(selected.value.id)
+  } catch (caught) {
+    error.value = caught instanceof Error ? caught.message : 'Не удалось опубликовать страницу'
+  } finally {
+    statusChanging.value = null
+  }
 }
 
-async function changeStatus(status: string): Promise<void> {
-  if (!selected.value) {
+async function changeStatus(status: PageStatus): Promise<void> {
+  if (!selected.value || !availableStatusActions.value.includes(status) || statusChanging.value !== null) {
     return
   }
-  await apiRequest<ContentPageItem>(`/admin/api/content/pages/${selected.value.id}/status`, { method: 'PATCH', body: { status } })
-  await loadPages()
-  await selectPage(selected.value.id)
+  error.value = null
+  statusChanging.value = status
+  try {
+    await apiRequest<ContentPageItem>(`/admin/api/content/pages/${selected.value.id}/status`, { method: 'PATCH', body: { status } })
+    await loadPages()
+    await selectPage(selected.value.id)
+  } catch (caught) {
+    error.value = caught instanceof Error ? caught.message : 'Не удалось изменить статус'
+  } finally {
+    statusChanging.value = null
+  }
 }
 
 async function buildPreviewLink(): Promise<void> {
@@ -455,9 +516,21 @@ onMounted(loadPages)
 
           <div class="mt-6 flex flex-wrap items-center gap-3">
             <button type="submit" class="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">{{ saving ? 'Сохраняется...' : 'Сохранить' }}</button>
-            <button v-if="selected" type="button" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" @click="publishPage">Опубликовать</button>
+            <button v-if="canPublishSelected" type="button" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60" :disabled="statusChanging !== null" @click="publishPage">
+              {{ statusChanging === 'published' ? 'Публикуется...' : 'Опубликовать' }}
+            </button>
             <template v-if="selected">
-              <button v-for="status in statuses" :key="status" type="button" class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50" @click="changeStatus(status)">{{ status }}</button>
+              <span class="rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">Текущий: {{ statusLabel(selected.status) }}</span>
+              <button
+                v-for="status in availableStatusActions"
+                :key="status"
+                type="button"
+                :class="statusButtonClass()"
+                :disabled="statusChanging !== null"
+                @click="changeStatus(status)"
+              >
+                {{ statusChanging === status ? '...' : statusLabel(status) }}
+              </button>
             </template>
             <button v-if="selected" type="button" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" @click="buildPreviewLink">Preview</button>
             <a v-if="previewUrl" :href="previewUrl" target="_blank" rel="noreferrer" class="text-sm font-medium text-emerald-700">Открыть preview</a>

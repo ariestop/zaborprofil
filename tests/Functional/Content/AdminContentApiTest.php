@@ -85,6 +85,8 @@ final class AdminContentApiTest extends WebTestCase
         $client->request('GET', '/draft-page/');
 
         self::assertResponseStatusCodeSame(404);
+        self::assertSelectorTextContains('h1', 'Страница не найдена');
+        self::assertStringContainsString('<meta name="robots" content="noindex, nofollow">', (string) $client->getResponse()->getContent());
     }
 
     public function testAdminCanUpdateSeoMetadataAndRendersTagsOnPublicPage(): void

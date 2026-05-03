@@ -65,7 +65,7 @@ final class PublicCatalogController extends AbstractController
 
         $category = $categories->findActiveByPath($catalogPath);
         if (!$category instanceof Category) {
-            throw $this->createNotFoundException('Catalog item not found.');
+            return $this->notFoundResponse();
         }
 
         return $this->categoryResponse($category, $products, $urlGenerator, $schemaOrg, $siteUrl);
@@ -162,5 +162,14 @@ final class PublicCatalogController extends AbstractController
         ];
 
         return $breadcrumbs;
+    }
+
+    private function notFoundResponse(): Response
+    {
+        $response = $this->render('public/errors/not_found.html.twig');
+        $response->setStatusCode(Response::HTTP_NOT_FOUND);
+        $response->headers->set('X-Robots-Tag', 'noindex,nofollow');
+
+        return $response;
     }
 }
