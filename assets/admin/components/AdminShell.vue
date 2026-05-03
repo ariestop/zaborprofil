@@ -5,6 +5,7 @@ import { initializeAuthStore, useAuthStore } from '../stores/auth'
 import DashboardView from '../views/DashboardView.vue'
 import RedirectsView from '../views/RedirectsView.vue'
 import SettingsView from '../views/SettingsView.vue'
+import SystemHealthView from '../views/SystemHealthView.vue'
 
 const props = defineProps<{
   userEmail: string
@@ -85,6 +86,7 @@ function isActive(name: AdminRouteName): boolean {
         <DashboardView v-if="routeName === 'dashboard'" />
         <SettingsView v-else-if="routeName === 'settings'" />
         <RedirectsView v-else-if="routeName === 'redirects'" />
+        <SystemHealthView v-else-if="routeName === 'systemHealth'" />
       </main>
     </div>
   </div>

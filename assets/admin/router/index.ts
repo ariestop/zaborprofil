@@ -1,4 +1,4 @@
-export type AdminRouteName = 'dashboard' | 'settings' | 'redirects'
+export type AdminRouteName = 'dashboard' | 'settings' | 'redirects' | 'systemHealth'
 
 export interface AdminRoute {
   name: AdminRouteName
@@ -10,6 +10,7 @@ export const routes: AdminRoute[] = [
   { name: 'dashboard', path: '/admin/dashboard', title: 'Панель управления' },
   { name: 'settings', path: '/admin/settings', title: 'Настройки' },
   { name: 'redirects', path: '/admin/seo/redirects', title: 'Редиректы' },
+  { name: 'systemHealth', path: '/admin/system/health', title: 'Health Center' },
 ]
 
 export function currentRouteName(pathname = window.location.pathname): AdminRouteName {

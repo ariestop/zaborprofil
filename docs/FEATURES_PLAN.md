@@ -37,15 +37,18 @@
 - Telegram error sink через Messenger;
 - документация `docs/LOGGING.md`.
 
-## Оставшиеся задачи на будущее
-
 ### W3 Health and diagnostics
+
+Состав:
 
 - `/health/live` и `/health/ready`;
 - расширяемый `HealthCheckInterface`;
 - System Health Center в админке;
 - `app:system:diagnostics`;
-- Admin System Warnings.
+- Admin System Warnings;
+- документация `docs/HEALTH_CHECKS.md`.
+
+## Оставшиеся задачи на будущее
 
 ### W4 Maintenance, audit log, business events
 

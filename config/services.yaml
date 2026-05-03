@@ -71,3 +71,7 @@ services:
     App\Shared\Infrastructure\Logging\Processor\PiiRedactorProcessor:
         tags:
             - { name: monolog.processor }
+
+    App\Shared\Infrastructure\Health\HealthRegistry:
+        arguments:
+            $checks: !tagged_iterator app.health_check
