@@ -59,6 +59,11 @@ final class AdminContentApiTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Забор жалюзи');
         self::assertSelectorTextContains('h2', 'Забор жалюзи под ключ');
+
+        $html = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('aria-label="Хлебные крошки"', $html);
+        self::assertStringContainsString('Забор жалюзи</span>', $html);
+        self::assertStringContainsString('"@type":"BreadcrumbList"', $html);
     }
 
     public function testDraftPageIsNotPubliclyVisible(): void

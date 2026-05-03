@@ -110,14 +110,17 @@
 - EXIF/metadata strip через re-encode загруженных raster images;
 - Safe SVG policy: SVG запрещён по умолчанию, sanitization оставлена отдельным future extension point.
 
-## Оставшиеся задачи на будущее
-
 ### W9.1 Menu
 
-- управляемые меню для header/footer/service navigation;
-- breadcrumbs для публичных страниц;
-- sitemap sources и chunking;
-- кэш меню с инвалидацией.
+Состав:
+
+- управляемые позиции `header`, `footer`, `service` в admin API/UI;
+- публичный layout рендерит header/footer/service navigation через `menu_items(position)`;
+- breadcrumbs для публичных страниц + JSON-LD `BreadcrumbList`;
+- sitemap page-source и chunking остаются в `SitemapBuilder` (`/sitemap.xml`, `/sitemap-pages-N.xml`);
+- кэш меню `cache.menu` инвалидируется при create/update/delete пунктов.
+
+## Оставшиеся задачи на будущее
 
 ### W10 Leads
 

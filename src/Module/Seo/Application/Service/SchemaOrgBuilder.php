@@ -31,4 +31,27 @@ final readonly class SchemaOrgBuilder
 
         return $schema;
     }
+
+    /**
+     * @param list<array{label: string, path: string, current: bool}> $breadcrumbs
+     *
+     * @return array<string, mixed>
+     */
+    public function breadcrumbList(array $breadcrumbs, string $siteUrl): array
+    {
+        return [
+            '@context' => 'https://schema.org',
+            '@type' => 'BreadcrumbList',
+            'itemListElement' => array_map(
+                fn (array $breadcrumb, int $index): array => [
+                    '@type' => 'ListItem',
+                    'position' => $index + 1,
+                    'name' => $breadcrumb['label'],
+                    'item' => rtrim($siteUrl, '/').'/'.ltrim($breadcrumb['path'], '/'),
+                ],
+                $breadcrumbs,
+                array_keys($breadcrumbs),
+            ),
+        ];
+    }
 }

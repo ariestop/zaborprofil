@@ -22,7 +22,8 @@ SEO является критичной частью проекта.
 - `app:seo:audit` проверяет страницы пакетно или по `--page-id`; P0/P1 ошибки блокируют публикацию.
 - `GET /admin/api/seo/audit/pages/{id}` возвращает текущий audit report для редактора.
 - Публичные страницы кэшируются через `cache.public_page`; изменения страниц, блоков, SEO metadata, settings, robots.txt и redirects сбрасывают соответствующий cache tag.
-- Управляемые меню доступны через `menu_items(position)` и могут использоваться для breadcrumbs/навигации.
+- Управляемые меню доступны через `menu_items(position)` для позиций `header`, `footer`, `service`; публичный layout рендерит их автоматически.
+- Публичные страницы получают HTML breadcrumbs и JSON-LD `BreadcrumbList`.
 
 ## SEO-аудит
 

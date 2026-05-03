@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Module\Content\UI\Web;
 
 use App\Module\Content\Application\Service\PublicPageResolverInterface;
+use App\Module\Menu\Application\Service\BreadcrumbBuilder;
 use App\Module\Seo\Application\Service\SchemaOrgBuilder;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -20,6 +22,9 @@ final class PublicPageController extends AbstractController
         TwigBlockRenderer $blockRenderer,
         UrlGeneratorInterface $urlGenerator,
         SchemaOrgBuilder $schemaOrg,
+        BreadcrumbBuilder $breadcrumbBuilder,
+        #[Autowire('%app.site_url%')]
+        string $siteUrl,
     ): Response {
         $page = $resolver->resolve($path);
 
@@ -34,8 +39,10 @@ final class PublicPageController extends AbstractController
 
         $canonical = $page->canonicalUrl
             ?? $urlGenerator->generate('content_public_page', ['path' => ltrim($page->path, '/')], UrlGeneratorInterface::ABSOLUTE_URL);
+        $breadcrumbs = array_map(static fn ($breadcrumb): array => $breadcrumb->toArray(), $breadcrumbBuilder->forPage($page));
         $jsonLdBlocks = [
             $schemaOrg->webPage($page, $canonical),
+            $schemaOrg->breadcrumbList($breadcrumbs, $siteUrl),
             ...($page->jsonLd ?? []),
         ];
 
@@ -49,6 +56,7 @@ final class PublicPageController extends AbstractController
             'og_title' => $page->ogTitle,
             'og_description' => $page->ogDescription ?? $page->metaDescription,
             'og_image' => $page->ogImage,
+            'breadcrumbs' => $breadcrumbs,
             'json_ld_blocks' => $jsonLdBlocks,
         ]);
     }

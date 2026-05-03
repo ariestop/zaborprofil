@@ -9,6 +9,7 @@ use App\Module\Content\UI\Admin\JsonRequest;
 use App\Module\Menu\Application\Service\MenuProvider;
 use App\Module\Menu\Domain\Entity\MenuItem;
 use App\Module\Menu\Domain\Repository\MenuItemRepositoryInterface;
+use App\Module\Menu\Domain\ValueObject\MenuPosition;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -35,6 +36,7 @@ final readonly class MenuApiController
 
         return new JsonResponse([
             'items' => array_map(static fn (MenuItem $item): array => $item->toArray(), $this->items->findAllForAdmin()),
+            'positions' => MenuPosition::options(),
         ]);
     }
 

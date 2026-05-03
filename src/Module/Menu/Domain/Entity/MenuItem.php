@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Module\Menu\Domain\Entity;
 
+use App\Module\Menu\Domain\ValueObject\MenuPosition;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use InvalidArgumentException;
@@ -39,7 +40,7 @@ final class MenuItem
     public function __construct(string $position, string $label, string $url, int $sortOrder = 0, bool $active = true)
     {
         $this->id = new Ulid();
-        $this->position = self::required($position, 'Menu position cannot be empty.');
+        $this->position = MenuPosition::normalize($position);
         $this->label = self::required($label, 'Menu label cannot be empty.');
         $this->url = self::normalizeUrl($url);
         $this->sortOrder = $sortOrder;
@@ -59,7 +60,7 @@ final class MenuItem
 
     public function update(string $position, string $label, string $url, int $sortOrder, bool $active): void
     {
-        $this->position = self::required($position, 'Menu position cannot be empty.');
+        $this->position = MenuPosition::normalize($position);
         $this->label = self::required($label, 'Menu label cannot be empty.');
         $this->url = self::normalizeUrl($url);
         $this->sortOrder = $sortOrder;

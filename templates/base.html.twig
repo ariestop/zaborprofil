@@ -47,7 +47,48 @@
         {% endblock %}
     </head>
     <body class="min-h-screen bg-slate-50 text-slate-950">
+        {% block site_header %}
+            {% set service_menu = menu_items('service') %}
+            {% set header_menu = menu_items('header') %}
+
+            {% if service_menu %}
+                <nav class="border-b border-slate-200 bg-slate-900 text-sm text-white" aria-label="Сервисная навигация">
+                    <div class="mx-auto flex max-w-6xl justify-end gap-5 px-6 py-2">
+                        {% for item in service_menu %}
+                            <a class="text-slate-200 hover:text-white" href="{{ item.url }}">{{ item.label }}</a>
+                        {% endfor %}
+                    </div>
+                </nav>
+            {% endif %}
+
+            <header class="border-b border-slate-200 bg-white">
+                <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+                    <a class="text-lg font-bold text-slate-950" href="/">ЗаборПрофиль</a>
+                    {% if header_menu %}
+                        <nav class="flex gap-5 text-sm font-medium text-slate-700" aria-label="Основная навигация">
+                            {% for item in header_menu %}
+                                <a class="hover:text-emerald-700" href="{{ item.url }}">{{ item.label }}</a>
+                            {% endfor %}
+                        </nav>
+                    {% endif %}
+                </div>
+            </header>
+        {% endblock %}
+
         {% block body %}{% endblock %}
+
+        {% block site_footer %}
+            {% set footer_menu = menu_items('footer') %}
+            {% if footer_menu %}
+                <footer class="border-t border-slate-200 bg-white">
+                    <nav class="mx-auto flex max-w-6xl flex-wrap gap-5 px-6 py-6 text-sm text-slate-600" aria-label="Навигация в подвале">
+                        {% for item in footer_menu %}
+                            <a class="hover:text-emerald-700" href="{{ item.url }}">{{ item.label }}</a>
+                        {% endfor %}
+                    </nav>
+                </footer>
+            {% endif %}
+        {% endblock %}
         {% block javascripts %}{% endblock %}
     </body>
 </html>

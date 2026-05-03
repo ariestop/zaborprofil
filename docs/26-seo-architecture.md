@@ -463,11 +463,12 @@ flowchart LR
 
 ## 11. Breadcrumbs
 
-- Domain: parent-структура `Page.parent` (целевое).
-- Twig: helper рендерит цепочку `Главная → Раздел → Текущая`.
-- HTML breadcrumbs — обязательны для всех страниц глубже 2 уровня.
-- JSON-LD `BreadcrumbList` — целевое (см. §9.3).
+- `BreadcrumbBuilder` строит цепочку от `Page.path`: `Главная → Раздел → Текущая`.
+- Twig helper `breadcrumbs_for_page(page)` доступен для публичных шаблонов.
+- HTML breadcrumbs рендерятся на публичных страницах с глубиной больше корня.
+- JSON-LD `BreadcrumbList` добавляется автоматически.
 - Последний элемент breadcrumbs — без ссылки (текущая страница).
+- Parent-структура `Page.parent` остаётся extension point для более точных названий промежуточных разделов.
 
 ---
 
