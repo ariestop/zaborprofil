@@ -48,15 +48,18 @@
 - Admin System Warnings;
 - документация `docs/HEALTH_CHECKS.md`.
 
-## Оставшиеся задачи на будущее
-
 ### W4 Maintenance, audit log, business events
+
+Состав:
 
 - Maintenance Mode через CLI и админку;
 - whitelist IP;
 - страница техобслуживания;
 - Admin Audit Log с diff old/new values;
-- Business Events Log.
+- Business Events Log;
+- документация `docs/MAINTENANCE.md`, `docs/AUDIT_LOG.md`, `docs/BUSINESS_EVENTS.md`.
+
+## Оставшиеся задачи на будущее
 
 ### W5 DevOps safety
 

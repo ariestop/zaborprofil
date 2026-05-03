@@ -9,6 +9,7 @@ use App\Module\Content\Application\DTO\PageOutput;
 use App\Module\Content\Application\Service\ContentId;
 use App\Module\Content\Application\Service\PublicPageCacheInvalidator;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
+use App\Shared\Application\Logging\BusinessEventLogger;
 
 final readonly class PublishPageHandler
 {
@@ -16,6 +17,7 @@ final readonly class PublishPageHandler
         private PageRepositoryInterface $pages,
         private ContentId $contentId,
         private PublicPageCacheInvalidator $publicPageCache,
+        private BusinessEventLogger $businessEvents,
     ) {
     }
 
@@ -26,6 +28,10 @@ final readonly class PublishPageHandler
         $this->pages->save($page);
 
         $this->publicPageCache->invalidate($page->path());
+        $this->businessEvents->log('page.published', [
+            'page_id' => (string) $page->id(),
+            'path' => $page->path(),
+        ]);
 
         return PageOutput::fromPage($page);
     }

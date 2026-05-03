@@ -45,3 +45,25 @@ export interface SystemHealthResponse {
   warnings: SystemWarningItem[]
   checkedAt: string
 }
+
+export interface MaintenanceStatus {
+  enabled: boolean
+  message?: string | null
+  allowedIps?: string[]
+  enabledAt?: string | null
+}
+
+export interface AuditLogEntryItem {
+  id: string
+  occurredAt: string
+  actorId: string | null
+  actorEmail: string | null
+  ip: string | null
+  userAgent: string | null
+  requestId: string | null
+  action: string
+  entityType: string
+  entityId: string | null
+  oldValues: Record<string, unknown>
+  newValues: Record<string, unknown>
+}

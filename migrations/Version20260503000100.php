@@ -7,47 +7,23 @@ namespace DoctrineMigrations;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
-/**
- * Add SEO metadata columns to content_pages: meta_description, canonical_url,
- * og_title, og_description, og_image, og_type, json_ld.
- *
- * All columns are NULLable so existing rows are unaffected and the public
- * renderer falls back to defaults (no description, canonical = absolute URL of
- * Page.path, og defaults from base layout, no JSON-LD) when the editor has not
- * provided a value.
- */
 final class Version20260503000100 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return 'Add SEO metadata columns to content_pages (meta_description, canonical_url, og_*, json_ld).';
+        return 'Create admin audit log entries table.';
     }
 
     public function up(Schema $schema): void
     {
-        $this->addSql(<<<'SQL'
-            ALTER TABLE content_pages
-                ADD COLUMN meta_description VARCHAR(320) DEFAULT NULL,
-                ADD COLUMN canonical_url VARCHAR(2048) DEFAULT NULL,
-                ADD COLUMN og_title VARCHAR(255) DEFAULT NULL,
-                ADD COLUMN og_description VARCHAR(320) DEFAULT NULL,
-                ADD COLUMN og_image VARCHAR(2048) DEFAULT NULL,
-                ADD COLUMN og_type VARCHAR(32) DEFAULT NULL,
-                ADD COLUMN json_ld JSONB DEFAULT NULL
-        SQL);
+        $this->addSql('CREATE TABLE audit_log_entries (id VARCHAR(26) NOT NULL, occurred_at TIMESTAMP(0) WITHOUT TIME ZONE NOT NULL, actor_id VARCHAR(26) DEFAULT NULL, actor_email VARCHAR(180) DEFAULT NULL, ip VARCHAR(64) DEFAULT NULL, user_agent TEXT DEFAULT NULL, request_id VARCHAR(128) DEFAULT NULL, action VARCHAR(80) NOT NULL, entity_type VARCHAR(160) NOT NULL, entity_id VARCHAR(64) DEFAULT NULL, old_values JSONB NOT NULL, new_values JSONB NOT NULL, PRIMARY KEY(id))');
+        $this->addSql('CREATE INDEX idx_audit_log_entries_occurred_at ON audit_log_entries (occurred_at)');
+        $this->addSql('CREATE INDEX idx_audit_log_entries_entity ON audit_log_entries (entity_type, entity_id)');
+        $this->addSql('CREATE INDEX idx_audit_log_entries_actor ON audit_log_entries (actor_id)');
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql(<<<'SQL'
-            ALTER TABLE content_pages
-                DROP COLUMN IF EXISTS json_ld,
-                DROP COLUMN IF EXISTS og_type,
-                DROP COLUMN IF EXISTS og_image,
-                DROP COLUMN IF EXISTS og_description,
-                DROP COLUMN IF EXISTS og_title,
-                DROP COLUMN IF EXISTS canonical_url,
-                DROP COLUMN IF EXISTS meta_description
-        SQL);
+        $this->addSql('DROP TABLE audit_log_entries');
     }
 }

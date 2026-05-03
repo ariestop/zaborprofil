@@ -6,6 +6,7 @@ namespace App\Module\Settings\Application\Service;
 
 use App\Module\Settings\Domain\Entity\Setting;
 use App\Module\Settings\Domain\Repository\SettingRepositoryInterface;
+use App\Shared\Application\Logging\BusinessEventLogger;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;
 
@@ -16,6 +17,7 @@ final readonly class SettingsService
     public function __construct(
         private SettingRepositoryInterface $settings,
         private CacheInterface $cache,
+        private BusinessEventLogger $businessEvents,
     ) {
     }
 
@@ -40,6 +42,10 @@ final readonly class SettingsService
 
         $this->settings->save($setting);
         $this->cache->delete($this->cacheKey($scope, $key));
+        $this->businessEvents->log('setting.updated', [
+            'scope' => $scope,
+            'key' => $key,
+        ]);
 
         return $setting;
     }
@@ -49,6 +55,10 @@ final readonly class SettingsService
         $setting = $this->settings->findOne($scope, $key);
         if ($setting !== null) {
             $this->settings->remove($setting);
+            $this->businessEvents->log('setting.deleted', [
+                'scope' => $scope,
+                'key' => $key,
+            ]);
         }
 
         $this->cache->delete($this->cacheKey($scope, $key));

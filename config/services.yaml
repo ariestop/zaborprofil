@@ -31,6 +31,9 @@ services:
     App\Module\Seo\Domain\Repository\RedirectRepositoryInterface:
         alias: App\Module\Seo\Infrastructure\Doctrine\Repository\DoctrineRedirectRepository
 
+    App\Module\AuditLog\Domain\Repository\AuditLogRepositoryInterface:
+        alias: App\Module\AuditLog\Infrastructure\Doctrine\Repository\DoctrineAuditLogRepository
+
     App\Shared\UI\Twig\ViteAssetExtension:
         arguments:
             $manifestPath: '%app.vite.manifest_path%'

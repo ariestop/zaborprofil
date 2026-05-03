@@ -10,6 +10,7 @@ use App\Module\Content\Application\Service\ContentId;
 use App\Module\Content\Application\Service\PublicPageCacheInvalidator;
 use App\Module\Content\Domain\Enum\PageType;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
+use App\Shared\Application\Logging\BusinessEventLogger;
 use InvalidArgumentException;
 
 final readonly class UpdatePageHandler
@@ -18,6 +19,7 @@ final readonly class UpdatePageHandler
         private PageRepositoryInterface $pages,
         private ContentId $contentId,
         private PublicPageCacheInvalidator $publicPageCache,
+        private BusinessEventLogger $businessEvents,
     ) {
     }
 
@@ -48,6 +50,13 @@ final readonly class UpdatePageHandler
         $this->pages->save($page);
 
         $this->publicPageCache->invalidateMany([$previousPath, $page->path()]);
+        if ($previousPath !== $page->path()) {
+            $this->businessEvents->log('page.pathChanged', [
+                'page_id' => (string) $page->id(),
+                'old_path' => $previousPath,
+                'new_path' => $page->path(),
+            ]);
+        }
 
         return PageOutput::fromPage($page);
     }

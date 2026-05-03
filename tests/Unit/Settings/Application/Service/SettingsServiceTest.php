@@ -7,7 +7,9 @@ namespace App\Tests\Unit\Settings\Application\Service;
 use App\Module\Settings\Application\Service\SettingsService;
 use App\Module\Settings\Domain\Entity\Setting;
 use App\Module\Settings\Domain\Repository\SettingRepositoryInterface;
+use App\Shared\Application\Logging\BusinessEventLogger;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
 final class SettingsServiceTest extends TestCase
@@ -15,7 +17,7 @@ final class SettingsServiceTest extends TestCase
     public function testStoresAndReadsSettingFromCacheBackedService(): void
     {
         $repository = new InMemorySettingRepository();
-        $service = new SettingsService($repository, new ArrayAdapter());
+        $service = new SettingsService($repository, new ArrayAdapter(), new BusinessEventLogger(new NullLogger()));
 
         $setting = $service->set('seo', 'robots.body', "User-agent: *\nAllow: /\n");
 
@@ -27,7 +29,7 @@ final class SettingsServiceTest extends TestCase
     public function testUpdatesCachedSettingAfterWrite(): void
     {
         $repository = new InMemorySettingRepository();
-        $service = new SettingsService($repository, new ArrayAdapter());
+        $service = new SettingsService($repository, new ArrayAdapter(), new BusinessEventLogger(new NullLogger()));
 
         $service->set('site', 'name', 'Old');
         self::assertSame('Old', $service->get('site', 'name'));
