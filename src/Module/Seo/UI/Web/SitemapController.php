@@ -13,11 +13,11 @@ use Symfony\Component\Routing\Attribute\Route;
  * is intentionally simple (urlset + url + loc + lastmod) so search engines
  * can ingest it without any extra dependency.
  */
-final class SitemapController
+final readonly class SitemapController
 {
     public function __construct(
-        private readonly PageRepositoryInterface $pages,
-        private readonly string $siteUrl,
+        private PageRepositoryInterface $pages,
+        private string $siteUrl,
     ) {
     }
 

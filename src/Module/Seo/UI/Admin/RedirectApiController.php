@@ -20,8 +20,7 @@ final readonly class RedirectApiController
     public function __construct(
         private RedirectRepositoryInterface $redirects,
         private AuthorizationCheckerInterface $authorizationChecker,
-    )
-    {
+    ) {
     }
 
     #[Route('', name: 'admin_api_seo_redirects_list', methods: ['GET'])]

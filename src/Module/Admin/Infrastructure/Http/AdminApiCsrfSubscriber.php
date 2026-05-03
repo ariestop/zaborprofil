@@ -18,7 +18,7 @@ use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
  * header. GET/HEAD/OPTIONS requests are allowed without a token because they
  * are expected to be safe.
  */
-final class AdminApiCsrfSubscriber implements EventSubscriberInterface
+final readonly class AdminApiCsrfSubscriber implements EventSubscriberInterface
 {
     public const string TOKEN_ID = 'admin_api';
 
@@ -32,7 +32,7 @@ final class AdminApiCsrfSubscriber implements EventSubscriberInterface
     private const array SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS'];
 
     public function __construct(
-        private readonly CsrfTokenManagerInterface $csrfTokenManager,
+        private CsrfTokenManagerInterface $csrfTokenManager,
     ) {
     }
 

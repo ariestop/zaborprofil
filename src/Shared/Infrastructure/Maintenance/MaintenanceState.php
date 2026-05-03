@@ -21,7 +21,7 @@ final readonly class MaintenanceState
      */
     public function enable(string $message = 'Сайт временно находится на техническом обслуживании.', array $allowedIps = []): void
     {
-        $directory = dirname($this->stateFile);
+        $directory = \dirname($this->stateFile);
         if (!is_dir($directory)) {
             mkdir($directory, 0775, true);
         }

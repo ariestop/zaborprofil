@@ -16,5 +16,6 @@ framework:
 when@test:
     framework:
         test: true
+        disallow_search_engine_index: false
         session:
             storage_factory_id: session.storage.factory.mock_file

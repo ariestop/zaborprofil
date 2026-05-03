@@ -47,13 +47,6 @@ final class AdminPermissionVoter extends Voter
     {
         $roles = $token->getRoleNames();
         $allowedRoles = self::PERMISSION_ROLES[$attribute] ?? [];
-
-        foreach ($allowedRoles as $allowedRole) {
-            if (\in_array($allowedRole, $roles, true)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($allowedRoles, fn ($allowedRole) => \in_array($allowedRole, $roles, true));
     }
 }

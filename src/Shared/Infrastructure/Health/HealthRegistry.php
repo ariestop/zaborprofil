@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Shared\Infrastructure\Health;
 
-final class HealthRegistry
+final readonly class HealthRegistry
 {
     /**
      * @var list<HealthCheckInterface>
@@ -49,12 +49,6 @@ final class HealthRegistry
      */
     public function isHealthy(array $results): bool
     {
-        foreach ($results as $result) {
-            if (!$result->isHealthy()) {
-                return false;
-            }
-        }
-
-        return true;
+        return array_all($results, fn ($result) => $result->isHealthy());
     }
 }

@@ -17,15 +17,15 @@ use Symfony\Contracts\Cache\ItemInterface;
  * Content handlers covers the happy path; TTL is the safety net.
  */
 #[AsDecorator(decorates: PublicPageResolverInterface::class)]
-final class CachedPublicPageResolver implements PublicPageResolverInterface
+final readonly class CachedPublicPageResolver implements PublicPageResolverInterface
 {
     public const string CACHE_KEY_PREFIX = 'content.public_page.';
     public const int DEFAULT_TTL_SECONDS = 300;
 
     public function __construct(
-        private readonly PublicPageResolverInterface $inner,
+        private PublicPageResolverInterface $inner,
         #[Autowire(service: 'cache.public_page')]
-        private readonly CacheInterface $cache,
+        private CacheInterface $cache,
     ) {
     }
 

@@ -20,8 +20,7 @@ final readonly class SettingsApiController
     public function __construct(
         private SettingsService $settings,
         private AuthorizationCheckerInterface $authorizationChecker,
-    )
-    {
+    ) {
     }
 
     #[Route('', name: 'admin_api_settings_list', methods: ['GET'])]
@@ -49,7 +48,7 @@ final readonly class SettingsApiController
 
         try {
             $payload = $this->payload($request);
-            if (!array_key_exists('value', $payload)) {
+            if (!\array_key_exists('value', $payload)) {
                 throw new InvalidArgumentException('Field "value" is required.');
             }
 

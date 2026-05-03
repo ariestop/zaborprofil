@@ -18,7 +18,7 @@ RUN apt-get update \
         libzip-dev \
         unzip \
         zip \
-    && docker-php-ext-install -j"$(nproc)" intl opcache pdo_pgsql zip \
+    && docker-php-ext-install intl pdo_pgsql zip \
     && pecl install redis xdebug \
     && docker-php-ext-enable redis xdebug \
     && curl -fsSL https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \

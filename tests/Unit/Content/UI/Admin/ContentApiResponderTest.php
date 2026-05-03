@@ -47,9 +47,20 @@ final class ContentApiResponderTest extends TestCase
 
             public function log($level, \Stringable|string $message, array $context = []): void
             {
+                if (!\is_string($level)) {
+                    throw new \InvalidArgumentException('Log level must be a string.');
+                }
+
+                $stringKeyContext = [];
+                foreach ($context as $key => $value) {
+                    if (\is_string($key)) {
+                        $stringKeyContext[$key] = $value;
+                    }
+                }
+
                 $this->records[] = [
-                    'level' => (string) $level,
-                    'context' => $context,
+                    'level' => $level,
+                    'context' => $stringKeyContext,
                 ];
             }
         };

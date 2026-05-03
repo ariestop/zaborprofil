@@ -82,7 +82,7 @@
         ],
         "check:syntax": "php tools/quality/php-lint.php",
         "check:cs": "php vendor/bin/php-cs-fixer fix --dry-run --diff --ansi",
-        "check:phpstan": "php vendor/bin/phpstan analyse",
+        "check:phpstan": "php vendor/bin/phpstan analyse --memory-limit=512M",
         "check:rector": "php vendor/bin/rector process --dry-run --ansi",
         "test": "php vendor/bin/phpunit",
         "check": [

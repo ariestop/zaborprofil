@@ -80,7 +80,7 @@ final class ViteAssetExtension extends AbstractExtension
     {
         $manifest = $this->loadManifest();
 
-        if (!isset($manifest[$entry]) || !\is_array($manifest[$entry])) {
+        if (!isset($manifest[$entry])) {
             throw new \RuntimeException(\sprintf(
                 'Vite manifest does not contain entry "%s". Run `npm run build`.',
                 $entry,
@@ -136,7 +136,7 @@ final class ViteAssetExtension extends AbstractExtension
 
             $visited[$importKey] = true;
 
-            if (isset($manifest[$importKey]) && \is_array($manifest[$importKey])) {
+            if (isset($manifest[$importKey])) {
                 $this->walkImports($manifest[$importKey], $manifest, $visited, $cssFiles);
             }
         }

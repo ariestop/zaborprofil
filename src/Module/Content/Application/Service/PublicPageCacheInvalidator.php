@@ -14,11 +14,11 @@ use Symfony\Contracts\Cache\CacheInterface;
  * Always invoke for **both** the previous and the new path on update, because
  * a path change leaves a stale entry under the previous key.
  */
-final class PublicPageCacheInvalidator
+final readonly class PublicPageCacheInvalidator
 {
     public function __construct(
         #[Autowire(service: 'cache.public_page')]
-        private readonly CacheInterface $cache,
+        private CacheInterface $cache,
     ) {
     }
 

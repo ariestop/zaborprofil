@@ -39,7 +39,7 @@ final readonly class MigrationsCheck implements HealthCheckInterface
             }
 
             $count = $this->connection->executeQuery('SELECT COUNT(*) FROM doctrine_migration_versions')->fetchOne();
-            $executedCount = \is_numeric($count) ? (int) $count : 0;
+            $executedCount = is_numeric($count) ? (int) $count : 0;
 
             return HealthCheckResult::ok($this->name(), $this->label(), 'Migrations table is readable.', [
                 'executed' => $executedCount,

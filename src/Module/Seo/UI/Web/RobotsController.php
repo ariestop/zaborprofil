@@ -16,11 +16,11 @@ use Symfony\Component\Routing\Attribute\Route;
  * - other → block everything (dev, staging, test). Staging Nginx ALSO
  *           serves its own /robots.txt block as defence in depth.
  */
-final class RobotsController
+final readonly class RobotsController
 {
     public function __construct(
-        private readonly string $environment,
-        private readonly string $siteUrl,
+        private string $environment,
+        private string $siteUrl,
     ) {
     }
 

@@ -51,7 +51,7 @@ final readonly class UploadValidator
             $extension = $originalExtension;
         }
 
-        if (!array_key_exists($extension, self::ALLOWED_MIME_BY_EXTENSION)) {
+        if (!\array_key_exists($extension, self::ALLOWED_MIME_BY_EXTENSION)) {
             throw new UploadSecurityException('Uploaded file extension is not allowed.');
         }
 

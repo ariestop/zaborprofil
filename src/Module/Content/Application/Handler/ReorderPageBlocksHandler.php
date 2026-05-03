@@ -46,6 +46,6 @@ final readonly class ReorderPageBlocksHandler
 
         $this->publicPageCache->invalidate($page->path());
 
-        return array_map(static fn ($block): PageBlockOutput => PageBlockOutput::fromBlock($block), $reordered);
+        return array_map(PageBlockOutput::fromBlock(...), $reordered);
     }
 }

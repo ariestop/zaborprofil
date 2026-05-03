@@ -142,6 +142,6 @@ final readonly class AuditLogSubscriber
             return $value;
         }
 
-        return \is_object($value) ? $value::class : get_debug_type($value);
+        return get_debug_type($value);
     }
 }

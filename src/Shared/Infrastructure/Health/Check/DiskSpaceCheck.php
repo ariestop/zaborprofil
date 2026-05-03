@@ -46,7 +46,7 @@ final readonly class DiskSpaceCheck implements HealthCheckInterface
             'totalBytes' => $total,
         ];
 
-        if ($usedPercent >= 90.0) {
+        if ($usedPercent >= 90.0 && $free < 1_073_741_824) {
             return HealthCheckResult::fail($this->name(), $this->label(), 'Disk usage is critical.', $details);
         }
 
