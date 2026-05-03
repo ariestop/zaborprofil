@@ -4,10 +4,12 @@ import { apiRequest } from '../api/client'
 import type { LeadItem } from '../types/api'
 
 const leads = ref<LeadItem[]>([])
+const statuses = ref<LeadItem['status'][]>(['new', 'in_progress', 'done', 'spam'])
 
 async function loadLeads(): Promise<void> {
-  const response = await apiRequest<{ leads: LeadItem[] }>('/admin/api/leads')
+  const response = await apiRequest<{ leads: LeadItem[], statuses?: LeadItem['status'][] }>('/admin/api/leads')
   leads.value = response.leads
+  statuses.value = response.statuses ?? statuses.value
 }
 
 async function setStatus(lead: LeadItem, status: LeadItem['status']): Promise<void> {
@@ -38,12 +40,12 @@ onMounted(loadLeads)
             <p class="font-medium text-slate-900">{{ lead.name }} · {{ lead.phone }}</p>
             <p class="text-sm text-slate-500">{{ lead.email ?? 'email не указан' }} · {{ lead.source }}</p>
             <p v-if="lead.message" class="mt-2 text-sm text-slate-700">{{ lead.message }}</p>
+            <p v-if="lead.spamScore > 0" class="mt-2 text-xs text-red-700">
+              spam score {{ lead.spamScore }} · {{ lead.spamReasons.join(', ') }}
+            </p>
           </div>
           <select :value="lead.status" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" @change="changeStatus(lead, $event)">
-            <option value="new">new</option>
-            <option value="in_progress">in_progress</option>
-            <option value="done">done</option>
-            <option value="spam">spam</option>
+            <option v-for="status in statuses" :key="status" :value="status">{{ status }}</option>
           </select>
         </div>
       </article>

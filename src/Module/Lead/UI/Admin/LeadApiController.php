@@ -8,6 +8,7 @@ use App\Module\Auth\Domain\Security\AdminPermission;
 use App\Module\Content\UI\Admin\JsonRequest;
 use App\Module\Lead\Domain\Entity\Lead;
 use App\Module\Lead\Domain\Repository\LeadRepositoryInterface;
+use App\Module\Lead\Domain\ValueObject\LeadStatus;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -33,6 +34,7 @@ final readonly class LeadApiController
 
         return new JsonResponse([
             'leads' => array_map(static fn (Lead $lead): array => $lead->toArray(), $this->leads->findLatest()),
+            'statuses' => LeadStatus::values(),
         ]);
     }
 

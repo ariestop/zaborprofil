@@ -54,9 +54,15 @@ services:
     App\Module\Lead\Domain\Repository\LeadRepositoryInterface:
         alias: App\Module\Lead\Infrastructure\Doctrine\Repository\DoctrineLeadRepository
 
-    App\Module\Lead\UI\Web\LeadApiController:
+    App\Module\Lead\Application\AntiSpam\LeadAntiSpamChecker:
         arguments:
-            $leadNotificationEmail: '%env(default:empty_string:LEAD_NOTIFICATION_EMAIL)%'
+            $cache: '@cache.app'
+
+    App\Module\Lead\Application\Notification\LeadNotifier:
+        arguments:
+            $emailRecipient: '%env(default:empty_string:LEAD_NOTIFICATION_EMAIL)%'
+            $telegramBotToken: '%env(default:empty_string:LEAD_TELEGRAM_BOT_TOKEN)%'
+            $telegramChatId: '%env(default:empty_string:LEAD_TELEGRAM_CHAT_ID)%'
 
     App\Shared\UI\Twig\ViteAssetExtension:
         arguments:

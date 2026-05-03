@@ -24,6 +24,7 @@ SEO является критичной частью проекта.
 - Публичные страницы кэшируются через `cache.public_page`; изменения страниц, блоков, SEO metadata, settings, robots.txt и redirects сбрасывают соответствующий cache tag.
 - Управляемые меню доступны через `menu_items(position)` для позиций `header`, `footer`, `service`; публичный layout рендерит их автоматически.
 - Публичные страницы получают HTML breadcrumbs и JSON-LD `BreadcrumbList`.
+- Публичные lead-формы сохраняют 152-ФЗ consent snapshot и не индексируют spam через neutral `202` response.
 
 ## SEO-аудит
 

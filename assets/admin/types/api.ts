@@ -149,6 +149,8 @@ export interface LeadItem {
   message: string | null
   consentSnapshot: Record<string, unknown>
   status: 'new' | 'in_progress' | 'done' | 'spam'
+  spamScore: number
+  spamReasons: string[]
   createdAt: string
   updatedAt: string
 }

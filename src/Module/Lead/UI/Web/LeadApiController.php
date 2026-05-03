@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Module\Lead\UI\Web;
 
+use App\Module\Lead\Application\AntiSpam\LeadAntiSpamChecker;
+use App\Module\Lead\Application\Notification\LeadNotifier;
 use App\Module\Lead\Domain\Entity\Lead;
 use App\Module\Lead\Domain\Repository\LeadRepositoryInterface;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Attribute\Route;
 use Throwable;
 
@@ -18,8 +18,8 @@ final readonly class LeadApiController
 {
     public function __construct(
         private LeadRepositoryInterface $leads,
-        private MailerInterface $mailer,
-        private string $leadNotificationEmail,
+        private LeadAntiSpamChecker $antiSpam,
+        private LeadNotifier $notifier,
     ) {
     }
 
@@ -29,9 +29,7 @@ final readonly class LeadApiController
         try {
             /** @var array<string, mixed> $payload */
             $payload = $request->toArray();
-            if (($payload['website'] ?? '') !== '') {
-                return new JsonResponse(['status' => 'accepted'], 202);
-            }
+            $spamCheck = $this->antiSpam->check($payload, $request);
 
             if (($payload['consent'] ?? false) !== true) {
                 throw new InvalidArgumentException('Consent is required.');
@@ -46,13 +44,23 @@ final readonly class LeadApiController
                 [
                     'consent' => true,
                     'text' => $this->nullableString($payload, 'consentText') ?? 'Пользователь согласился на обработку персональных данных.',
+                    'policyUrl' => $this->nullableString($payload, 'policyUrl') ?? '/privacy/',
+                    'pageUrl' => $this->nullableString($payload, 'pageUrl'),
+                    'ip' => $request->getClientIp(),
+                    'userAgent' => $request->headers->get('User-Agent'),
                     'capturedAt' => (new \DateTimeImmutable())->format(DATE_ATOM),
                 ],
             );
-            $this->leads->save($lead);
-            $this->notify($lead);
+            if ($spamCheck->isSpam()) {
+                $lead->markSpam($spamCheck->score, $spamCheck->reasons);
+            }
 
-            return new JsonResponse(['status' => 'created', 'id' => $lead->toArray()['id']], 201);
+            $this->leads->save($lead);
+            if (!$spamCheck->isSpam()) {
+                $this->notifier->notify($lead);
+            }
+
+            return new JsonResponse(['status' => $spamCheck->isSpam() ? 'accepted' : 'created', 'id' => $lead->toArray()['id']], $spamCheck->isSpam() ? 202 : 201);
         } catch (Throwable $exception) {
             return new JsonResponse(['error' => $exception->getMessage()], 400);
         }
@@ -84,23 +92,5 @@ final readonly class LeadApiController
         }
 
         return $value;
-    }
-
-    private function notify(Lead $lead): void
-    {
-        if ($this->leadNotificationEmail === '') {
-            return;
-        }
-
-        $payload = $lead->toArray();
-        $id = $payload['id'];
-        if (!\is_string($id)) {
-            return;
-        }
-
-        $this->mailer->send((new Email())
-            ->to($this->leadNotificationEmail)
-            ->subject('Новая заявка с сайта zaborprofil.ru')
-            ->text('Поступила новая заявка: '.$id));
     }
 }

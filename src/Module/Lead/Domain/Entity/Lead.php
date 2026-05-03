@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Module\Lead\Domain\Entity;
 
+use App\Module\Lead\Domain\ValueObject\LeadStatus;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use InvalidArgumentException;
@@ -40,7 +41,16 @@ final class Lead
     private array $consentSnapshot;
 
     #[ORM\Column(length: 32)]
-    private string $status = 'new';
+    private string $status = LeadStatus::NEW;
+
+    #[ORM\Column(name: 'spam_score')]
+    private int $spamScore = 0;
+
+    /**
+     * @var list<string>
+     */
+    #[ORM\Column(name: 'spam_reasons', type: 'json', options: ['jsonb' => true])]
+    private array $spamReasons = [];
 
     #[ORM\Column]
     private DateTimeImmutable $createdAt;
@@ -66,13 +76,22 @@ final class Lead
 
     public function updateStatus(string $status): void
     {
-        $allowed = ['new', 'in_progress', 'done', 'spam'];
-        if (!\in_array($status, $allowed, true)) {
-            throw new InvalidArgumentException('Lead status is not allowed.');
+        $this->status = LeadStatus::normalize($status);
+        $this->updatedAt = new DateTimeImmutable();
+    }
+
+    /**
+     * @param list<string> $reasons
+     */
+    public function markSpam(int $score, array $reasons): void
+    {
+        if ($score < 0) {
+            throw new InvalidArgumentException('Lead spam score must be zero or positive.');
         }
 
-        $this->status = $status;
-        $this->updatedAt = new DateTimeImmutable();
+        $this->spamScore = $score;
+        $this->spamReasons = array_values(array_filter($reasons, static fn (string $reason): bool => trim($reason) !== ''));
+        $this->updateStatus(LeadStatus::SPAM);
     }
 
     /**
@@ -89,6 +108,8 @@ final class Lead
             'message' => $this->message,
             'consentSnapshot' => $this->consentSnapshot,
             'status' => $this->status,
+            'spamScore' => $this->spamScore,
+            'spamReasons' => $this->spamReasons,
             'createdAt' => $this->createdAt->format(DATE_ATOM),
             'updatedAt' => $this->updatedAt->format(DATE_ATOM),
         ];
