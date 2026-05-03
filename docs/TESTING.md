@@ -4,9 +4,14 @@
 
 ```bash
 composer check:syntax
+composer validate --strict
 vendor/bin/php-cs-fixer fix --dry-run --diff
 vendor/bin/phpstan analyse
 vendor/bin/rector process --dry-run
+php bin/console doctrine:schema:validate --env=test --skip-sync
+php bin/console lint:container --env=test
+php bin/console lint:twig templates --env=test
+php bin/console app:smoke:test --env=test
 vendor/bin/phpunit
 npm run build
 ```
@@ -18,7 +23,7 @@ npm run build
 - `tests/Functional` — функциональные тесты Symfony.
 - `tests/E2E` — будущие e2e-сценарии.
 
-На первом этапе добавлены smoke-тесты для Kernel, `/health` и `/admin/login`.
+`app:smoke:test` проверяет release-readiness: ключевые routes, обязательные env, Vite manifest и writable uploads storage.
 
 Для Content Engine добавлены:
 

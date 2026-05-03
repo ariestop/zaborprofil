@@ -5,9 +5,9 @@
 - страница входа `/admin/login`;
 - защищенный Vue dashboard `/admin/dashboard`;
 - страницы и блоки `/admin/content/pages`;
-- Media Library `/admin/media`;
-- управляемые меню `/admin/menu`;
-- заявки `/admin/leads`;
+- Media Library `/admin/media` с variants для изображений;
+- управляемые меню `/admin/menu` для `header`, `footer`, `service`;
+- заявки `/admin/leads` со статусами `new`, `in_progress`, `done`, `spam` и spam score/reasons;
 - настройки, редиректы, health center, maintenance mode и audit log.
 
 ## Content API
@@ -47,5 +47,13 @@ API пока предназначен для будущего Vue-интерфе
 - `GET /admin/api/leads`, `PATCH /admin/api/leads/{id}/status`.
 
 Публичные заявки отправляются в `POST /api/leads` с обязательным `consent=true` и honeypot-полем `website`.
+
+## Release readiness
+
+Перед выкладкой:
+
+- `make quality` должен проходить локально или в CI;
+- `php bin/console app:smoke:test --env=prod` должен проходить на целевом окружении;
+- после restore rehearsal проверяются sitemap, login, preview links, Media Library и публичная lead-форма.
 
 До реализации seed-команды администратора нужно создать вручную через миграцию, SQL или будущую console-команду.

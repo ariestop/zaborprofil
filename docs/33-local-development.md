@@ -63,6 +63,7 @@ php bin/console security:hash-password
 ## Ежедневные команды
 
 ```bash
+make init                     # build + up + install deps + migrate + build + smoke
 make up                       # старт сервисов
 make shell                    # шелл в php-контейнере
 make logs                     # tail логов всех сервисов
@@ -70,7 +71,8 @@ make migrate                  # применить миграции
 make migration                # сгенерировать diff-миграцию
 make reset-db                 # drop + create + migrate
 make test                     # phpunit
-make quality                  # cs + phpstan + rector + phpunit + npm build
+make quality                  # validate + syntax + cs + phpstan + rector + db/schema/twig/container + phpunit + smoke + npm build
+make smoke                    # app:smoke:test в test-env
 make cache-clear              # cache:clear внутри app
 make composer-install
 make npm-install

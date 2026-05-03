@@ -120,7 +120,8 @@ Functional тесты на `/health`, `/sitemap.xml`, `/robots.txt`, `/admin/log
 ```bash
 vendor/bin/phpunit
 make test
-make quality        # cs + phpstan + rector + phpunit + npm build
+make smoke          # release-readiness smoke checks
+make quality        # validate + syntax + cs + phpstan + rector + schema/lint + phpunit + smoke + npm build
 ```
 
 В CI — `composer test` (см. composer.json scripts).
@@ -134,6 +135,7 @@ make quality        # cs + phpstan + rector + phpunit + npm build
 - [ ] `composer test` ok.
 - [ ] Schema validate ok.
 - [ ] `lint:container`, `lint:twig` ok.
+- [ ] `php bin/console app:smoke:test` ok.
 - [ ] `npm run build` ok.
 
 ## Что проверять при новой фиче

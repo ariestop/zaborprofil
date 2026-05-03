@@ -64,6 +64,7 @@ make health
 ## Ежедневные команды
 
 ```bash
+make init
 make up
 make shell
 make logs
@@ -71,6 +72,7 @@ make cache-clear
 make migrate
 make test
 make quality
+make smoke
 make down
 ```
 

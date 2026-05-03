@@ -130,14 +130,16 @@
 - 152-ФЗ consent snapshot: текст согласия, policy URL, page URL, IP, User-Agent, timestamp;
 - email notifications и optional Telegram notifications для заявок.
 
-## Оставшиеся задачи на будущее
-
 ### W11 Dev/QA and documentation
 
-- `make init`;
-- расширенный `make quality`;
-- `app:smoke:test`;
-- финальное обновление документации администратора и редактора.
+Состав:
+
+- `make init`: build/up/install/migrate/build/smoke для локального старта;
+- расширенный `make quality`: composer validate, syntax, CS, PHPStan, Rector, migrations status, schema validate, container lint, Twig lint, PHPUnit, smoke test, npm build;
+- `app:smoke:test`: release-readiness проверки ключевых routes, env, Vite manifest и uploads storage;
+- финальное обновление документации администратора, редактора, тестирования и local dev.
+
+## Оставшиеся задачи на будущее
 
 ## Отложено до публичного запуска
 

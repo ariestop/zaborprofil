@@ -29,6 +29,14 @@ final class SmokeTestCommand extends Command
             'route:admin_login' => $this->routeExists('admin_login'),
             'route:admin_spa' => $this->routeExists('admin_spa'),
             'route:api_leads_create' => $this->routeExists('api_leads_create'),
+            'route:admin_api_media_assets_index' => $this->routeExists('admin_api_media_assets_index'),
+            'route:admin_api_menu_item_index' => $this->routeExists('admin_api_menu_item_index'),
+            'route:admin_api_leads_index' => $this->routeExists('admin_api_leads_index'),
+            'route:public_sitemap_xml' => $this->routeExists('public_sitemap_xml'),
+            'route:public_robots_txt' => $this->routeExists('public_robots_txt'),
+            'env:app_secret' => $this->envExists('APP_SECRET'),
+            'env:database_url' => $this->envExists('DATABASE_URL'),
+            'build:manifest' => $this->buildManifestExists(),
             'uploads:writable' => $this->uploadsWritable(),
         ];
 
@@ -50,6 +58,18 @@ final class SmokeTestCommand extends Command
     private function routeExists(string $name): bool
     {
         return $this->router->getRouteCollection()->get($name) !== null;
+    }
+
+    private function envExists(string $name): bool
+    {
+        $value = $_ENV[$name] ?? $_SERVER[$name] ?? null;
+
+        return \is_string($value) && trim($value) !== '';
+    }
+
+    private function buildManifestExists(): bool
+    {
+        return is_file($this->projectDir.'/public_html/build/.vite/manifest.json');
     }
 
     private function uploadsWritable(): bool

@@ -16,7 +16,9 @@ POSTGRES = $(COMPOSE) exec -T postgres
 REDIS = $(COMPOSE) exec -T redis
 TEST_ENV = env APP_ENV=test APP_SECRET=test-secret DATABASE_URL='sqlite:///%kernel.cache_dir%/test.db' REDIS_URL=redis://redis:6379/1 MESSENGER_TRANSPORT_DSN=in-memory:// MAILER_DSN=null://null SITE_URL=https://zaborprofil.test DEFAULT_URI=https://zaborprofil.test
 
-.PHONY: up down restart build shell composer-install npm-install npm-dev npm-build migrate migration fixtures test phpstan cs cs-fix rector quality smoke cache-clear logs db redis reset-db health
+.PHONY: init up down restart build shell composer-install npm-install npm-dev npm-build migrate migration fixtures test phpstan cs cs-fix rector quality smoke cache-clear logs db redis reset-db health
+
+init: build up composer-install npm-install migrate npm-build smoke
 
 up:
 	$(COMPOSE) up -d --remove-orphans
@@ -71,9 +73,14 @@ rector:
 
 quality:
 	$(PHP) composer validate --strict
+	$(PHP) composer check:syntax
 	$(PHP) php vendor/bin/php-cs-fixer fix --dry-run --diff --ansi
 	$(PHP) php vendor/bin/phpstan analyse
 	$(PHP) php vendor/bin/rector process --dry-run --ansi
+	$(PHP) $(TEST_ENV) php bin/console doctrine:migrations:status --env=test --no-interaction
+	$(PHP) $(TEST_ENV) php bin/console doctrine:schema:validate --env=test --no-interaction --skip-sync
+	$(PHP) $(TEST_ENV) php bin/console lint:container --env=test --no-interaction
+	$(PHP) $(TEST_ENV) php bin/console lint:twig templates --env=test --no-interaction
 	$(PHP) $(TEST_ENV) php vendor/bin/phpunit
 	$(PHP) $(TEST_ENV) php bin/console app:smoke:test
 	$(NODE) npm run build
