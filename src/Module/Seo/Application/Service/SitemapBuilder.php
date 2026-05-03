@@ -6,12 +6,15 @@ namespace App\Module\Seo\Application\Service;
 
 use App\Module\Content\Domain\Entity\Page;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
+use App\Module\Catalog\Domain\Entity\Product;
+use App\Module\Catalog\Domain\Repository\ProductRepositoryInterface;
 use InvalidArgumentException;
 
 final readonly class SitemapBuilder
 {
     public function __construct(
         private PageRepositoryInterface $pages,
+        private ProductRepositoryInterface $products,
         private string $siteUrl,
         private int $chunkSize,
     ) {
@@ -22,7 +25,7 @@ final readonly class SitemapBuilder
 
     public function chunkCount(): int
     {
-        return (int) ceil($this->pages->countPublishedIndexable() / $this->chunkSize);
+        return (int) ceil(($this->pages->countPublishedIndexable() + $this->products->countPublishedIndexable()) / $this->chunkSize);
     }
 
     public function buildRootSitemap(): string
@@ -49,13 +52,29 @@ final readonly class SitemapBuilder
     public function buildPageChunk(int $pageNumber): string
     {
         $offset = ($pageNumber - 1) * $this->chunkSize;
-        $pages = $this->pages->findPublishedIndexableSlice($this->chunkSize, $offset);
+        $pageCount = $this->pages->countPublishedIndexable();
+        $pages = [];
+        $products = [];
+
+        if ($offset < $pageCount) {
+            $pages = $this->pages->findPublishedIndexableSlice($this->chunkSize, $offset);
+        }
+
+        $remaining = $this->chunkSize - \count($pages);
+        if ($remaining > 0) {
+            $productOffset = max(0, $offset - $pageCount);
+            $products = $this->products->findPublishedIndexableSlice($remaining, $productOffset);
+        }
 
         $xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
         $xml .= "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
 
         foreach ($pages as $page) {
-            $xml .= $this->urlEntry($page);
+            $xml .= $this->pageUrlEntry($page);
+        }
+
+        foreach ($products as $product) {
+            $xml .= $this->productUrlEntry($product);
         }
 
         $xml .= "</urlset>\n";
@@ -63,10 +82,21 @@ final readonly class SitemapBuilder
         return $xml;
     }
 
-    private function urlEntry(Page $page): string
+    private function pageUrlEntry(Page $page): string
     {
         $loc = $this->xml($this->absoluteUrl($page->path()));
         $lastmod = $page->updatedAt()->format('Y-m-d');
+
+        return "    <url>\n"
+            .'        <loc>'.$loc."</loc>\n"
+            .'        <lastmod>'.$lastmod."</lastmod>\n"
+            ."    </url>\n";
+    }
+
+    private function productUrlEntry(Product $product): string
+    {
+        $loc = $this->xml($this->absoluteUrl($product->path()));
+        $lastmod = $product->updatedAt()->format('Y-m-d');
 
         return "    <url>\n"
             .'        <loc>'.$loc."</loc>\n"

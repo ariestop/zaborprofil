@@ -54,4 +54,31 @@ final class DoctrineCategoryRepository extends ServiceEntityRepository implement
 
         return $result;
     }
+
+    public function findActiveForPublic(): array
+    {
+        /** @var list<Category> $result */
+        $result = $this->findBy(['active' => true], ['sortOrder' => 'ASC', 'title' => 'ASC']);
+
+        return $result;
+    }
+
+    public function findActiveByPath(string $path): ?Category
+    {
+        return $this->findOneBy([
+            'path' => $this->normalizePath($path),
+            'active' => true,
+        ]);
+    }
+
+    private function normalizePath(string $path): string
+    {
+        $normalized = trim($path);
+
+        if ($normalized !== '' && !str_starts_with($normalized, '/')) {
+            return '/'.$normalized;
+        }
+
+        return $normalized;
+    }
 }

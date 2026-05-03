@@ -74,6 +74,31 @@ final class Category
         return $this->id;
     }
 
+    public function parent(): ?self
+    {
+        return $this->parent;
+    }
+
+    public function title(): string
+    {
+        return $this->title;
+    }
+
+    public function path(): string
+    {
+        return $this->path;
+    }
+
+    public function description(): ?string
+    {
+        return $this->description;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->active;
+    }
+
     public function update(string $title, string $slug, string $path, ?string $description, int $sortOrder, bool $active, ?self $parent = null): void
     {
         if ($parent !== null && (string) $parent->id() === (string) $this->id) {

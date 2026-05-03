@@ -1,0 +1,48 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ product.name }}{% endblock %}
+
+{% block body %}
+    <main class="mx-auto max-w-6xl px-6 py-12">
+        {% include 'public/catalog/_breadcrumbs.html.twig' %}
+
+        <article class="grid gap-10 lg:grid-cols-[1fr_360px]">
+            <div>
+                <p class="text-sm font-semibold uppercase tracking-wide text-emerald-700">Товар</p>
+                <h1 class="mt-2 text-4xl font-bold tracking-tight text-slate-950">{{ product.name }}</h1>
+                {% if product.summary %}
+                    <p class="mt-4 max-w-3xl text-lg leading-8 text-slate-700">{{ product.summary }}</p>
+                {% endif %}
+
+                {% if product.description %}
+                    <div class="prose prose-slate mt-8 max-w-none">
+                        <p>{{ product.description|nl2br }}</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <aside class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 class="text-xl font-bold text-slate-950">Варианты исполнения</h2>
+                {% if variants %}
+                    <div class="mt-5 grid gap-3">
+                        {% for variant in variants %}
+                            <div class="rounded-xl border border-slate-200 p-4">
+                                <p class="font-semibold text-slate-950">{{ variant.title }}</p>
+                                <p class="mt-1 text-sm text-slate-500">SKU: {{ variant.sku }}</p>
+                                <p class="mt-3 text-lg font-bold text-emerald-700">
+                                    {{ (variant.priceCents / 100)|number_format(2, ',', ' ') }} {{ variant.currency }}
+                                </p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="mt-4 text-sm text-slate-600">Активные варианты появятся позже.</p>
+                {% endif %}
+            </aside>
+        </article>
+
+        <div class="mt-12">
+            {% include 'public/partials/lead_form.html.twig' %}
+        </div>
+    </main>
+{% endblock %}

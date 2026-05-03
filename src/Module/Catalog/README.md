@@ -14,10 +14,16 @@
   - `PUT/DELETE /admin/api/catalog/products/{id}`;
   - `POST /admin/api/catalog/products/{productId}/variants`;
   - `PUT/DELETE /admin/api/catalog/variants/{id}`.
+- Public SSR:
+  - `GET /catalog/`;
+  - `GET /catalog/{path}` для активных категорий и опубликованных товаров.
+- SEO:
+  - product meta description / canonical / OpenGraph поля;
+  - JSON-LD `Product` с `Offer` по активным вариантам;
+  - опубликованные indexable товары попадают в `/sitemap.xml`.
 
 Не входит в этот slice:
 
-- публичный SSR каталога;
 - корзина и заказ;
 - складские остатки и доставка;
 - payments;

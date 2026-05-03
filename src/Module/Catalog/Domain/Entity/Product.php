@@ -45,6 +45,21 @@ final class Product
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $description;
 
+    #[ORM\Column(name: 'meta_description', length: 320, nullable: true)]
+    private ?string $metaDescription = null;
+
+    #[ORM\Column(name: 'canonical_url', length: 2048, nullable: true)]
+    private ?string $canonicalUrl = null;
+
+    #[ORM\Column(name: 'og_title', length: 255, nullable: true)]
+    private ?string $ogTitle = null;
+
+    #[ORM\Column(name: 'og_description', length: 320, nullable: true)]
+    private ?string $ogDescription = null;
+
+    #[ORM\Column(name: 'og_image', length: 2048, nullable: true)]
+    private ?string $ogImage = null;
+
     #[ORM\Column(name: 'is_indexable')]
     private bool $indexable;
 
@@ -90,6 +105,79 @@ final class Product
         return $this->id;
     }
 
+    public function category(): ?Category
+    {
+        return $this->category;
+    }
+
+    public function name(): string
+    {
+        return $this->name;
+    }
+
+    public function path(): string
+    {
+        return $this->path;
+    }
+
+    public function status(): ProductStatus
+    {
+        return $this->status;
+    }
+
+    public function summary(): ?string
+    {
+        return $this->summary;
+    }
+
+    public function description(): ?string
+    {
+        return $this->description;
+    }
+
+    public function metaDescription(): ?string
+    {
+        return $this->metaDescription;
+    }
+
+    public function canonicalUrl(): ?string
+    {
+        return $this->canonicalUrl;
+    }
+
+    public function ogTitle(): ?string
+    {
+        return $this->ogTitle;
+    }
+
+    public function ogDescription(): ?string
+    {
+        return $this->ogDescription;
+    }
+
+    public function ogImage(): ?string
+    {
+        return $this->ogImage;
+    }
+
+    public function isIndexable(): bool
+    {
+        return $this->indexable;
+    }
+
+    public function updatedAt(): DateTimeImmutable
+    {
+        return $this->updatedAt;
+    }
+
+    /**
+     * @return list<Variant>
+     */
+    public function activeVariants(): array
+    {
+        return array_values($this->variants->filter(static fn (Variant $variant): bool => $variant->isActive())->toArray());
+    }
+
     public function addVariant(Variant $variant): void
     {
         if (!$this->variants->contains($variant)) {
@@ -120,6 +208,21 @@ final class Product
         $this->touch();
     }
 
+    public function updateSeoMetadata(
+        ?string $metaDescription,
+        ?string $canonicalUrl,
+        ?string $ogTitle,
+        ?string $ogDescription,
+        ?string $ogImage,
+    ): void {
+        $this->metaDescription = self::normalizeOptionalString($metaDescription, 320, 'metaDescription');
+        $this->canonicalUrl = self::normalizeOptionalAbsoluteUrl($canonicalUrl, 'canonicalUrl');
+        $this->ogTitle = self::normalizeOptionalString($ogTitle, 255, 'ogTitle');
+        $this->ogDescription = self::normalizeOptionalString($ogDescription, 320, 'ogDescription');
+        $this->ogImage = self::normalizeOptionalAbsoluteUrl($ogImage, 'ogImage');
+        $this->touch();
+    }
+
     public function touch(): void
     {
         $this->updatedAt = new DateTimeImmutable();
@@ -139,6 +242,11 @@ final class Product
             'status' => $this->status->value,
             'summary' => $this->summary,
             'description' => $this->description,
+            'metaDescription' => $this->metaDescription,
+            'canonicalUrl' => $this->canonicalUrl,
+            'ogTitle' => $this->ogTitle,
+            'ogDescription' => $this->ogDescription,
+            'ogImage' => $this->ogImage,
             'isIndexable' => $this->indexable,
             'variants' => array_map(static fn (Variant $variant): array => $variant->toArray(), $this->variants->toArray()),
             'createdAt' => $this->createdAt->format(DATE_ATOM),
@@ -200,5 +308,35 @@ final class Product
         $normalized = trim($value);
 
         return $normalized === '' ? null : $normalized;
+    }
+
+    private static function normalizeOptionalString(?string $value, int $maxLength, string $field): ?string
+    {
+        $normalized = self::optionalText($value);
+
+        if ($normalized === null) {
+            return null;
+        }
+
+        if (mb_strlen($normalized) > $maxLength) {
+            throw new InvalidArgumentException(\sprintf('Catalog product %s must be at most %d characters.', $field, $maxLength));
+        }
+
+        return $normalized;
+    }
+
+    private static function normalizeOptionalAbsoluteUrl(?string $value, string $field): ?string
+    {
+        $normalized = self::normalizeOptionalString($value, 2048, $field);
+
+        if ($normalized === null) {
+            return null;
+        }
+
+        if (!preg_match('#^https?://#i', $normalized)) {
+            throw new InvalidArgumentException(\sprintf('Catalog product %s must be an absolute URL (http:// or https://).', $field));
+        }
+
+        return $normalized;
     }
 }

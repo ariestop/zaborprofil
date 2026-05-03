@@ -1,0 +1,16 @@
+{% if breadcrumbs is defined and breadcrumbs|length > 1 %}
+    <nav class="mb-8 text-sm text-slate-500" aria-label="Хлебные крошки">
+        <ol class="flex flex-wrap gap-2">
+            {% for breadcrumb in breadcrumbs %}
+                <li>
+                    {% if breadcrumb.current %}
+                        <span class="text-slate-700" aria-current="page">{{ breadcrumb.label }}</span>
+                    {% else %}
+                        <a class="hover:text-emerald-700" href="{{ breadcrumb.path }}">{{ breadcrumb.label }}</a>
+                        <span class="ml-2 text-slate-300">/</span>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ol>
+    </nav>
+{% endif %}

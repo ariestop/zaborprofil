@@ -14,6 +14,7 @@ use App\Module\Catalog\Domain\Repository\CategoryRepositoryInterface;
 use App\Module\Catalog\Domain\Repository\ProductRepositoryInterface;
 use App\Module\Catalog\Domain\Repository\VariantRepositoryInterface;
 use App\Module\Content\UI\Admin\JsonRequest;
+use App\Module\Seo\Application\Service\CanonicalUrlGuard;
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -32,6 +33,7 @@ final readonly class CatalogApiController
         private VariantRepositoryInterface $variants,
         private JsonRequest $jsonRequest,
         private AuthorizationCheckerInterface $authorizationChecker,
+        private CanonicalUrlGuard $canonicalUrlGuard,
         private LoggerInterface $logger,
     ) {
     }
@@ -149,6 +151,14 @@ final readonly class CatalogApiController
                 $this->jsonRequest->bool($payload, 'isIndexable', true),
                 $this->categories->findById($this->jsonRequest->nullableString($payload, 'categoryId')),
             );
+            $product->updateSeoMetadata(
+                $this->jsonRequest->nullableString($payload, 'metaDescription'),
+                $this->jsonRequest->nullableString($payload, 'canonicalUrl'),
+                $this->jsonRequest->nullableString($payload, 'ogTitle'),
+                $this->jsonRequest->nullableString($payload, 'ogDescription'),
+                $this->jsonRequest->nullableString($payload, 'ogImage'),
+            );
+            $this->canonicalUrlGuard->assertAllowed($product->canonicalUrl());
             $this->products->save($product);
 
             return new JsonResponse($product->toArray(), 201);
@@ -177,6 +187,14 @@ final readonly class CatalogApiController
                 $this->jsonRequest->bool($payload, 'isIndexable', true),
                 $this->categories->findById($this->jsonRequest->nullableString($payload, 'categoryId')),
             );
+            $product->updateSeoMetadata(
+                $this->jsonRequest->nullableString($payload, 'metaDescription'),
+                $this->jsonRequest->nullableString($payload, 'canonicalUrl'),
+                $this->jsonRequest->nullableString($payload, 'ogTitle'),
+                $this->jsonRequest->nullableString($payload, 'ogDescription'),
+                $this->jsonRequest->nullableString($payload, 'ogImage'),
+            );
+            $this->canonicalUrlGuard->assertAllowed($product->canonicalUrl());
             $this->products->save($product);
 
             return new JsonResponse($product->toArray());

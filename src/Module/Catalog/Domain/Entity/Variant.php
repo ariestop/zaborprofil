@@ -80,6 +80,31 @@ final class Variant
         return $this->product;
     }
 
+    public function title(): string
+    {
+        return $this->title;
+    }
+
+    public function sku(): string
+    {
+        return $this->sku;
+    }
+
+    public function priceCents(): int
+    {
+        return $this->priceCents;
+    }
+
+    public function currency(): string
+    {
+        return $this->currency;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->active;
+    }
+
     public function update(string $sku, string $title, int $priceCents, string $currency, int $sortOrder, bool $active): void
     {
         $this->sku = self::normalizeSku($sku);

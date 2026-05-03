@@ -20,4 +20,11 @@ interface CategoryRepositoryInterface
      * @return list<Category>
      */
     public function findAllForAdmin(): array;
+
+    /**
+     * @return list<Category>
+     */
+    public function findActiveForPublic(): array;
+
+    public function findActiveByPath(string $path): ?Category;
 }
