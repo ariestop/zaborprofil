@@ -45,9 +45,14 @@
 - `deploy-production.sh` — деплой production (требует `CONFIRM_STAGING_DEPLOYED=yes` и `CONFIRM_DEPLOY_SAFETY_CHECKLIST=yes`).
 - `rollback.sh` — переключение `current` на предыдущий релиз или выбранный релиз.
 - `health-check.sh` — curl healthcheck с retry.
+- `staging-smoke.sh` — post-deploy smoke для staging.
+- `restore-rehearsal.sh` — проверка восстановления PostgreSQL dump и uploads archive.
+- `monitoring-check.sh` — health/readiness, disk, services, PostgreSQL, Redis и smoke для systemd timer.
 - `shared-env-example.sh` — шаблон env переменных скриптов.
 - `templates/nginx-staging.conf`, `nginx-production.conf` — nginx vhost.
 - `templates/zaborprofil-messenger.service`, `zaborprofil-messenger-staging.service` — systemd unit для worker.
+- `templates/zaborprofil-monitoring.service`, `zaborprofil-monitoring.timer` — systemd monitoring checks.
+- `templates/zaborprofil-logrotate.conf` — logrotate для Symfony logs.
 
 Все скрипты — bash, идемпотентны, логируют через `set -euo pipefail`.
 
@@ -86,6 +91,10 @@ APP_ROOT=/var/www/zaborprofil \
 HEALTH_URL=https://staging.zaborprofil.ru/health \
 tools/deploy/deploy-staging.sh
 ```
+
+Staging deploy по умолчанию запускает `tools/deploy/staging-smoke.sh` после
+успешного health-check. Для временного отключения используйте
+`RUN_STAGING_SMOKE=no`.
 
 Production:
 

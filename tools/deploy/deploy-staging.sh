@@ -16,3 +16,7 @@ HEALTH_URL="${HEALTH_URL:-https://staging.zaborprofil.ru/health}"
 export WORKER_SERVICE="${WORKER_SERVICE:-zaborprofil-messenger-staging}"
 
 deploy_release "$BRANCH" "$APP_ENV" "$HEALTH_URL" "no"
+
+if [[ "${RUN_STAGING_SMOKE:-yes}" == "yes" ]]; then
+  "$SCRIPT_DIR/staging-smoke.sh"
+fi

@@ -149,18 +149,25 @@ $this->mediaLogger->error('media.upload.failed', [
 
 ## Logrotate
 
-На VPS — `/etc/logrotate.d/zaborprofil`:
+Шаблон хранится в `tools/deploy/templates/zaborprofil-logrotate.conf`.
+На VPS он устанавливается как `/etc/logrotate.d/zaborprofil`:
 
 ```text
-/var/www/zaborprofil/current/var/log/*.log {
+/var/www/zaborprofil/shared/var/log/*.log {
     daily
     missingok
     rotate 14
     compress
+    delaycompress
     notifempty
     copytruncate
+    create 0640 www-data www-data
 }
 ```
+
+Monitoring timer использует `tools/deploy/monitoring-check.sh` и может отправлять
+алерты через `ALERT_WEBHOOK_URL` или Telegram-пару `ALERT_TELEGRAM_BOT_TOKEN` /
+`ALERT_TELEGRAM_CHAT_ID`.
 
 ## Observability roadmap
 

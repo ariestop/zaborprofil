@@ -69,6 +69,7 @@ Concurrency: `deploy-${{ github.ref }}; cancel-in-progress: false`.
 - Срабатывает на push develop/staging, tag v*, или workflow_dispatch.
 - SCP заливает `tools/deploy/*` на staging-сервер в `/tmp/zaborprofil-deploy`.
 - SSH запускает `deploy-staging.sh` с переменными окружения из `secrets.STAGING_*`.
+- После успешного health-check staging script запускает `staging-smoke.sh`.
 
 #### Job `deploy-production`
 

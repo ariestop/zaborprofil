@@ -1,0 +1,14 @@
+[Unit]
+Description=Zaborprofil monitoring check
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=deploy
+Group=deploy
+Environment=APP_ROOT=/var/www/zaborprofil
+Environment=HEALTH_URL=https://zaborprofil.ru/health
+Environment=APP_ENV=prod
+EnvironmentFile=-/var/www/zaborprofil/shared/monitoring.env
+ExecStart=/var/www/zaborprofil/current/tools/deploy/monitoring-check.sh

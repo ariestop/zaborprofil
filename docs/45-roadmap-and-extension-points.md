@@ -24,11 +24,20 @@
 
 ### Этап 1 — release readiness (следующий)
 
-- Выполнить первый staging smoke deploy.
-- Настроить GitHub Environments и secrets для staging/production.
-- Провести restore rehearsal: PostgreSQL dump restore + uploads archive restore.
-- Задокументировать реальные VPS значения `PHP_FPM_SERVICE`, `WORKER_SERVICE`, paths и retention.
-- Добавить monitoring/log rotation/alerting для PHP-FPM, Nginx, Messenger, PostgreSQL и Redis.
+Репозиторий подготовлен:
+
+- staging deploy запускает `tools/deploy/staging-smoke.sh`;
+- GitHub Actions использует environments `staging` и `production`;
+- restore rehearsal автоматизирован через `tools/deploy/restore-rehearsal.sh`;
+- monitoring/log rotation/alerting подготовлены через `tools/deploy/monitoring-check.sh` и templates в `tools/deploy/templates/`;
+- порядок установки и запуска описан в [RELEASE_READINESS](RELEASE_READINESS.md).
+
+Остаётся операционно на VPS/GitHub:
+
+- выполнить первый staging smoke deploy;
+- завести реальные GitHub Environment secrets для staging/production;
+- провести restore rehearsal на реальном backup;
+- установить monitoring timer и logrotate на VPS.
 
 ### Этап 2 — Catalog / Commerce
 

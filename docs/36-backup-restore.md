@@ -105,6 +105,20 @@ rsync -av \
 - Проверка sitemap, login, preview links, Media Library и публичной lead-формы;
 - Запуск `php bin/console app:smoke:test` после переключения на восстановленную БД.
 
+Для технической проверки backup-файлов без переключения приложения используйте:
+
+```bash
+CONFIRM_RESTORE_REHEARSAL=yes \
+APP_ROOT=/var/www/zaborprofil \
+tools/deploy/restore-rehearsal.sh \
+    --db-backup /var/www/zaborprofil/shared/backups/db/<backup>.dump \
+    --uploads-backup /var/www/zaborprofil/shared/backups/uploads/<backup>.tar.gz
+```
+
+Скрипт восстанавливает dump во временную БД, проверяет наличие public tables,
+распаковывает uploads archive во временную директорию и удаляет временные данные
+после успешного rehearsal.
+
 ## Что нельзя
 
 - Хранить backup в той же папке, что и release (его удалят при `releases/cleanup`).

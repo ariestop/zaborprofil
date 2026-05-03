@@ -219,27 +219,17 @@ load_shared_env() {
   set +a
 }
 
-backup_database() {
-  local release_name="$1"
+export_pg_env_from_database_url() {
+  local database_url="${1:-${DATABASE_URL:-}}"
 
-  if [[ -n "${DATABASE_BACKUP_COMMAND:-}" ]]; then
-    log "Run custom database backup command"
-    bash -lc "$DATABASE_BACKUP_COMMAND"
-    return
-  fi
+  [[ -n "$database_url" ]] || fail "DATABASE_URL is not set"
 
-  require_command pg_dump
-  load_shared_env
-
-  mkdir -p "$DB_BACKUP_DIR"
-
-  local backup_file="$DB_BACKUP_DIR/${release_name}_database.dump"
   local pg_env_file
   pg_env_file="$(mktemp)"
 
-  "$PHP_BIN" <<'PHP' >"$pg_env_file"
+  DATABASE_URL_TO_PARSE="$database_url" "$PHP_BIN" <<'PHP' >"$pg_env_file"
 <?php
-$url = getenv('DATABASE_URL') ?: '';
+$url = getenv('DATABASE_URL_TO_PARSE') ?: '';
 $parts = parse_url($url);
 if ($parts === false || ($parts['scheme'] ?? '') === '') {
     fwrite(STDERR, "DATABASE_URL is not parseable\n");
@@ -259,6 +249,24 @@ PHP
   # shellcheck disable=SC1091
   source "$pg_env_file"
   rm -f "$pg_env_file"
+}
+
+backup_database() {
+  local release_name="$1"
+
+  if [[ -n "${DATABASE_BACKUP_COMMAND:-}" ]]; then
+    log "Run custom database backup command"
+    bash -lc "$DATABASE_BACKUP_COMMAND"
+    return
+  fi
+
+  require_command pg_dump
+  load_shared_env
+
+  mkdir -p "$DB_BACKUP_DIR"
+
+  local backup_file="$DB_BACKUP_DIR/${release_name}_database.dump"
+  export_pg_env_from_database_url "$DATABASE_URL"
 
   pg_dump --format=custom --file="$backup_file"
 
