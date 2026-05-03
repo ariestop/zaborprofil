@@ -16,7 +16,8 @@
 │   ├── .env.local                 # APP_SECRET, DB password, Redis password, ...
 │   ├── public_html/uploads/       # симлинкается из releases/<ts>/public_html/uploads
 │   ├── var/log/                   # симлинкается из releases/<ts>/var/log
-│   └── backups/                   # дампы PostgreSQL, копии uploads
+│   ├── backups/                   # дампы PostgreSQL, копии uploads
+│   └── deployments/               # deployments.jsonl, staging marker
 └── current -> releases/20260502-090000
 ```
 
@@ -41,8 +42,8 @@
 
 - `common.sh` — общие функции, переменные.
 - `deploy-staging.sh` — деплой staging.
-- `deploy-production.sh` — деплой production (требует `CONFIRM_STAGING_DEPLOYED=yes`).
-- `rollback.sh` — переключение `current` на предыдущий релиз.
+- `deploy-production.sh` — деплой production (требует `CONFIRM_STAGING_DEPLOYED=yes` и `CONFIRM_DEPLOY_SAFETY_CHECKLIST=yes`).
+- `rollback.sh` — переключение `current` на предыдущий релиз или выбранный релиз.
 - `health-check.sh` — curl healthcheck с retry.
 - `shared-env-example.sh` — шаблон env переменных скриптов.
 - `templates/nginx-staging.conf`, `nginx-production.conf` — nginx vhost.
@@ -90,6 +91,7 @@ Production:
 
 ```bash
 CONFIRM_STAGING_DEPLOYED=yes \
+CONFIRM_DEPLOY_SAFETY_CHECKLIST=yes \
 BRANCH=master \
 APP_ROOT=/var/www/zaborprofil \
 HEALTH_URL=https://zaborprofil.ru/health \
@@ -100,6 +102,18 @@ Rollback:
 
 ```bash
 HEALTH_URL=https://zaborprofil.ru/health tools/deploy/rollback.sh
+```
+
+Список доступных релизов:
+
+```bash
+tools/deploy/rollback.sh --list
+```
+
+Rollback на конкретный релиз:
+
+```bash
+HEALTH_URL=https://zaborprofil.ru/health tools/deploy/rollback.sh 2026-05-03_142000
 ```
 
 ## Nginx config
@@ -187,6 +201,19 @@ php bin/console cache:warmup --env=prod
 3. `systemctl restart zaborprofil-messenger`.
 4. `health-check.sh`.
 5. Если миграция повредила БД — restore из backup (см. [36-backup-restore](36-backup-restore.md)).
+
+`tools/deploy/rollback.sh --list` показывает релизы по убыванию времени. В аргумент можно передать имя релиза из `releases/` или абсолютный путь.
+
+## DevOps safety
+
+- `current` переключается атомарно через временный symlink и `mv`.
+- `tools/deploy/*.sh` используют lock directory `${APP_ROOT}/.deploy.lock`, чтобы не запускать deploy и rollback параллельно.
+- Production deploy перед миграциями создает PostgreSQL backup в `shared/backups/db/` и uploads archive в `shared/backups/uploads/`.
+- Backup проверяется сразу после создания: `pg_restore -l` для dump и `tar -tzf` для uploads archive.
+- Старые backup-файлы удаляются по `BACKUP_RETENTION_DAYS` (по умолчанию 14 дней).
+- Deploy и rollback пишут JSONL-события в `shared/deployments/deployments.jsonl`; retention управляется `DEPLOY_LOG_RETENTION_DAYS` (по умолчанию 90 дней).
+- Production deploy требует `CONFIRM_STAGING_DEPLOYED=yes` и `CONFIRM_DEPLOY_SAFETY_CHECKLIST=yes`.
+- Если staging и production находятся на одном `APP_ROOT` или marker синхронизируется отдельно, можно включить дополнительную проверку `REQUIRE_STAGING_MARKER=yes`; marker хранится в `shared/deployments/last-staging-success.env`.
 
 ## Deployment checklist
 

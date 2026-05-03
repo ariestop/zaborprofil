@@ -59,15 +59,19 @@
 - Business Events Log;
 - документация `docs/MAINTENANCE.md`, `docs/AUDIT_LOG.md`, `docs/BUSINESS_EVENTS.md`.
 
-## Оставшиеся задачи на будущее
-
 ### W5 DevOps safety
 
-- Backup Manager;
-- Deployment Log;
-- расширенный Rollback Manager;
-- Deploy Safety Checklist;
-- Staging Protection.
+Состав:
+
+- Backup Manager на уровне deploy-скриптов: PostgreSQL dump + uploads archive перед production миграциями;
+- проверка backup-файлов (`pg_restore -l`, `tar -tzf`) и retention через `BACKUP_RETENTION_DAYS`;
+- Deployment Log в `shared/deployments/deployments.jsonl`;
+- расширенный Rollback Manager: `rollback.sh --list`, rollback по имени/пути релиза, health-check после rollback;
+- Deploy Safety Checklist gate для production через `CONFIRM_DEPLOY_SAFETY_CHECKLIST=yes`;
+- защита от параллельных deploy/rollback через lock directory;
+- Staging Protection: production job зависит от staging job, production script требует `CONFIRM_STAGING_DEPLOYED=yes`, опционально поддерживается marker `REQUIRE_STAGING_MARKER=yes`.
+
+## Оставшиеся задачи на будущее
 
 ### W6 SEO core
 

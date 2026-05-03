@@ -75,7 +75,7 @@ Concurrency: `deploy-${{ github.ref }}; cancel-in-progress: false`.
 - Environment: `production`.
 - Срабатывает только при `tags/v*`.
 - Зависит от `deploy-staging`.
-- SCP + SSH + `deploy-production.sh` с `CONFIRM_STAGING_DEPLOYED=yes`.
+- SCP + SSH + `deploy-production.sh` с `CONFIRM_STAGING_DEPLOYED=yes` и `CONFIRM_DEPLOY_SAFETY_CHECKLIST=yes`.
 
 ## Secrets
 

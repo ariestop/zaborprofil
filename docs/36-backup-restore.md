@@ -5,8 +5,8 @@
 | Объект | Способ | Частота | Retention | Где |
 |---|---|---|---|---|
 | PostgreSQL (full) | `pg_dump --format=custom` | ежедневно | 30 дней | `/var/www/zaborprofil/shared/backups/db/` |
-| PostgreSQL (per-deploy) | `pg_dump` перед миграцией | per deploy | 14 дней | то же |
-| `public_html/uploads/` | `rsync` или `tar` | ежедневно | 30 дней | `shared/backups/uploads/` |
+| PostgreSQL (per-deploy) | `pg_dump` перед миграцией | per deploy | `BACKUP_RETENTION_DAYS` (по умолчанию 14 дней) | `shared/backups/db/` |
+| `public_html/uploads/` | `rsync` или `tar` | ежедневно / per deploy | `BACKUP_RETENTION_DAYS` для per-deploy архивов | `shared/backups/uploads/` |
 | `.env.local` (зашифрованный) | копия в безопасное хранилище | при изменении | бессрочно | offline / vault |
 | Redis | RDB снапшот | (опционально) ежечасно | 7 дней | `shared/backups/redis/` |
 
@@ -24,7 +24,7 @@ PGPASSWORD=... pg_dump \
     --file=/var/www/zaborprofil/shared/backups/db/zaborprofil-$(date +%Y%m%d-%H%M%S).dump
 ```
 
-Внутри `tools/deploy/deploy-production.sh` это уже выполняется перед `migrations:migrate`.
+Внутри `tools/deploy/deploy-production.sh` это уже выполняется перед `migrations:migrate`. Per-deploy dump сохраняется в `shared/backups/db/<release>_database.dump` и проверяется через `pg_restore -l`.
 
 ## PostgreSQL restore
 
@@ -55,6 +55,8 @@ rsync -av --delete \
 ```
 
 Целевое: rsync в off-site (S3-compatible, encrypted at rest).
+
+В production deploy uploads дополнительно архивируются в `shared/backups/uploads/<release>_uploads.tar.gz`; архив сразу проверяется через `tar -tzf`.
 
 ## Uploads restore
 
@@ -115,6 +117,7 @@ rsync -av \
 - [ ] Off-site копирование (S3 / Hetzner / B2).
 - [ ] Encryption.
 - [ ] Retention настроен.
+- [ ] `BACKUP_RETENTION_DAYS` соответствует production policy.
 - [ ] Restore drill план в календаре.
 - [ ] Логирование backup’ов в канал `deploy`.
 - [ ] Alert при отсутствии успешного backup за 36ч.

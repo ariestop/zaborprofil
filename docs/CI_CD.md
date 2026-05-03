@@ -38,7 +38,7 @@ Production:
 - tag `v*`;
 - environment `production` должен иметь manual approval в GitHub;
 - job зависит от успешного `deploy-staging`;
-- запуск `tools/deploy/deploy-production.sh` с `CONFIRM_STAGING_DEPLOYED=yes`.
+- запуск `tools/deploy/deploy-production.sh` с `CONFIRM_STAGING_DEPLOYED=yes` и `CONFIRM_DEPLOY_SAFETY_CHECKLIST=yes`.
 
 Production intentionally does not run from manual dispatch. Для production создается tag `v*`; workflow сначала деплоит этот tag на staging, затем после approval деплоит тот же tag на production.
 
@@ -81,6 +81,7 @@ sudo chown -R www-data:www-data /var/www/zaborprofil
 ## Security
 
 - Production deploy не стартует без успешного staging job.
+- Production deploy не стартует без явного deploy safety confirmation.
 - Production deploy делает backup перед миграциями.
 - Health-check обязателен после переключения релиза.
 - Rollback выполняется автоматически при failed health-check.

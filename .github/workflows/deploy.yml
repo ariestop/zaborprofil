@@ -140,4 +140,5 @@ jobs:
             APP_ROOT="${PRODUCTION_APP_ROOT:-/var/www/zaborprofil}" \
             HEALTH_URL="${PRODUCTION_HEALTH_URL:-https://zaborprofil.ru/health}" \
             CONFIRM_STAGING_DEPLOYED=yes \
+            CONFIRM_DEPLOY_SAFETY_CHECKLIST=yes \
             /tmp/zaborprofil-deploy/deploy-production.sh

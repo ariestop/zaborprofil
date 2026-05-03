@@ -12,11 +12,19 @@ NPM_BIN="${NPM_BIN:-npm}"
 PHP_FPM_SERVICE="${PHP_FPM_SERVICE:-php8.5-fpm}"
 NGINX_SERVICE="${NGINX_SERVICE:-nginx}"
 WORKER_SERVICE="${WORKER_SERVICE:-zaborprofil-messenger}"
+BACKUP_RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-14}"
+DEPLOY_LOG_RETENTION_DAYS="${DEPLOY_LOG_RETENTION_DAYS:-90}"
 
 RELEASES_DIR="${APP_ROOT}/releases"
 SHARED_DIR="${APP_ROOT}/shared"
 CURRENT_LINK="${APP_ROOT}/current"
 BACKUP_DIR="${SHARED_DIR}/backups"
+DB_BACKUP_DIR="${BACKUP_DIR}/db"
+UPLOADS_BACKUP_DIR="${BACKUP_DIR}/uploads"
+DEPLOYMENTS_DIR="${SHARED_DIR}/deployments"
+DEPLOY_LOG_FILE="${DEPLOY_LOG_FILE:-$DEPLOYMENTS_DIR/deployments.jsonl}"
+DEPLOY_LOCK_DIR="${APP_ROOT}/.deploy.lock"
+STAGING_MARKER_FILE="${STAGING_MARKER_FILE:-$DEPLOYMENTS_DIR/last-staging-success.env}"
 
 log() {
   printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"
@@ -36,11 +44,98 @@ prepare_shared_layout() {
     "$RELEASES_DIR" \
     "$SHARED_DIR/public_html/uploads" \
     "$SHARED_DIR/var/log" \
-    "$BACKUP_DIR"
+    "$DB_BACKUP_DIR" \
+    "$UPLOADS_BACKUP_DIR" \
+    "$DEPLOYMENTS_DIR"
 
   if [[ ! -f "$SHARED_DIR/.env.local" ]]; then
     fail "Missing shared env: $SHARED_DIR/.env.local"
   fi
+}
+
+acquire_deploy_lock() {
+  if ! mkdir "$DEPLOY_LOCK_DIR" 2>/dev/null; then
+    fail "Another deploy or rollback is already running: $DEPLOY_LOCK_DIR"
+  fi
+
+  printf '%s\n' "$$" >"$DEPLOY_LOCK_DIR/pid"
+}
+
+release_deploy_lock() {
+  rm -rf "$DEPLOY_LOCK_DIR"
+}
+
+append_deployment_log() {
+  local action="$1"
+  local status="$2"
+  local release_name="${3:-}"
+  local branch="${4:-}"
+  local app_env="${5:-}"
+  local commit="${6:-}"
+  local message="${7:-}"
+
+  mkdir -p "$DEPLOYMENTS_DIR"
+
+  DEPLOY_LOG_ACTION="$action" \
+  DEPLOY_LOG_STATUS="$status" \
+  DEPLOY_LOG_RELEASE="$release_name" \
+  DEPLOY_LOG_BRANCH="$branch" \
+  DEPLOY_LOG_APP_ENV="$app_env" \
+  DEPLOY_LOG_COMMIT="$commit" \
+  DEPLOY_LOG_MESSAGE="$message" \
+  DEPLOY_LOG_USER="$(id -un 2>/dev/null || printf 'unknown')" \
+  "$PHP_BIN" <<'PHP' >>"$DEPLOY_LOG_FILE"
+<?php
+$entry = [
+    'timestamp' => gmdate('c'),
+    'action' => getenv('DEPLOY_LOG_ACTION') ?: '',
+    'status' => getenv('DEPLOY_LOG_STATUS') ?: '',
+    'release' => getenv('DEPLOY_LOG_RELEASE') ?: '',
+    'branch' => getenv('DEPLOY_LOG_BRANCH') ?: '',
+    'app_env' => getenv('DEPLOY_LOG_APP_ENV') ?: '',
+    'commit' => getenv('DEPLOY_LOG_COMMIT') ?: '',
+    'message' => getenv('DEPLOY_LOG_MESSAGE') ?: '',
+    'user' => getenv('DEPLOY_LOG_USER') ?: 'unknown',
+];
+
+echo json_encode($entry, JSON_UNESCAPED_SLASHES), PHP_EOL;
+PHP
+}
+
+cleanup_deployment_logs() {
+  [[ -f "$DEPLOY_LOG_FILE" ]] || return
+
+  local cutoff
+  cutoff="$(date -u -d "$DEPLOY_LOG_RETENTION_DAYS days ago" '+%Y-%m-%dT%H:%M:%S' 2>/dev/null || true)"
+  [[ -n "$cutoff" ]] || return
+
+  local tmp_file
+  tmp_file="$(mktemp)"
+
+  DEPLOY_LOG_CUTOFF="$cutoff" "$PHP_BIN" "$DEPLOY_LOG_FILE" <<'PHP' >"$tmp_file"
+<?php
+$cutoff = strtotime((string) getenv('DEPLOY_LOG_CUTOFF'));
+$file = $argv[1] ?? '';
+$handle = fopen($file, 'rb');
+if ($handle === false) {
+    exit(0);
+}
+
+while (($line = fgets($handle)) !== false) {
+    $entry = json_decode($line, true);
+    if (!is_array($entry) || !isset($entry['timestamp'])) {
+        echo $line;
+        continue;
+    }
+
+    $timestamp = strtotime((string) $entry['timestamp']);
+    if ($timestamp === false || $timestamp >= $cutoff) {
+        echo $line;
+    }
+}
+PHP
+
+  mv "$tmp_file" "$DEPLOY_LOG_FILE"
 }
 
 clone_release() {
@@ -89,8 +184,10 @@ restart_services() {
 
 switch_current() {
   local release_dir="$1"
+  local tmp_link="${CURRENT_LINK}.tmp"
 
-  ln -sfn "$release_dir" "$CURRENT_LINK"
+  ln -sfn "$release_dir" "$tmp_link"
+  mv -Tf "$tmp_link" "$CURRENT_LINK"
 }
 
 rollback_to() {
@@ -108,6 +205,11 @@ cleanup_old_releases() {
     | xargs -0 ls -dt 2>/dev/null \
     | tail -n +"$((keep + 1))" \
     | xargs -r rm -rf
+}
+
+cleanup_old_backups() {
+  find "$DB_BACKUP_DIR" -type f -name '*.dump' -mtime +"$BACKUP_RETENTION_DAYS" -delete 2>/dev/null || true
+  find "$UPLOADS_BACKUP_DIR" -type f -name '*.tar.gz' -mtime +"$BACKUP_RETENTION_DAYS" -delete 2>/dev/null || true
 }
 
 load_shared_env() {
@@ -129,9 +231,13 @@ backup_database() {
   require_command pg_dump
   load_shared_env
 
-  local backup_file="$BACKUP_DIR/${release_name}_database.dump"
+  mkdir -p "$DB_BACKUP_DIR"
 
-  "$PHP_BIN" <<'PHP' >"$BACKUP_DIR/.pg-env"
+  local backup_file="$DB_BACKUP_DIR/${release_name}_database.dump"
+  local pg_env_file
+  pg_env_file="$(mktemp)"
+
+  "$PHP_BIN" <<'PHP' >"$pg_env_file"
 <?php
 $url = getenv('DATABASE_URL') ?: '';
 $parts = parse_url($url);
@@ -151,19 +257,79 @@ foreach ([
 PHP
 
   # shellcheck disable=SC1091
-  source "$BACKUP_DIR/.pg-env"
-  rm -f "$BACKUP_DIR/.pg-env"
+  source "$pg_env_file"
+  rm -f "$pg_env_file"
 
   pg_dump --format=custom --file="$backup_file"
+
+  if command -v pg_restore >/dev/null 2>&1; then
+    pg_restore -l "$backup_file" >/dev/null
+  fi
+
   log "Database backup created: $backup_file"
 }
 
 backup_uploads() {
   local release_name="$1"
-  local backup_file="$BACKUP_DIR/${release_name}_uploads.tar.gz"
+  local backup_file="$UPLOADS_BACKUP_DIR/${release_name}_uploads.tar.gz"
 
+  mkdir -p "$UPLOADS_BACKUP_DIR"
   tar -czf "$backup_file" -C "$SHARED_DIR/public_html" uploads
+  tar -tzf "$backup_file" >/dev/null
   log "Uploads backup created: $backup_file"
+}
+
+write_staging_success_marker() {
+  local release_name="$1"
+  local branch="$2"
+  local commit="$3"
+
+  mkdir -p "$DEPLOYMENTS_DIR"
+  {
+    printf 'STAGING_DEPLOYED_AT=%q\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+    printf 'STAGING_RELEASE=%q\n' "$release_name"
+    printf 'STAGING_BRANCH=%q\n' "$branch"
+    printf 'STAGING_COMMIT=%q\n' "$commit"
+  } >"$STAGING_MARKER_FILE"
+}
+
+require_recent_staging_marker() {
+  [[ "${REQUIRE_STAGING_MARKER:-no}" == "yes" ]] || return
+  [[ -f "$STAGING_MARKER_FILE" ]] || fail "Missing staging success marker: $STAGING_MARKER_FILE"
+
+  local max_age_hours="${STAGING_MARKER_MAX_AGE_HOURS:-72}"
+  local now
+  local marker_mtime
+  local marker_age_hours
+
+  now="$(date +%s)"
+  marker_mtime="$(stat -c %Y "$STAGING_MARKER_FILE")"
+  marker_age_hours="$(((now - marker_mtime) / 3600))"
+
+  if (( marker_age_hours > max_age_hours )); then
+    fail "Staging marker is older than ${max_age_hours}h: $STAGING_MARKER_FILE"
+  fi
+}
+
+list_release_candidates() {
+  find "$RELEASES_DIR" -mindepth 1 -maxdepth 1 -type d -print0 \
+    | xargs -0 ls -dt 2>/dev/null || true
+}
+
+resolve_release_path() {
+  local release="$1"
+
+  if [[ -d "$release" ]]; then
+    printf '%s\n' "$release"
+    return
+  fi
+
+  if [[ -d "$RELEASES_DIR/$release" ]]; then
+    printf '%s\n' "$RELEASES_DIR/$release"
+    return
+  fi
+
+  fail "Release not found: $release"
 }
 
 run_health_check() {
@@ -188,19 +354,25 @@ deploy_release() {
   require_command curl
 
   prepare_shared_layout
+  acquire_deploy_lock
+  trap release_deploy_lock EXIT
 
   release_name="$(date '+%Y-%m-%d_%H%M%S')"
   release_dir="$RELEASES_DIR/$release_name"
   previous_release="$(readlink "$CURRENT_LINK" 2>/dev/null || true)"
 
   log "Create release $release_name from $branch"
+  append_deployment_log "deploy" "started" "$release_name" "$branch" "$app_env" "" "Deploy started"
   clone_release "$branch" "$release_dir"
+  local commit
+  commit="$(git -C "$release_dir" rev-parse HEAD 2>/dev/null || true)"
   link_shared_paths "$release_dir"
   install_release_dependencies "$release_dir"
 
   if [[ "$with_backup" == "yes" ]]; then
     backup_database "$release_name"
     backup_uploads "$release_name"
+    cleanup_old_backups
   fi
 
   run_release_console_tasks "$release_dir" "$app_env"
@@ -209,13 +381,21 @@ deploy_release() {
 
   if ! run_health_check "$health_url"; then
     log "Health-check failed"
+    append_deployment_log "deploy" "health_failed" "$release_name" "$branch" "$app_env" "$commit" "Health-check failed"
     if [[ -n "$previous_release" ]]; then
       log "Rollback to previous release: $previous_release"
       rollback_to "$previous_release"
+      append_deployment_log "rollback" "succeeded" "$(basename "$previous_release")" "$branch" "$app_env" "" "Automatic rollback after failed health-check"
     fi
     exit 1
   fi
 
+  if [[ "$app_env" == "staging" ]]; then
+    write_staging_success_marker "$release_name" "$branch" "$commit"
+  fi
+
   cleanup_old_releases
+  cleanup_deployment_logs
+  append_deployment_log "deploy" "succeeded" "$release_name" "$branch" "$app_env" "$commit" "Deploy finished"
   log "Deploy finished: $release_name"
 }
