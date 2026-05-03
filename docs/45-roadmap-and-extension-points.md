@@ -39,9 +39,9 @@
 - провести restore rehearsal на реальном backup;
 - установить monitoring timer и logrotate на VPS.
 
-### Этап 2 — Catalog / Commerce
+### Этап 2 — Catalog
 
-Частично готово:
+Готово:
 
 - Catalog core: `Category`, `Product`, `Variant`;
 - Admin API для категорий, товаров и вариантов;
@@ -50,7 +50,7 @@
 - SEO metadata / canonical / JSON-LD `Product`;
 - включение опубликованных indexable товаров в sitemap.
 
-Дальше:
+### Позже — Commerce / Customer / API
 
 - Корзина и заказ.
 - Customer (B2C) с регистрацией.

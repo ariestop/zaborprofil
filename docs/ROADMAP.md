@@ -40,9 +40,9 @@
 
 ## Этапы 5-13
 
-Фактический baseline уже включает SEO metadata, redirects, sitemap index/chunks, robots manager, settings, audit log, Vue admin shell, Media Library, Menu, Leads, cache invalidation, preview links, DevOps safety и Dev/QA readiness.
+Фактический baseline уже включает SEO metadata, redirects, sitemap index/chunks, robots manager, settings, audit log, Vue admin shell, Media Library, Menu, Leads, cache invalidation, preview links, DevOps safety, Dev/QA readiness и базовый Catalog / Product / Variant с публичным SSR и sitemap/SEO.
 
-Следующие приоритеты: staging smoke deploy, backup/restore rehearsal, monitoring, GitHub Environments/secrets и следующий крупный продуктовый этап `Catalog / Product / Variant`.
+Commerce, Customer, Public API, reverse proxy cache и domain events вынесены в более позднюю реализацию.
 
 ## Инфраструктура и deploy
 

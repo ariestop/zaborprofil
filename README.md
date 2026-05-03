@@ -137,4 +137,4 @@ Admin API доступен под `/admin/api/content/...` и защищен т�
 
 ## Дальше
 
-W0-W11 из `docs/FEATURES_PLAN.md` реализованы. Дальнейшие направления: staging smoke deploy, restore rehearsal, monitoring/release readiness и следующий крупный продуктовый этап `Catalog / Product / Variant`. Канонический порядок работ зафиксирован в `docs/45-roadmap-and-extension-points.md` и `docs/FEATURES_PLAN.md`.
+W0-W11 из `docs/FEATURES_PLAN.md` реализованы. Release readiness и базовый `Catalog / Product / Variant` подготовлены на уровне репозитория. Commerce, Customer, Public API, reverse proxy cache и domain events вынесены в более позднюю реализацию. Канонический порядок работ зафиксирован в `docs/45-roadmap-and-extension-points.md` и `docs/FEATURES_PLAN.md`.

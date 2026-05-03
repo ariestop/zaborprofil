@@ -141,9 +141,10 @@
 
 ## Оставшиеся задачи на будущее
 
-Активных Wave-задач W0-W11 не осталось. Следующие направления вынесены в
-release readiness и продуктовый roadmap: staging smoke deploy, restore
-rehearsal, monitoring, затем `Catalog / Product / Variant`.
+Активных Wave-задач W0-W11 не осталось. Release readiness и базовый
+`Catalog / Product / Variant` закрыты на уровне репозитория. Commerce, Customer,
+Public API, reverse proxy cache и domain events вынесены в более позднюю
+реализацию.
 
 ## Отложено до публичного запуска
 
