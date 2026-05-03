@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Shared\Infrastructure\Health;
 
+use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
+
 final readonly class HealthRegistry
 {
     /**
@@ -14,7 +16,7 @@ final readonly class HealthRegistry
     /**
      * @param iterable<HealthCheckInterface> $checks
      */
-    public function __construct(iterable $checks)
+    public function __construct(#[AutowireIterator('app.health_check')] iterable $checks)
     {
         $this->checks = \is_array($checks) ? array_values($checks) : iterator_to_array($checks, false);
     }

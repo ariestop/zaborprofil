@@ -14,9 +14,13 @@ const saving = ref(false)
 const statusChanging = ref<string | null>(null)
 const error = ref<string | null>(null)
 const previewUrl = ref<string | null>(null)
-const seoAudit = ref<{ passed: boolean; issues: Array<{ severity: string; code: string; message: string; field: string }> } | null>(null)
 
 type PageStatus = ContentPageItem['status']
+type SeoAuditIssue = { severity: string; code: string; message: string; field: string }
+type SeoAuditResult = { passed: boolean; issues: SeoAuditIssue[] }
+
+const seoAuditToast = ref<SeoAuditResult | null>(null)
+let seoAuditToastTimeout: number | null = null
 
 const pageTypes = ['home', 'landing', 'service', 'product_category_landing', 'material_landing', 'portfolio_index', 'portfolio_item', 'contacts', 'prices', 'text_page', 'seo_landing', 'system_page']
 const statusTransitions: Record<PageStatus, PageStatus[]> = {
@@ -29,7 +33,7 @@ const statusTransitions: Record<PageStatus, PageStatus[]> = {
   archived: ['draft', 'deleted'],
   deleted: ['draft'],
 }
-const hiddenStatusActions = new Set<PageStatus>(['published', 'scheduled', 'deleted'])
+const hiddenStatusActions = new Set<PageStatus>(['review', 'approved', 'published', 'scheduled', 'deleted'])
 const statusLabels: Record<PageStatus, string> = {
   draft: 'Черновик',
   review: 'На проверке',
@@ -39,6 +43,105 @@ const statusLabels: Record<PageStatus, string> = {
   unpublished: 'Снято',
   archived: 'Архив',
   deleted: 'Удалено',
+}
+const pageTypeLabels: Record<string, string> = {
+  home: 'Главная',
+  landing: 'Посадочная страница',
+  service: 'Услуга',
+  product_category_landing: 'Категория товаров',
+  material_landing: 'Материал',
+  portfolio_index: 'Список работ',
+  portfolio_item: 'Работа в портфолио',
+  contacts: 'Контакты',
+  prices: 'Цены',
+  text_page: 'Текстовая страница',
+  seo_landing: 'SEO-посадочная',
+  system_page: 'Системная страница',
+}
+const visibilityLabels: Record<string, string> = {
+  public: 'Публичная',
+  hidden: 'Скрытая',
+  unlisted: 'Доступна по ссылке',
+}
+const templateLabels: Record<string, string> = {
+  home_default: 'Главная страница',
+  service_landing: 'Страница услуги',
+  material_landing: 'Страница материала',
+  portfolio_index: 'Список работ',
+  contacts: 'Контакты',
+  prices: 'Цены',
+  text_page: 'Текстовая страница',
+  seo_landing: 'SEO-посадочная',
+  default: 'Без шаблона',
+}
+const blockTypeLabels: Record<string, string> = {
+  hero: 'Первый экран',
+  text: 'Текст',
+  text_image: 'Текст с изображением',
+  image: 'Изображение',
+  gallery: 'Галерея',
+  video: 'Видео',
+  feature_grid: 'Преимущества',
+  price_cards: 'Карточки цен',
+  steps: 'Этапы работ',
+  faq: 'FAQ: вопросы и ответы',
+  cta_form: 'Форма заявки',
+  telegram_cta: 'Переход в Telegram',
+  contacts: 'Контакты',
+  map: 'Карта',
+  portfolio_grid: 'Сетка работ',
+  seo_text: 'SEO-текст',
+  html_embed: 'HTML-вставка',
+  table: 'Таблица',
+  accordion: 'Аккордеон',
+  calculator_placeholder: 'Место под калькулятор',
+  before_after: 'До/после',
+  review_cards: 'Отзывы',
+  documents: 'Документы',
+}
+const blockContentExamples: Record<string, Record<string, unknown>> = {
+  hero: { title: 'Заборы под ключ в Москве', text: 'Изготовим и установим забор на участке с гарантией.', cta: { text: 'Рассчитать стоимость', url: '#lead-form' } },
+  text: { title: 'Описание услуги', text: 'Короткий полезный текст для посетителя страницы.' },
+  text_image: { title: 'Почему выбирают нас', text: 'Работаем по договору, соблюдаем сроки и используем проверенные материалы.', image: '/uploads/example.webp', alt: 'Монтаж забора' },
+  image: { image: '/uploads/example.webp', alt: 'Готовый забор на участке', caption: 'Пример выполненной работы' },
+  gallery: { items: [{ image: '/uploads/work-1.webp', alt: 'Забор из профнастила' }] },
+  video: { url: 'https://rutube.ru/video/example/', title: 'Видеообзор объекта' },
+  feature_grid: { items: [{ title: 'Собственное производство', text: 'Контролируем качество материалов и сроки.' }] },
+  price_cards: { items: [{ title: 'Забор из профнастила', price: 'от 2 500 ₽/м', text: 'Материалы и монтаж под ключ.' }] },
+  steps: { items: [{ title: 'Замер', text: 'Выезжаем на участок и уточняем параметры.' }] },
+  faq: { items: [{ question: 'Сколько стоит установка забора?', answer: 'Стоимость зависит от материала, длины, высоты и условий монтажа.' }] },
+  cta_form: { title: 'Получить расчёт', text: 'Оставьте контакты, и мы подготовим смету.', button: 'Оставить заявку' },
+  telegram_cta: { title: 'Написать в Telegram', text: 'Ответим на вопросы и рассчитаем стоимость.', url: 'https://t.me/example' },
+  contacts: { items: [{ title: 'Телефон', value: '+7 (999) 000-00-00' }] },
+  map: { address: 'Москва, МКАД', embedUrl: 'https://yandex.ru/map-widget/v1/?um=example' },
+  portfolio_grid: { items: [], title: 'Наши работы' },
+  seo_text: { title: 'SEO-текст', text: 'Развёрнутый текст с описанием услуги, материалов, сроков и преимуществ.' },
+  html_embed: { html: '<iframe src="https://example.com/widget" title="Виджет"></iframe>' },
+  table: { columns: ['Услуга', 'Цена'], rows: [['Монтаж забора', 'от 2 500 ₽/м']] },
+  accordion: { items: [{ title: 'Что входит в стоимость?', text: 'Материалы, доставка и монтаж указываются в смете.' }] },
+  calculator_placeholder: { title: 'Калькулятор стоимости', text: 'Скоро здесь будет расчёт стоимости.' },
+  before_after: { before: '/uploads/before.webp', after: '/uploads/after.webp' },
+  review_cards: { items: [{ name: 'Иван', text: 'Работу выполнили аккуратно и в срок.' }] },
+  documents: { items: [{ title: 'Сертификат', url: '/uploads/certificate.pdf' }] },
+}
+const blockSettingsExamples: Record<string, Record<string, unknown>> = {
+  hero: { layout: 'default' },
+  gallery: { columns: 3 },
+  feature_grid: { columns: 3 },
+  price_cards: { currency: 'RUB' },
+  steps: { columns: 4 },
+  faq: { schemaOrg: true },
+  cta_form: { source: 'page_engine' },
+  telegram_cta: { style: 'card' },
+  contacts: { layout: 'cards' },
+  map: { height: 420 },
+  portfolio_grid: { limit: 6 },
+  seo_text: { collapsed: false },
+  html_embed: { sandbox: true },
+  table: { responsive: 'scroll' },
+  accordion: { multiple: false },
+  image: { lazy: true },
+  video: { lazy: true },
 }
 
 const form = reactive({
@@ -71,6 +174,9 @@ const blockForm = reactive({
 
 const selectedBlock = computed(() => selected.value?.blocks.find((block) => block.id === selectedBlockId.value) ?? null)
 const templatesForType = computed(() => templates.value.filter((template) => template.pageType === form.type))
+const selectedBlockSchema = computed(() => blockSchemas.value.find((item) => item.type === blockForm.type) ?? null)
+const selectedBlockExampleContent = computed(() => blockContentExamples[blockForm.type] ?? selectedBlockSchema.value?.defaultContent ?? {})
+const selectedBlockExampleSettings = computed(() => blockSettingsExamples[blockForm.type] ?? selectedBlockSchema.value?.defaultSettings ?? {})
 const availableStatusActions = computed(() => {
   if (!selected.value) {
     return []
@@ -90,7 +196,7 @@ function resetPageForm(): void {
   selected.value = null
   selectedBlockId.value = null
   previewUrl.value = null
-  seoAudit.value = null
+  closeSeoAuditToast()
   revisions.value = []
   form.type = 'landing'
   form.title = ''
@@ -202,6 +308,26 @@ function statusLabel(status: PageStatus): string {
   return statusLabels[status] ?? status
 }
 
+function pageTypeLabel(type: string): string {
+  return pageTypeLabels[type] ?? type
+}
+
+function visibilityLabel(visibility: string): string {
+  return visibilityLabels[visibility] ?? visibility
+}
+
+function templateLabel(code: string, fallback?: string): string {
+  return templateLabels[code] ?? fallback ?? code
+}
+
+function blockTypeLabel(type: string): string {
+  return blockTypeLabels[type] ?? type
+}
+
+function exampleJson(value: Record<string, unknown>): string {
+  return JSON.stringify(value, null, 2)
+}
+
 function statusButtonClass(): string {
   return 'rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60'
 }
@@ -231,7 +357,7 @@ async function loadPages(): Promise<void> {
 
 async function selectPage(id: string): Promise<void> {
   previewUrl.value = null
-  seoAudit.value = null
+  closeSeoAuditToast()
   selected.value = await apiRequest<ContentPageDetail>(`/admin/api/content/pages/${id}`)
   fillPageForm(selected.value)
   selectedBlockId.value = selected.value.blocks[0]?.id ?? null
@@ -273,6 +399,18 @@ async function savePage(): Promise<void> {
   }
 }
 
+async function persistSelectedPageDraft(): Promise<string | null> {
+  if (!selected.value) {
+    return null
+  }
+
+  const pageId = selected.value.id
+  await apiRequest<ContentPageItem>(`/admin/api/content/pages/${pageId}`, { method: 'PUT', body: pagePayload() })
+  await apiRequest<ContentPageItem>(`/admin/api/content/pages/${pageId}/seo`, { method: 'PUT', body: seoPayload() })
+
+  return pageId
+}
+
 async function createBlocksFromTemplate(): Promise<void> {
   if (!selected.value || selected.value.blocks.length > 0) {
     return
@@ -290,7 +428,7 @@ async function createBlocksFromTemplate(): Promise<void> {
         position: block.position,
         content: block.content,
         settings: block.settings,
-        isEnabled: block.isEnabled,
+        isEnabled: block.type === 'faq' ? false : block.isEnabled,
       },
     })
   }
@@ -360,12 +498,17 @@ async function publishPage(): Promise<void> {
   error.value = null
   statusChanging.value = 'published'
   try {
-    await apiRequest<ContentPageItem>(`/admin/api/content/pages/${selected.value.id}/publish`, {
+    const pageId = await persistSelectedPageDraft()
+    if (pageId === null) {
+      return
+    }
+
+    await apiRequest<ContentPageItem>(`/admin/api/content/pages/${pageId}/publish`, {
       method: 'POST',
       body: { comment: 'Published from Page Engine editor' },
     })
     await loadPages()
-    await selectPage(selected.value.id)
+    await selectPage(pageId)
   } catch (caught) {
     error.value = caught instanceof Error ? caught.message : 'Не удалось опубликовать страницу'
   } finally {
@@ -402,9 +545,40 @@ async function runSeoAudit(): Promise<void> {
   if (!selected.value) {
     return
   }
-  seoAudit.value = await apiRequest<{ passed: boolean; issues: Array<{ severity: string; code: string; message: string; field: string }> }>(
-    `/admin/api/seo/audit/pages/${selected.value.id}`,
+  error.value = null
+  const pageId = selected.value.id
+  try {
+    await persistSelectedPageDraft()
+  } catch (caught) {
+    error.value = caught instanceof Error ? caught.message : 'Не удалось сохранить SEO перед проверкой'
+    return
+  }
+  const audit = await apiRequest<SeoAuditResult>(
+    `/admin/api/seo/audit/pages/${pageId}`,
   )
+  showSeoAuditToast(audit)
+}
+
+function showSeoAuditToast(audit: SeoAuditResult): void {
+  seoAuditToast.value = audit
+
+  if (seoAuditToastTimeout !== null) {
+    window.clearTimeout(seoAuditToastTimeout)
+  }
+
+  seoAuditToastTimeout = window.setTimeout(() => {
+    seoAuditToast.value = null
+    seoAuditToastTimeout = null
+  }, 10000)
+}
+
+function closeSeoAuditToast(): void {
+  seoAuditToast.value = null
+
+  if (seoAuditToastTimeout !== null) {
+    window.clearTimeout(seoAuditToastTimeout)
+    seoAuditToastTimeout = null
+  }
 }
 
 async function rollbackRevision(revision: PageRevisionItem): Promise<void> {
@@ -424,8 +598,8 @@ onMounted(loadPages)
     <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
       <div class="flex items-start justify-between gap-4">
         <div>
-          <h2 class="text-lg font-semibold text-slate-950">Page Engine</h2>
-          <p class="mt-1 text-sm text-slate-600">Страницы, блоки, SEO, preview, публикация и история версий.</p>
+          <h2 class="text-lg font-semibold text-slate-950">Редактор страниц</h2>
+          <p class="mt-1 text-sm text-slate-600">Создание страниц, блоки контента, SEO-поля, предпросмотр, публикация и история версий.</p>
         </div>
         <button type="button" class="rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800" @click="resetPageForm">
           Создать страницу
@@ -441,7 +615,7 @@ onMounted(loadPages)
           <p v-if="loading" class="text-sm text-slate-500">Загрузка...</p>
           <button v-for="page in pages" :key="page.id" type="button" class="mb-2 block w-full rounded-lg border border-slate-200 px-3 py-2 text-left text-sm hover:bg-slate-50" @click="selectPage(page.id)">
             <span class="block font-medium text-slate-900">{{ page.title }}</span>
-            <span class="block text-xs text-slate-500">{{ page.path }} · {{ page.status }}</span>
+            <span class="block text-xs text-slate-500">{{ page.path }} · {{ statusLabel(page.status) }}</span>
           </button>
         </div>
 
@@ -452,50 +626,61 @@ onMounted(loadPages)
           </div>
           <button v-for="block in selected.blocks" :key="block.id" type="button" class="mb-2 block w-full rounded-lg border border-slate-200 px-3 py-2 text-left text-sm hover:bg-slate-50" @click="fillBlockForm(block)">
             <span class="block font-medium text-slate-900">{{ block.position + 1 }}. {{ block.name }}</span>
-            <span class="block text-xs text-slate-500">{{ block.type }} · {{ block.isEnabled ? 'visible' : 'hidden' }}</span>
+            <span class="block text-xs text-slate-500">{{ blockTypeLabel(block.type) }} · {{ block.isEnabled ? 'включён' : 'выключен' }}</span>
           </button>
         </div>
       </aside>
 
       <div class="space-y-6">
         <form class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" @submit.prevent="savePage">
+          <div class="mb-5">
+            <h3 class="text-base font-semibold text-slate-950">Основные поля страницы</h3>
+            <p class="mt-1 text-sm text-slate-600">Заполните адрес, заголовки и SEO-описание. Для публикации критичны путь, заголовок, H1 и корректные включённые блоки.</p>
+          </div>
           <div class="grid grid-cols-3 gap-4">
             <label class="text-sm font-medium text-slate-700">
-              Тип
+              Тип страницы
               <select v-model="form.type" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
-                <option v-for="type in pageTypes" :key="type" :value="type">{{ type }}</option>
+                <option v-for="type in pageTypes" :key="type" :value="type">{{ pageTypeLabel(type) }}</option>
               </select>
+              <span class="mt-1 block text-xs font-normal text-slate-500">Определяет назначение страницы и SEO-рекомендации. Пример: «Услуга» для страницы монтажа забора.</span>
             </label>
             <label class="text-sm font-medium text-slate-700">
               Шаблон
               <select v-model="form.template" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
-                <option v-for="template in templatesForType" :key="template.code" :value="template.code">{{ template.name }}</option>
-                <option value="default">default</option>
+                <option v-for="template in templatesForType" :key="template.code" :value="template.code">{{ templateLabel(template.code, template.name) }}</option>
+                <option value="default">{{ templateLabel('default') }}</option>
               </select>
+              <span class="mt-1 block text-xs font-normal text-slate-500">Создаёт стартовый набор блоков. Пример: «Страница услуги».</span>
             </label>
             <label class="text-sm font-medium text-slate-700">
-              Visibility
+              Видимость
               <select v-model="form.visibility" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
-                <option value="public">public</option>
-                <option value="hidden">hidden</option>
-                <option value="unlisted">unlisted</option>
+                <option value="public">{{ visibilityLabel('public') }}</option>
+                <option value="hidden">{{ visibilityLabel('hidden') }}</option>
+                <option value="unlisted">{{ visibilityLabel('unlisted') }}</option>
               </select>
+              <span class="mt-1 block text-xs font-normal text-slate-500">Публичная страница доступна посетителям и может попасть в sitemap.</span>
             </label>
             <label class="text-sm font-medium text-slate-700">
-              Заголовок
+              Заголовок страницы
               <input v-model="form.title" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+              <span class="mt-1 block text-xs font-normal text-slate-500">Title для админки и SEO. Пример: «Заборы из профнастила под ключ».</span>
             </label>
             <label class="text-sm font-medium text-slate-700">
-              H1
+              H1 на странице
               <input v-model="form.h1" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+              <span class="mt-1 block text-xs font-normal text-slate-500">Главный заголовок для посетителя. Пример: «Установка заборов из профнастила».</span>
             </label>
             <label class="text-sm font-medium text-slate-700">
-              URL path
+              Адрес страницы
               <input v-model="form.path" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+              <span class="mt-1 block text-xs font-normal text-slate-500">Путь должен начинаться с «/». Пример: «/zabory-iz-profnastila/».</span>
             </label>
             <label class="text-sm font-medium text-slate-700">
-              Slug
+              Часть URL
               <input v-model="form.slug" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+              <span class="mt-1 block text-xs font-normal text-slate-500">Короткий латинский идентификатор без слэшей. Пример: «zabory-iz-profnastila».</span>
             </label>
             <label class="flex items-end gap-2 pb-2 text-sm text-slate-700">
               <input v-model="form.isIndexable" type="checkbox" class="rounded border-slate-300">
@@ -504,14 +689,38 @@ onMounted(loadPages)
           </div>
 
           <div class="mt-6 grid gap-4">
-            <label class="text-sm font-medium text-slate-700">Meta description<textarea v-model="form.metaDescription" rows="3" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" /></label>
-            <label class="text-sm font-medium text-slate-700">Canonical URL<input v-model="form.canonicalUrl" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"></label>
+            <label class="text-sm font-medium text-slate-700">
+              SEO-описание
+              <textarea v-model="form.metaDescription" rows="3" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+              <span class="mt-1 block text-xs font-normal text-slate-500">Описание для поискового сниппета, желательно 80-320 символов. Пример: «Производим и устанавливаем заборы из профнастила под ключ в Москве и области: замер, материалы, монтаж и гарантия.»</span>
+            </label>
+            <label class="text-sm font-medium text-slate-700">
+              Канонический URL
+              <input v-model="form.canonicalUrl" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+              <span class="mt-1 block text-xs font-normal text-slate-500">Заполняйте только если канонический адрес отличается. Пример: «https://zaborprofil.ru/zabory-iz-profnastila/».</span>
+            </label>
             <div class="grid grid-cols-2 gap-4">
-              <label class="text-sm font-medium text-slate-700">OG title<input v-model="form.ogTitle" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"></label>
-              <label class="text-sm font-medium text-slate-700">OG image<input v-model="form.ogImage" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"></label>
+              <label class="text-sm font-medium text-slate-700">
+                Заголовок для соцсетей
+                <input v-model="form.ogTitle" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+                <span class="mt-1 block text-xs font-normal text-slate-500">Используется в превью ссылки. Пример: «Заборы из профнастила под ключ».</span>
+              </label>
+              <label class="text-sm font-medium text-slate-700">
+                Изображение для соцсетей
+                <input v-model="form.ogImage" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+                <span class="mt-1 block text-xs font-normal text-slate-500">Абсолютный URL картинки. Пример: «https://zaborprofil.ru/uploads/og/zabor.webp».</span>
+              </label>
             </div>
-            <label class="text-sm font-medium text-slate-700">OG description<textarea v-model="form.ogDescription" rows="2" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" /></label>
-            <label class="text-sm font-medium text-slate-700">JSON-LD<textarea v-model="form.jsonLd" rows="5" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs" /></label>
+            <label class="text-sm font-medium text-slate-700">
+              Описание для соцсетей
+              <textarea v-model="form.ogDescription" rows="2" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+              <span class="mt-1 block text-xs font-normal text-slate-500">Можно повторить SEO-описание или написать более рекламный текст.</span>
+            </label>
+            <label class="text-sm font-medium text-slate-700">
+              JSON-LD разметка
+              <textarea v-model="form.jsonLd" rows="5" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs" />
+              <span class="mt-1 block text-xs font-normal text-slate-500">Необязательный массив объектов schema.org. Пример: [{"@context":"https://schema.org","@type":"LocalBusiness","name":"ЗаборПрофиль"}]</span>
+            </label>
           </div>
 
           <div class="mt-6 flex flex-wrap items-center gap-3">
@@ -532,27 +741,62 @@ onMounted(loadPages)
                 {{ statusChanging === status ? '...' : statusLabel(status) }}
               </button>
             </template>
-            <button v-if="selected" type="button" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" @click="buildPreviewLink">Preview</button>
-            <a v-if="previewUrl" :href="previewUrl" target="_blank" rel="noreferrer" class="text-sm font-medium text-emerald-700">Открыть preview</a>
-            <button v-if="selected" type="button" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" @click="runSeoAudit">Checklist</button>
+            <button v-if="selected" type="button" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" @click="buildPreviewLink">Предпросмотр</button>
+            <a v-if="previewUrl" :href="previewUrl" target="_blank" rel="noreferrer" class="text-sm font-medium text-emerald-700">Открыть предпросмотр</a>
+            <button v-if="selected" type="button" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" @click="runSeoAudit">Проверить SEO</button>
           </div>
         </form>
 
         <section v-if="selected" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <div class="mb-4 flex items-center justify-between">
-            <h3 class="text-base font-semibold text-slate-950">Block editor</h3>
+            <div>
+              <h3 class="text-base font-semibold text-slate-950">Редактор блоков</h3>
+              <p class="mt-1 text-sm text-slate-600">Блоки выводятся на публичной странице сверху вниз. JSON должен быть объектом в фигурных скобках.</p>
+            </div>
             <select v-model="blockForm.type" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" @change="startNewBlock(blockForm.type)">
-              <option v-for="schema in blockSchemas" :key="schema.type" :value="schema.type">{{ schema.label }}</option>
+              <option v-for="schema in blockSchemas" :key="schema.type" :value="schema.type">{{ blockTypeLabel(schema.type) }}</option>
             </select>
           </div>
+          <div v-if="selectedBlockSchema" class="mb-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+            <p><span class="font-semibold text-slate-700">Назначение:</span> {{ selectedBlockSchema.description }}</p>
+            <p v-if="selectedBlockSchema.requiredContentFields.length > 0" class="mt-1">
+              <span class="font-semibold text-slate-700">Обязательные поля:</span> {{ selectedBlockSchema.requiredContentFields.join(', ') }}
+            </p>
+          </div>
           <div class="grid grid-cols-3 gap-4">
-            <label class="text-sm font-medium text-slate-700">Название<input v-model="blockForm.name" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"></label>
-            <label class="text-sm font-medium text-slate-700">Позиция<input v-model.number="blockForm.position" type="number" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"></label>
-            <label class="flex items-end gap-2 pb-2 text-sm text-slate-700"><input v-model="blockForm.isEnabled" type="checkbox" class="rounded border-slate-300"> Включен</label>
+            <label class="text-sm font-medium text-slate-700">
+              Название блока
+              <input v-model="blockForm.name" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+              <span class="mt-1 block text-xs font-normal text-slate-500">Внутреннее название для редактора. Пример: «FAQ по установке».</span>
+            </label>
+            <label class="text-sm font-medium text-slate-700">
+              Позиция
+              <input v-model.number="blockForm.position" type="number" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+              <span class="mt-1 block text-xs font-normal text-slate-500">Чем меньше число, тем выше блок на странице.</span>
+            </label>
+            <label class="flex items-end gap-2 pb-7 text-sm text-slate-700"><input v-model="blockForm.isEnabled" type="checkbox" class="rounded border-slate-300"> Включён на странице</label>
           </div>
           <div class="mt-4 grid grid-cols-2 gap-4">
-            <label class="text-sm font-medium text-slate-700">Content JSON<textarea v-model="blockForm.content" rows="10" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs" /></label>
-            <label class="text-sm font-medium text-slate-700">Settings JSON<textarea v-model="blockForm.settings" rows="10" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs" /></label>
+            <label class="text-sm font-medium text-slate-700">
+              Контент блока JSON
+              <textarea v-model="blockForm.content" rows="10" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs" />
+              <span class="mt-1 block text-xs font-normal text-slate-500">Тексты, изображения, ссылки и списки для блока. Значение должно быть JSON-объектом.</span>
+            </label>
+            <label class="text-sm font-medium text-slate-700">
+              Настройки блока JSON
+              <textarea v-model="blockForm.settings" rows="10" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs" />
+              <span class="mt-1 block text-xs font-normal text-slate-500">Внешний вид и поведение блока: колонки, режим отображения, schema.org. Значение должно быть JSON-объектом.</span>
+            </label>
+          </div>
+          <div class="mt-4 grid grid-cols-2 gap-4">
+            <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
+              <p class="text-sm font-semibold text-slate-700">Пример контента для «{{ blockTypeLabel(blockForm.type) }}»</p>
+              <pre class="mt-2 overflow-auto whitespace-pre-wrap text-xs text-slate-600">{{ exampleJson(selectedBlockExampleContent) }}</pre>
+            </div>
+            <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
+              <p class="text-sm font-semibold text-slate-700">Пример настроек</p>
+              <pre class="mt-2 overflow-auto whitespace-pre-wrap text-xs text-slate-600">{{ exampleJson(selectedBlockExampleSettings) }}</pre>
+            </div>
           </div>
           <div class="mt-4 flex flex-wrap gap-2">
             <button type="button" class="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800" @click="saveBlock">{{ selectedBlock ? 'Сохранить блок' : 'Добавить блок' }}</button>
@@ -562,27 +806,43 @@ onMounted(loadPages)
           </div>
         </section>
 
-        <section v-if="seoAudit" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <p class="text-sm font-semibold" :class="seoAudit.passed ? 'text-emerald-700' : 'text-red-700'">{{ seoAudit.passed ? 'Checklist passed' : 'Checklist has blocking issues' }}</p>
-          <ul class="mt-3 space-y-2 text-sm text-slate-700">
-            <li v-for="issue in seoAudit.issues" :key="issue.code + issue.field" class="rounded-lg bg-slate-50 px-3 py-2">
-              <span class="font-semibold">{{ issue.severity }}</span> {{ issue.message }} <span class="text-xs text-slate-500">{{ issue.field }}</span>
-            </li>
-          </ul>
-        </section>
-
         <section v-if="selected" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h3 class="text-base font-semibold text-slate-950">Revisions</h3>
+          <h3 class="text-base font-semibold text-slate-950">История публикаций</h3>
           <p v-if="revisions.length === 0" class="mt-2 text-sm text-slate-500">Публикаций пока нет.</p>
           <div v-for="revision in revisions" :key="revision.id" class="mt-3 flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3">
             <div>
               <p class="font-medium text-slate-900">v{{ revision.version }} · {{ revision.title }}</p>
               <p class="text-xs text-slate-500">{{ revision.path }} · {{ revision.createdAt }} · {{ revision.comment ?? 'без комментария' }}</p>
             </div>
-            <button type="button" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" @click="rollbackRevision(revision)">Rollback</button>
+            <button type="button" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" @click="rollbackRevision(revision)">Откатить</button>
           </div>
         </section>
       </div>
+    </div>
+
+    <div
+      v-if="seoAuditToast"
+      class="fixed bottom-6 right-6 z-50 max-w-lg rounded-2xl border bg-white p-5 shadow-2xl"
+      :class="seoAuditToast.passed ? 'border-emerald-200' : 'border-red-200'"
+      role="status"
+    >
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="text-sm font-semibold" :class="seoAuditToast.passed ? 'text-emerald-700' : 'text-red-700'">
+            {{ seoAuditToast.passed ? 'Checklist пройден' : 'Checklist нашёл замечания' }}
+          </p>
+          <p class="mt-1 text-sm text-slate-600">
+            {{ seoAuditToast.issues.length === 0 ? 'SEO-проблем не найдено.' : `Найдено замечаний: ${seoAuditToast.issues.length}` }}
+          </p>
+        </div>
+        <button type="button" class="text-sm font-semibold text-slate-400 hover:text-slate-700" @click="closeSeoAuditToast">Закрыть</button>
+      </div>
+      <ul v-if="seoAuditToast.issues.length > 0" class="mt-4 max-h-72 space-y-2 overflow-auto text-sm text-slate-700">
+        <li v-for="issue in seoAuditToast.issues" :key="issue.code + issue.field" class="rounded-lg bg-slate-50 px-3 py-2">
+          <span class="font-semibold">{{ issue.severity }}</span> {{ issue.message }}
+          <span class="text-xs text-slate-500">{{ issue.field }}</span>
+        </li>
+      </ul>
     </div>
   </section>
 </template>

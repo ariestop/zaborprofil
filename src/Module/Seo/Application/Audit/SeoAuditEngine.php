@@ -109,7 +109,7 @@ final readonly class SeoAuditEngine
 
         foreach ($enabledBlocks as $block) {
             $content = $block->content();
-            if ($block->type() === BlockType::Faq && ($content['items'] ?? []) === []) {
+            if ($block->type() === BlockType::Faq && !$this->hasCompleteFaqItem($content['items'] ?? [])) {
                 $issues[] = new SeoAuditIssue(SeoAuditSeverity::P1, 'seo.content.faq_empty', 'FAQ block must contain at least one question and answer.', 'blocks');
             }
 
@@ -129,6 +129,31 @@ final readonly class SeoAuditEngine
     {
         foreach ($blocks as $block) {
             if ($block->type() === $type) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param mixed $items
+     */
+    private function hasCompleteFaqItem(mixed $items): bool
+    {
+        if (!\is_array($items)) {
+            return false;
+        }
+
+        foreach ($items as $item) {
+            if (!\is_array($item)) {
+                continue;
+            }
+
+            $question = $item['question'] ?? $item['title'] ?? '';
+            $answer = $item['answer'] ?? '';
+
+            if (\is_string($question) && trim($question) !== '' && \is_string($answer) && trim($answer) !== '') {
                 return true;
             }
         }

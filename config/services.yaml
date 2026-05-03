@@ -1,5 +1,7 @@
 parameters:
     empty_string: ''
+    app.asset_build_default_command: npm run build
+    app.asset_build_command: '%env(default:app.asset_build_default_command:APP_ASSET_BUILD_COMMAND)%'
     app.site_url: '%env(SITE_URL)%'
     app.vite.manifest_path: '%kernel.project_dir%/public_html/build/.vite/manifest.json'
     app.vite.public_build_path: /build
@@ -47,6 +49,10 @@ services:
     App\Module\Settings\Application\Service\MigrationAdminService:
         arguments:
             $dependencyFactory: '@doctrine.migrations.dependency_factory'
+
+    App\Module\Admin\Application\Service\AssetBuildRunner:
+        arguments:
+            $command: '%app.asset_build_command%'
 
     App\Module\Seo\Domain\Repository\RedirectRepositoryInterface:
         alias: App\Module\Seo\Infrastructure\Doctrine\Repository\DoctrineRedirectRepository
@@ -135,10 +141,6 @@ services:
     App\Shared\Infrastructure\Logging\Processor\PiiRedactorProcessor:
         tags:
             - { name: monolog.processor }
-
-    App\Shared\Infrastructure\Health\HealthRegistry:
-        arguments:
-            $checks: !tagged_iterator app.health_check
 
 when@test:
     parameters:

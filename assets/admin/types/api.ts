@@ -64,6 +64,16 @@ export interface MaintenanceStatus {
   enabledAt?: string | null
 }
 
+export interface AssetBuildStatus {
+  status: 'idle' | 'running' | 'success' | 'failed'
+  command: string
+  startedAt: string | null
+  finishedAt: string | null
+  exitCode: number | null
+  progress: number
+  logs: string
+}
+
 export interface AuditLogEntryItem {
   id: string
   occurredAt: string

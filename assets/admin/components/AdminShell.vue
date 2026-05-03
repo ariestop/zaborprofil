@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { currentRouteName, navigateTo, routes, type AdminRouteName } from '../router'
 import { initializeAuthStore, useAuthStore } from '../stores/auth'
+import AssetBuildWidget from './AssetBuildWidget.vue'
 import AuditLogView from '../views/AuditLogView.vue'
 import ContentPagesView from '../views/ContentPagesView.vue'
 import DashboardView from '../views/DashboardView.vue'
@@ -106,5 +107,7 @@ function isRouteActive(routeNameToCheck: AdminRouteName): boolean {
         <AuditLogView v-else-if="routeName === 'auditLog'" />
       </main>
     </div>
+
+    <AssetBuildWidget />
   </div>
 </template>
