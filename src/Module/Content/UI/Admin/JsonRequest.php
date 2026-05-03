@@ -102,7 +102,7 @@ final class JsonRequest
      */
     public function nullableObjectList(array $payload, string $key): ?array
     {
-        if (!array_key_exists($key, $payload) || $payload[$key] === null) {
+        if (!\array_key_exists($key, $payload) || $payload[$key] === null) {
             return null;
         }
 

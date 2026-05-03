@@ -372,7 +372,7 @@ final class Page
             return null;
         }
 
-        if (\mb_strlen($trimmed) > $maxLength) {
+        if (mb_strlen($trimmed) > $maxLength) {
             throw new InvalidArgumentException(\sprintf('Page %s must be at most %d characters.', $field, $maxLength));
         }
 
