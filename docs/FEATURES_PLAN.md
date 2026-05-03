@@ -81,14 +81,17 @@
 - Schema.org Builder: базовый `WebPage` JSON-LD для публичных страниц;
 - Canonical URL Guard с проверкой host из `SITE_URL`.
 
-## Оставшиеся задачи на будущее
-
 ### W7 SEO audit and pre-publish checklist
 
-- SEO Audit Engine;
-- bulk audit;
-- сохранение результатов аудита;
-- Pre-Publish Checklist с блокировкой P0/P1 ошибок.
+Состав:
+
+- SEO Audit Engine с severity P0/P1/P2;
+- bulk audit через `app:seo:audit`;
+- page audit через `GET /admin/api/seo/audit/pages/{id}`;
+- Pre-Publish Checklist с блокировкой P0/P1 ошибок;
+- рекомендации P2 без блокировки публикации.
+
+## Оставшиеся задачи на будущее
 
 ### W8 Cache invalidation and preview links
 

@@ -8,6 +8,7 @@ const selected = ref<ContentPageDetail | null>(null)
 const loading = ref(false)
 const error = ref<string | null>(null)
 const previewUrl = ref<string | null>(null)
+const seoAudit = ref<{ passed: boolean; issues: Array<{ severity: string; code: string; message: string; field: string }> } | null>(null)
 
 const form = reactive({
   type: 'landing',
@@ -97,6 +98,7 @@ async function loadPages(): Promise<void> {
 
 async function selectPage(id: string): Promise<void> {
   previewUrl.value = null
+  seoAudit.value = null
   selected.value = await apiRequest<ContentPageDetail>(`/admin/api/content/pages/${id}`)
   fillForm(selected.value)
 }
@@ -147,6 +149,16 @@ async function buildPreviewLink(): Promise<void> {
 
   const response = await apiRequest<{ previewUrl: string }>(`/admin/api/content/pages/${selected.value.id}/preview-link`)
   previewUrl.value = response.previewUrl
+}
+
+async function runSeoAudit(): Promise<void> {
+  if (selected.value === null) {
+    return
+  }
+
+  seoAudit.value = await apiRequest<{ passed: boolean; issues: Array<{ severity: string; code: string; message: string; field: string }> }>(
+    `/admin/api/seo/audit/pages/${selected.value.id}`,
+  )
 }
 
 onMounted(loadPages)
@@ -276,6 +288,27 @@ onMounted(loadPages)
           <a v-if="previewUrl" :href="previewUrl" target="_blank" rel="noreferrer" class="text-sm font-medium text-emerald-700">
             Открыть предпросмотр
           </a>
+          <button
+            v-if="selected"
+            type="button"
+            class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            @click="runSeoAudit"
+          >
+            SEO audit
+          </button>
+        </div>
+
+        <div v-if="seoAudit" class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <p class="text-sm font-semibold" :class="seoAudit.passed ? 'text-emerald-700' : 'text-red-700'">
+            {{ seoAudit.passed ? 'SEO audit: blocking issues not found' : 'SEO audit: blocking issues found' }}
+          </p>
+          <ul v-if="seoAudit.issues.length > 0" class="mt-3 space-y-2 text-sm text-slate-700">
+            <li v-for="issue in seoAudit.issues" :key="issue.code + issue.field" class="rounded-lg bg-white px-3 py-2">
+              <span class="font-semibold">{{ issue.severity }}</span>
+              <span class="ml-2">{{ issue.message }}</span>
+              <span class="ml-2 text-xs text-slate-500">{{ issue.field }}</span>
+            </li>
+          </ul>
         </div>
       </form>
     </div>

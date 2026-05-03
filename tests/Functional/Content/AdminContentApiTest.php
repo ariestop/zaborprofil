@@ -209,6 +209,54 @@ final class AdminContentApiTest extends WebTestCase
         self::assertStringContainsString('Canonical URL must belong to the configured SITE_URL host.', (string) $client->getResponse()->getContent());
     }
 
+    public function testSeoAuditApiReportsPageWarnings(): void
+    {
+        $client = self::createClient();
+        $this->prepareDatabase();
+        $client->loginUser($this->createAdminUser('seo-audit@example.test'));
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/content/pages', [
+            'type' => 'landing',
+            'title' => 'SEO Audit Page',
+            'slug' => 'seo-audit',
+            'path' => '/seo-audit/',
+            'h1' => 'SEO Audit Page',
+        ]);
+        self::assertResponseStatusCodeSame(201);
+        $pageId = $this->stringFromResponse((string) $client->getResponse()->getContent(), 'id');
+
+        $this->jsonRequestWithCsrf($client, 'GET', \sprintf('/admin/api/seo/audit/pages/%s', $pageId));
+
+        self::assertResponseIsSuccessful();
+        $payload = json_decode((string) $client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($payload);
+        self::assertTrue($payload['passed'] ?? false);
+        self::assertIsArray($payload['issues'] ?? null);
+        self::assertNotEmpty($payload['issues']);
+    }
+
+    public function testPrePublishChecklistBlocksReservedPagePath(): void
+    {
+        $client = self::createClient();
+        $this->prepareDatabase();
+        $client->loginUser($this->createAdminUser('prepublish@example.test'));
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/content/pages', [
+            'type' => 'landing',
+            'title' => 'Reserved Path',
+            'slug' => 'reserved-path',
+            'path' => '/admin/reserved/',
+            'h1' => 'Reserved Path',
+        ]);
+        self::assertResponseStatusCodeSame(201);
+        $pageId = $this->stringFromResponse((string) $client->getResponse()->getContent(), 'id');
+
+        $this->jsonRequestWithCsrf($client, 'POST', \sprintf('/admin/api/content/pages/%s/publish', $pageId));
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('Pre-publish SEO checklist failed: seo.path.reserved_prefix', (string) $client->getResponse()->getContent());
+    }
+
     public function testPublishingAPageInvalidatesPublicPageCache(): void
     {
         $client = self::createClient();
