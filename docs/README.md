@@ -32,7 +32,7 @@
 | Безопасность | [20-security-and-access-control](20-security-and-access-control.md), [25-files-and-uploads](25-files-and-uploads.md) |
 | Кеш / Redis | [23-cache-and-redis](23-cache-and-redis.md) |
 | Очереди / Messenger | [24-messenger-and-queues](24-messenger-and-queues.md) |
-| Деплой / инфраструктура | [32-docker-architecture](32-docker-architecture.md), [33-local-development](33-local-development.md), [34-deployment](34-deployment.md), [35-cicd](35-cicd.md), [36-backup-restore](36-backup-restore.md), [37-runbooks](37-runbooks.md) |
+| Деплой / инфраструктура | [32-docker-architecture](32-docker-architecture.md), [33-local-development](33-local-development.md), [34-deployment](34-deployment.md), [35-cicd](35-cicd.md), [36-backup-restore](36-backup-restore.md), [37-runbooks](37-runbooks.md), [47-dev-database-state](47-dev-database-state.md) |
 | Новый модуль | [06-module-architecture](06-module-architecture.md), [43-module-development-guide](43-module-development-guide.md) |
 | Новая фича end-to-end | [41-implementation-playbook](41-implementation-playbook.md), [42-feature-development-guide](42-feature-development-guide.md) |
 
@@ -102,6 +102,7 @@
 - [44-troubleshooting](44-troubleshooting.md) — частые ошибки в dev.
 - [45-roadmap-and-extension-points](45-roadmap-and-extension-points.md) — куда расширять систему.
 - [46-glossary](46-glossary.md) — термины проекта.
+- [47-dev-database-state](47-dev-database-state.md) — единое dev-состояние БД, fixtures и правила для dev snapshots в Git.
 
 ### ADR
 

@@ -30,6 +30,8 @@ make npm-build
 make health
 ```
 
+Для получения единого dev-состояния БД после клонирования используйте `make reset-db`: команда пересоздаёт локальную БД, применяет migrations и запускает `make fixtures`.
+
 После запуска:
 
 - `http://localhost` — публичный сайт.
@@ -69,7 +71,7 @@ make shell                    # шелл в php-контейнере
 make logs                     # tail логов всех сервисов
 make migrate                  # применить миграции
 make migration                # сгенерировать diff-миграцию
-make reset-db                 # drop + create + migrate
+make reset-db                 # drop + create + migrate + fixtures
 make test                     # phpunit
 make quality                  # validate + syntax + cs + phpstan + rector + db/schema/twig/container + phpunit + smoke + npm build
 make smoke                    # app:smoke:test в test-env
@@ -160,5 +162,6 @@ vendor/bin/phpunit
 
 - [32-docker-architecture](32-docker-architecture.md)
 - [27-config-and-env](27-config-and-env.md)
+- [47-dev-database-state](47-dev-database-state.md)
 - [INSTALL.md](legacy/INSTALL.md)
 - [LOCAL_DOCKER.md](legacy/LOCAL_DOCKER.md)

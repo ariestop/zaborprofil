@@ -104,6 +104,7 @@ reset-db:
 	$(PHP) php bin/console doctrine:database:drop --force --if-exists
 	$(PHP) php bin/console doctrine:database:create --if-not-exists
 	$(PHP) php bin/console doctrine:migrations:migrate --no-interaction
+	$(PHP) sh -lc 'php bin/console list doctrine:fixtures >/dev/null 2>&1 && php bin/console doctrine:fixtures:load --no-interaction || echo "Doctrine fixtures are not installed."'
 
 health:
 	curl -fsS "$${SITE_URL:-http://localhost}/health"

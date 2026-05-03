@@ -27,6 +27,8 @@
 | `uploads_data` | `/var/www/html/public_html/uploads` | User uploads (между app и nginx) |
 | Bind mount `./` | `/var/www/html` (на app) и `/var/www/html` ro (на nginx) | Исходный код проекта |
 
+Volumes являются локальным runtime-состоянием конкретного ПК разработки. Их не экспортируют в Git и не используют как способ синхронизации окружений. Единое dev-состояние БД воспроизводится из migrations + fixtures; при необходимости допускается только маленький обезличенный dev snapshot, описанный в [47-dev-database-state](47-dev-database-state.md).
+
 ## Networks
 
 Compose использует default bridge network. Сервисы доступны по именам (`postgres`, `redis`, `mailpit`).
@@ -89,6 +91,7 @@ Compose использует default bridge network. Сервисы доступ
 
 - Использовать Docker для staging/production без отдельного решения и обновления документации.
 - Хранить в Docker volumes секреты — секреты только в `.env.local`.
+- Коммитить Docker images, Docker volumes, production/staging dumps или реальные backups БД в Git.
 - Запускать `composer install --no-dev` локально без необходимости (теряем dev-зависимости).
 - Опубликовывать Adminer/Mailpit на доступный извне IP.
 
@@ -121,6 +124,8 @@ make test
 ```bash
 make reset-db
 ```
+
+`make reset-db` удаляет локальную БД, создаёт её заново, применяет migrations и запускает `make fixtures`. Если fixtures ещё не подключены, шаг остаётся безопасным no-op.
 
 ### Остановка
 

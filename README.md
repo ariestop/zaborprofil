@@ -71,6 +71,20 @@ make health
 
 Подробнее: `docs/LOCAL_DOCKER.md`.
 
+## Единое dev-состояние БД
+
+Новый ПК разработки должен получать одинаковую структуру и базовые данные через Git: Doctrine migrations + dev fixtures/seed data. Docker images, Docker volumes и реальные backup-файлы БД в Git не хранятся.
+
+Для пересоздания локальной БД используйте:
+
+```bash
+make reset-db
+```
+
+Команда удаляет локальную БД, создаёт её заново, применяет миграции и запускает `make fixtures`. Если fixtures ещё не подключены, шаг завершится информационным сообщением без ошибки.
+
+Если нужен общий набор демонстрационных данных, храните в Git только маленький обезличенный dev snapshot/seed после ручной проверки. Production/staging backups, секреты, персональные данные и Docker volumes в Git запрещены. Подробнее: `docs/47-dev-database-state.md`.
+
 ## Native запуск без Docker
 
 ```bash

@@ -52,7 +52,7 @@ Cursor существует, чтобы **помогать реализовыв�
 | Admin                               | `docs/12-admin-area.md`, `docs/20-security-and-access-control.md`                                                                          |
 | Front / Twig / Assets               | `docs/13-front-area.md`, `docs/21-templates-and-twig.md`, `docs/22-frontend-assets.md`, `docs/26-seo-architecture.md`                      |
 | API                                 | `docs/14-api-area.md`, `docs/20-security-and-access-control.md`, `docs/30-error-handling.md`                                               |
-| Doctrine / Database / Migrations    | `docs/17-doctrine-and-database.md`, `docs/18-migrations.md`, `docs/05-domain-model.md`                                                     |
+| Doctrine / Database / Migrations    | `docs/17-doctrine-and-database.md`, `docs/18-migrations.md`, `docs/05-domain-model.md`, `docs/47-dev-database-state.md`                    |
 | Forms / DTO / Validation            | `docs/19-forms-dto-validation.md`, `docs/09-application-layer.md`                                                                          |
 | Security                            | `docs/20-security-and-access-control.md`, `docs/27-config-and-env.md`, `docs/30-error-handling.md`                                         |
 | SEO                                 | `docs/26-seo-architecture.md`, `docs/13-front-area.md`, `docs/16-routing.md`, `docs/21-templates-and-twig.md`                              |
@@ -62,8 +62,8 @@ Cursor существует, чтобы **помогать реализовыв�
 | Config / Env                        | `docs/27-config-and-env.md`, `docs/33-local-development.md`, `docs/34-deployment.md`                                                       |
 | Logging / Errors / Healthchecks     | `docs/28-logging-observability.md`, `docs/29-healthchecks.md`, `docs/30-error-handling.md`, `docs/37-runbooks.md`                          |
 | Tests / Quality                     | `docs/31-testing-strategy.md`, `docs/38-coding-standards.md`                                                                                |
-| Docker / Local                      | `docs/32-docker-architecture.md`, `docs/33-local-development.md`                                                                            |
-| Deploy / CI/CD / Backups            | `docs/34-deployment.md`, `docs/35-cicd.md`, `docs/36-backup-restore.md`, `docs/37-runbooks.md`                                              |
+| Docker / Local                      | `docs/32-docker-architecture.md`, `docs/33-local-development.md`, `docs/47-dev-database-state.md`                                           |
+| Deploy / CI/CD / Backups            | `docs/34-deployment.md`, `docs/35-cicd.md`, `docs/36-backup-restore.md`, `docs/37-runbooks.md`, `docs/47-dev-database-state.md`             |
 | Feature / Module development        | `docs/41-implementation-playbook.md`, `docs/42-feature-development-guide.md`, `docs/43-module-development-guide.md`, `docs/45-roadmap-and-extension-points.md` |
 
 ### 2.3 Прочитать сам код
@@ -247,6 +247,7 @@ Cursor существует, чтобы **помогать реализовыв�
 - [ ] Queue/worker impact учтён (раздел 18).
 - [ ] Deployment impact учтён (раздел 10).
 - [ ] Нет новых секретов в коде, шаблонах, миграциях, логах.
+- [ ] Нет Docker images, Docker volumes, production/staging dumps, real backups, uploads или PII в Git.
 - [ ] Нет открытых наружу dangerous portов в compose/Nginx.
 - [ ] Нет unrelated files в diff.
 - [ ] Нет broad formatting changes.

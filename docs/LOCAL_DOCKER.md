@@ -43,6 +43,8 @@ make npm-build
 make health
 ```
 
+`make init` и `make reset-db` приводят локальную БД к единому dev-состоянию через Doctrine migrations и `make fixtures`. Если `doctrine/doctrine-fixtures-bundle` ещё не подключён, fixture-шаг будет no-op с информационным сообщением.
+
 После запуска доступны:
 
 - `http://localhost`
@@ -134,6 +136,18 @@ Docker использует именованные volumes:
 - `uploads_data` — `public_html/uploads`.
 
 Секреты не должны храниться в volumes. Реальные значения храните только в `.env.local`, который игнорируется Git.
+
+Volumes локальны для конкретного ПК и не являются переносимым состоянием проекта. В Git фиксируются только схема и воспроизводимые dev-данные: migrations, fixtures и при необходимости маленький обезличенный dev snapshot. Реальные backups PostgreSQL, production/staging dumps, персональные данные и uploads из локального volume в Git не добавляются.
+
+## Dev snapshot БД
+
+Основной способ синхронизировать БД между ПК разработки:
+
+```bash
+make reset-db
+```
+
+Если fixtures недостаточно и нужен общий демонстрационный набор данных, допускается добавить в Git только проверенный dev snapshot без секретов и персональных данных. Это не backup production и не замена normal backup/restore. Правила описаны в `docs/47-dev-database-state.md`.
 
 ## Проверка окружения
 

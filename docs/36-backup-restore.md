@@ -12,6 +12,8 @@
 
 > Redis в этом проекте — **cache + очередь сообщений**. Терять данные можно с минимальным ущербом (cache rebuild + retry messages из failed). Backup не критичен; целевое — RDB на всякий случай.
 
+Git не является хранилищем backup'ов. В Git можно хранить только воспроизводимое dev-состояние: migrations, fixtures и при необходимости маленький обезличенный dev snapshot/seed. Production/staging dumps, per-deploy backups, Docker volumes, uploads с реальными файлами, секреты и персональные данные в Git не коммитятся. Правила для dev-состояния описаны в [47-dev-database-state](47-dev-database-state.md).
+
 ## PostgreSQL backup
 
 ```bash
@@ -109,6 +111,7 @@ rsync -av \
 - Хранить backup на той же VM без off-site копии.
 - Не шифровать backup, отправляемый наружу.
 - Backup в `public_html/` (riski public exposure).
+- Коммитить реальные backup-файлы БД или uploads в Git; Git допускается только для обезличенных dev seeds/snapshots.
 
 ## Чек-лист настройки backup
 

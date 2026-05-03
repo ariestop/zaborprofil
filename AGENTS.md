@@ -51,6 +51,7 @@ Docker используется только для local development. Staging �
 - Публичный сайт должен оставаться SSR на Symfony + Twig, не SPA.
 - Все PHP-файлы должны использовать `declare(strict_types=1)`.
 - Документация пишется на русском языке.
+- Единое dev-состояние БД должно воспроизводиться из Doctrine migrations + fixtures/seed data. Не коммитить Docker images, Docker volumes, реальные PostgreSQL backups, production/staging dumps, uploads или секреты; в Git допустим только маленький обезличенный dev snapshot после ручной проверки.
 
 ## Проверки
 
@@ -67,4 +68,6 @@ npm run build
 ```
 
 Локально для Doctrine/PostgreSQL требуется включенное расширение PHP `pdo_pgsql`.
+
+Для пересоздания локальной dev-БД использовать `make reset-db`: команда применяет migrations и запускает `make fixtures`. Если fixtures ещё не подключены, fixture-шаг является безопасным no-op.
 

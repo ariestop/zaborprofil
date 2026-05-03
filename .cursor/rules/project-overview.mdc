@@ -11,6 +11,7 @@ alwaysApply: true
 - Public pages must be server-rendered with Symfony + Twig for SEO; do not turn the public site into a pure SPA.
 - The target stack is PHP `>=8.5`, Node.js `>=25.9.0` (npm `>=11.12.1`), nginx `>=1.30.0`, Symfony `8.x`, PostgreSQL `>=18`, Redis `>=8`, Doctrine, Twig, Tailwind CSS, Vite, Vue 3 admin UI.
 - Documentation must be written in Russian.
+- Development database state must be reproducible from Doctrine migrations plus fixtures/seed data. Do not commit Docker images, Docker volumes, real PostgreSQL backups, production/staging dumps, uploads, secrets, or personal data. Only a small manually reviewed anonymized dev snapshot is allowed in Git when fixtures are not enough.
 
 ## Main Directories
 
