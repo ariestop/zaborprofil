@@ -9,7 +9,8 @@ use App\Module\Content\Domain\Entity\Page;
 final readonly class PublicPageView
 {
     /**
-     * @param list<PageBlockView> $blocks
+     * @param list<PageBlockView>             $blocks
+     * @param list<array<string, mixed>>|null $jsonLd
      */
     public function __construct(
         public string $id,
@@ -17,6 +18,14 @@ final readonly class PublicPageView
         public string $h1,
         public string $path,
         public string $template,
+        public bool $isIndexable,
+        public ?string $metaDescription,
+        public ?string $canonicalUrl,
+        public ?string $ogTitle,
+        public ?string $ogDescription,
+        public ?string $ogImage,
+        public ?string $ogType,
+        public ?array $jsonLd,
         public array $blocks,
     ) {
     }
@@ -29,6 +38,14 @@ final readonly class PublicPageView
             $page->h1(),
             $page->path(),
             $page->template(),
+            $page->isIndexable(),
+            $page->metaDescription(),
+            $page->canonicalUrl(),
+            $page->ogTitle(),
+            $page->ogDescription(),
+            $page->ogImage(),
+            $page->ogType(),
+            $page->jsonLd(),
             array_map(PageBlockView::fromBlock(...), $page->enabledBlocks()),
         );
     }

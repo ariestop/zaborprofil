@@ -16,6 +16,9 @@ services:
             - ../src/Module/*/Domain/Entity/
             - ../src/Module/*/Infrastructure/Doctrine/Entity/
 
+    App\Module\Content\Application\Service\PublicPageResolverInterface:
+        alias: App\Module\Content\Application\Service\PublicPageResolver
+
     App\Module\Content\Domain\Repository\PageRepositoryInterface:
         alias: App\Module\Content\Infrastructure\Repository\DoctrinePageRepository
 

@@ -6,7 +6,7 @@ namespace App\Module\Content\Application\Service;
 
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 
-final readonly class PublicPageResolver
+final readonly class PublicPageResolver implements PublicPageResolverInterface
 {
     public function __construct(private PageRepositoryInterface $pages)
     {
@@ -14,23 +14,8 @@ final readonly class PublicPageResolver
 
     public function resolve(string $path): ?PublicPageView
     {
-        $page = $this->pages->findPublishedByPath($this->normalizePath($path));
+        $page = $this->pages->findPublishedByPath(PublicPagePathNormalizer::normalize($path));
 
         return $page === null ? null : PublicPageView::fromPage($page);
-    }
-
-    private function normalizePath(string $path): string
-    {
-        $normalized = trim($path);
-
-        if ($normalized === '') {
-            return '/';
-        }
-
-        if (!str_starts_with($normalized, '/')) {
-            return '/' . $normalized;
-        }
-
-        return $normalized;
     }
 }

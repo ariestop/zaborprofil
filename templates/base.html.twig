@@ -29,6 +29,18 @@
             {% if canonical_url is defined and canonical_url %}
                 <meta property="og:url" content="{{ canonical_url }}">
             {% endif %}
+            {% if og_image is defined and og_image %}
+                <meta property="og:image" content="{{ og_image }}">
+                <meta name="twitter:card" content="summary_large_image">
+                <meta name="twitter:image" content="{{ og_image }}">
+            {% endif %}
+        {% endblock %}
+        {% block json_ld %}
+            {% if json_ld_blocks is defined and json_ld_blocks %}
+                {% for block in json_ld_blocks %}
+                    <script type="application/ld+json">{{ block|json_encode(constant('JSON_UNESCAPED_UNICODE'))|raw }}</script>
+                {% endfor %}
+            {% endif %}
         {% endblock %}
         {% block stylesheets %}
             {{ vite_entry_link_tags('assets/site/app.ts') }}

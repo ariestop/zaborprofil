@@ -7,6 +7,7 @@ namespace App\Module\Content\Application\Handler;
 use App\Module\Content\Application\Command\UpdatePageCommand;
 use App\Module\Content\Application\DTO\PageOutput;
 use App\Module\Content\Application\Service\ContentId;
+use App\Module\Content\Application\Service\PublicPageCacheInvalidator;
 use App\Module\Content\Domain\Enum\PageType;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use InvalidArgumentException;
@@ -16,6 +17,7 @@ final readonly class UpdatePageHandler
     public function __construct(
         private PageRepositoryInterface $pages,
         private ContentId $contentId,
+        private PublicPageCacheInvalidator $publicPageCache,
     ) {
     }
 
@@ -28,6 +30,7 @@ final readonly class UpdatePageHandler
         }
 
         $page = $this->pages->get($pageId);
+        $previousPath = $page->path();
         $parent = $command->parentId === null ? null : $this->pages->get($this->contentId->fromString($command->parentId));
 
         $page->update(
@@ -43,6 +46,8 @@ final readonly class UpdatePageHandler
         );
 
         $this->pages->save($page);
+
+        $this->publicPageCache->invalidateMany([$previousPath, $page->path()]);
 
         return PageOutput::fromPage($page);
     }

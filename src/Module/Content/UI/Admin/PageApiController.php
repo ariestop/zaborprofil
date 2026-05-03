@@ -9,10 +9,12 @@ use App\Module\Content\Application\Command\ArchivePageCommand;
 use App\Module\Content\Application\Command\CreatePageCommand;
 use App\Module\Content\Application\Command\PublishPageCommand;
 use App\Module\Content\Application\Command\UpdatePageCommand;
+use App\Module\Content\Application\Command\UpdatePageSeoMetadataCommand;
 use App\Module\Content\Application\Handler\ArchivePageHandler;
 use App\Module\Content\Application\Handler\CreatePageHandler;
 use App\Module\Content\Application\Handler\PublishPageHandler;
 use App\Module\Content\Application\Handler\UpdatePageHandler;
+use App\Module\Content\Application\Handler\UpdatePageSeoMetadataHandler;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -76,6 +78,32 @@ final readonly class PageApiController
                 $this->jsonRequest->int($payload, 'sortOrder', 0),
                 $this->jsonRequest->bool($payload, 'isIndexable', true),
                 $this->jsonRequest->nullableString($payload, 'parentId'),
+            ));
+
+            return new JsonResponse($page->toArray());
+        } catch (Throwable $exception) {
+            return $this->responder->error($exception);
+        }
+    }
+
+    #[Route('/{id}/seo', name: 'admin_api_content_page_seo_update', methods: ['PUT'])]
+    public function updateSeo(string $id, Request $request, UpdatePageSeoMetadataHandler $handler): JsonResponse
+    {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::SEO_EDIT)) {
+            return $this->accessDenied();
+        }
+
+        try {
+            $payload = $this->jsonRequest->payload($request);
+            $page = $handler(new UpdatePageSeoMetadataCommand(
+                $id,
+                $this->jsonRequest->nullableString($payload, 'metaDescription'),
+                $this->jsonRequest->nullableString($payload, 'canonicalUrl'),
+                $this->jsonRequest->nullableString($payload, 'ogTitle'),
+                $this->jsonRequest->nullableString($payload, 'ogDescription'),
+                $this->jsonRequest->nullableString($payload, 'ogImage'),
+                $this->jsonRequest->nullableString($payload, 'ogType'),
+                $this->jsonRequest->nullableObjectList($payload, 'jsonLd'),
             ));
 
             return new JsonResponse($page->toArray());

@@ -98,6 +98,35 @@ final class JsonRequest
     /**
      * @param array<string, mixed> $payload
      *
+     * @return list<array<string, mixed>>|null
+     */
+    public function nullableObjectList(array $payload, string $key): ?array
+    {
+        if (!array_key_exists($key, $payload) || $payload[$key] === null) {
+            return null;
+        }
+
+        $value = $payload[$key];
+
+        if (!\is_array($value)) {
+            throw new InvalidArgumentException(\sprintf('Field "%s" must be an array of objects or null.', $key));
+        }
+
+        $items = [];
+        foreach ($value as $index => $item) {
+            if (!\is_array($item)) {
+                throw new InvalidArgumentException(\sprintf('Field "%s[%d]" must be an object.', $key, (int) $index));
+            }
+
+            $items[] = $this->stringKeyedArray($item, \sprintf('Field "%s[%d]" must be an object.', $key, (int) $index));
+        }
+
+        return $items;
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     *
      * @return list<string>
      */
     public function stringList(array $payload, string $key): array

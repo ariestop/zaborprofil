@@ -8,6 +8,9 @@ use App\Module\Content\Domain\Entity\Page;
 
 final readonly class PageOutput
 {
+    /**
+     * @param list<array<string, mixed>>|null $jsonLd
+     */
     public function __construct(
         public string $id,
         public string $type,
@@ -20,6 +23,13 @@ final readonly class PageOutput
         public int $sortOrder,
         public bool $isIndexable,
         public ?string $publishedAt,
+        public ?string $metaDescription = null,
+        public ?string $canonicalUrl = null,
+        public ?string $ogTitle = null,
+        public ?string $ogDescription = null,
+        public ?string $ogImage = null,
+        public ?string $ogType = null,
+        public ?array $jsonLd = null,
     ) {
     }
 
@@ -37,11 +47,18 @@ final readonly class PageOutput
             $page->sortOrder(),
             $page->isIndexable(),
             $page->publishedAt()?->format(DATE_ATOM),
+            $page->metaDescription(),
+            $page->canonicalUrl(),
+            $page->ogTitle(),
+            $page->ogDescription(),
+            $page->ogImage(),
+            $page->ogType(),
+            $page->jsonLd(),
         );
     }
 
     /**
-     * @return array<string, string|int|bool|null>
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {
@@ -57,6 +74,15 @@ final readonly class PageOutput
             'sortOrder' => $this->sortOrder,
             'isIndexable' => $this->isIndexable,
             'publishedAt' => $this->publishedAt,
+            'seo' => [
+                'metaDescription' => $this->metaDescription,
+                'canonicalUrl' => $this->canonicalUrl,
+                'ogTitle' => $this->ogTitle,
+                'ogDescription' => $this->ogDescription,
+                'ogImage' => $this->ogImage,
+                'ogType' => $this->ogType,
+                'jsonLd' => $this->jsonLd,
+            ],
         ];
     }
 }

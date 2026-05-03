@@ -64,6 +64,30 @@ final class Page
     #[ORM\Column]
     private bool $indexable = true;
 
+    #[ORM\Column(name: 'meta_description', length: 320, nullable: true)]
+    private ?string $metaDescription = null;
+
+    #[ORM\Column(name: 'canonical_url', length: 2048, nullable: true)]
+    private ?string $canonicalUrl = null;
+
+    #[ORM\Column(name: 'og_title', length: 255, nullable: true)]
+    private ?string $ogTitle = null;
+
+    #[ORM\Column(name: 'og_description', length: 320, nullable: true)]
+    private ?string $ogDescription = null;
+
+    #[ORM\Column(name: 'og_image', length: 2048, nullable: true)]
+    private ?string $ogImage = null;
+
+    #[ORM\Column(name: 'og_type', length: 32, nullable: true)]
+    private ?string $ogType = null;
+
+    /**
+     * @var list<array<string, mixed>>|null
+     */
+    #[ORM\Column(name: 'json_ld', type: 'json', nullable: true, options: ['jsonb' => true])]
+    private ?array $jsonLd = null;
+
     #[ORM\Column(nullable: true)]
     private ?DateTimeImmutable $publishedAt = null;
 
@@ -161,6 +185,44 @@ final class Page
         return $this->indexable;
     }
 
+    public function metaDescription(): ?string
+    {
+        return $this->metaDescription;
+    }
+
+    public function canonicalUrl(): ?string
+    {
+        return $this->canonicalUrl;
+    }
+
+    public function ogTitle(): ?string
+    {
+        return $this->ogTitle;
+    }
+
+    public function ogDescription(): ?string
+    {
+        return $this->ogDescription;
+    }
+
+    public function ogImage(): ?string
+    {
+        return $this->ogImage;
+    }
+
+    public function ogType(): ?string
+    {
+        return $this->ogType;
+    }
+
+    /**
+     * @return list<array<string, mixed>>|null
+     */
+    public function jsonLd(): ?array
+    {
+        return $this->jsonLd;
+    }
+
     public function publishedAt(): ?DateTimeImmutable
     {
         return $this->publishedAt;
@@ -212,6 +274,28 @@ final class Page
         $this->template = self::required($template, 'Page template cannot be empty.');
         $this->sortOrder = $sortOrder;
         $this->indexable = $indexable;
+        $this->touch();
+    }
+
+    /**
+     * @param list<array<string, mixed>>|null $jsonLd
+     */
+    public function updateSeoMetadata(
+        ?string $metaDescription,
+        ?string $canonicalUrl,
+        ?string $ogTitle,
+        ?string $ogDescription,
+        ?string $ogImage,
+        ?string $ogType,
+        ?array $jsonLd,
+    ): void {
+        $this->metaDescription = self::normalizeOptionalString($metaDescription, 320, 'metaDescription');
+        $this->canonicalUrl = self::normalizeOptionalAbsoluteUrl($canonicalUrl, 'canonicalUrl');
+        $this->ogTitle = self::normalizeOptionalString($ogTitle, 255, 'ogTitle');
+        $this->ogDescription = self::normalizeOptionalString($ogDescription, 320, 'ogDescription');
+        $this->ogImage = self::normalizeOptionalAbsoluteUrl($ogImage, 'ogImage');
+        $this->ogType = self::normalizeOptionalString($ogType, 32, 'ogType');
+        $this->jsonLd = self::normalizeJsonLd($jsonLd);
         $this->touch();
     }
 
@@ -271,6 +355,81 @@ final class Page
 
         if (!preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/', $normalized)) {
             throw new InvalidArgumentException('Page slug must contain only lowercase latin letters, numbers and hyphens.');
+        }
+
+        return $normalized;
+    }
+
+    private static function normalizeOptionalString(?string $value, int $maxLength, string $field): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $trimmed = trim($value);
+
+        if ($trimmed === '') {
+            return null;
+        }
+
+        if (\mb_strlen($trimmed) > $maxLength) {
+            throw new InvalidArgumentException(\sprintf('Page %s must be at most %d characters.', $field, $maxLength));
+        }
+
+        return $trimmed;
+    }
+
+    private static function normalizeOptionalAbsoluteUrl(?string $value, string $field): ?string
+    {
+        $normalized = self::normalizeOptionalString($value, 2048, $field);
+
+        if ($normalized === null) {
+            return null;
+        }
+
+        if (!preg_match('#^https?://#i', $normalized)) {
+            throw new InvalidArgumentException(\sprintf('Page %s must be an absolute URL (http:// or https://).', $field));
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * Accepts the raw decoded JSON-LD payload (caller may pass anything that
+     * resembles a list of associative arrays). Each element is rebuilt into a
+     * `array<string, mixed>` so downstream code can rely on string keys.
+     *
+     * @param array<mixed>|null $jsonLd
+     *
+     * @return list<array<string, mixed>>|null
+     */
+    private static function normalizeJsonLd(?array $jsonLd): ?array
+    {
+        if ($jsonLd === null || $jsonLd === []) {
+            return null;
+        }
+
+        $normalized = [];
+
+        foreach ($jsonLd as $index => $block) {
+            if (!\is_array($block)) {
+                throw new InvalidArgumentException(\sprintf('Page jsonLd[%s] must be an associative array.', (string) $index));
+            }
+
+            if (!isset($block['@context']) || !isset($block['@type'])) {
+                throw new InvalidArgumentException(\sprintf('Page jsonLd[%s] must contain "@context" and "@type" keys.', (string) $index));
+            }
+
+            $stringKeyed = [];
+            foreach ($block as $key => $value) {
+                if (!\is_string($key)) {
+                    throw new InvalidArgumentException(\sprintf('Page jsonLd[%s] must contain only string keys.', (string) $index));
+                }
+
+                $stringKeyed[$key] = $value;
+            }
+
+            $normalized[] = $stringKeyed;
         }
 
         return $normalized;
