@@ -32,6 +32,8 @@ interface PageRepositoryInterface
      */
     public function findAllForAdmin(): array;
 
+    public function countPublishedIndexable(): int;
+
     /**
      * Returns every published, non-deleted, indexable page in stable order so
      * the sitemap stays deterministic.
@@ -39,4 +41,9 @@ interface PageRepositoryInterface
      * @return list<Page>
      */
     public function findAllPublishedIndexable(): array;
+
+    /**
+     * @return list<Page>
+     */
+    public function findPublishedIndexableSlice(int $limit, int $offset): array;
 }

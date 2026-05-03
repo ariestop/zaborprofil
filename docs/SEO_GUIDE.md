@@ -16,6 +16,9 @@ SEO является критичной частью проекта.
 
 - `Page.indexable` управляет `<meta name="robots">`.
 - `Page.metaDescription`, `canonicalUrl`, `ogTitle`, `ogDescription`, `ogImage`, `ogType`, `jsonLd` выводятся в Twig `<head>`.
+- `SchemaOrgBuilder` автоматически добавляет базовый `WebPage` JSON-LD для публичной страницы; редакторские JSON-LD блоки добавляются следом.
+- `/sitemap.xml` автоматически становится sitemap index, когда опубликованных индексируемых страниц больше `app.sitemap_chunk_size`; чанки доступны как `/sitemap-pages-N.xml`.
+- `/robots.txt` в production управляется через `PUT /admin/api/seo/robots`; вне production всегда отдается `Disallow: /`.
 - Публичные страницы кэшируются через `cache.public_page`; изменения страниц, блоков и SEO сбрасывают соответствующий cache tag.
 - Управляемые меню доступны через `menu_items(position)` и могут использоваться для breadcrumbs/навигации.
 

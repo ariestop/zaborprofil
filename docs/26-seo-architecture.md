@@ -127,7 +127,7 @@
 | `meta_robots` | `'index, follow'` или `'noindex, nofollow'` (на основе `page.isIndexable`) |
 | `canonical_url` | `page.canonicalUrl` или `absolute_url` от `page.path` |
 | `og_type`, `og_title`, `og_description`, `og_image` | соответствующие поля `Page`, с fallback'ами |
-| `json_ld_blocks` | `page.jsonLd` (массив) |
+| `json_ld_blocks` | базовый `SchemaOrgBuilder::webPage()` + редакторские `page.jsonLd` блоки |
 
 `templates/public/page/show.html.twig` рендерит только `<title>` (через extends `base`) и `<h1>` (явно). Все meta-теги — в `base.html.twig`.
 
@@ -159,6 +159,7 @@
 - Файл `robots.txt` рендерится `Module\Seo\UI\Web\RobotsController` ([код](../src/Module/Seo/UI/Web/RobotsController.php)).
 - В `dev`/`staging` окружениях — `User-agent: *` + `Disallow: /` (полный запрет индексации).
 - В `prod` — стандартный robots с `Sitemap:` директивой и точечными `Disallow:` для служебных путей.
+- Редактирование production robots.txt: `GET/PUT /admin/api/seo/robots` (требует `AdminPermission::SEO_EDIT`), значение хранится в Settings `seo.robots_txt`.
 
 Минимальный production robots.txt:
 
@@ -193,12 +194,13 @@ Sitemap: https://zaborprofil.ru/sitemap.xml
 
 - `sitemap.xml` рендерится `Module\Seo\UI\Web\SitemapController` ([код](../src/Module/Seo/UI/Web/SitemapController.php)).
 - Включаются **только** `PageStatus::Published` + `indexable=true`, без `deletedAt`.
-- `<lastmod>` — `updatedAt` страницы в формате `YYYY-MM-DDThh:mm:ssZ` (ISO 8601, UTC).
+- `<lastmod>` — `updatedAt` страницы в формате `YYYY-MM-DD`.
 - `<priority>` и `<changefreq>` — по умолчанию опускаются (Google их игнорирует).
+- Если число URL превышает `app.sitemap_chunk_size`, `/sitemap.xml` отдаёт sitemap index, а страницы попадают в `/sitemap-pages-N.xml`.
 
 ### 6.2 Целевая архитектура (для роста каталога)
 
-При росте каталога > 10 000 URL — переход на индексный sitemap:
+При росте каталога — расширение индексного sitemap дополнительными источниками:
 
 ```text
 /sitemap.xml          (sitemap index)

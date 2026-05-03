@@ -71,15 +71,17 @@
 - защита от параллельных deploy/rollback через lock directory;
 - Staging Protection: production job зависит от staging job, production script требует `CONFIRM_STAGING_DEPLOYED=yes`, опционально поддерживается marker `REQUIRE_STAGING_MARKER=yes`.
 
-## Оставшиеся задачи на будущее
-
 ### W6 SEO core
 
-- расширенные SEO-поля страниц;
-- Advanced Sitemap Manager;
-- Robots Manager;
-- Schema.org Builder;
-- Canonical URL Guard.
+Состав:
+
+- расширенные SEO-поля страниц: description, canonical, OpenGraph, JSON-LD;
+- Advanced Sitemap Manager: sitemap index + чанки `/sitemap-pages-N.xml`;
+- Robots Manager: production robots.txt через `Settings`, non-prod `Disallow: /`;
+- Schema.org Builder: базовый `WebPage` JSON-LD для публичных страниц;
+- Canonical URL Guard с проверкой host из `SITE_URL`.
+
+## Оставшиеся задачи на будущее
 
 ### W7 SEO audit and pre-publish checklist
 

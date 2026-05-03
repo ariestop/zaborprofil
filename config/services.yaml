@@ -5,6 +5,7 @@ parameters:
     app.vite.public_build_path: /build
     app.release_info_path: '%kernel.project_dir%/var/release-info.json'
     app.media_upload_dir: '%kernel.project_dir%/public_html/uploads/media'
+    app.sitemap_chunk_size: 50000
 
 services:
     _defaults:
@@ -66,14 +67,15 @@ services:
         arguments:
             $projectDir: '%kernel.project_dir%'
 
-    App\Module\Seo\UI\Web\RobotsController:
+    App\Module\Seo\Application\Service\RobotsTxtManager:
         arguments:
             $environment: '%kernel.environment%'
             $siteUrl: '%app.site_url%'
 
-    App\Module\Seo\UI\Web\SitemapController:
+    App\Module\Seo\Application\Service\SitemapBuilder:
         arguments:
             $siteUrl: '%app.site_url%'
+            $chunkSize: '%app.sitemap_chunk_size%'
 
     App\Module\Seo\Application\Service\CanonicalUrlGuard:
         arguments:
@@ -113,3 +115,4 @@ services:
 when@test:
     parameters:
         app.vite.manifest_path: '%kernel.project_dir%/tests/Fixtures/vite/manifest.json'
+        app.sitemap_chunk_size: 2

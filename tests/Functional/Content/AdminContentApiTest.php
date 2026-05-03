@@ -127,6 +127,8 @@ final class AdminContentApiTest extends WebTestCase
         self::assertStringContainsString('<meta property="og:image" content="https://zaborprofil.test/og/zabory.jpg">', $html);
         self::assertStringContainsString('<meta name="twitter:card" content="summary_large_image">', $html);
         self::assertMatchesRegularExpression('#"@context":"https:\\\\?/\\\\?/schema\.org"#', $html);
+        self::assertStringContainsString('"@type":"WebPage"', $html);
+        self::assertStringContainsString('"url":"https:\/\/zaborprofil.test\/zabory-pod-kluch\/"', $html);
         self::assertStringContainsString('"@type":"Product"', $html);
     }
 

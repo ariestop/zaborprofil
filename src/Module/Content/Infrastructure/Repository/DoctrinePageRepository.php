@@ -9,6 +9,7 @@ use App\Module\Content\Domain\Enum\PageStatus;
 use App\Module\Content\Domain\Exception\ContentNotFoundException;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Uid\Ulid;
 
@@ -66,13 +67,29 @@ final class DoctrinePageRepository extends ServiceEntityRepository implements Pa
     public function findAllPublishedIndexable(): array
     {
         /** @var list<Page> $result */
-        $result = $this->createQueryBuilder('page')
-            ->andWhere('page.status = :status')
-            ->andWhere('page.deletedAt IS NULL')
-            ->andWhere('page.indexable = :indexable')
-            ->setParameter('status', PageStatus::Published)
-            ->setParameter('indexable', true)
+        $result = $this->publishedIndexableQueryBuilder()
             ->orderBy('page.path', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        return $result;
+    }
+
+    public function countPublishedIndexable(): int
+    {
+        return (int) $this->publishedIndexableQueryBuilder()
+            ->select('COUNT(page.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function findPublishedIndexableSlice(int $limit, int $offset): array
+    {
+        /** @var list<Page> $result */
+        $result = $this->publishedIndexableQueryBuilder()
+            ->orderBy('page.path', 'ASC')
+            ->setMaxResults($limit)
+            ->setFirstResult($offset)
             ->getQuery()
             ->getResult();
 
@@ -110,6 +127,16 @@ final class DoctrinePageRepository extends ServiceEntityRepository implements Pa
             ->getResult();
 
         return $result;
+    }
+
+    private function publishedIndexableQueryBuilder(): QueryBuilder
+    {
+        return $this->createQueryBuilder('page')
+            ->andWhere('page.status = :status')
+            ->andWhere('page.deletedAt IS NULL')
+            ->andWhere('page.indexable = :indexable')
+            ->setParameter('status', PageStatus::Published)
+            ->setParameter('indexable', true);
     }
 
     private function toUlid(string $id): Ulid

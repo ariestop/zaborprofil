@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Module\Seo\UI\Web;
 
+use App\Module\Seo\Application\Service\RobotsTxtManager;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -18,52 +19,16 @@ use Symfony\Component\Routing\Attribute\Route;
  */
 final readonly class RobotsController
 {
-    public function __construct(
-        private string $environment,
-        private string $siteUrl,
-    ) {
+    public function __construct(private RobotsTxtManager $robots)
+    {
     }
 
     #[Route('/robots.txt', name: 'public_robots_txt', methods: ['GET'])]
     public function __invoke(): Response
     {
-        $body = $this->buildBody();
-
-        return new Response($body, 200, [
+        return new Response($this->robots->body(), 200, [
             'Content-Type' => 'text/plain; charset=UTF-8',
             'Cache-Control' => 'public, max-age=3600',
         ]);
-    }
-
-    private function buildBody(): string
-    {
-        if ('prod' !== $this->environment) {
-            return "User-agent: *\nDisallow: /\n";
-        }
-
-        $lines = [
-            'User-agent: *',
-            'Allow: /',
-            'Disallow: /admin/',
-            'Disallow: /api/',
-        ];
-
-        $sitemapUrl = $this->buildSitemapUrl();
-        if (null !== $sitemapUrl) {
-            $lines[] = '';
-            $lines[] = 'Sitemap: '.$sitemapUrl;
-        }
-
-        return implode("\n", $lines)."\n";
-    }
-
-    private function buildSitemapUrl(): ?string
-    {
-        $base = trim($this->siteUrl);
-        if ('' === $base) {
-            return null;
-        }
-
-        return rtrim($base, '/').'/sitemap.xml';
     }
 }

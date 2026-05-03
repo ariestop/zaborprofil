@@ -43,6 +43,38 @@ final class SitemapControllerTest extends WebTestCase
         self::assertStringNotContainsString('/hidden/', $body);
     }
 
+    public function testSitemapUsesIndexWhenPublishedPagesExceedChunkSize(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+
+        $repository = $this->pageRepository();
+        foreach ([1, 2, 3] as $number) {
+            $page = new Page(PageType::Landing, 'Страница '.$number, 'chunk-'.$number, '/chunk-'.$number.'/', 'Страница '.$number);
+            $page->publish();
+            $repository->save($page);
+        }
+
+        $client->request('GET', '/sitemap.xml');
+        self::assertResponseIsSuccessful();
+
+        $index = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">', $index);
+        self::assertStringContainsString('<loc>https://zaborprofil.test/sitemap-pages-1.xml</loc>', $index);
+        self::assertStringContainsString('<loc>https://zaborprofil.test/sitemap-pages-2.xml</loc>', $index);
+
+        $client->request('GET', '/sitemap-pages-1.xml');
+        self::assertResponseIsSuccessful();
+        $firstChunk = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('/chunk-1/', $firstChunk);
+        self::assertStringContainsString('/chunk-2/', $firstChunk);
+        self::assertStringNotContainsString('/chunk-3/', $firstChunk);
+
+        $client->request('GET', '/sitemap-pages-2.xml');
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('/chunk-3/', (string) $client->getResponse()->getContent());
+    }
+
     private function entityManager(): EntityManagerInterface
     {
         $entityManager = self::getContainer()->get(EntityManagerInterface::class);

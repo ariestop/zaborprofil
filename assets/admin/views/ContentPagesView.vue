@@ -23,6 +23,7 @@ const form = reactive({
   ogTitle: '',
   ogDescription: '',
   ogImage: '',
+  jsonLd: '',
 })
 
 function fillForm(page: ContentPageDetail): void {
@@ -39,6 +40,7 @@ function fillForm(page: ContentPageDetail): void {
   form.ogTitle = page.seo.ogTitle ?? ''
   form.ogDescription = page.seo.ogDescription ?? ''
   form.ogImage = page.seo.ogImage ?? ''
+  form.jsonLd = page.seo.jsonLd ? JSON.stringify(page.seo.jsonLd, null, 2) : ''
 }
 
 function pagePayload(): Record<string, unknown> {
@@ -62,8 +64,21 @@ function seoPayload(): Record<string, unknown> {
     ogDescription: form.ogDescription || null,
     ogImage: form.ogImage || null,
     ogType: 'website',
-    jsonLd: null,
+    jsonLd: parseJsonLdInput(),
   }
+}
+
+function parseJsonLdInput(): Record<string, unknown>[] | null {
+  if (form.jsonLd.trim() === '') {
+    return null
+  }
+
+  const decoded = JSON.parse(form.jsonLd) as unknown
+  if (!Array.isArray(decoded) || decoded.some((item) => item === null || typeof item !== 'object' || Array.isArray(item))) {
+    throw new Error('JSON-LD должен быть массивом объектов.')
+  }
+
+  return decoded as Record<string, unknown>[]
 }
 
 async function loadPages(): Promise<void> {
@@ -226,6 +241,15 @@ onMounted(loadPages)
           <label class="text-sm font-medium text-slate-700">
             OG image
             <input v-model="form.ogImage" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2">
+          </label>
+          <label class="text-sm font-medium text-slate-700">
+            JSON-LD
+            <textarea
+              v-model="form.jsonLd"
+              rows="7"
+              placeholder='[{"@context":"https://schema.org","@type":"Product","name":"Забор"}]'
+              class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs"
+            />
           </label>
         </div>
 

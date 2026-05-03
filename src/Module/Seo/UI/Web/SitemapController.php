@@ -4,43 +4,40 @@ declare(strict_types=1);
 
 namespace App\Module\Seo\UI\Web;
 
-use App\Module\Content\Domain\Repository\PageRepositoryInterface;
+use App\Module\Seo\Application\Service\SitemapBuilder;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
- * Generates `/sitemap.xml` from every published, indexable page. The sitemap
- * is intentionally simple (urlset + url + loc + lastmod) so search engines
- * can ingest it without any extra dependency.
+ * Generates sitemap index/chunks from published, indexable pages.
  */
 final readonly class SitemapController
 {
-    public function __construct(
-        private PageRepositoryInterface $pages,
-        private string $siteUrl,
-    ) {
+    public function __construct(private SitemapBuilder $sitemap)
+    {
     }
 
     #[Route('/sitemap.xml', name: 'public_sitemap_xml', methods: ['GET'])]
     public function __invoke(): Response
     {
-        $base = rtrim(trim($this->siteUrl), '/');
+        return $this->xmlResponse($this->sitemap->buildRootSitemap());
+    }
 
-        $xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-        $xml .= "<urlset xmlns=\"http://www.sitemaps.org/schemas/0.9\">\n";
-
-        foreach ($this->pages->findAllPublishedIndexable() as $page) {
-            $loc = htmlspecialchars($base.$page->path(), \ENT_QUOTES | \ENT_XML1, 'UTF-8');
-            $lastmod = $page->updatedAt()->format('Y-m-d');
-
-            $xml .= "    <url>\n";
-            $xml .= '        <loc>'.$loc."</loc>\n";
-            $xml .= '        <lastmod>'.$lastmod."</lastmod>\n";
-            $xml .= "    </url>\n";
+    #[Route('/sitemap-pages-{page}.xml', name: 'public_sitemap_page_xml', requirements: ['page' => '[1-9]\d*'], methods: ['GET'])]
+    public function page(int $page): Response
+    {
+        if ($page > $this->sitemap->chunkCount()) {
+            return new Response('Sitemap chunk not found.', 404, [
+                'Content-Type' => 'text/plain; charset=UTF-8',
+                'X-Robots-Tag' => 'noindex, nofollow',
+            ]);
         }
 
-        $xml .= "</urlset>\n";
+        return $this->xmlResponse($this->sitemap->buildPageChunk($page));
+    }
 
+    private function xmlResponse(string $xml): Response
+    {
         return new Response($xml, 200, [
             'Content-Type' => 'application/xml; charset=UTF-8',
             'Cache-Control' => 'public, max-age=3600',
