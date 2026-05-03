@@ -2,6 +2,7 @@
 /.env.*.local
 /.env.staging
 /.env.production
+!/.env.local
 /.DS_Store
 /public_html/.DS_Store
 /vendor/
@@ -22,6 +23,7 @@
 /.env.local
 /.env.local.php
 /.env.*.local
+!/.env.local
 /config/secrets/prod/prod.decrypt.private.php
 /config/reference.php
 /public_html/bundles/

@@ -52,7 +52,6 @@ Docker используется только для локальной разр�
 ## Быстрый старт через Docker
 
 ```bash
-cp .env.local.example .env.local
 make build
 make up
 make composer-install
