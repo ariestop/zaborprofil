@@ -23,6 +23,11 @@ type SeoAuditResult = { passed: boolean; issues: SeoAuditIssue[] }
 
 const seoAuditToast = ref<SeoAuditResult | null>(null)
 let seoAuditToastTimeout: number | null = null
+type DropPlacement = 'before' | 'after'
+const draggingBlockId = ref<string | null>(null)
+const dragOverBlockId = ref<string | null>(null)
+const dragOverPlacement = ref<DropPlacement | null>(null)
+const reorderSaving = ref(false)
 
 const pageTypes = ['home', 'landing', 'service', 'product_category_landing', 'material_landing', 'portfolio_index', 'portfolio_item', 'contacts', 'prices', 'text_page', 'seo_landing', 'system_page']
 const statusTransitions: Record<PageStatus, PageStatus[]> = {
@@ -179,6 +184,7 @@ const templatesForType = computed(() => templates.value.filter((template) => tem
 const selectedBlockSchema = computed(() => blockSchemas.value.find((item) => item.type === blockForm.type) ?? null)
 const selectedBlockExampleContent = computed(() => blockContentExamples[blockForm.type] ?? selectedBlockSchema.value?.defaultContent ?? {})
 const selectedBlockExampleSettings = computed(() => blockSettingsExamples[blockForm.type] ?? selectedBlockSchema.value?.defaultSettings ?? {})
+const selectedBlocks = computed(() => [...(selected.value?.blocks ?? [])].sort((left, right) => left.position - right.position))
 const availableStatusActions = computed(() => {
   if (!selected.value) {
     return []
@@ -365,7 +371,7 @@ async function selectPage(id: string): Promise<void> {
   closeSeoAuditToast()
   selected.value = await apiRequest<ContentPageDetail>(`/admin/api/content/pages/${id}`)
   fillPageForm(selected.value)
-  selectedBlockId.value = selected.value.blocks[0]?.id ?? null
+  selectedBlockId.value = selectedBlocks.value[0]?.id ?? null
   if (selectedBlock.value) {
     fillBlockForm(selectedBlock.value, false)
   }
@@ -480,7 +486,7 @@ async function moveBlock(block: ContentBlockItem, direction: -1 | 1): Promise<vo
   if (!selected.value) {
     return
   }
-  const sorted = [...selected.value.blocks].sort((left, right) => left.position - right.position)
+  const sorted = selectedBlocks.value
   const index = sorted.findIndex((item) => item.id === block.id)
   const target = index + direction
   if (target < 0 || target >= sorted.length) {
@@ -493,6 +499,142 @@ async function moveBlock(block: ContentBlockItem, direction: -1 | 1): Promise<vo
     body: { blockIds: sorted.map((item) => item.id) },
   })
   await selectPage(selected.value.id)
+}
+
+function blockCardClass(block: ContentBlockItem): string[] {
+  const classes = [
+    selectedBlockId.value === block.id ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200',
+    reorderSaving.value ? 'cursor-wait' : 'cursor-grab',
+  ]
+
+  if (draggingBlockId.value === block.id) {
+    classes.push('opacity-50')
+  }
+
+  if (dragOverBlockId.value === block.id && draggingBlockId.value !== block.id) {
+    classes.push(dragOverPlacement.value === 'before' ? 'ring-2 ring-emerald-400 ring-offset-2' : 'ring-2 ring-emerald-600 ring-offset-2')
+  }
+
+  return classes
+}
+
+function resolveDropPlacement(event: DragEvent): DropPlacement {
+  if (event.currentTarget instanceof HTMLElement) {
+    const rect = event.currentTarget.getBoundingClientRect()
+    return event.clientY > rect.top + rect.height / 2 ? 'after' : 'before'
+  }
+
+  return 'after'
+}
+
+function buildReorderedBlocks(draggedId: string, targetId: string, placement: DropPlacement): ContentBlockItem[] | null {
+  if (draggedId === targetId) {
+    return null
+  }
+
+  const currentBlocks = selectedBlocks.value
+  const reordered = [...currentBlocks]
+  const draggedIndex = reordered.findIndex((item) => item.id === draggedId)
+  if (draggedIndex === -1) {
+    return null
+  }
+
+  const [dragged] = reordered.splice(draggedIndex, 1)
+  const targetIndex = reordered.findIndex((item) => item.id === targetId)
+  if (targetIndex === -1) {
+    return null
+  }
+
+  reordered.splice(placement === 'after' ? targetIndex + 1 : targetIndex, 0, dragged)
+
+  if (reordered.every((item, index) => item.id === currentBlocks[index]?.id)) {
+    return null
+  }
+
+  return reordered
+}
+
+function applyBlockOrder(blocks: ContentBlockItem[]): void {
+  if (!selected.value) {
+    return
+  }
+
+  selected.value.blocks = blocks.map((block, position) => ({ ...block, position }))
+}
+
+function resetBlockDragState(): void {
+  draggingBlockId.value = null
+  dragOverBlockId.value = null
+  dragOverPlacement.value = null
+}
+
+function handleBlockDragStart(event: DragEvent, block: ContentBlockItem): void {
+  if (reorderSaving.value || selectedBlocks.value.length < 2) {
+    event.preventDefault()
+    return
+  }
+
+  draggingBlockId.value = block.id
+  event.dataTransfer?.setData('text/plain', block.id)
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move'
+  }
+}
+
+function handleBlockDragOver(event: DragEvent, block: ContentBlockItem): void {
+  if (!draggingBlockId.value || draggingBlockId.value === block.id || reorderSaving.value) {
+    return
+  }
+
+  event.preventDefault()
+  dragOverBlockId.value = block.id
+  dragOverPlacement.value = resolveDropPlacement(event)
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move'
+  }
+}
+
+async function handleBlockDrop(event: DragEvent, targetBlock: ContentBlockItem): Promise<void> {
+  event.preventDefault()
+
+  if (!selected.value || reorderSaving.value) {
+    resetBlockDragState()
+    return
+  }
+
+  const draggedId = draggingBlockId.value ?? event.dataTransfer?.getData('text/plain') ?? null
+  if (!draggedId) {
+    resetBlockDragState()
+    return
+  }
+
+  const reordered = buildReorderedBlocks(draggedId, targetBlock.id, resolveDropPlacement(event))
+  if (reordered === null) {
+    resetBlockDragState()
+    return
+  }
+
+  const pageId = selected.value.id
+  const previousBlocks = selected.value.blocks
+  reorderSaving.value = true
+  error.value = null
+  resetBlockDragState()
+  applyBlockOrder(reordered)
+
+  try {
+    await apiRequest(`/admin/api/content/pages/${pageId}/blocks/reorder`, {
+      method: 'POST',
+      body: { blockIds: reordered.map((item) => item.id) },
+    })
+    await selectPage(pageId)
+  } catch (caught) {
+    if (selected.value?.id === pageId) {
+      selected.value.blocks = previousBlocks
+    }
+    error.value = caught instanceof Error ? caught.message : 'Не удалось сохранить порядок блоков'
+  } finally {
+    reorderSaving.value = false
+  }
 }
 
 function startNewBlock(type = 'hero'): void {
@@ -641,21 +783,38 @@ onMounted(loadPages)
         </div>
 
         <div v-if="selected" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div class="mb-3 flex items-center justify-between">
-            <p class="text-sm font-semibold text-slate-700">Блоки</p>
-            <button type="button" class="text-xs font-semibold text-emerald-700" @click="startNewBlock()">+ блок</button>
+          <div class="mb-3 flex items-start justify-between gap-3">
+            <div>
+              <p class="text-sm font-semibold text-slate-700">Блоки</p>
+              <p class="mt-1 text-xs text-slate-500">
+                {{ reorderSaving ? 'Сохраняем новый порядок...' : 'Перетащите блок, чтобы изменить порядок вывода.' }}
+              </p>
+            </div>
+            <button type="button" class="shrink-0 text-xs font-semibold text-emerald-700" @click="startNewBlock()">+ блок</button>
           </div>
           <button
-            v-for="block in selected.blocks"
+            v-for="block in selectedBlocks"
             :key="block.id"
             type="button"
-            class="mb-2 block w-full rounded-lg border px-3 py-2 text-left text-sm hover:bg-slate-50"
-            :class="selectedBlockId === block.id ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200'"
+            draggable="true"
+            class="mb-2 block w-full rounded-lg border px-3 py-2 text-left text-sm transition hover:bg-slate-50 disabled:opacity-70"
+            :class="blockCardClass(block)"
+            :disabled="reorderSaving"
             @click="fillBlockForm(block)"
+            @dragstart="handleBlockDragStart($event, block)"
+            @dragover="handleBlockDragOver($event, block)"
+            @drop="handleBlockDrop($event, block)"
+            @dragend="resetBlockDragState"
           >
-            <span class="block font-medium text-slate-900">{{ block.position + 1 }}. {{ block.name }}</span>
-            <span class="block text-xs text-slate-500">{{ blockTypeLabel(block.type) }} · {{ block.isEnabled ? 'включён' : 'выключен' }}</span>
+            <span class="flex items-start gap-2">
+              <span class="mt-0.5 select-none rounded border border-slate-200 px-1 text-[10px] uppercase text-slate-400" aria-hidden="true">drag</span>
+              <span class="min-w-0">
+                <span class="block font-medium text-slate-900">{{ block.position + 1 }}. {{ block.name }}</span>
+                <span class="block text-xs text-slate-500">{{ blockTypeLabel(block.type) }} · {{ block.isEnabled ? 'включён' : 'выключен' }}</span>
+              </span>
+            </span>
           </button>
+          <p v-if="selectedBlocks.length === 0" class="text-sm text-slate-500">Блоков пока нет.</p>
         </div>
       </aside>
 
