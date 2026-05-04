@@ -52,7 +52,7 @@ Commerce, Customer, Public API, reverse proxy cache и domain events вынес�
 - `Makefile` для локальных команд разработки и quality pipeline.
 - Health-check `/health` с проверкой приложения, database, Redis/cache и storage.
 - GitHub Actions CI для backend/frontend проверок.
-- GitHub Actions deploy workflow: staging first, production только по `v*` tag после staging и GitHub Environment approval.
+- GitHub Actions deploy workflow: staging first, production с `main` после staging и GitHub Environment approval.
 - Native VPS deploy scripts без Docker: staging, production, rollback, health-check.
 - Templates для Nginx и systemd Messenger workers.
 - Документация по local Docker, staging, production, deploy, CI/CD и restore backup.
@@ -65,7 +65,7 @@ Commerce, Customer, Public API, reverse proxy cache и domain events вынес�
 - настроить GitHub Environments и secrets для staging/production;
 - установить Nginx и systemd templates на VPS;
 - настроить staging protection: basic auth или IP allowlist;
-- проверить production deploy на тестовом `v*` tag после успешного staging;
+- проверить production deploy с `main` после успешного staging;
 - провести restore rehearsal: database backup restore и uploads backup restore;
 - поддерживать PostgreSQL-backed тесты в CI и локальном Docker без SQLite fallback;
 - документировать реальные VPS значения `PHP_FPM_SERVICE`, `WORKER_SERVICE`, paths и backup retention;

@@ -8,8 +8,8 @@
 
 Триггеры:
 
-- push в `main`/`master`/`develop`/`staging`;
-- pull_request на любую ветку.
+- push в `main`/`develop`/`feature/**`/`fix/**`;
+- pull_request в `main`/`develop`.
 
 Концепт `concurrency: ci-${{ github.ref }}; cancel-in-progress: true` — отменяет старый CI при пуше нового коммита.
 
@@ -53,8 +53,7 @@
 
 Триггеры:
 
-- push в `develop`/`staging`;
-- tags `v*`;
+- push в `main`;
 - workflow_dispatch.
 
 Concurrency: `deploy-${{ github.ref }}; cancel-in-progress: false`.
@@ -66,7 +65,7 @@ Concurrency: `deploy-${{ github.ref }}; cancel-in-progress: false`.
 #### Job `deploy-staging`
 
 - Environment: `staging`.
-- Срабатывает на push develop/staging, tag v*, или workflow_dispatch.
+- Срабатывает при запуске workflow на `main`.
 - SCP заливает `tools/deploy/*` на staging-сервер в `/tmp/zaborprofil-deploy`.
 - SSH запускает `deploy-staging.sh` с переменными окружения из `secrets.STAGING_*`.
 - После успешного health-check staging script запускает `staging-smoke.sh`.
@@ -74,7 +73,7 @@ Concurrency: `deploy-${{ github.ref }}; cancel-in-progress: false`.
 #### Job `deploy-production`
 
 - Environment: `production`.
-- Срабатывает только при `tags/v*`.
+- Срабатывает при запуске workflow на `main`.
 - Зависит от `deploy-staging`.
 - SCP + SSH + `deploy-production.sh` с `CONFIRM_STAGING_DEPLOYED=yes` и `CONFIRM_DEPLOY_SAFETY_CHECKLIST=yes`.
 
@@ -90,7 +89,7 @@ Concurrency: `deploy-${{ github.ref }}; cancel-in-progress: false`.
 GitHub Environments дают:
 
 - ручное approval для production (целевое — включить);
-- ограничение branch protection (только `main`/tags v*).
+- ограничение branch protection (только `main`).
 
 ## Что CI проверяет автоматически
 
