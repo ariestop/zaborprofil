@@ -182,8 +182,6 @@ src/Shared/
 │   │   └── HealthCheckController.php
 │   ├── Twig/
 │   │   └── ViteAssetExtension.php
-│   └── Web/
-│       └── HomeController.php
 └── README.md
 ```
 

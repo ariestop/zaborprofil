@@ -8,7 +8,7 @@
 
 | Префикс/path | Контроллер | Что |
 |---|---|---|
-| `/` | `Shared\UI\Web\HomeController` (целевое — может стать lookup на Page с `path = '/'`) | Главная |
+| `/` | `Module\Content\UI\Web\PublicPageController` через `Page.path = '/'` | Главная CMS-страница |
 | `/health` | `Shared\UI\Http\HealthCheckController` | Healthcheck |
 | `/sitemap.xml` | `Module\Seo\UI\Web\SitemapController` | Sitemap |
 | `/robots.txt` | `Module\Seo\UI\Web\RobotsController` | robots.txt |
@@ -41,7 +41,6 @@ flowchart LR
 templates/
 ├── base.html.twig                 # общий layout: head, header, footer
 └── public/
-    ├── home.html.twig
     ├── page/show.html.twig        # главный публичный шаблон
     └── blocks/
         ├── default.html.twig      # fallback

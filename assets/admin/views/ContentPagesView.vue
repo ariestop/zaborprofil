@@ -9,6 +9,7 @@ const blockSchemas = ref<BlockSchemaItem[]>([])
 const revisions = ref<PageRevisionItem[]>([])
 const selected = ref<ContentPageDetail | null>(null)
 const selectedBlockId = ref<string | null>(null)
+const blockEditorOpen = ref(false)
 const loading = ref(false)
 const saving = ref(false)
 const savingMessage = ref('Сохраняется...')
@@ -196,6 +197,7 @@ const canPublishSelected = computed(() => {
 function resetPageForm(): void {
   selected.value = null
   selectedBlockId.value = null
+  blockEditorOpen.value = false
   previewUrl.value = null
   closeSeoAuditToast()
   revisions.value = []
@@ -234,7 +236,7 @@ function fillPageForm(page: ContentPageDetail): void {
   form.jsonLd = page.seo.jsonLd ? JSON.stringify(page.seo.jsonLd, null, 2) : ''
 }
 
-function fillBlockForm(block: ContentBlockItem): void {
+function fillBlockForm(block: ContentBlockItem, openEditor = true): void {
   selectedBlockId.value = block.id
   blockForm.type = block.type
   blockForm.name = block.name
@@ -243,6 +245,7 @@ function fillBlockForm(block: ContentBlockItem): void {
   blockForm.visibility = block.visibility
   blockForm.content = JSON.stringify(block.content, null, 2)
   blockForm.settings = JSON.stringify(block.settings, null, 2)
+  blockEditorOpen.value = openEditor
 }
 
 function parseObject(value: string, label: string): Record<string, unknown> {
@@ -358,12 +361,13 @@ async function loadPages(): Promise<void> {
 
 async function selectPage(id: string): Promise<void> {
   previewUrl.value = null
+  blockEditorOpen.value = false
   closeSeoAuditToast()
   selected.value = await apiRequest<ContentPageDetail>(`/admin/api/content/pages/${id}`)
   fillPageForm(selected.value)
   selectedBlockId.value = selected.value.blocks[0]?.id ?? null
   if (selectedBlock.value) {
-    fillBlockForm(selectedBlock.value)
+    fillBlockForm(selectedBlock.value, false)
   }
   await loadRevisions()
 }
@@ -448,13 +452,15 @@ async function saveBlock(): Promise<void> {
     return
   }
   error.value = null
+  const pageId = selected.value.id
   try {
     if (!selectedBlock.value) {
-      await apiRequest(`/admin/api/content/pages/${selected.value.id}/blocks`, { method: 'POST', body: blockPayload() })
+      await apiRequest(`/admin/api/content/pages/${pageId}/blocks`, { method: 'POST', body: blockPayload() })
     } else {
       await apiRequest(`/admin/api/content/blocks/${selectedBlock.value.id}`, { method: 'PUT', body: blockPayload() })
     }
-    await selectPage(selected.value.id)
+    await selectPage(pageId)
+    closeBlockEditor()
   } catch (caught) {
     error.value = caught instanceof Error ? caught.message : 'Не удалось сохранить блок'
   }
@@ -464,8 +470,10 @@ async function deleteBlock(block: ContentBlockItem): Promise<void> {
   if (!selected.value) {
     return
   }
+  const pageId = selected.value.id
   await apiRequest(`/admin/api/content/blocks/${block.id}`, { method: 'DELETE' })
-  await selectPage(selected.value.id)
+  await selectPage(pageId)
+  closeBlockEditor()
 }
 
 async function moveBlock(block: ContentBlockItem, direction: -1 | 1): Promise<void> {
@@ -497,6 +505,11 @@ function startNewBlock(type = 'hero'): void {
   blockForm.visibility = 'public'
   blockForm.content = JSON.stringify(schema?.defaultContent ?? {}, null, 2)
   blockForm.settings = JSON.stringify(schema?.defaultSettings ?? {}, null, 2)
+  blockEditorOpen.value = true
+}
+
+function closeBlockEditor(): void {
+  blockEditorOpen.value = false
 }
 
 async function publishPage(): Promise<void> {
@@ -632,7 +645,14 @@ onMounted(loadPages)
             <p class="text-sm font-semibold text-slate-700">Блоки</p>
             <button type="button" class="text-xs font-semibold text-emerald-700" @click="startNewBlock()">+ блок</button>
           </div>
-          <button v-for="block in selected.blocks" :key="block.id" type="button" class="mb-2 block w-full rounded-lg border border-slate-200 px-3 py-2 text-left text-sm hover:bg-slate-50" @click="fillBlockForm(block)">
+          <button
+            v-for="block in selected.blocks"
+            :key="block.id"
+            type="button"
+            class="mb-2 block w-full rounded-lg border px-3 py-2 text-left text-sm hover:bg-slate-50"
+            :class="selectedBlockId === block.id ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200'"
+            @click="fillBlockForm(block)"
+          >
             <span class="block font-medium text-slate-900">{{ block.position + 1 }}. {{ block.name }}</span>
             <span class="block text-xs text-slate-500">{{ blockTypeLabel(block.type) }} · {{ block.isEnabled ? 'включён' : 'выключен' }}</span>
           </button>
@@ -755,15 +775,19 @@ onMounted(loadPages)
           </div>
         </form>
 
-        <section v-if="selected" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div class="mb-4 flex items-center justify-between">
+        <div v-if="selected && blockEditorOpen" class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-950/50 px-4 py-8" role="dialog" aria-modal="true" @click.self="closeBlockEditor">
+          <section class="w-full max-w-5xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+          <div class="mb-4 flex items-start justify-between gap-4">
             <div>
               <h3 class="text-base font-semibold text-slate-950">Редактор блоков</h3>
               <p class="mt-1 text-sm text-slate-600">Блоки выводятся на публичной странице сверху вниз. JSON должен быть объектом в фигурных скобках.</p>
             </div>
-            <select v-model="blockForm.type" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" @change="startNewBlock(blockForm.type)">
-              <option v-for="schema in blockSchemas" :key="schema.type" :value="schema.type">{{ blockTypeLabel(schema.type) }}</option>
-            </select>
+            <div class="flex items-center gap-3">
+              <select v-model="blockForm.type" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" @change="startNewBlock(blockForm.type)">
+                <option v-for="schema in blockSchemas" :key="schema.type" :value="schema.type">{{ blockTypeLabel(schema.type) }}</option>
+              </select>
+              <button type="button" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50" @click="closeBlockEditor">Закрыть</button>
+            </div>
           </div>
           <div v-if="selectedBlockSchema" class="mb-4 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
             <p><span class="font-semibold text-slate-700">Назначение:</span> {{ selectedBlockSchema.description }}</p>
@@ -812,7 +836,8 @@ onMounted(loadPages)
             <button v-if="selectedBlock" type="button" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" @click="moveBlock(selectedBlock, 1)">Вниз</button>
             <button v-if="selectedBlock" type="button" class="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700" @click="deleteBlock(selectedBlock)">Удалить</button>
           </div>
-        </section>
+          </section>
+        </div>
 
         <section v-if="selected" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h3 class="text-base font-semibold text-slate-950">История публикаций</h3>
