@@ -25,8 +25,27 @@ final class SchemaTestHelper
             return;
         }
 
+        self::dropAllTables($entityManager);
+
         $tool = new SchemaTool($entityManager);
-        $tool->dropSchema($metadata);
         $tool->createSchema($metadata);
+        $entityManager->clear();
+    }
+
+    private static function dropAllTables(EntityManagerInterface $entityManager): void
+    {
+        $connection = $entityManager->getConnection();
+        $tables = $connection->createSchemaManager()->listTableNames();
+
+        if ([] === $tables) {
+            return;
+        }
+
+        $quotedTables = array_map(
+            $connection->quoteIdentifier(...),
+            $tables,
+        );
+
+        $connection->executeStatement('DROP TABLE IF EXISTS '.implode(', ', $quotedTables).' CASCADE');
     }
 }
