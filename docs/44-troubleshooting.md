@@ -40,6 +40,35 @@ SITE_URL=http://localhost:8081
 DEFAULT_URI=http://localhost:8081
 ```
 
+Если вы запускаете не `make up`, а прямой `docker compose up -d`, не забудьте передать `.env.local`:
+
+```bash
+docker compose --env-file .env.local up -d
+```
+
+Иначе Compose возьмёт значения из `.env` (часто `HTTP_PORT=80`) и конфликт порта вернётся.
+
+### Браузер не подключается к `127.0.0.1:8081` (Firefox: «не удаётся подключиться»)
+
+Чаще всего Docker крутится на **другом** компьютере (удалённый dev-сервер, VM), а браузер — на вашем ПК: `127.0.0.1` в адресной строке — это loopback **ПК**, не сервера.
+
+Решение: с ПК выполнить SSH port forwarding, например `ssh -N -L 8081:127.0.0.1:8081 user@server`, либо настроить `LocalForward` в `~/.ssh/config` / `autossh`. Подробно — [33-local-development](33-local-development.md) (раздел «Удалённый сервер»).
+
+Если Docker и браузер на **одной** машине, проверьте `docker compose ps` (nginx **Up**) и что в `.env.local` порт совпадает с тем, что открываете в браузере.
+
+### `channel X: open failed: connect failed: Connection refused` в SSH
+
+Это ошибка SSH port forwarding: туннель поднят, но на удалённой стороне целевой порт не слушает (например, `nginx` не стартовал или слушает другой порт).
+
+Проверьте на сервере:
+
+```bash
+docker compose --env-file .env.local ps
+ss -tln '( sport = :8081 )'
+```
+
+Если переходите на доступ без SSH (например, через Tailscale), задайте в `.env.local` `HTTP_PORT=8081` (без `127.0.0.1:`), перезапустите стек и открывайте сайт по VPN-IP.
+
 ### `make migrate` упал — `relation "..." does not exist`
 
 ```bash
@@ -134,6 +163,27 @@ make test
 
 `make npm-dev` — следить, что порт 5173 свободен. `ViteAssetExtension` определит автоматически.
 
+### В админке «Перекомпилировать» падает с `npm ERR! EACCES ... /var/www/html/node_modules/...`
+
+Симптом в логе:
+
+```text
+npm ERR! code EACCES
+npm ERR! syscall mkdir
+npm ERR! path /var/www/html/node_modules/...
+```
+
+Обычно это несовпадение прав в `node_modules` между контейнерами `node` и `app`.
+
+Быстрое решение:
+
+```bash
+make down
+make up
+```
+
+Запуск через `make` гарантирует корректный `--env-file .env.local` и штатные docker-compose override-настройки для `node_modules`.
+
 ### Manifest не подхватывается
 
 ```bash
@@ -198,4 +248,4 @@ make npm-build
 - [33-local-development](33-local-development.md)
 - [37-runbooks](37-runbooks.md)
 - [INSTALL.md](legacy/INSTALL.md)
-- [LOCAL_DOCKER.md](legacy/LOCAL_DOCKER.md)
+- [LOCAL_DOCKER.md](LOCAL_DOCKER.md)

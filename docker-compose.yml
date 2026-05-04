@@ -4,10 +4,7 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
-    command: >
-      sh -lc "mkdir -p var/cache var/log public_html/uploads
-      && chown -R www-data:www-data var public_html/uploads
-      && php-fpm"
+    command: ["/usr/local/bin/docker-app-entrypoint.sh", "php-fpm"]
     user: root
     restart: unless-stopped
     environment:
@@ -83,10 +80,6 @@ services:
       context: .
       dockerfile: docker/node/Dockerfile
     working_dir: /var/www/html
-    command:
-      - tail
-      - -f
-      - /dev/null
     volumes:
       - ./:/var/www/html
 

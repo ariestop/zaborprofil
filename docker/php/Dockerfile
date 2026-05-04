@@ -38,6 +38,8 @@ RUN apt-get update \
 
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/99-zaborprofil.ini
 COPY docker/php/xdebug.ini /usr/local/etc/php/conf.d/99-xdebug.ini
+COPY docker/php/docker-app-entrypoint.sh /usr/local/bin/docker-app-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-app-entrypoint.sh
 
 WORKDIR /var/www/html
 

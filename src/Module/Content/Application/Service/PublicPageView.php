@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Module\Content\Application\Service;
 
 use App\Module\Content\Domain\Entity\Page;
+use App\Module\Content\Domain\Entity\PageBlock;
 use App\Module\Content\Domain\Entity\PageRevision;
 
 final readonly class PublicPageView
@@ -76,6 +77,45 @@ final readonly class PublicPageView
                 $revision->blocksSnapshot(),
                 static fn (array $block): bool => (bool) ($block['isEnabled'] ?? true),
             ))),
+        );
+    }
+
+    /**
+     * Опубликованная страница: SEO и поля страницы из снимка ревизии, порядок и
+     * содержимое блоков из текущих сущностей {@see PageBlock} (в т.ч. после
+     * перестановки без новой ревизии).
+     *
+     * @param list<PageBlock> $liveBlocks
+     */
+    public static function fromRevisionUsingLiveBlocks(PageRevision $revision, array $liveBlocks): self
+    {
+        $seo = $revision->seoSnapshot();
+        $normalizer = new SnapshotValueNormalizer();
+        $metaDescription = \is_string($seo['metaDescription'] ?? null) ? $seo['metaDescription'] : null;
+        $jsonLd = $normalizer->objectListOrNull($seo['jsonLd'] ?? null);
+
+        $blocks = [];
+        foreach ($liveBlocks as $block) {
+            if ($block->isEnabled()) {
+                $blocks[] = PageBlockView::fromBlock($block);
+            }
+        }
+
+        return new self(
+            (string) $revision->page()->id(),
+            $revision->title(),
+            $revision->h1(),
+            $revision->path(),
+            $revision->template(),
+            (bool) ($seo['isIndexable'] ?? true),
+            $metaDescription,
+            \is_string($seo['canonicalUrl'] ?? null) ? $seo['canonicalUrl'] : null,
+            \is_string($seo['ogTitle'] ?? null) ? $seo['ogTitle'] : null,
+            \is_string($seo['ogDescription'] ?? null) ? $seo['ogDescription'] : $metaDescription,
+            \is_string($seo['ogImage'] ?? null) ? $seo['ogImage'] : null,
+            \is_string($seo['ogType'] ?? null) ? $seo['ogType'] : null,
+            $jsonLd,
+            $blocks,
         );
     }
 }

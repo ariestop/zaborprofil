@@ -7,14 +7,10 @@ namespace App\Module\Content\Application\Handler;
 use App\Module\Content\Application\Command\ReorderPageBlocksCommand;
 use App\Module\Content\Application\DTO\PageBlockOutput;
 use App\Module\Content\Application\Service\ContentId;
-use App\Module\Content\Application\Service\PageRevisionSnapshotBuilder;
 use App\Module\Content\Application\Service\PublicPageCacheInvalidator;
 use App\Module\Content\Domain\Entity\PageBlock;
-use App\Module\Content\Domain\Enum\PageStatus;
 use App\Module\Content\Domain\Repository\PageBlockRepositoryInterface;
-use App\Module\Content\Domain\Repository\PagePublicationRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
-use App\Module\Content\Domain\Repository\PageRevisionRepositoryInterface;
 use InvalidArgumentException;
 
 final readonly class ReorderPageBlocksHandler
@@ -22,11 +18,8 @@ final readonly class ReorderPageBlocksHandler
     public function __construct(
         private PageRepositoryInterface $pages,
         private PageBlockRepositoryInterface $blocks,
-        private PageRevisionRepositoryInterface $revisions,
-        private PagePublicationRepositoryInterface $publications,
         private ContentId $contentId,
         private PublicPageCacheInvalidator $publicPageCache,
-        private PageRevisionSnapshotBuilder $snapshotBuilder,
     ) {
     }
 
@@ -67,21 +60,6 @@ final readonly class ReorderPageBlocksHandler
         }
 
         $this->blocks->saveAll($reordered);
-
-        if ($page->status() === PageStatus::Published) {
-            $revision = $this->snapshotBuilder->build(
-                $page,
-                $this->revisions->nextVersionForPage((string) $page->id()),
-                $reordered,
-                comment: 'Reordered page blocks',
-                changeSummary: ['action' => 'reorder_blocks'],
-            );
-            $this->revisions->save($revision);
-
-            $publication = $this->publications->getOrCreate($page);
-            $publication->publish($revision);
-            $this->publications->save($publication);
-        }
 
         $this->publicPageCache->invalidate($page->path());
 

@@ -1,6 +1,6 @@
 # 33. Local development
 
-См. также [LOCAL_DOCKER.md](legacy/LOCAL_DOCKER.md), [INSTALL.md](legacy/INSTALL.md).
+См. также [LOCAL_DOCKER.md](LOCAL_DOCKER.md), [INSTALL.md](legacy/INSTALL.md).
 
 ## Требования
 
@@ -84,27 +84,88 @@ make health
 
 Если вы поменяли `HTTP_PORT`, открывайте сайт по значению `SITE_URL`, например `http://localhost:8081`.
 
-## Создание администратора
+В `HTTP_PORT` допустим формат с привязкой только к loopback хоста (без доступа из LAN): `127.0.0.1:8081`. Тогда сайт открывается только на той машине, где запущен Docker.
 
-Целевое: console command `app:user:create-admin` (пока создаётся напрямую через миграцию-фикстуру). Текущий способ — SQL через Adminer или `psql`:
+## Удалённый сервер: браузер не на той же машине, что и Docker
 
-```sql
-INSERT INTO admin_users (id, email, password, roles, is_active, created_at, updated_at)
-VALUES (
-  '01HZ0000000000000000000000',
-  'admin@example.com',
-  '<bcrypt-hash>',
-  '["ROLE_SUPER_ADMIN"]',
-  true,
-  now(), now()
-);
-```
+Типичный случай: код и `docker compose` на Linux-сервере (или VM), а Firefox/Chrome — на ноутбуке. Адрес `http://127.0.0.1:8081` в браузере ноутбука указывает на **локальный** loopback ноутбука, а не на сервер, поэтому соединение отклоняется, даже если на сервере nginx слушает `127.0.0.1:8081`.
 
-Для генерации hash:
+### Вариант A: SSH-туннель (быстрый и временный)
+
+**Разовый проброс портов** (с ноутбука; подставьте пользователя и хост):
 
 ```bash
-php bin/console security:hash-password
+ssh -N -L 8081:127.0.0.1:8081 user@dev-server.example
 ```
+
+Пока сессия SSH открыта, на ноутбуке доступны те же URL, что и на сервере, например `http://127.0.0.1:8081/`. При необходимости добавьте цепочку `-L` для других портов из `.env.local` (часто: `5173` — Vite, `8025` — Mailpit, `8080` — Adminer, `15432` — Postgres).
+
+**Постоянная настройка в `~/.ssh/config`** на ноутбуке:
+
+```sshconfig
+Host zaborprofil-dev
+    HostName dev-server.example
+    User user
+    LocalForward 8081 127.0.0.1:8081
+    LocalForward 5173 127.0.0.1:5173
+    LocalForward 8025 127.0.0.1:8025
+    LocalForward 8080 127.0.0.1:8080
+    ServerAliveInterval 30
+    ServerAliveCountMax 3
+```
+
+Запуск только туннеля (без интерактивной shell на сервере):
+
+```bash
+ssh -N zaborprofil-dev
+```
+
+**Автопереподключение:** установите `autossh` и используйте, например, `autossh -M 0 -f -N zaborprofil-dev` (те же `LocalForward` в `Host`).
+
+**Автозапуск при входе в сессию:** можно оформить `systemd --user` unit с `ExecStart=/usr/bin/autossh -M 0 -N zaborprofil-dev` и `Restart=always` (см. примеры в man `systemd.service`).
+
+Альтернатива: встроенный port forwarding в Cursor/VS Code (**Ports**), если вы подключены к удалённому workspace по Remote SSH.
+
+### Вариант B: доступ без SSH через Tailscale/VPN
+
+Если нужна постоянная работа без SSH-туннеля, подключите сервер и ноутбук в одну VPN-сеть (например, Tailscale) и откройте HTTP-порт наружу:
+
+```dotenv
+HTTP_PORT=8081
+SITE_URL=http://<tailscale-ip-сервера>:8081
+DEFAULT_URI=http://<tailscale-ip-сервера>:8081
+```
+
+Важно: в `HTTP_PORT` не должно быть `127.0.0.1:...`, иначе порт будет доступен только локально на сервере.
+
+Проверка после перезапуска:
+
+```bash
+docker compose --env-file .env.local ps
+ss -tln '( sport = :8081 )'
+```
+
+Ожидается bind на `0.0.0.0:8081` или `[::]:8081`.
+
+Для безопасности оставляйте инфраструктурные порты (`POSTGRES_PORT`, `REDIS_PORT`, `MAILPIT_PORT`, `ADMINER_PORT`) на `127.0.0.1:...`.
+
+## Создание администратора
+
+Целевое: консольная команда `app:user:create-admin` (пока отсутствует). Сейчас: сгенерировать bcrypt-хеш и вставить строку в `admin_users` (тип `id` в PostgreSQL — **UUID**, соответствующий ULID в PHP; колонки: `email`, `roles` jsonb, `password_hash`, `active`, `created_at`, `updated_at`).
+
+Сгенерировать хеш пароля (из корня проекта, внутри app-контейнера при Docker):
+
+```bash
+docker compose exec app php bin/console security:hash-password 'your-password' --no-interaction
+```
+
+Получить UUID для нового ULID (подставьте свой ULID из `Symfony\Component\Uid\Ulid` или сгенерируйте новый):
+
+```bash
+docker compose exec app php -r 'require "vendor/autoload.php"; echo (new Symfony\Component\Uid\Ulid())->toRfc4122();'
+```
+
+Далее `INSERT` через Adminer/psql с полученными `id` (uuid), `email`, `roles` (например `'["ROLE_ADMIN"]'::jsonb`), `password_hash` и метками времени. Не копируйте чужие примеры с устаревшими именами колонок (`password`, `is_active`): актуальная схема — в миграции `Version20260501000100` и entity `AdminUser`.
 
 ## Ежедневные команды
 
@@ -190,6 +251,8 @@ make npm-dev          # vite на :5173
 | HMR Vite не работает | dev server не запущен | `make npm-dev` |
 | Тесты падают на CSRF | нет `.env.test.local` | используйте phpunit с дефолтным `.env.test`, для CI используется `.env.test.ci` |
 | Время в логах не московское | `php.ini` timezone | `docker/php/php.ini` → `date.timezone` |
+| Браузер: «не удаётся подключиться» к `127.0.0.1:8081` | Docker на **другом** хосте, чем Firefox, или туннель закрыт | SSH `-L` / `LocalForward` в `~/.ssh/config`, см. раздел «Удалённый сервер» выше |
+| Админка: сборка ассетов падает с `npm ERR! EACCES ... /node_modules/...` | сервис `app` не имеет прав на `node_modules` | запустите стек через `make up` (подхватит `.env.local` и корректные volume/права), затем повторите «Перекомпилировать» |
 
 ## Проверка установки
 
@@ -206,6 +269,7 @@ vendor/bin/phpunit
 
 - [32-docker-architecture](32-docker-architecture.md)
 - [27-config-and-env](27-config-and-env.md)
+- [44-troubleshooting](44-troubleshooting.md)
 - [47-dev-database-state](47-dev-database-state.md)
 - [INSTALL.md](legacy/INSTALL.md)
-- [LOCAL_DOCKER.md](legacy/LOCAL_DOCKER.md)
+- [LOCAL_DOCKER.md](LOCAL_DOCKER.md)

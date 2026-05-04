@@ -41,6 +41,22 @@ REDIS_PORT=16379
 HTTP_PORT=80
 ```
 
+В `HTTP_PORT` допускается привязка только к loopback, например `127.0.0.1:8081` (см. [27-config-and-env](27-config-and-env.md)). Тогда с другой машины в LAN/VPN сайт по IP сервера не откроется — это ожидаемо.
+
+Если нужен доступ с другого устройства (например, через Tailscale) без SSH-туннеля, используйте:
+
+```dotenv
+HTTP_PORT=8081
+SITE_URL=http://<server-ip>:8081
+DEFAULT_URI=http://<server-ip>:8081
+```
+
+Не открывайте наружу `POSTGRES_PORT`, `REDIS_PORT`, `MAILPIT_PORT`, `ADMINER_PORT` без отдельной причины.
+
+### Удалённая разработка (браузер не там, где Docker)
+
+Если репозиторий и `docker compose` на сервере, а браузер на ноутбуке, `http://127.0.0.1:…` на ноутбуке указывает на сам ноутбук, а не на сервер. Нужен **SSH local port forwarding** (`ssh -L …`), постоянный `LocalForward` в `~/.ssh/config`, `autossh` или forwarding вкладки **Ports** в Cursor/VS Code при Remote SSH. Подробные команды и примеры — в [33-local-development](33-local-development.md) (раздел «Удалённый сервер»).
+
 ## Правило работы с БД
 
 Для локальной разработки и запуска тестов используется PostgreSQL только из Docker-контейнера `postgres`. Не запускайте локальные миграции, fixtures, `make test`, `make quality` или Symfony-команды против установленного на хосте PostgreSQL: это приводит к расхождению версий, ролей и схемы.
@@ -72,6 +88,12 @@ make npm-install
 make migrate
 make npm-build
 make health
+```
+
+Если запускаете Compose напрямую, а не через `make`, всегда передавайте env-file:
+
+```bash
+docker compose --env-file .env.local up -d
 ```
 
 Для обычного первого запуска можно использовать агрегированную команду:

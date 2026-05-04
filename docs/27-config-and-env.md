@@ -50,7 +50,7 @@
 | `TRUSTED_HOSTS` | regex hostname | Symfony framework |
 | `XDEBUG_MODE` | `off` / `develop,debug` | Docker PHP-FPM |
 | `POSTGRES_DB`/`USER`/`PASSWORD` | для Docker Compose | Compose |
-| `HTTP_PORT` | хост-порт nginx | Compose |
+| `HTTP_PORT` | хост-порт nginx для проброса `host:container` (Compose). Можно задать привязку к интерфейсу: `8081` (все интерфейсы) или `127.0.0.1:8081` (только loopback хоста; удобно на сервере, для доступа с ноутбука — SSH `-L` / Remote Ports) | Compose |
 | `MAILPIT_PORT`/`ADMINER_PORT`/`VITE_PORT` | хост-порты | Compose, dev only |
 | `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | для critical alerts | `TelegramErrorHandler` |
 | `RELEASE_TAG` | версия для логов/Sentry | `ReleaseProcessor` |

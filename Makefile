@@ -9,9 +9,13 @@ ifneq (,$(wildcard .env.local))
 include .env.local
 export
 endif
+
+DOCKER_UID ?= 1000
+DOCKER_GID ?= 1000
+
 PHP = $(COMPOSE) exec -T --user www-data app
 PHP_SHELL = $(COMPOSE) exec --user www-data app
-NODE = $(COMPOSE) exec -T node
+NODE = $(COMPOSE) exec -T --user $(DOCKER_UID):$(DOCKER_GID) node
 POSTGRES = $(COMPOSE) exec -T postgres
 REDIS = $(COMPOSE) exec -T redis
 POSTGRES_DB ?= zaborprofil
@@ -47,7 +51,7 @@ npm-install:
 	$(NODE) npm ci
 
 npm-dev:
-	$(COMPOSE) exec node npm run dev -- --host 0.0.0.0
+	$(COMPOSE) exec --user $(DOCKER_UID):$(DOCKER_GID) node npm run dev -- --host 0.0.0.0
 
 npm-build:
 	$(NODE) npm run build

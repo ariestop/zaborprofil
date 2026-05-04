@@ -1764,7 +1764,7 @@ Mutating-изменения **разбиваются** на серию additive-
 - [32-docker-architecture](32-docker-architecture.md)
 - [33-local-development](33-local-development.md)
 - [27-config-and-env](27-config-and-env.md)
-- [LOCAL_DOCKER.md](legacy/LOCAL_DOCKER.md)
+- [LOCAL_DOCKER.md](LOCAL_DOCKER.md)
 
 ---
 
@@ -2004,7 +2004,7 @@ client → Nginx :443 → static? yes → отдать; нет → fastcgi_pass 
 | Redis / cache key | Invalidation hooks, tests, docs, [23-cache-and-redis](23-cache-and-redis.md), [44-troubleshooting](44-troubleshooting.md) |
 | Messenger message | Handler, retry policy, transport routing, tests, logs, worker config, [24-messenger-and-queues](24-messenger-and-queues.md) |
 | Uploads logic | Validators, security checks, backup/restore docs, cleanup, tests, [25-files-and-uploads](25-files-and-uploads.md), [UPLOAD_SECURITY.md](legacy/UPLOAD_SECURITY.md), [36-backup-restore](36-backup-restore.md) |
-| docker-compose | Local docs, install scripts, healthchecks, [32-docker-architecture](32-docker-architecture.md), [33-local-development](33-local-development.md), [LOCAL_DOCKER.md](legacy/LOCAL_DOCKER.md) |
+| docker-compose | Local docs, install scripts, healthchecks, [32-docker-architecture](32-docker-architecture.md), [33-local-development](33-local-development.md), [LOCAL_DOCKER.md](LOCAL_DOCKER.md) |
 | Nginx config | Routing/redirects, static assets, SSL, SEO checks, [34-deployment](34-deployment.md) |
 | CI workflow | Secrets, deploy checklist, docs, [35-cicd](35-cicd.md), [CI_CD.md](legacy/CI_CD.md) |
 | SEO metadata | Sitemap, canonical, JSON-LD, tests, [26-seo-architecture](26-seo-architecture.md), [SEO_GUIDE.md](legacy/SEO_GUIDE.md) |
