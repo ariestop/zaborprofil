@@ -127,13 +127,7 @@ final readonly class SeoAuditEngine
      */
     private function hasBlock(array $blocks, BlockType $type): bool
     {
-        foreach ($blocks as $block) {
-            if ($block->type() === $type) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($blocks, static fn (PageBlock $block): bool => $block->type() === $type);
     }
 
     /**

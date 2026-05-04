@@ -11,6 +11,7 @@ const selected = ref<ContentPageDetail | null>(null)
 const selectedBlockId = ref<string | null>(null)
 const loading = ref(false)
 const saving = ref(false)
+const savingMessage = ref('Сохраняется...')
 const statusChanging = ref<string | null>(null)
 const error = ref<string | null>(null)
 const previewUrl = ref<string | null>(null)
@@ -377,14 +378,19 @@ async function loadRevisions(): Promise<void> {
 }
 
 async function savePage(): Promise<void> {
+  if (saving.value) {
+    return
+  }
+
   error.value = null
   saving.value = true
+  savingMessage.value = 'Сохраняется...'
   try {
     if (selected.value === null) {
       const created = await apiRequest<ContentPageItem>('/admin/api/content/pages', { method: 'POST', body: pagePayload() })
       await loadPages()
       await selectPage(created.id)
-      await createBlocksFromTemplate()
+      await createBlocksFromTemplate(created.id)
       return
     }
 
@@ -396,6 +402,7 @@ async function savePage(): Promise<void> {
     error.value = caught instanceof Error ? caught.message : 'Не удалось сохранить страницу'
   } finally {
     saving.value = false
+    savingMessage.value = 'Сохраняется...'
   }
 }
 
@@ -411,7 +418,7 @@ async function persistSelectedPageDraft(): Promise<string | null> {
   return pageId
 }
 
-async function createBlocksFromTemplate(): Promise<void> {
+async function createBlocksFromTemplate(pageId: string): Promise<void> {
   if (!selected.value || selected.value.blocks.length > 0) {
     return
   }
@@ -419,8 +426,9 @@ async function createBlocksFromTemplate(): Promise<void> {
   if (!template) {
     return
   }
-  for (const block of template.blocksSchema) {
-    await apiRequest(`/admin/api/content/pages/${selected.value.id}/blocks`, {
+  savingMessage.value = 'Создаются стартовые блоки...'
+  await Promise.all(template.blocksSchema.map((block) => (
+    apiRequest(`/admin/api/content/pages/${pageId}/blocks`, {
       method: 'POST',
       body: {
         type: block.type,
@@ -431,8 +439,8 @@ async function createBlocksFromTemplate(): Promise<void> {
         isEnabled: block.type === 'faq' ? false : block.isEnabled,
       },
     })
-  }
-  await selectPage(selected.value.id)
+  )))
+  await selectPage(pageId)
 }
 
 async function saveBlock(): Promise<void> {
@@ -724,7 +732,7 @@ onMounted(loadPages)
           </div>
 
           <div class="mt-6 flex flex-wrap items-center gap-3">
-            <button type="submit" class="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">{{ saving ? 'Сохраняется...' : 'Сохранить' }}</button>
+            <button type="submit" class="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60" :disabled="saving">{{ saving ? savingMessage : 'Сохранить' }}</button>
             <button v-if="canPublishSelected" type="button" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60" :disabled="statusChanging !== null" @click="publishPage">
               {{ statusChanging === 'published' ? 'Публикуется...' : 'Опубликовать' }}
             </button>

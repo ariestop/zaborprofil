@@ -72,12 +72,6 @@ final readonly class PageStatusTransitionPolicy
      */
     private function hasAnyRole(array $roles, array $allowed): bool
     {
-        foreach ($allowed as $role) {
-            if (\in_array($role, $roles, true)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($allowed, static fn (string $role): bool => \in_array($role, $roles, true));
     }
 }

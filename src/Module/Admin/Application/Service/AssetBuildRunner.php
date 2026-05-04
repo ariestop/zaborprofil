@@ -72,7 +72,7 @@ final readonly class AssetBuildRunner
             'pid' => null,
         ];
 
-        file_put_contents($this->logPath, sprintf("Запуск %s...\n", $this->command), \LOCK_EX);
+        file_put_contents($this->logPath, \sprintf("Запуск %s...\n", $this->command), \LOCK_EX);
         $this->writeStatus($initialStatus);
         $this->writeRunnerScript($startedAt);
 
@@ -137,7 +137,14 @@ final readonly class AssetBuildRunner
             ];
         }
 
-        return $decoded;
+        $status = [];
+        foreach ($decoded as $key => $value) {
+            if (\is_string($key)) {
+                $status[$key] = $value;
+            }
+        }
+
+        return $status;
     }
 
     /**
@@ -171,7 +178,7 @@ final readonly class AssetBuildRunner
         $logs = stream_get_contents($handle);
         fclose($handle);
 
-        return "[...лог обрезан до последних " . self::MAX_LOG_BYTES . " байт...]\n" . (string) $logs;
+        return '[...лог обрезан до последних ' . self::MAX_LOG_BYTES . " байт...]\n" . (string) $logs;
     }
 
     private function writeRunnerScript(string $startedAt): void
