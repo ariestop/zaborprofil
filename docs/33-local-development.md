@@ -9,6 +9,25 @@
 - ≥ 4 GB RAM выделено Docker’у.
 - Свободные порты на хосте: `80`, `15432`, `16379`, `8025`, `8080`, `5173`. Переопределяются через `.env.local`.
 
+### Windows 10/11
+
+На Windows используйте Docker Desktop с WSL2 backend. В Docker Desktop включите интеграцию с Ubuntu-дистрибутивом, в котором лежит проект, и запускайте все команды из WSL terminal, а не из PowerShell/CMD.
+
+Рабочая копия должна лежать внутри Linux-файловой системы WSL:
+
+```bash
+cd ~/zaborprofil
+```
+
+Путь вида `\\wsl.localhost\Ubuntu\home\<user>\zaborprofil` можно открывать в Cursor/Explorer, но команды `make`, `docker compose`, `composer` и `npm` выполняются из Ubuntu/WSL. Не храните проект на `C:\projects\...`: это замедляет bind mounts, `node_modules`, `vendor` и работу Docker.
+
+Если `make` не установлен:
+
+```bash
+sudo apt update
+sudo apt install -y make
+```
+
 Native (без Docker, опционально, для OSPanel/диагностики):
 
 - PHP 8.5 + extensions `ctype, iconv, intl, mbstring, pdo_pgsql, redis`.
@@ -30,6 +49,29 @@ make npm-build
 make health
 ```
 
+На новом Windows/WSL окружении можно использовать короткий вариант:
+
+```bash
+cp .env.local.example .env.local
+make init
+make health
+```
+
+Если порт `80` занят IIS, Skype, OSPanel или другим локальным сервером, задайте другой порт в `.env.local`:
+
+```dotenv
+HTTP_PORT=8081
+SITE_URL="http://localhost:8081"
+DEFAULT_URI="http://localhost:8081"
+```
+
+Затем примените настройки:
+
+```bash
+make up
+make health
+```
+
 Для получения единого dev-состояния БД после клонирования используйте `make reset-db`: команда пересоздаёт локальную БД, применяет migrations и запускает `make fixtures`.
 
 После запуска:
@@ -39,6 +81,8 @@ make health
 - `http://localhost/health` — healthcheck.
 - `http://localhost:8025` — Mailpit.
 - `http://localhost:8080` — Adminer.
+
+Если вы поменяли `HTTP_PORT`, открывайте сайт по значению `SITE_URL`, например `http://localhost:8081`.
 
 ## Создание администратора
 

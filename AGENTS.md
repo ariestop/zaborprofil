@@ -30,6 +30,21 @@
 
 Docker используется только для local development. Staging и production должны оставаться native VPS stack: Nginx, PHP-FPM, PostgreSQL, Redis, systemd и Git-based release deploy.
 
+## Windows / WSL2 для агентов
+
+- На Windows проект должен запускаться из Ubuntu/WSL terminal, даже если открыт в Cursor по пути `\\wsl.localhost\Ubuntu\home\...\zaborprofil`.
+- Рабочая копия должна лежать внутри Linux-файловой системы WSL (`~/zaborprofil`, `/home/<user>/zaborprofil`), а не на `C:\`.
+- Docker Desktop должен работать с WSL2 backend и включённой интеграцией с Ubuntu-дистрибутивом проекта.
+- Все `make`, `docker compose`, `composer`, `npm`, PHPUnit и Doctrine-команды выполнять из WSL. Не запускать их из PowerShell/CMD против UNC-пути.
+- Если порт `80` занят на Windows, использовать `.env.local`: `HTTP_PORT=8081`, `SITE_URL=http://localhost:8081`, `DEFAULT_URI=http://localhost:8081`.
+- Канонический первый запуск на Windows:
+
+```bash
+cp .env.local.example .env.local
+make init
+make health
+```
+
 ## Структура
 
 - `public_html/` — web root, здесь лежит `index.php`.

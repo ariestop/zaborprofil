@@ -8,6 +8,31 @@ Docker нужен только для локальной разработки н
 - На Windows проект лучше хранить внутри WSL2, например `~/projects/zaborprofil`, а не на диске `C:`.
 - Свободные порты на хосте по умолчанию: `80` (Nginx), `15432` (PostgreSQL), `16379` (Redis), `8025` (Mailpit), `8080` (Adminer), `5173` (Vite dev).
 
+## Windows + WSL2
+
+На Windows поддерживаемый local development flow:
+
+1. Установить Docker Desktop.
+2. Включить WSL2 backend: Docker Desktop → Settings → General → `Use the WSL 2 based engine`.
+3. Включить интеграцию с Ubuntu: Settings → Resources → WSL Integration.
+4. Клонировать или держать проект внутри WSL, например `~/zaborprofil`.
+5. Запускать команды из Ubuntu/WSL terminal.
+
+Путь `\\wsl.localhost\Ubuntu\home\<user>\zaborprofil` подходит для открытия проекта в Cursor на Windows. Для команд используйте Linux-путь:
+
+```bash
+cd ~/zaborprofil
+```
+
+Если в WSL нет `make`:
+
+```bash
+sudo apt update
+sudo apt install -y make
+```
+
+Не запускайте `make init`, `make test`, `make quality`, `composer install` или `npm install` из PowerShell/CMD против UNC-пути. Это создаёт проблемы с правами, скоростью файловой системы и путями внутри Docker.
+
 PostgreSQL и Redis намеренно публикуются на нестандартных портах хоста (`15432`/`16379`), чтобы не конфликтовать с локально установленными `postgres`/`redis`. Внутри Docker-сети сервисы доступны по штатным `5432`/`6379`. Хост-порты можно переопределить в `.env.local`:
 
 ```dotenv
@@ -46,6 +71,14 @@ make composer-install
 make npm-install
 make migrate
 make npm-build
+make health
+```
+
+Для обычного первого запуска можно использовать агрегированную команду:
+
+```bash
+cp .env.local.example .env.local
+make init
 make health
 ```
 

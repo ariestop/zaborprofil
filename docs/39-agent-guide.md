@@ -74,6 +74,19 @@ production-VPS это приводит к одному из четырёх сц�
 - **Redis 8+** только для cache (Symfony Cache pools). Sessions — нативные файлы, Messenger — Doctrine transport. См. [ADR-0007](adr/0007-redis-cache-and-messenger.md).
 - **VPS deployment** через bash + systemd, без Docker на проде.
 
+### 2.1.1 Windows / WSL2 execution model
+
+Если проект открыт в Cursor на Windows по UNC-пути `\\wsl.localhost\Ubuntu\home\...\zaborprofil`, это всё равно WSL-проект. Агент должен считать Linux/WSL terminal канонической средой выполнения команд.
+
+Правила:
+
+- Рабочая копия хранится внутри WSL (`/home/<user>/zaborprofil`, `~/zaborprofil`), не на `C:\`.
+- Docker Desktop использует WSL2 backend и включённую интеграцию с Ubuntu.
+- `make`, `docker compose`, `composer`, `npm`, Doctrine и PHPUnit запускаются из WSL, не из PowerShell/CMD.
+- Первый запуск: `cp .env.local.example .env.local`, затем `make init` и `make health`.
+- Если порт `80` занят на Windows, агент предлагает изменить `.env.local`: `HTTP_PORT=8081`, `SITE_URL=http://localhost:8081`, `DEFAULT_URI=http://localhost:8081`.
+- Проверки БД и тесты по-прежнему выполняются только через Docker Compose и PostgreSQL service `postgres`; SQLite запрещён.
+
 ### 2.2 Как думать о проекте
 
 | Уровень                       | Что находится                                                  | Source of truth                                |

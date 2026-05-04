@@ -73,6 +73,44 @@ make health
 
 Подробнее: `docs/LOCAL_DOCKER.md`.
 
+## Запуск на Windows
+
+Рекомендуемый способ для Windows 10/11 — Docker Desktop с WSL2 backend и проект внутри Linux-файловой системы WSL, например `\\wsl.localhost\Ubuntu\home\<user>\zaborprofil` или `~/zaborprofil` внутри Ubuntu. Не храните рабочую копию на `C:\`, иначе Docker bind mounts и npm/composer будут заметно медленнее.
+
+1. Установите Docker Desktop, включите WSL2 backend и интеграцию с нужным дистрибутивом Ubuntu.
+2. Откройте Ubuntu/WSL terminal, перейдите в папку проекта и при необходимости установите `make`:
+
+```bash
+sudo apt update
+sudo apt install -y make
+cd ~/zaborprofil
+```
+
+3. Подготовьте локальный env и запустите окружение:
+
+```bash
+cp .env.local.example .env.local
+make init
+make health
+```
+
+Если порт `80` занят, измените в `.env.local`:
+
+```dotenv
+HTTP_PORT=8081
+SITE_URL="http://localhost:8081"
+DEFAULT_URI="http://localhost:8081"
+```
+
+После этого выполните:
+
+```bash
+make up
+make health
+```
+
+Открывайте сайт из Windows-браузера: `http://localhost` или порт, указанный в `HTTP_PORT`. Для frontend dev server используйте `make npm-dev`, Vite будет доступен на `http://localhost:5173`.
+
 ## Единое dev-состояние БД
 
 Новый ПК разработки должен получать одинаковую структуру и базовые данные через Git: Doctrine migrations + dev fixtures/seed data. Docker images, Docker volumes и реальные backup-файлы БД в Git не хранятся.

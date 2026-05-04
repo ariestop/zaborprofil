@@ -21,6 +21,8 @@
 5. [38-coding-standards](38-coding-standards.md)
 6. [39-agent-guide](39-agent-guide.md) и [40-cursor-rules](40-cursor-rules.md), если изменения вносит AI-агент.
 
+Для запуска проекта на Windows используйте Docker Desktop + WSL2 и выполняйте команды из Ubuntu/WSL. Пошаговая инструкция находится в [33-local-development](33-local-development.md) и [LOCAL_DOCKER](LOCAL_DOCKER.md).
+
 Дополнительные обязательные чтения по контексту задачи:
 
 | Что меняется | Обязательные документы |
