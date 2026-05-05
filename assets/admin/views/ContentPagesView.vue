@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { apiRequest } from '../api/client'
-import type { BlockSchemaItem, ContentBlockItem, ContentPageDetail, ContentPageItem, PageRevisionItem, PageTemplateItem } from '../types/api'
+import type { BlockSchemaItem, ContentBlockItem, ContentPageDetail, ContentPageItem, MediaAssetItem, PageRevisionItem, PageTemplateItem } from '../types/api'
+import { createVisualState, supportsVisualEditor, toBlockContent, type BlockEditorMode, type VisualBlockFormState } from '../utils/blockVisualEditor'
 
 const pages = ref<ContentPageItem[]>([])
 const templates = ref<PageTemplateItem[]>([])
@@ -28,6 +29,11 @@ const draggingBlockId = ref<string | null>(null)
 const dragOverBlockId = ref<string | null>(null)
 const dragOverPlacement = ref<DropPlacement | null>(null)
 const reorderSaving = ref(false)
+const mediaAssets = ref<MediaAssetItem[]>([])
+const mediaLoading = ref(false)
+const mediaPickerOpen = ref(false)
+const textEditorElement = ref<HTMLElement | null>(null)
+const textImageEditorElement = ref<HTMLElement | null>(null)
 
 const pageTypes = ['home', 'landing', 'service', 'product_category_landing', 'material_landing', 'portfolio_index', 'portfolio_item', 'contacts', 'prices', 'text_page', 'seo_landing', 'system_page']
 const statusTransitions: Record<PageStatus, PageStatus[]> = {
@@ -178,6 +184,19 @@ const blockForm = reactive({
   content: '{}',
   settings: '{}',
 })
+const visualBlockForm = reactive<VisualBlockFormState>({
+  mode: 'json',
+  text: {
+    title: '',
+    text: '',
+  },
+  textImage: {
+    title: '',
+    text: '',
+    image: '',
+    alt: '',
+  },
+})
 
 const selectedBlock = computed(() => selected.value?.blocks.find((block) => block.id === selectedBlockId.value) ?? null)
 const templatesForType = computed(() => templates.value.filter((template) => template.pageType === form.type))
@@ -185,6 +204,7 @@ const selectedBlockSchema = computed(() => blockSchemas.value.find((item) => ite
 const selectedBlockExampleContent = computed(() => blockContentExamples[blockForm.type] ?? selectedBlockSchema.value?.defaultContent ?? {})
 const selectedBlockExampleSettings = computed(() => blockSettingsExamples[blockForm.type] ?? selectedBlockSchema.value?.defaultSettings ?? {})
 const selectedBlocks = computed(() => [...(selected.value?.blocks ?? [])].sort((left, right) => left.position - right.position))
+const blockSupportsVisualEditor = computed(() => supportsVisualEditor(blockForm.type))
 const availableStatusActions = computed(() => {
   if (!selected.value) {
     return []
@@ -251,7 +271,129 @@ function fillBlockForm(block: ContentBlockItem, openEditor = true): void {
   blockForm.visibility = block.visibility
   blockForm.content = JSON.stringify(block.content, null, 2)
   blockForm.settings = JSON.stringify(block.settings, null, 2)
+  syncVisualFormFromJson(blockForm.type, block.content)
   blockEditorOpen.value = openEditor
+}
+
+function parseBlockContentForVisual(): Record<string, unknown> {
+  try {
+    return parseObject(blockForm.content, 'Content')
+  } catch {
+    return {}
+  }
+}
+
+function syncVisualFormFromJson(blockType: string, contentInput: unknown): void {
+  const created = createVisualState(blockType, contentInput)
+  visualBlockForm.mode = created.mode
+  visualBlockForm.text.title = created.text.title
+  visualBlockForm.text.text = created.text.text
+  visualBlockForm.textImage.title = created.textImage.title
+  visualBlockForm.textImage.text = created.textImage.text
+  visualBlockForm.textImage.image = created.textImage.image
+  visualBlockForm.textImage.alt = created.textImage.alt
+  void nextTick(() => {
+    syncVisualEditorsFromState()
+  })
+}
+
+function setBlockEditorMode(mode: BlockEditorMode): void {
+  if (!supportsVisualEditor(blockForm.type)) {
+    visualBlockForm.mode = 'json'
+    return
+  }
+
+  if (mode === 'visual') {
+    syncVisualFormFromJson(blockForm.type, parseBlockContentForVisual())
+    visualBlockForm.mode = 'visual'
+    void nextTick(() => {
+      syncVisualEditorsFromState()
+    })
+    return
+  }
+
+  syncVisualTextFromEditors()
+  blockForm.content = JSON.stringify(
+    toBlockContent(blockForm.type, visualBlockForm, parseBlockContentForVisual()),
+    null,
+    2,
+  )
+  visualBlockForm.mode = 'json'
+}
+
+function updateVisualText(field: 'text' | 'textImage', html: string): void {
+  if (field === 'text') {
+    visualBlockForm.text.text = html
+    return
+  }
+
+  visualBlockForm.textImage.text = html
+}
+
+function syncVisualEditorsFromState(): void {
+  if (textEditorElement.value && document.activeElement !== textEditorElement.value) {
+    textEditorElement.value.innerHTML = visualBlockForm.text.text
+  }
+
+  if (textImageEditorElement.value && document.activeElement !== textImageEditorElement.value) {
+    textImageEditorElement.value.innerHTML = visualBlockForm.textImage.text
+  }
+}
+
+function syncVisualTextFromEditors(): void {
+  if (textEditorElement.value) {
+    visualBlockForm.text.text = textEditorElement.value.innerHTML
+  }
+
+  if (textImageEditorElement.value) {
+    visualBlockForm.textImage.text = textImageEditorElement.value.innerHTML
+  }
+}
+
+function handleRichTextBlur(field: 'text' | 'textImage', event: Event): void {
+  if (!(event.target instanceof HTMLElement)) {
+    return
+  }
+
+  updateVisualText(field, event.target.innerHTML)
+}
+
+function applyRichTextCommand(command: string): void {
+  document.execCommand(command, false)
+}
+
+function promptRichTextLink(): void {
+  const url = window.prompt('Введите URL ссылки')
+  if (!url) {
+    return
+  }
+
+  document.execCommand('createLink', false, url)
+}
+
+async function openMediaPicker(): Promise<void> {
+  mediaPickerOpen.value = true
+  if (mediaAssets.value.length > 0) {
+    return
+  }
+
+  mediaLoading.value = true
+  try {
+    const response = await apiRequest<{ assets: MediaAssetItem[] }>('/admin/api/media/assets')
+    mediaAssets.value = response.assets
+  } catch (caught) {
+    error.value = caught instanceof Error ? caught.message : 'Не удалось загрузить медиатеку'
+  } finally {
+    mediaLoading.value = false
+  }
+}
+
+function selectTextImageAsset(asset: MediaAssetItem): void {
+  visualBlockForm.textImage.image = asset.publicPath
+  if (visualBlockForm.textImage.alt.trim() === '') {
+    visualBlockForm.textImage.alt = asset.originalName
+  }
+  mediaPickerOpen.value = false
 }
 
 function parseObject(value: string, label: string): Record<string, unknown> {
@@ -303,13 +445,21 @@ function seoPayload(): Record<string, unknown> {
 }
 
 function blockPayload(): Record<string, unknown> {
+  if (visualBlockForm.mode === 'visual') {
+    syncVisualTextFromEditors()
+  }
+
+  const parsedContent = visualBlockForm.mode === 'visual'
+    ? parseBlockContentForVisual()
+    : parseObject(blockForm.content, 'Content')
+
   return {
     type: blockForm.type,
     name: blockForm.name || blockForm.type,
     position: blockForm.position,
     isEnabled: blockForm.isEnabled,
     visibility: blockForm.visibility,
-    content: parseObject(blockForm.content, 'Content'),
+    content: toBlockContent(blockForm.type, visualBlockForm, parsedContent),
     settings: parseObject(blockForm.settings, 'Settings'),
   }
 }
@@ -647,6 +797,7 @@ function startNewBlock(type = 'hero'): void {
   blockForm.visibility = 'public'
   blockForm.content = JSON.stringify(schema?.defaultContent ?? {}, null, 2)
   blockForm.settings = JSON.stringify(schema?.defaultSettings ?? {}, null, 2)
+  syncVisualFormFromJson(type, schema?.defaultContent ?? {})
   blockEditorOpen.value = true
 }
 
@@ -967,8 +1118,89 @@ onMounted(loadPages)
             </label>
             <label class="flex items-end gap-2 pb-7 text-sm text-slate-700"><input v-model="blockForm.isEnabled" type="checkbox" class="rounded border-slate-300"> Включён на странице</label>
           </div>
+          <div v-if="blockSupportsVisualEditor" class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p class="text-sm font-semibold text-slate-700">Режим редактирования</p>
+            <div class="mt-2 inline-flex rounded-lg border border-slate-300 bg-white p-1 text-xs font-semibold">
+              <button
+                type="button"
+                class="rounded-md px-3 py-1"
+                :class="visualBlockForm.mode === 'visual' ? 'bg-emerald-700 text-white' : 'text-slate-600'"
+                @click="setBlockEditorMode('visual')"
+              >
+                Визуально
+              </button>
+              <button
+                type="button"
+                class="rounded-md px-3 py-1"
+                :class="visualBlockForm.mode === 'json' ? 'bg-emerald-700 text-white' : 'text-slate-600'"
+                @click="setBlockEditorMode('json')"
+              >
+                JSON
+              </button>
+            </div>
+          </div>
+          <div v-if="blockSupportsVisualEditor && visualBlockForm.mode === 'visual'" class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
+            <p class="text-sm font-semibold text-slate-700">Визуальный редактор блока</p>
+            <div v-if="blockForm.type === 'text'" class="mt-3 space-y-4">
+              <label class="block text-sm font-medium text-slate-700">
+                Заголовок
+                <input v-model="visualBlockForm.text.title" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2">
+              </label>
+              <div>
+                <p class="text-sm font-medium text-slate-700">Текст</p>
+                <div class="mt-1 flex flex-wrap gap-2">
+                  <button type="button" class="rounded border border-slate-300 bg-white px-2 py-1 text-xs" @click="applyRichTextCommand('bold')"><strong>B</strong></button>
+                  <button type="button" class="rounded border border-slate-300 bg-white px-2 py-1 text-xs italic" @click="applyRichTextCommand('italic')">I</button>
+                  <button type="button" class="rounded border border-slate-300 bg-white px-2 py-1 text-xs" @click="applyRichTextCommand('insertUnorderedList')">Список</button>
+                  <button type="button" class="rounded border border-slate-300 bg-white px-2 py-1 text-xs" @click="promptRichTextLink">Ссылка</button>
+                </div>
+                <div
+                  ref="textEditorElement"
+                  class="mt-2 min-h-44 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                  dir="ltr"
+                  contenteditable="true"
+                  @blur="handleRichTextBlur('text', $event)"
+                ></div>
+              </div>
+            </div>
+            <div v-else-if="blockForm.type === 'text_image'" class="mt-3 space-y-4">
+              <label class="block text-sm font-medium text-slate-700">
+                Заголовок
+                <input v-model="visualBlockForm.textImage.title" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2">
+              </label>
+              <div>
+                <p class="text-sm font-medium text-slate-700">Текст</p>
+                <div class="mt-1 flex flex-wrap gap-2">
+                  <button type="button" class="rounded border border-slate-300 bg-white px-2 py-1 text-xs" @click="applyRichTextCommand('bold')"><strong>B</strong></button>
+                  <button type="button" class="rounded border border-slate-300 bg-white px-2 py-1 text-xs italic" @click="applyRichTextCommand('italic')">I</button>
+                  <button type="button" class="rounded border border-slate-300 bg-white px-2 py-1 text-xs" @click="applyRichTextCommand('insertUnorderedList')">Список</button>
+                  <button type="button" class="rounded border border-slate-300 bg-white px-2 py-1 text-xs" @click="promptRichTextLink">Ссылка</button>
+                </div>
+                <div
+                  ref="textImageEditorElement"
+                  class="mt-2 min-h-44 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
+                  dir="ltr"
+                  contenteditable="true"
+                  @blur="handleRichTextBlur('textImage', $event)"
+                ></div>
+              </div>
+              <div class="grid grid-cols-[1fr_auto] gap-3">
+                <label class="text-sm font-medium text-slate-700">
+                  Изображение
+                  <input v-model="visualBlockForm.textImage.image" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2" placeholder="/uploads/media/example.webp">
+                </label>
+                <button type="button" class="mt-6 h-fit rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" @click="openMediaPicker">
+                  Выбрать из медиатеки
+                </button>
+              </div>
+              <label class="block text-sm font-medium text-slate-700">
+                Alt изображения
+                <input v-model="visualBlockForm.textImage.alt" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2">
+              </label>
+            </div>
+          </div>
           <div class="mt-4 grid grid-cols-2 gap-4">
-            <label class="text-sm font-medium text-slate-700">
+            <label v-if="!blockSupportsVisualEditor || visualBlockForm.mode === 'json'" class="text-sm font-medium text-slate-700">
               Контент блока JSON
               <textarea v-model="blockForm.content" rows="10" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs" />
               <span class="mt-1 block text-xs font-normal text-slate-500">Тексты, изображения, ссылки и списки для блока. Значение должно быть JSON-объектом.</span>
@@ -995,6 +1227,30 @@ onMounted(loadPages)
             <button v-if="selectedBlock" type="button" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" @click="moveBlock(selectedBlock, 1)">Вниз</button>
             <button v-if="selectedBlock" type="button" class="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700" @click="deleteBlock(selectedBlock)">Удалить</button>
           </div>
+          </section>
+        </div>
+        <div v-if="mediaPickerOpen" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/60 px-4" role="dialog" aria-modal="true" @click.self="mediaPickerOpen = false">
+          <section class="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <h4 class="text-base font-semibold text-slate-900">Выбор изображения</h4>
+                <p class="mt-1 text-sm text-slate-600">Выберите файл из Media Library. В блок будет записан `publicPath`.</p>
+              </div>
+              <button type="button" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50" @click="mediaPickerOpen = false">Закрыть</button>
+            </div>
+            <p v-if="mediaLoading" class="mt-4 text-sm text-slate-500">Загрузка файлов...</p>
+            <div v-else class="mt-4 max-h-[55vh] space-y-3 overflow-y-auto">
+              <article v-for="asset in mediaAssets" :key="asset.id" class="rounded-xl border border-slate-200 p-3">
+                <div class="flex items-center justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="truncate text-sm font-semibold text-slate-900">{{ asset.originalName }}</p>
+                    <p class="truncate text-xs text-slate-500">{{ asset.publicPath }}</p>
+                  </div>
+                  <button type="button" class="shrink-0 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800" @click="selectTextImageAsset(asset)">Выбрать</button>
+                </div>
+              </article>
+              <p v-if="mediaAssets.length === 0" class="text-sm text-slate-500">Медиатека пока пустая.</p>
+            </div>
           </section>
         </div>
 

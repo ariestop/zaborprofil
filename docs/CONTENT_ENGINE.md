@@ -155,6 +155,15 @@ API защищен admin firewall и предназначен для будущ�
 - `POST /admin/api/content/pages/{pageId}/blocks/reorder`
 - `DELETE /admin/api/content/blocks/{id}`
 
+Для block type `text` и `text_image` в админке предусмотрен визуальный режим редактирования.
+Он работает поверх тех же полей `content/settings` и сохраняет данные в JSONB без изменения API-контракта.
+Для сложных кейсов доступен fallback-режим ручного JSON.
+
+Для `text_image` выбор изображения выполняется через существующий Media API:
+
+- `GET /admin/api/media/assets` — список файлов;
+- `POST /admin/api/media/assets` — загрузка новых файлов.
+
 Для сортировки используется список `blockIds` в нужном порядке:
 
 ```json

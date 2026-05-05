@@ -16,7 +16,7 @@ PostgreSQL service `postgres`. SQLite для тестов запрещён.
 - `tests/Unit` — unit-тесты.
 - `tests/Integration` — интеграционные тесты.
 - `tests/Functional` — функциональные тесты Symfony.
-- `tests/E2E` — будущие e2e-сценарии.
+- `tests/E2E` — e2e-сценарии для ручного/будущего автопрогона (например, `AdminContentEditorCaretScenario.md`).
 
 `app:smoke:test` проверяет release-readiness: ключевые routes, обязательные env, Vite manifest и writable uploads storage.
 

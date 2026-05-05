@@ -70,6 +70,17 @@ make health
 
 ## Проверки
 
+### Запуск команд на сервере
+
+- Для запуска shell-команд на сервере использовать `sudo -n` (non-interactive режим, без запроса пароля).
+- Пример:
+
+```bash
+sudo -n npm install
+```
+
+- Это правило распространяется на команды `npm`, `composer`, `make`, `docker compose`, PHPUnit и другие проверки/сборки, выполняемые агентом на сервере.
+
 AI-агентам запрещено запускать PHPUnit/Doctrine проверки на SQLite. Локальные
 тесты всегда выполняются внутри Docker Compose против PostgreSQL service
 `postgres` и отдельной БД `zaborprofil_test`:

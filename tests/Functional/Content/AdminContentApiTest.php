@@ -332,6 +332,72 @@ final class AdminContentApiTest extends WebTestCase
         self::assertSelectorTextContains('h1', 'Preview draft');
     }
 
+    public function testAdminCanStoreRichTextAndImageFieldsInTextImageBlock(): void
+    {
+        $client = self::createClient();
+        $this->prepareDatabase();
+        $client->loginUser($this->createAdminUser('block-editor@example.test'));
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/content/pages', [
+            'type' => 'landing',
+            'title' => 'Block editor page',
+            'slug' => 'block-editor-page',
+            'path' => '/block-editor-page/',
+            'h1' => 'Block editor page',
+        ]);
+        self::assertResponseStatusCodeSame(201);
+        $pageId = $this->stringFromResponse((string) $client->getResponse()->getContent(), 'id');
+
+        $this->jsonRequestWithCsrf($client, 'POST', \sprintf('/admin/api/content/pages/%s/blocks', $pageId), [
+            'type' => 'text_image',
+            'name' => 'О компании',
+            'position' => 0,
+            'content' => [
+                'title' => 'О компании',
+                'text' => '<p>Работаем <strong>по договору</strong> и соблюдаем сроки.</p>',
+                'image' => '/uploads/media/company.webp',
+                'alt' => 'Монтаж забора',
+            ],
+            'settings' => ['imageSide' => 'right'],
+            'isEnabled' => true,
+        ]);
+        self::assertResponseStatusCodeSame(201);
+
+        $createdBlockPayload = json_decode((string) $client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($createdBlockPayload);
+        self::assertIsArray($createdBlockPayload['content'] ?? null);
+        self::assertSame(
+            '<p>Работаем <strong>по договору</strong> и соблюдаем сроки.</p>',
+            $createdBlockPayload['content']['text'] ?? null,
+        );
+        self::assertSame('/uploads/media/company.webp', $createdBlockPayload['content']['image'] ?? null);
+
+        $blockId = $this->stringFromResponse((string) $client->getResponse()->getContent(), 'id');
+
+        $this->jsonRequestWithCsrf($client, 'PUT', \sprintf('/admin/api/content/blocks/%s', $blockId), [
+            'type' => 'text_image',
+            'name' => 'О компании',
+            'content' => [
+                'title' => 'О компании',
+                'text' => '<p>Обновлённый текст с <em>форматированием</em>.</p>',
+                'image' => '/uploads/media/company-updated.webp',
+                'alt' => 'Обновлённое фото монтажа',
+            ],
+            'settings' => ['imageSide' => 'left'],
+            'isEnabled' => true,
+        ]);
+        self::assertResponseIsSuccessful();
+
+        $updatedBlockPayload = json_decode((string) $client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($updatedBlockPayload);
+        self::assertSame(
+            '<p>Обновлённый текст с <em>форматированием</em>.</p>',
+            $updatedBlockPayload['content']['text'] ?? null,
+        );
+        self::assertSame('/uploads/media/company-updated.webp', $updatedBlockPayload['content']['image'] ?? null);
+        self::assertSame('Обновлённое фото монтажа', $updatedBlockPayload['content']['alt'] ?? null);
+    }
+
     public function testAdminApiRejectsRequestWithoutCsrfToken(): void
     {
         $client = self::createClient();
