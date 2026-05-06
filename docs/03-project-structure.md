@@ -10,7 +10,7 @@ zaborprofil/
 ├── .osp/                      # OSPanel project config
 ├── .trunk/                    # trunk.io linters
 ├── assets/
-│   ├── admin/                 # Vue 3 admin SPA entrypoint
+│   ├── admin/                 # React + TypeScript admin SPA entrypoint
 │   └── site/                  # public site assets
 ├── bin/console                # Symfony console
 ├── config/                    # Symfony bundles & packages config
@@ -269,7 +269,7 @@ tools/
 
 ```text
 assets/
-├── admin/                     # Vue 3 admin SPA
+├── admin/                     # React + TypeScript admin SPA
 └── site/                      # Public site assets
 ```
 

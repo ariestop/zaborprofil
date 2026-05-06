@@ -6,6 +6,7 @@
 make up
 make test-db
 make quality
+npm run test:frontend
 ```
 
 PHPUnit/Doctrine проверки локально запускаются только через Docker Compose и
@@ -25,6 +26,7 @@ PostgreSQL service `postgres`. SQLite для тестов запрещён.
 - Unit-тесты доменных инвариантов `Page` и `PageBlock`;
 - Integration-тесты Doctrine repositories;
 - Functional-тесты Admin API и публичного рендера опубликованной страницы.
+- Frontend unit-тесты Vitest/React Testing Library для React-компонентов админки (например, `TiptapRichTextEditor`).
 
 В `test` окружении Doctrine использует отдельную PostgreSQL БД
 `zaborprofil_test` из Docker Compose. Production, dev и test окружения должны

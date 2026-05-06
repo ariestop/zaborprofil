@@ -3,9 +3,9 @@
 ## Стек
 
 - **Vite 7** — bundler.
-- **Vue 3** — admin SPA.
+- **React 19 + TypeScript** — admin SPA.
 - **Tailwind CSS 3** + `@tailwindcss/typography`.
-- **TypeScript 5.8**, `vue-tsc` для типов.
+- **TypeScript 5.8**, `tsc --noEmit` для типов.
 - **PostCSS**, `autoprefixer`.
 - **Node.js >= 25.9.0**, npm >= 11.12.1.
 
@@ -15,19 +15,19 @@
 
 ```text
 assets/
-├── admin/         # Vue 3 admin SPA entry: main.ts, App.vue, components/, ...
+├── admin/         # React admin SPA entry: app.ts, components/, views/, ...
 └── site/          # Public site: main.ts/css, partial JS для публичного сайта
 public_html/
 └── build/         # Vite output (gitignored)
 ```
 
-`vite.config.*` (целевая структура: `assets/site/main.ts`, `assets/admin/main.ts`) → два entry, один `manifest.json`.
+`vite.config.ts` использует два entry: `assets/site/app.ts` и `assets/admin/app.ts` (один `manifest.json`).
 
 ## Build
 
 ```bash
 npm install
-npm run build       # vue-tsc --noEmit && vite build → public_html/build/
+npm run build       # tsc --noEmit && vite build → public_html/build/
 ```
 
 В Docker:
@@ -82,7 +82,9 @@ make npm-dev        # vite dev на :5173, HMR
 
 ## Admin SPA
 
-См. [ADMIN_FRONTEND.md](legacy/ADMIN_FRONTEND.md). Единый entry `assets/admin/main.ts` грузится в `templates/admin/dashboard.html.twig` и стартует Vue-приложение в `<div id="app">`. CSRF token читается из `<meta name="admin-csrf-token">`.
+См. [ADMIN_FRONTEND.md](ADMIN_FRONTEND.md). Единый entry `assets/admin/app.ts`
+грузится в `templates/admin/dashboard.html.twig` и стартует React-приложение в
+`<div id="admin-app">`. CSRF token читается из `<meta name="admin-csrf-token">`.
 
 ## Image optimization (целевое)
 
@@ -114,7 +116,7 @@ npm run build
 - [ ] `npm run build` проходит без warnings.
 - [ ] Twig подключает через `vite_asset(...)`.
 - [ ] CSP проверен, если добавляются inline-handlers.
-- [ ] `vue-tsc` не ругается.
+- [ ] `tsc --noEmit` не ругается.
 
 ## Связанные документы
 

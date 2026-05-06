@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Module\Admin\Application\Service;
 
+use App\Kernel;
 use DateTimeImmutable;
 use RuntimeException;
-use Symfony\Component\HttpKernel\KernelInterface;
 
 final readonly class AssetBuildRunner
 {
@@ -20,9 +20,14 @@ final readonly class AssetBuildRunner
     private string $logPath;
     private string $scriptPath;
 
-    public function __construct(KernelInterface $kernel, string $command = self::DEFAULT_COMMAND)
+    public function __construct(Kernel $kernel, string $command = self::DEFAULT_COMMAND)
     {
-        $this->projectDir = $kernel->getProjectDir();
+        $projectDirResolver = [$kernel, 'getProjectDir'];
+        if (!is_callable($projectDirResolver)) {
+            throw new RuntimeException('Kernel should provide project directory.');
+        }
+
+        $this->projectDir = (string) $projectDirResolver();
         $this->command = trim($command) !== '' ? trim($command) : self::DEFAULT_COMMAND;
         $this->stateDir = $this->projectDir . '/var/admin-build';
         $this->statusPath = $this->stateDir . '/status.json';
@@ -314,7 +319,7 @@ SH;
 
         $progress = 15;
         foreach ([
-            'vue-tsc' => 30,
+            'tsc --noEmit' => 30,
             'vite build' => 55,
             'transforming' => 70,
             'rendering chunks' => 82,

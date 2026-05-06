@@ -3,6 +3,6 @@
         <h2>{{ block.content.title }}</h2>
     {% endif %}
     {% if block.content.text is defined %}
-        <div>{{ block.content.text|nl2br }}</div>
+        <div>{{ block.content.text|raw }}</div>
     {% endif %}
 </section>

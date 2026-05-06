@@ -61,7 +61,7 @@ npm install
 npm run build
 ```
 
-`npm install` обязателен до открытия `tailwind.config.ts` в IDE и до запуска `npm run build`/`vue-tsc`. Конфиг Tailwind импортирует плагин `@tailwindcss/typography`, объявленный в `package.json` как devDependency. Без `node_modules/` TypeScript будет падать с ошибкой `Cannot find module '@tailwindcss/typography'`.
+`npm install` обязателен до открытия `tailwind.config.ts` в IDE и до запуска `npm run build`/`tsc --noEmit`. Конфиг Tailwind импортирует плагин `@tailwindcss/typography`, объявленный в `package.json` как devDependency. Без `node_modules/` TypeScript будет падать с ошибкой `Cannot find module '@tailwindcss/typography'`.
 
 5. Проверить приложение:
 

@@ -11,6 +11,7 @@
 
 {% block stylesheets %}
     {{ parent() }}
+    {{ vite_entry_link_tags('assets/admin/app.ts') }}
     <meta name="admin-csrf-token" content="{{ csrf_token('admin_api') }}">
     <meta name="admin-csrf-header" content="X-CSRF-Token">
 {% endblock %}

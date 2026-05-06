@@ -23,7 +23,7 @@
 - Twig
 - Tailwind CSS (`@tailwindcss/typography`)
 - Vite
-- Vue 3 для админ-панели
+- React + TypeScript для админ-панели
 - PHPUnit, PHPStan, PHP-CS-Fixer, Rector
 
 Docker используется только для локальной разработки. Staging и production разворачиваются на VPS без Docker: Nginx, PHP-FPM, PostgreSQL, Redis, systemd и Git-based release deploy.
@@ -36,7 +36,7 @@ Docker используется только для локальной разр�
 - `src/Shared/` — общие контракты, инфраструктура и UI-адаптеры.
 - `src/Module/` — модули модульного монолита.
 - `assets/site/` — frontend публичного сайта.
-- `assets/admin/` — Vue 3 SPA админ-панели.
+- `assets/admin/` — React + TypeScript админ-панель.
 - `templates/` — Twig-шаблоны.
 - `docs/` — документация на русском языке.
 
@@ -52,7 +52,7 @@ Docker используется только для локальной разр�
 - Media Library с безопасной загрузкой, re-encode изображений и WebP/AVIF variants.
 - Управляемые меню `header`, `footer`, `service`, breadcrumbs и JSON-LD `BreadcrumbList`.
 - Lead pipeline: публичная lead-форма, anti-spam, consent snapshot, email/Telegram notifications.
-- Settings, Maintenance Mode, Audit Log, Business Events и Vue admin shell.
+- Settings, Maintenance Mode, Audit Log, Business Events и React admin shell.
 - Dev/QA readiness: `make init`, расширенный `make quality`, `app:smoke:test`.
 - Unit, Integration и Functional тесты для ключевых CMS-сценариев.
 
@@ -176,6 +176,9 @@ Admin API доступен под `/admin/api/content/...` и защищен т�
 Публичный URL открывает опубликованную страницу по `Page.path`. Черновики и архивные страницы публично не показываются и возвращают `404`.
 
 Подробнее: `docs/CONTENT_ENGINE.md`.
+
+По frontend-части админки (React + TypeScript, маршруты, CSRF, сборка) см.
+`docs/ADMIN_FRONTEND.md`.
 
 ## Дальше
 

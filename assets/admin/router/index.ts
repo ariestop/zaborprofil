@@ -22,15 +22,10 @@ export const routes: AdminRoute[] = [
   { name: 'auditLog', path: '/admin/system/audit', title: 'Audit Log' },
 ]
 
-export function currentRouteName(pathname = window.location.pathname): AdminRouteName {
+export function routeNameByPath(pathname: string): AdminRouteName {
   return routes.find((route) => route.path === pathname)?.name ?? 'dashboard'
 }
 
-export function navigateTo(path: string): void {
-  if (window.location.pathname === path) {
-    return
-  }
-
-  window.history.pushState({}, '', path)
-  window.dispatchEvent(new PopStateEvent('popstate'))
+export function currentRouteName(pathname = window.location.pathname): AdminRouteName {
+  return routeNameByPath(pathname)
 }

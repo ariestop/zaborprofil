@@ -29,7 +29,7 @@
 |---|---|
 | Доменная модель / Entity | [05-domain-model](05-domain-model.md), [10-domain-layer](10-domain-layer.md), [17-doctrine-and-database](17-doctrine-and-database.md), [18-migrations](18-migrations.md) |
 | Application / use case | [09-application-layer](09-application-layer.md), [19-forms-dto-validation](19-forms-dto-validation.md), [30-error-handling](30-error-handling.md) |
-| Контроллеры / роуты | [08-controller-architecture](08-controller-architecture.md), [16-routing](16-routing.md), [12-admin-area](12-admin-area.md), [13-front-area](13-front-area.md), [14-api-area](14-api-area.md) |
+| Контроллеры / роуты | [08-controller-architecture](08-controller-architecture.md), [16-routing](16-routing.md), [12-admin-area](12-admin-area.md), [13-front-area](13-front-area.md), [14-api-area](14-api-area.md), [ADMIN_FRONTEND](ADMIN_FRONTEND.md) |
 | Шаблоны / SSR | [21-templates-and-twig](21-templates-and-twig.md), [22-frontend-assets](22-frontend-assets.md), [26-seo-architecture](26-seo-architecture.md) |
 | Безопасность | [20-security-and-access-control](20-security-and-access-control.md), [25-files-and-uploads](25-files-and-uploads.md) |
 | Кеш / Redis | [23-cache-and-redis](23-cache-and-redis.md) |
@@ -58,6 +58,7 @@
 - [10-domain-layer](10-domain-layer.md) — Entity, Value Object, Domain Service.
 - [11-infrastructure-layer](11-infrastructure-layer.md) — Doctrine, Redis, Mailer, Storage.
 - [12-admin-area](12-admin-area.md) — `/admin` зона.
+- [ADMIN_FRONTEND](ADMIN_FRONTEND.md) — React + TypeScript админский SPA shell и frontend-практики.
 - [13-front-area](13-front-area.md) — публичный сайт.
 - [14-api-area](14-api-area.md) — публичные и admin API.
 - [15-dev-area](15-dev-area.md) — dev-инструменты, profiler.
@@ -70,7 +71,7 @@
 - [19-forms-dto-validation](19-forms-dto-validation.md) — DTO + Validator, когда FormType.
 - [20-security-and-access-control](20-security-and-access-control.md) — Symfony Security, RBAC, voters, CSRF.
 - [21-templates-and-twig](21-templates-and-twig.md) — Twig структура, partial’ы, view models.
-- [22-frontend-assets](22-frontend-assets.md) — Vite, Vue 3, Tailwind, admin SPA.
+- [22-frontend-assets](22-frontend-assets.md) — Vite, React + TypeScript, Tailwind, admin SPA.
 - [23-cache-and-redis](23-cache-and-redis.md) — пулы Symfony Cache, инвалидация.
 - [24-messenger-and-queues](24-messenger-and-queues.md) — Doctrine transport, worker.
 - [25-files-and-uploads](25-files-and-uploads.md) — uploads, безопасность, хранение.

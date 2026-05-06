@@ -1,7 +1,9 @@
-# Vue-админка
+# React-админка
 
 Админка остается защищенной Symfony Security, а пользовательский интерфейс
-загружается как Vue 3 приложение внутри Twig-шаблона `templates/admin/dashboard.html.twig`.
+загружается как React + TypeScript приложение внутри Twig-шаблона `templates/admin/dashboard.html.twig`.
+
+Точка входа фронтенда: `assets/admin/app.ts`.
 
 ## Маршрутизация
 
@@ -9,9 +11,11 @@
 - `/admin`, `/admin/dashboard`, `/admin/settings`, `/admin/seo/redirects` рендерят один SPA shell.
 - `/admin/api/*` остается JSON API и защищается CSRF subscriber.
 
-На первом этапе не добавляются внешние frontend-зависимости вроде `vue-router`
-или Pinia. В `assets/admin/router/index.ts` реализован минимальный history-router,
-а `assets/admin/stores/auth.ts` хранит состояние текущего администратора.
+Используется `react-router-dom` для клиентской навигации и `zustand` для
+базового состояния текущего администратора (`assets/admin/stores/auth.ts`).
+
+Основные view-компоненты находятся в `assets/admin/views/*.tsx`,
+общие UI-элементы и редактор контента — в `assets/admin/components/`.
 
 ## API-клиент
 
@@ -23,3 +27,26 @@
 - `credentials: same-origin`.
 
 CSRF-токен передается из Twig через meta-теги.
+
+## Редактор контента
+
+Рич-текст редактор реализован через TipTap (`assets/admin/components/TiptapRichTextEditor.tsx`).
+Шаблоны вставок и кнопки тулбара вынесены в отдельные модули:
+
+- `assets/admin/components/tiptap-templates/`
+- `assets/admin/components/useTiptapToolbar.ts`
+- `assets/admin/components/hooks/`
+
+Для регрессий редактора используется Vitest-спека
+`assets/admin/components/TiptapRichTextEditor.spec.ts`.
+
+## Сборка и проверки
+
+Для локальной разработки и CI используйте make-цели:
+
+- `make npm-install` — установка npm-зависимостей в docker compose;
+- `make npm-build` — production-сборка Vite;
+- `make npm-dev` — dev server Vite.
+
+Не запускайте `npm install`/`npm run build` в app-контейнере от root,
+чтобы не создавать root-owned артефакты в `public_html/build/`.

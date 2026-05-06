@@ -25,7 +25,7 @@
 - Symfony Security, Messenger, Validator, Serializer, Mailer
 - Twig для публичного SSR
 - Tailwind CSS (`@tailwindcss/typography`), Vite
-- Vue 3 для админ-панели
+- React + TypeScript для админ-панели
 - PHPUnit, PHPStan, PHP-CS-Fixer, Rector
 
 Docker используется только для local development. Staging и production должны оставаться native VPS stack: Nginx, PHP-FPM, PostgreSQL, Redis, systemd и Git-based release deploy.
@@ -52,7 +52,7 @@ make health
 - `src/Module/` — модули модульного монолита.
 - `templates/` — Twig-шаблоны публичного сайта и админки.
 - `assets/site/` — frontend публичного сайта.
-- `assets/admin/` — Vue 3 entrypoint админ-панели.
+- `assets/admin/` — React + TypeScript entrypoint админ-панели.
 - `docs/` — документация на русском языке.
 
 ## Архитектурные правила
@@ -80,6 +80,20 @@ sudo -n npm install
 ```
 
 - Это правило распространяется на команды `npm`, `composer`, `make`, `docker compose`, PHPUnit и другие проверки/сборки, выполняемые агентом на сервере.
+
+### Локальный npm в Docker Compose
+
+- Для локальных npm-команд использовать только цели `make`:
+  - `make npm-install` (вместо прямого `npm install`/`npm ci`)
+  - `make npm-build` (вместо прямого `npm run build`)
+- Эти цели запускают `node`-сервис с `--user $(DOCKER_UID):$(DOCKER_GID)` и предотвращают поломку прав в bind mount.
+- Не запускать npm-команды в `app`-контейнере под `root` против рабочей директории проекта: это создаёт root-owned файлы в `public_html/build/` и приводит к `EACCES` при `vite build` (например, на `public_html/build/.vite`).
+- Если права уже сломаны, исправить владельца и повторить сборку через `make npm-build`:
+
+```bash
+docker compose exec -T app sh -lc 'chown -R 1000:1000 /var/www/html/public_html/build'
+make npm-build
+```
 
 AI-агентам запрещено запускать PHPUnit/Doctrine проверки на SQLite. Локальные
 тесты всегда выполняются внутри Docker Compose против PostgreSQL service

@@ -155,7 +155,7 @@ make test
 
 ## Frontend
 
-### `vue-tsc --noEmit` падает на типы
+### `tsc --noEmit` падает на типы
 
 `npm install`, затем перезапустить TS-сервер. Если ошибка корректная — исправить типы.
 
@@ -205,7 +205,7 @@ make npm-build
 ### `403` на admin API
 
 - Origin/Referer не совпадает с `SITE_URL` → проверить `.env.local`.
-- CSRF token не передан в `X-CSRF-Token` → проверить Vue-клиент.
+- CSRF token не передан в `X-CSRF-Token` → проверить React API-клиент.
 
 ## Email
 

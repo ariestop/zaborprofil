@@ -66,7 +66,7 @@ WordPress-импортёр **не строится**. Контент перен�
 - SEO-инфраструктура: `RobotsController`, `SitemapController`, `Redirect` + `RedirectKernelSubscriber`.
 - Settings-модуль с Twig-расширением.
 - Telegram error handler как critical-канал Monolog, PII-redactor processor, request_id, user, release processor’ы.
-- Vite + Vue 3 + Tailwind для admin SPA, Twig + manifest для публичного сайта.
+- Vite + React + TypeScript + Tailwind для admin SPA, Twig + manifest для публичного сайта.
 - CI/CD: GitHub Actions с lint, phpstan, rector, phpunit, Doctrine schema validate, lint:container, lint:twig, npm build; deploy.yml gated CI green.
 - Docker Compose локально, native deploy скрипты в `tools/deploy/`.
 

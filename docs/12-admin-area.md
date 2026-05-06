@@ -5,7 +5,7 @@
 | Префикс | Что отвечает |
 |---|---|
 | `^/admin/login` | страница логина (`SecurityController` Auth-модуля) |
-| `^/admin` (HTML) | admin shell (`DashboardController`), Vue admin SPA |
+| `^/admin` (HTML) | admin shell (`DashboardController`), React admin SPA |
 | `^/admin/api` | admin JSON API (Content, Settings, Seo и т.д.) |
 
 ## Firewall
@@ -40,7 +40,7 @@
 Admin API использует **double-submit CSRF**:
 
 1. `DashboardController` рендерит токен `admin_api` в `<meta name="admin-csrf-token" content="...">`.
-2. Vue SPA читает meta, шлёт в каждом небезопасном запросе как заголовок `X-CSRF-Token`.
+2. React SPA читает meta, шлёт в каждом небезопасном запросе как заголовок `X-CSRF-Token`.
 3. `AdminApiCsrfSubscriber` валидирует токен. На несовпадение — `403`.
 
 ## Origin / Referer
@@ -76,7 +76,7 @@ Admin API использует **double-submit CSRF**:
 
 ## Admin SPA
 
-См. [ADMIN_FRONTEND.md](legacy/ADMIN_FRONTEND.md). Vue 3 + Tailwind + Vite, билдится в `public_html/build/`. Manifest рендерится в Twig через `ViteAssetExtension`.
+См. [ADMIN_FRONTEND.md](ADMIN_FRONTEND.md). React + TypeScript + Tailwind + Vite, билдится в `public_html/build/`. Manifest рендерится в Twig через `ViteAssetExtension`.
 
 ## Что НЕЛЬЗЯ в admin area
 

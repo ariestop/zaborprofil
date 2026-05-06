@@ -155,8 +155,8 @@ API защищен admin firewall и предназначен для будущ�
 - `POST /admin/api/content/pages/{pageId}/blocks/reorder`
 - `DELETE /admin/api/content/blocks/{id}`
 
-Для block type `text` и `text_image` в админке предусмотрен визуальный режим редактирования.
-Он работает поверх тех же полей `content/settings` и сохраняет данные в JSONB без изменения API-контракта.
+Для block type `text` и `text_image` в админке предусмотрен визуальный режим редактирования на базе Vue TipTap.
+Он работает поверх тех же полей `content/settings` и сохраняет HTML в `content.text` (JSONB) без изменения API-контракта.
 Для сложных кейсов доступен fallback-режим ручного JSON.
 
 Для `text_image` выбор изображения выполняется через существующий Media API:

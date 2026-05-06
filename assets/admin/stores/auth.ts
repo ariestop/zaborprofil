@@ -1,4 +1,4 @@
-import { reactive } from 'vue'
+import { create } from 'zustand'
 
 export interface AdminAuthState {
   userEmail: string
@@ -6,18 +6,27 @@ export interface AdminAuthState {
   logoutToken: string
 }
 
-const state = reactive<AdminAuthState>({
+interface AdminAuthStore extends AdminAuthState {
+  initialize: (payload: AdminAuthState) => void
+}
+
+const defaultState: AdminAuthState = {
   userEmail: '',
   logoutUrl: '/admin/logout',
   logoutToken: '',
-})
-
-export function useAuthStore(): AdminAuthState {
-  return state
 }
 
+export const useAuthStore = create<AdminAuthStore>((set) => ({
+  ...defaultState,
+  initialize: (payload) => {
+    set({
+      userEmail: payload.userEmail,
+      logoutUrl: payload.logoutUrl,
+      logoutToken: payload.logoutToken,
+    })
+  },
+}))
+
 export function initializeAuthStore(payload: AdminAuthState): void {
-  state.userEmail = payload.userEmail
-  state.logoutUrl = payload.logoutUrl
-  state.logoutToken = payload.logoutToken
+  useAuthStore.getState().initialize(payload)
 }

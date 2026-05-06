@@ -113,11 +113,11 @@ final class CreatePageHandler
 - `|raw` запрещён без обоснования.
 - Переменные из контроллера — view models, не Doctrine entity напрямую (там, где есть смысл).
 
-## TypeScript / Vue
+## TypeScript / React
 
 - `strict: true`.
-- `<script setup lang="ts">` для Vue компонентов.
-- ESLint + Prettier (целевое — пока через `vue-tsc`).
+- Файлы UI-компонентов админки — `*.tsx`.
+- ESLint + Prettier (целевое — пока через `tsc --noEmit`).
 - API клиент типизирован, не `any`.
 
 ## Имена коммитов

@@ -36,7 +36,7 @@ flowchart LR
     Worker[Messenger Worker] --> Bus
 
     subgraph FrontPipeline[Frontend pipeline]
-        Vite[Vite + Vue 3 + Tailwind] --> Manifest[manifest.json]
+        Vite[Vite + React + Tailwind] --> Manifest[manifest.json]
     end
     Controller --> Twig
     Twig --> Manifest
@@ -170,7 +170,7 @@ System_Boundary(s, "zaborprofil") {
 }
 
 Rel(visitor, nginx, "HTTPS")
-Rel(admin, nginx, "HTTPS / Vue SPA")
+Rel(admin, nginx, "HTTPS / React SPA")
 Rel(nginx, php, "FastCGI")
 Rel(php, pg, "PDO pgsql")
 Rel(php, redis, "Predis")

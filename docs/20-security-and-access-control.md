@@ -65,7 +65,7 @@ public function publish(...) {}
 - Logout — `enable_csrf: true`.
 - Admin JSON API — double-submit:
   - токен `admin_api` рендерится в `<meta name="admin-csrf-token">`;
-  - Vue SPA шлёт `X-CSRF-Token`;
+  - React SPA шлёт `X-CSRF-Token`;
   - `AdminApiCsrfSubscriber` валидирует.
 
 ## Same-origin

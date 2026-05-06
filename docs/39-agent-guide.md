@@ -66,7 +66,7 @@ production-VPS это приводит к одному из четырёх сц�
 `zaborprofil` — это **Symfony 8.1+ CMS Engine**, замещающий WordPress, со следующими ключевыми свойствами:
 
 - **SSR** на Symfony + Twig для публичного сайта (SEO-критично).
-- **Vue 3 SPA** для админки (отдельная зона `/admin`).
+- **React SPA** для админки (отдельная зона `/admin`).
 - **Clean Architecture + Modular Monolith**: слои UI → Application → Domain ← Infrastructure.
 - **Bounded modules** в `src/Module/<Name>/{Domain, Application, Infrastructure, UI}`.
 - **Web root** — `public_html/`, не Symfony default `public/`.
@@ -285,7 +285,7 @@ AI-агент **обязан** читать документацию по пра
 | Багфикс                        | конкретный модуль                                        | regression tests, log noise                                             | `docs/44-troubleshooting.md` (если симптом частый)                            | regression test, воспроизводящий баг                                 |
 | SEO-изменение                  | routing, Twig, sitemap, redirects, canonical             | `docs/26`, фактические URL/canonical/sitemap                            | `docs/26-seo-architecture.md`                                                | functional + SEO regression                                          |
 | UI/Twig                        | templates, assets, view models                           | accessibility, mobile, SEO-теги                                         | `docs/21`, `docs/22`                                                         | functional snapshot где применимо                                    |
-| Админка                        | `/admin` controllers, Vue SPA, voters                    | RBAC, audit log, CSRF                                                  | `docs/12`, `docs/20`                                                         | functional + security                                                |
+| Админка                        | `/admin` controllers, React SPA, voters                  | RBAC, audit log, CSRF                                                  | `docs/12`, `docs/20`                                                         | functional + security                                                |
 | API                            | `/api/*` controllers, DTO, normalizer                    | backward compatibility, error format, exposed fields                    | `docs/14`, `docs/30`                                                         | API contract tests                                                   |
 | Инфраструктурное               | Nginx, PHP-FPM, systemd, Redis, PostgreSQL config        | runbook, rollback                                                       | `docs/32`, `docs/34`, `docs/37`                                              | smoke + healthcheck                                                  |
 | Миграция БД                    | `migrations/`, entities, repositories                    | expand/contract, data migration, rollback                              | `docs/17`, `docs/18`, `docs/05`                                              | migration test, repository test                                      |
@@ -297,7 +297,7 @@ AI-агент **обязан** читать документацию по пра
 | Observability/logging          | Monolog channels, request_id, level                      | log noise, секреты в логах                                              | `docs/28`                                                                    | юнит, если кастомный formatter                                       |
 | Security                       | voters, firewall, CSRF, uploads                          | RBAC матрица, regression                                                | `docs/20`, `docs/25`                                                          | security tests                                                       |
 | Config/env                     | `.env*`, `config/packages/*`                             | обновление `.env.example`, deploy templates                             | `docs/27`                                                                    | config validation                                                    |
-| Frontend assets                | Vite, Tailwind, Vue components                           | критические страницы, Lighthouse                                        | `docs/22`                                                                    | manual smoke + e2e где применимо                                     |
+| Frontend assets                | Vite, Tailwind, React components                         | критические страницы, Lighthouse                                        | `docs/22`                                                                    | manual smoke + e2e где применимо                                     |
 | Тестовое изменение             | `tests/`                                                 | flaky, изоляция                                                         | `docs/31`                                                                    | сами тесты                                                           |
 | Документационное               | `docs/`                                                  | отсутствие противоречий с кодом                                         | соответствующий документ                                                     | —                                                                    |
 
@@ -482,6 +482,9 @@ AI-агент **обязан** читать документацию по пра
 ### 8.13 Frontend assets
 
 - **Типичные ошибки:** удаление SEO-тегов, layout shift, удаление a11y атрибутов.
+- **Запуск npm в local Docker:** использовать `make npm-install` и `make npm-build`, а не прямой запуск `npm` в `app`-контейнере под `root`.
+- **Почему это важно:** root-owned файлы в bind mount (особенно в `public_html/build/`) приводят к `EACCES` на `vite build` при очистке `outDir`.
+- **Если уже случилось:** исправить владельца `public_html/build` и повторить `make npm-build`.
 - **Тестировать:** Vite build, ручной просмотр критических страниц.
 
 ### 8.14 Deploy / scripts
@@ -590,6 +593,20 @@ AI-агент **обязан** читать документацию по пра
 - [ ] Обновлены docs.
 - [ ] Проверена сборка и `bin/console doctrine:migrations:migrate --dry-run`.
 
+### 9.11 Incident rule: schema exists, migrations history missing
+
+Если в БД уже есть таблицы приложения, но `doctrine_migration_versions` пуста/отсутствует, агент **не должен** сразу запускать `doctrine:migrations:migrate` на dev/prod: это часто приводит к `Duplicate table ... already exists`.
+
+Безопасный порядок:
+
+1. Проверить статус миграций (`doctrine:migrations:status`) и наличие бизнес-таблиц (`admin_users`, и т.д.).
+2. Если схема фактически существует, выполнить baseline-выравнивание:
+   - `php bin/console doctrine:migrations:version --add --all --no-interaction`
+3. Повторно проверить `doctrine:migrations:status`: `Executed == Available`, `New == 0`.
+4. Только после этого выполнять новые миграции.
+
+Это правило применимо и к local, и к серверным окружениям.
+
 ---
 
 ## 10. Rules for SEO-related changes
@@ -666,7 +683,7 @@ AI-агент **обязан** читать документацию по пра
 
 - Админка живёт в `/admin`, отдельный firewall, отдельные voters, отдельный CSRF.
 - Админ-контроллеры **тонкие**, бизнес-логика — в Application.
-- Vue SPA общается с backend через `/api/admin/*`, не через формы.
+- React SPA общается с backend через `/admin/api/*`, не через формы.
 - Любая destructive операция (delete, restore, force publish) — через подтверждение и audit log.
 
 ### 11.2 Новые сущности / поля
@@ -966,6 +983,24 @@ make test
 
 Для точечных тестов использовать тот же PostgreSQL `DATABASE_URL` внутри
 контейнера `app`; `sqlite://` в командах агента запрещён.
+
+### 17.0.1 Hard safety rails (mandatory)
+
+- Запрещён запуск `phpunit` в контейнере `app` только с `APP_ENV=test` без явного `DATABASE_URL`:
+  это может подключить dev-БД `zaborprofil`.
+- Для точечных запусков агент обязан передать полный test-env (`APP_ENV=test`, `DATABASE_URL=...zaborprofil_test...`, `REDIS_URL`, `MESSENGER_TRANSPORT_DSN`, `MAILER_DSN`, `SITE_URL`, `DEFAULT_URI`) либо использовать `make test`.
+- `SchemaTestHelper` имеет право делать `DROP TABLE ... CASCADE` только на БД с суффиксом `_test`.
+  Если helper сообщает `got "zaborprofil"` — это не баг helper, а неверный запуск тестов.
+- Любые команды `reset-db`, `doctrine:database:drop`, `SchemaTool::drop*` на dev/prod без явного запроса пользователя запрещены.
+
+### 17.0.2 Quick recovery after accidental schema reset
+
+Если dev-схема уже пересоздана вручную/тестом:
+
+1. Не трогать production данные и не выполнять destructive команды повторно.
+2. Восстановить структуру через миграции или baseline (см. 9.11).
+3. Пересоздать технических пользователей (например, `admin@admin.com`) только в local/dev.
+4. Зафиксировать инцидент в `docs/44-troubleshooting.md`, если симптом повторяемый.
 
 ### 17.1 Что должно быть покрыто
 

@@ -47,7 +47,7 @@
 2. Setup Node 25.9.0.
 3. `npm ci`.
 4. `npm audit --audit-level=high`.
-5. `npm run build` (включает `vue-tsc --noEmit`).
+5. `npm run build` (включает `tsc --noEmit`).
 
 ### `.github/workflows/deploy.yml`
 
@@ -106,7 +106,7 @@ GitHub Environments дают:
 - PHPUnit (Postgres).
 - `app:smoke:test` для базовой release readiness.
 - npm audit.
-- npm/Vite build (включая vue-tsc).
+- npm/Vite build (включая `tsc --noEmit`).
 
 ## Что НЕ автоматизировано (целевое)
 
