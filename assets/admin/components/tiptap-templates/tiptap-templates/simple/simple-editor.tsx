@@ -97,7 +97,6 @@ const MainToolbarContent = ({
           types={["bulletList", "orderedList", "taskList"]}
         />
         <BlockquoteButton />
-        <CodeBlockButton />
       </ToolbarGroup>
 
       <ToolbarSeparator />
@@ -106,7 +105,7 @@ const MainToolbarContent = ({
         <MarkButton type="bold" />
         <MarkButton type="italic" />
         <MarkButton type="strike" />
-        <MarkButton type="code" />
+        <CodeBlockButton />
         <MarkButton type="underline" />
         {!isMobile ? (
           <ColorHighlightPopover />
