@@ -1,7 +1,5 @@
 # 32. Docker architecture
 
-См. также [LOCAL_DOCKER.md](LOCAL_DOCKER.md), [INSTALL.md](legacy/INSTALL.md).
-
 > **Docker — только для local development**. Staging и production не используют Docker. См. [ADR-0008](adr/0008-docker-for-local-development.md), [ADR-0009](adr/0009-vps-deployment-strategy.md).
 
 ## Состав compose
@@ -137,6 +135,5 @@ make down
 
 - [33-local-development](33-local-development.md)
 - [34-deployment](34-deployment.md)
-- [LOCAL_DOCKER.md](LOCAL_DOCKER.md)
-- [INSTALL.md](legacy/INSTALL.md)
+- [33-local-development](33-local-development.md)
 - [adr/0008-docker-for-local-development](adr/0008-docker-for-local-development.md)

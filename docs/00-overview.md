@@ -28,7 +28,7 @@ WordPress-импортёр **не строится**. Контент перен�
 - **DevOps-инженер** — должен иметь пошаговые сценарии деплоя, бэкапа, рестарта и runbooks.
 - **Архитектор** — должен видеть, где проходят границы модулей, слоёв и контекстов, и почему.
 - **AI-агент (Cursor / Codex)** — должен иметь жёсткие правила, что можно и что нельзя менять.
-- **Редактор/маркетолог** — пользуется тематическими файлами `CONTENT_EDITOR_GUIDE.md`, `ADMIN_GUIDE.md`, `SEO_GUIDE.md`.
+- **Редактор/маркетолог** — пользуется тематическими файлами `CONTENT_EDITOR_GUIDE.md`, `ADMIN_GUIDE.md` и SEO-разделом в `26-seo-architecture.md`.
 
 ## Ключевые архитектурные решения
 
@@ -72,7 +72,7 @@ WordPress-импортёр **не строится**. Контент перен�
 
 ## Целевые возможности (roadmap)
 
-См. [45-roadmap-and-extension-points](45-roadmap-and-extension-points.md) и [ROADMAP.md](legacy/ROADMAP.md). Кратко:
+См. [45-roadmap-and-extension-points](45-roadmap-and-extension-points.md). Кратко:
 
 - Media Library и безопасные uploads с image processing.
 - Menu-модуль и динамические меню.

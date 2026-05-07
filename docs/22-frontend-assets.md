@@ -9,7 +9,7 @@
 - **PostCSS**, `autoprefixer`.
 - **Node.js >= 25.9.0**, npm >= 11.12.1.
 
-См. [ADMIN_FRONTEND.md](legacy/ADMIN_FRONTEND.md) для деталей admin shell.
+См. [ADMIN_FRONTEND.md](ADMIN_FRONTEND.md) для деталей admin shell.
 
 ## Где живёт
 
@@ -123,4 +123,4 @@ npm run build
 - [21-templates-and-twig](21-templates-and-twig.md)
 - [12-admin-area](12-admin-area.md)
 - [33-local-development](33-local-development.md)
-- [ADMIN_FRONTEND.md](legacy/ADMIN_FRONTEND.md)
+- [ADMIN_FRONTEND.md](ADMIN_FRONTEND.md)

@@ -1,7 +1,5 @@
 # 35. CI/CD
 
-См. также [CI_CD.md](legacy/CI_CD.md).
-
 ## Workflow’ы
 
 ### `.github/workflows/ci.yml`
@@ -53,8 +51,9 @@
 
 Триггеры:
 
-- push в `main`;
-- workflow_dispatch.
+- push в `develop` или `staging` для staging-потока;
+- tag `v*` для production-потока через staging gate;
+- workflow_dispatch для повторного staging deploy и операционных сценариев.
 
 Concurrency: `deploy-${{ github.ref }}; cancel-in-progress: false`.
 
@@ -65,7 +64,7 @@ Concurrency: `deploy-${{ github.ref }}; cancel-in-progress: false`.
 #### Job `deploy-staging`
 
 - Environment: `staging`.
-- Срабатывает при запуске workflow на `main`.
+- Срабатывает при push в `develop`/`staging`, а также как первый шаг tag-based production pipeline.
 - SCP заливает `tools/deploy/*` на staging-сервер в `/tmp/zaborprofil-deploy`.
 - SSH запускает `deploy-staging.sh` с переменными окружения из `secrets.STAGING_*`.
 - После успешного health-check staging script запускает `staging-smoke.sh`.
@@ -73,9 +72,11 @@ Concurrency: `deploy-${{ github.ref }}; cancel-in-progress: false`.
 #### Job `deploy-production`
 
 - Environment: `production`.
-- Срабатывает при запуске workflow на `main`.
+- Срабатывает для `v*` tags после успешного staging job и environment approval.
 - Зависит от `deploy-staging`.
 - SCP + SSH + `deploy-production.sh` с `CONFIRM_STAGING_DEPLOYED=yes` и `CONFIRM_DEPLOY_SAFETY_CHECKLIST=yes`.
+
+Production intentionally does not run as an unguarded manual path: сначала staging, затем approval и только после этого production.
 
 ## Secrets
 
@@ -151,7 +152,7 @@ GitHub Environments дают:
 - [ ] Изменение протестировано на feature branch.
 - [ ] Если меняется secret — обновлены оба environments (staging/prod).
 - [ ] Логика gating CI green сохранена.
-- [ ] Документация обновлена ([CI_CD.md](legacy/CI_CD.md), этот файл).
+- [ ] Документация обновлена в `docs/NN-*.md` (минимум этот файл + [34-deployment](34-deployment.md), если менялся deploy-процесс).
 - [ ] Не понижены проверки качества (cs/phpstan/rector/phpunit).
 
 ## Anti-patterns
@@ -166,4 +167,4 @@ GitHub Environments дают:
 
 - [34-deployment](34-deployment.md)
 - [38-coding-standards](38-coding-standards.md)
-- [CI_CD.md](legacy/CI_CD.md)
+- [34-deployment](34-deployment.md)

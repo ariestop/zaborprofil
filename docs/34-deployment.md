@@ -1,6 +1,6 @@
 # 34. Deployment
 
-См. также [DEPLOY.md](legacy/DEPLOY.md), [STAGING.md](legacy/STAGING.md), [PRODUCTION.md](legacy/PRODUCTION.md), [ADR-0009](adr/0009-vps-deployment-strategy.md).
+См. также [ADR-0009](adr/0009-vps-deployment-strategy.md).
 
 > Staging и production деплоятся **на VPS без Docker**. Docker — только для local dev.
 
@@ -55,6 +55,17 @@
 - `templates/zaborprofil-logrotate.conf` — logrotate для Symfony logs.
 
 Все скрипты — bash, идемпотентны, логируют через `set -euo pipefail`.
+
+## Ключевые переменные deploy-скриптов
+
+- `APP_ROOT` — корень release layout (`/var/www/zaborprofil` по умолчанию).
+- `REPOSITORY` — Git repository.
+- `BRANCH` — ветка или tag для deploy.
+- `HEALTH_URL` — URL health-check.
+- `KEEP_RELEASES` — сколько старых релизов хранить.
+- `PHP_FPM_SERVICE`, `NGINX_SERVICE`, `WORKER_SERVICE` — имена systemd unit.
+- `HEALTH_RETRIES`, `HEALTH_SLEEP_SECONDS` — поведение health-check retry.
+- `CONFIRM_STAGING_DEPLOYED=yes` и `CONFIRM_DEPLOY_SAFETY_CHECKLIST=yes` — обязательные production guards.
 
 ## Порядок релиза
 
@@ -247,6 +258,13 @@ php bin/console cache:warmup --env=prod
 - [ ] Создание/публикация страницы работает (smoke).
 - [ ] Логи без ERROR в первые 5 минут.
 
+## Release readiness перед публичным запуском
+
+- Staging deploy после переключения релиза запускает `tools/deploy/staging-smoke.sh`.
+- Проверяется `/health`, `/health/ready`, `/sitemap.xml`, `/robots.txt`, `/admin/login`, `app:smoke:test --env=staging`.
+- `restore-rehearsal.sh` должен проходить на реальном backup-файле.
+- На VPS должны быть установлены monitoring/logrotate templates из `tools/deploy/templates/`.
+
 ## Связанные документы
 
 - [27-config-and-env](27-config-and-env.md)
@@ -254,6 +272,4 @@ php bin/console cache:warmup --env=prod
 - [35-cicd](35-cicd.md)
 - [36-backup-restore](36-backup-restore.md)
 - [37-runbooks](37-runbooks.md)
-- [DEPLOY.md](legacy/DEPLOY.md)
-- [STAGING.md](legacy/STAGING.md)
-- [PRODUCTION.md](legacy/PRODUCTION.md)
+- [37-runbooks](37-runbooks.md)

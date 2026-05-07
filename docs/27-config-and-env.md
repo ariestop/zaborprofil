@@ -1,7 +1,5 @@
 # 27. Config и environment variables
 
-См. также [DEPLOY_VARIABLES.md](legacy/DEPLOY_VARIABLES.md), [INSTALL.md](legacy/INSTALL.md).
-
 ## Файлы
 
 | Файл | Что | Где |
@@ -55,6 +53,17 @@
 | `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | для critical alerts | `TelegramErrorHandler` |
 | `RELEASE_TAG` | версия для логов/Sentry | `ReleaseProcessor` |
 
+## Deploy script variables (операционные)
+
+Переменные, которые читает `tools/deploy/*.sh`:
+
+- `APP_ROOT`, `REPOSITORY`, `BRANCH`, `HEALTH_URL`, `KEEP_RELEASES`.
+- `PHP_BIN`, `COMPOSER_BIN`, `NPM_BIN`.
+- `PHP_FPM_SERVICE`, `NGINX_SERVICE`, `WORKER_SERVICE`.
+- `HEALTH_RETRIES`, `HEALTH_SLEEP_SECONDS`.
+- Production guards: `CONFIRM_STAGING_DEPLOYED=yes`, `CONFIRM_DEPLOY_SAFETY_CHECKLIST=yes`.
+- Дополнительно: `DATABASE_BACKUP_COMMAND` (кастомная backup команда).
+
 ## Default values
 
 Базовый `.env` содержит безопасные dev-значения. **Никогда не коммитить** реальные production-значения в `.env`. На production значения только в `shared/.env.local`.
@@ -98,7 +107,7 @@ TRUSTED_HOSTS='^(zaborprofil\.ru|staging\.zaborprofil\.ru)$'
 
 - [ ] Добавлено значение по умолчанию в `.env`.
 - [ ] Шаблон обновлён: `.env.local.example`, `.env.staging.example`, `.env.production.example`.
-- [ ] Документировано в [DEPLOY_VARIABLES.md](legacy/DEPLOY_VARIABLES.md) и в этом файле.
+- [ ] Документировано в [34-deployment](34-deployment.md) и в этом файле.
 - [ ] При обязательности — добавлена startup validation.
 - [ ] При секретности — НЕ коммитить реальное значение, обновить deploy notes.
 - [ ] CI обновлён (если переменная нужна в тестах) — `.env.test.ci`.
@@ -108,6 +117,5 @@ TRUSTED_HOSTS='^(zaborprofil\.ru|staging\.zaborprofil\.ru)$'
 
 - [33-local-development](33-local-development.md)
 - [34-deployment](34-deployment.md)
-- [DEPLOY_VARIABLES.md](legacy/DEPLOY_VARIABLES.md)
-- [INSTALL.md](legacy/INSTALL.md)
+- [33-local-development](33-local-development.md)
 - [20-security-and-access-control](20-security-and-access-control.md)

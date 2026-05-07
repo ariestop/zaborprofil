@@ -104,7 +104,7 @@ flowchart LR
 5. Если есть admin API — повесить под `/admin/api/<module>/...`, проверить voter и CSRF.
 6. Добавить миграцию.
 7. Добавить тесты (unit + integration минимум).
-8. Обновить [05-domain-model](05-domain-model.md), [03-project-structure](03-project-structure.md), [00-overview](00-overview.md), `docs/MODULES.md`.
+8. Обновить [05-domain-model](05-domain-model.md), [03-project-structure](03-project-structure.md), [00-overview](00-overview.md), [48-documentation-normalization](48-documentation-normalization.md) при изменении карты legacy->NN.
 
 ## Как удалить модуль
 
@@ -112,7 +112,7 @@ flowchart LR
 2. Перенести/выпилить функциональность.
 3. Создать миграцию для удаления таблиц **через staged migration** (см. [18-migrations](18-migrations.md)): сначала миграция, делающая поля nullable / сносящая FK, потом релиз с удалением кода, потом миграция drop table.
 4. Удалить `src/Module/<Name>`, шаблоны, тесты, документацию.
-5. Обновить `docs/MODULES.md`.
+5. Обновить [48-documentation-normalization](48-documentation-normalization.md), если меняется карта переходных документов.
 
 ## Документирование модуля
 

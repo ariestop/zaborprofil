@@ -1,7 +1,5 @@
 # 45. Roadmap и extension points
 
-См. также [ROADMAP.md](legacy/ROADMAP.md), [FEATURES_PLAN.md](legacy/FEATURES_PLAN.md).
-
 ## Roadmap по этапам
 
 ### Готово (фактическое)
@@ -30,7 +28,7 @@
 - GitHub Actions использует environments `staging` и `production`;
 - restore rehearsal автоматизирован через `tools/deploy/restore-rehearsal.sh`;
 - monitoring/log rotation/alerting подготовлены через `tools/deploy/monitoring-check.sh` и templates в `tools/deploy/templates/`;
-- порядок установки и запуска описан в [RELEASE_READINESS](RELEASE_READINESS.md).
+- порядок установки и запуска описан в [34-deployment](34-deployment.md) и [37-runbooks](37-runbooks.md).
 
 Остаётся операционно на VPS/GitHub:
 
@@ -38,6 +36,15 @@
 - завести реальные GitHub Environment secrets для staging/production;
 - провести restore rehearsal на реальном backup;
 - установить monitoring timer и logrotate на VPS.
+
+### Исторические волны W0-W11 (закрыты)
+
+- W0 Foundations, W1 Security baseline, W2 Logging, W3 Health and diagnostics.
+- W4 Maintenance/Audit/Business events, W5 DevOps safety.
+- W6 SEO core, W7 SEO audit/pre-publish checklist, W8 Cache invalidation/preview links.
+- W9 Media, W9.1 Menu, W10 Leads, W11 Dev/QA and docs.
+
+Эти волны считаются завершенным baseline. Новая разработка ведётся поверх текущих extension points.
 
 ### Этап 2 — Catalog
 
@@ -129,5 +136,4 @@
 
 - [00-overview](00-overview.md)
 - [06-module-architecture](06-module-architecture.md)
-- [ROADMAP.md](legacy/ROADMAP.md)
-- [FEATURES_PLAN.md](legacy/FEATURES_PLAN.md)
+- [42-feature-development-guide](42-feature-development-guide.md)

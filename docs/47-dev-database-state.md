@@ -65,7 +65,7 @@ SQL snapshot допустим только как временная мера д
 
 ## Связанные документы
 
-- [LOCAL_DOCKER](LOCAL_DOCKER.md)
+- [33-local-development](33-local-development.md)
 - [32-docker-architecture](32-docker-architecture.md)
 - [36-backup-restore](36-backup-restore.md)
 - [31-testing-strategy](31-testing-strategy.md)

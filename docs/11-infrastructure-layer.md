@@ -132,7 +132,7 @@ App\Module\Content\Domain\Repository\PageRepositoryInterface:
 - Возвращает `ValidatedUpload`.
 - На нарушении — `UploadSecurityException`.
 
-См. [25-files-and-uploads](25-files-and-uploads.md) и [UPLOAD_SECURITY.md](legacy/UPLOAD_SECURITY.md).
+См. [25-files-and-uploads](25-files-and-uploads.md).
 
 ## Security
 

@@ -1,7 +1,5 @@
 # 33. Local development
 
-См. также [LOCAL_DOCKER.md](LOCAL_DOCKER.md), [INSTALL.md](legacy/INSTALL.md).
-
 ## Требования
 
 - Docker Desktop / Docker Engine + Compose v2.
@@ -271,5 +269,4 @@ vendor/bin/phpunit
 - [27-config-and-env](27-config-and-env.md)
 - [44-troubleshooting](44-troubleshooting.md)
 - [47-dev-database-state](47-dev-database-state.md)
-- [INSTALL.md](legacy/INSTALL.md)
-- [LOCAL_DOCKER.md](LOCAL_DOCKER.md)
+- [32-docker-architecture](32-docker-architecture.md)

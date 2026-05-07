@@ -92,6 +92,5 @@ Accepted, 2026.
 - [34-deployment](../34-deployment.md)
 - [35-cicd](../35-cicd.md)
 - [37-runbooks](../37-runbooks.md)
-- [DEPLOY.md](../DEPLOY.md)
-- [PRODUCTION.md](../PRODUCTION.md)
+- [27-config-and-env](../27-config-and-env.md)
 - [adr/0008-docker-for-local-development](0008-docker-for-local-development.md)

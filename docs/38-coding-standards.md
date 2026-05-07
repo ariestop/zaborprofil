@@ -175,7 +175,7 @@ final class CreatePageHandler
 | Изменение CI/CD пайплайна | [35-cicd.md](35-cicd.md) |
 | Изменение деплой-скриптов / systemd unit / nginx config | [34-deployment.md](34-deployment.md), при необходимости [37-runbooks.md](37-runbooks.md) |
 | Архитектурное решение (новая граница, новая зависимость, новый компромисс) | Создать новый ADR в `docs/adr/` (см. шаблон в [41-implementation-playbook.md](41-implementation-playbook.md)) |
-| Новый модуль `src/Module/<X>` | [06-module-architecture.md](06-module-architecture.md) (карта модулей), [MODULES.md](legacy/MODULES.md), `src/Module/<X>/README.md` |
+| Новый модуль `src/Module/<X>` | [06-module-architecture.md](06-module-architecture.md) (карта модулей), [43-module-development-guide](43-module-development-guide.md), `src/Module/<X>/README.md` |
 | Изменение публичного контракта модуля (interface) | `src/Module/<X>/README.md`, [06-module-architecture.md](06-module-architecture.md) |
 
 **Правила формулировки в обновлённом документе:**

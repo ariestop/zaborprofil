@@ -3,11 +3,11 @@
 В проекте две категории API:
 
 1. **Admin API** — `^/admin/api/...`, JSON, под admin firewall, CSRF + Origin (см. [12-admin-area](12-admin-area.md)). Реализован.
-2. **Public API** — `^/api/v1/...`, JSON, для внешних потребителей. **Целевое**, ещё не реализован.
+2. **Public API** — JSON endpoints вне `/admin`. Частично реализован (`POST /api/leads`), версионированный внешний API `/api/v1/...` остаётся целевым.
 
 ## Admin API: текущее состояние
 
-См. [CONTENT_ENGINE.md](legacy/CONTENT_ENGINE.md) для конкретных контрактов Content. Settings и Seo имеют свои admin API под `/admin/api/settings/...` и `/admin/api/seo/...`.
+См. [CONTENT_ENGINE.md](CONTENT_ENGINE.md) для конкретных контрактов Content. Settings и Seo имеют свои admin API под `/admin/api/settings/...` и `/admin/api/seo/...`.
 
 Общие правила:
 
@@ -18,6 +18,16 @@
 - Каждый небезопасный метод требует `X-CSRF-Token`.
 
 ## Public API: целевые правила
+
+### Фактический публичный endpoint
+
+`POST /api/leads`:
+
+- принимает lead payload (`source`, `name`, `phone`, `email`, `message`, `consent`, `consentText`, `pageUrl`, `policyUrl`, `formLoadedAt`, honeypot `website`);
+- normal lead: `201` и статус `new`;
+- spam lead: нейтральный `202`, статус `spam`, `spamScore`/`spamReasons`;
+- антиспам: honeypot, минимальное время заполнения, IP rate limit, link scoring;
+- уведомления: email и Telegram (если заданы env переменные).
 
 ### Версионирование
 

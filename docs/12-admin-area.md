@@ -25,7 +25,7 @@
 
 ## RBAC
 
-См. [ROLES.md](legacy/ROLES.md) и [20-security-and-access-control](20-security-and-access-control.md).
+См. [20-security-and-access-control](20-security-and-access-control.md).
 
 Права (`AdminPermission`): `pages.view`, `pages.create`, `pages.edit`, `pages.publish`, `pages.delete`, `seo.edit`, `media.upload`, `media.delete`, `leads.view`, `leads.manage`, `settings.edit`, `users.manage`, `system.view`, `system.manage`.
 
@@ -58,7 +58,7 @@ Admin API использует **double-submit CSRF**:
 - Ответ — JSON через `ContentApiResponder` (унифицированный success/error).
 - Ошибки 500 — заменяются на `Internal server error` с логированием оригинала в канал `admin`.
 
-Пример: см. [CONTENT_ENGINE.md](legacy/CONTENT_ENGINE.md).
+Пример: см. [14-api-area](14-api-area.md).
 
 ### Маршруты Content (фактическое)
 
@@ -77,6 +77,12 @@ Admin API использует **double-submit CSRF**:
 ## Admin SPA
 
 См. [ADMIN_FRONTEND.md](ADMIN_FRONTEND.md). React + TypeScript + Tailwind + Vite, билдится в `public_html/build/`. Manifest рендерится в Twig через `ViteAssetExtension`.
+
+## System разделы (фактическое состояние)
+
+- `/admin/system/health` + `GET /admin/api/system/health` — health center.
+- `/admin/system/maintenance` + `GET/POST /admin/api/system/maintenance/*` — maintenance mode.
+- `/admin/system/audit` + `GET /admin/api/system/audit` — audit log критичных действий (`Page`, `PageBlock`, `Setting`, `Redirect`).
 
 ## Что НЕЛЬЗЯ в admin area
 
@@ -101,7 +107,6 @@ Admin API использует **double-submit CSRF**:
 
 - [08-controller-architecture](08-controller-architecture.md)
 - [20-security-and-access-control](20-security-and-access-control.md)
-- [ROLES.md](legacy/ROLES.md)
-- [SECURITY.md](legacy/SECURITY.md)
-- [CONTENT_ENGINE.md](legacy/CONTENT_ENGINE.md)
-- [ADMIN_FRONTEND.md](legacy/ADMIN_FRONTEND.md)
+- [14-api-area](14-api-area.md)
+- [28-logging-observability](28-logging-observability.md)
+- [ADMIN_FRONTEND.md](ADMIN_FRONTEND.md)

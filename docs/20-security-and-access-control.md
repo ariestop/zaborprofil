@@ -2,8 +2,6 @@
 
 Разделяем на: **AuthN** (кто), **AuthZ** (что можно), **Transport security** (как защищены каналы), **Application hardening** (как защищён код).
 
-См. также: [SECURITY.md](legacy/SECURITY.md), [ROLES.md](legacy/ROLES.md), [UPLOAD_SECURITY.md](legacy/UPLOAD_SECURITY.md).
-
 ## Authentication
 
 ### Admin
@@ -59,6 +57,37 @@ public function publish(...) {}
 
 При появлении сложных правил на конкретные сущности — выделить **resource voters** (например, `PageVoter::canEdit($page, $user)`).
 
+### Полный список прав (`AdminPermission`)
+
+- `pages.view`
+- `pages.create`
+- `pages.edit`
+- `pages.publish`
+- `pages.submit_review`
+- `pages.approve`
+- `pages.unpublish`
+- `pages.schedule`
+- `pages.archive`
+- `pages.view_revisions`
+- `pages.rollback_revision`
+- `pages.manage_templates`
+- `pages.delete`
+- `blocks.create`
+- `blocks.edit`
+- `blocks.delete`
+- `blocks.reorder`
+- `blocks.clone`
+- `seo.edit`
+- `seo.approve`
+- `media.upload`
+- `media.delete`
+- `leads.view`
+- `leads.manage`
+- `settings.edit`
+- `users.manage`
+- `system.view`
+- `system.manage`
+
 ## CSRF
 
 - Login form — Symfony `enable_csrf: true`.
@@ -106,7 +135,7 @@ password_hashers:
 
 ## File upload security
 
-См. [25-files-and-uploads](25-files-and-uploads.md), [UPLOAD_SECURITY.md](legacy/UPLOAD_SECURITY.md).
+См. [25-files-and-uploads](25-files-and-uploads.md).
 
 `UploadValidator`:
 
@@ -150,6 +179,7 @@ password_hashers:
 - `Referrer-Policy: same-origin`
 - `Permissions-Policy: ...`
 - `Content-Security-Policy-Report-Only: ...` (целевое — full enforce)
+- Admin area дополнительно получает `X-Robots-Tag: noindex, nofollow, noarchive`.
 
 ## Nginx hardening
 
@@ -200,6 +230,4 @@ password_hashers:
 - [25-files-and-uploads](25-files-and-uploads.md)
 - [27-config-and-env](27-config-and-env.md)
 - [37-runbooks](37-runbooks.md)
-- [SECURITY.md](legacy/SECURITY.md)
-- [ROLES.md](legacy/ROLES.md)
-- [UPLOAD_SECURITY.md](legacy/UPLOAD_SECURITY.md)
+- [25-files-and-uploads](25-files-and-uploads.md)

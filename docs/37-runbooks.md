@@ -3234,6 +3234,13 @@ nginx -T 2>/dev/null | grep -i maintenance
 
 #### Пошаговое решение
 
+Если доступен штатный механизм приложения, использовать его в первую очередь:
+
+```bash
+php bin/console app:maintenance:on --message="Сайт временно недоступен" --allow-ip=127.0.0.1
+php bin/console app:maintenance:status
+```
+
 > Если в проекте уже есть собственный механизм maintenance mode — использовать его.
 > Ниже — **шаблонный generic-вариант** на nginx + файл-флаг. Адаптировать под свой vhost.
 
@@ -3282,6 +3289,12 @@ curl -I https://<domain>/
 ### 63. Нужно снять maintenance mode
 
 #### Пошаговое решение
+
+Если maintenance был включён штатной командой:
+
+```bash
+php bin/console app:maintenance:off
+```
 
 1. Удалить флаг:
 

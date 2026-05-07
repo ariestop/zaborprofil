@@ -79,4 +79,4 @@ firewalls:
 - [27-config-and-env](27-config-and-env.md)
 - [32-docker-architecture](32-docker-architecture.md)
 - [33-local-development](33-local-development.md)
-- [SECURITY.md](legacy/SECURITY.md)
+- [20-security-and-access-control](20-security-and-access-control.md)

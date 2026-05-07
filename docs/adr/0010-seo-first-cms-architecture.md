@@ -61,5 +61,4 @@ CMS строится как **SEO-first**:
 - [26-seo-architecture](../26-seo-architecture.md)
 - [13-front-area](../13-front-area.md)
 - [05-domain-model](../05-domain-model.md)
-- [SEO_GUIDE.md](../SEO_GUIDE.md)
-- [REDIRECTS.md](../REDIRECTS.md)
+- [16-routing](../16-routing.md)

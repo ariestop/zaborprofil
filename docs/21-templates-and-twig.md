@@ -128,4 +128,4 @@ Vite manifest содержит хеши. `ViteAssetExtension` отдаёт `<lin
 - [13-front-area](13-front-area.md)
 - [22-frontend-assets](22-frontend-assets.md)
 - [26-seo-architecture](26-seo-architecture.md)
-- [SETTINGS.md](legacy/SETTINGS.md)
+- [27-config-and-env](27-config-and-env.md)

@@ -1,7 +1,5 @@
 # 25. Files и uploads
 
-См. также [UPLOAD_SECURITY.md](legacy/UPLOAD_SECURITY.md).
-
 ## Расположение
 
 - Web root: `public_html/`.
@@ -24,6 +22,8 @@
 - Проверка размера (`max_file_size` через config).
 - MIME через `finfo` (NOT через extension!).
 - Whitelist расширений.
+- Проверка двойных расширений и запрет исполняемых расширений (`php`, `phtml`, `phar`, `html`, `js`, `svg` по умолчанию).
+- Проверка upload status из Symfony UploadedFile.
 - Имя файла: только `[a-z0-9._-]`, transliteration кириллицы, без `..`.
 - Возвращает `ValidatedUpload` или бросает `UploadSecurityException`.
 
@@ -57,6 +57,7 @@ final class UploadController
 - AVIF/WebP variants зависят от доступных PHP encoders (`imageavif`, `imagewebp`).
 - Хранится оригинал + metadata произведённых вариантов в `media_assets.variants`.
 - Async generation через Messenger остаётся future extension point для больших библиотек.
+- SVG по умолчанию запрещён; включение SVG допустимо только через отдельную sanitization policy.
 
 ## Path traversal protection
 
@@ -153,4 +154,4 @@ location ~* ^/uploads/.*\.(php|phtml|phar|pht)$ {
 - [20-security-and-access-control](20-security-and-access-control.md)
 - [11-infrastructure-layer](11-infrastructure-layer.md)
 - [36-backup-restore](36-backup-restore.md)
-- [UPLOAD_SECURITY.md](legacy/UPLOAD_SECURITY.md)
+- [20-security-and-access-control](20-security-and-access-control.md)

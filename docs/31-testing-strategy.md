@@ -1,7 +1,5 @@
 # 31. Testing strategy
 
-См. также [TESTING.md](legacy/TESTING.md).
-
 ## Стек
 
 - PHPUnit 12.
@@ -22,6 +20,7 @@ flowchart TB
 | Unit | `tests/Unit/<Module>/...` | Domain entities, enums, value objects, application handlers с моками |
 | Integration | `tests/Integration/<Module>/...` | Doctrine repositories на тестовой БД, listeners, subscribers |
 | Functional | `tests/Functional/<Module>/...` | HTTP контроллеры через `WebTestCase` |
+| E2E сценарии | `tests/E2E/...` | эксплуатационные сценарии и ручные регрессионные чек-листы |
 | Support | `tests/Support/...` | хелперы (`SchemaTestHelper`) |
 
 ## Naming
@@ -127,6 +126,15 @@ make quality        # validate + syntax + cs + phpstan + rector + schema/lint + 
 
 В CI — `composer test` (см. composer.json scripts).
 
+Для полного локального прогона качества:
+
+```bash
+make up
+make test-db
+make quality
+npm run test:frontend
+```
+
 ## Что проверять перед merge
 
 - [ ] `composer check:syntax` ok.
@@ -164,4 +172,4 @@ make quality        # validate + syntax + cs + phpstan + rector + schema/lint + 
 - [10-domain-layer](10-domain-layer.md)
 - [11-infrastructure-layer](11-infrastructure-layer.md)
 - [38-coding-standards](38-coding-standards.md)
-- [TESTING.md](legacy/TESTING.md)
+- [38-coding-standards](38-coding-standards.md)

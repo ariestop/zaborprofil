@@ -301,17 +301,17 @@ CMS Engine — это **product** для редактора и **service** дл�
 | **Repository / query change** | Infrastructure | N+1, индексы, performance | EXPLAIN, fixtures | Integration repository | [17](17-doctrine-and-database.md) |
 | **Database schema change** | Infrastructure + Domain | Downtime, потеря данных | Backward-compatible шаги, backfill, индексы | Integration + migration test | [18](18-migrations.md), [13. Раздел](#13-playbook-database-schema-change) |
 | **WordPress migration** | Infrastructure (importer) + SEO | URL-сохранение, потеря индексации | Mapping table, redirects, canonical | Integration importer | [Раздел 14](#14-playbook-wordpress-migration-related-change) |
-| **SEO / meta / sitemap change** | Front + Application + Twig | Индексация, ranking | URL, canonical, sitemap, robots, JSON-LD | Functional SEO | [26](26-seo-architecture.md), [SEO_GUIDE.md](legacy/SEO_GUIDE.md) |
-| **Route / URL change** | Front/API + Application + redirects | 301/410, sitemap | Конфликт маршрутов, sitemap, redirects | Functional + redirect test | [16](16-routing.md), [REDIRECTS.md](legacy/REDIRECTS.md) |
-| **Files / uploads change** | Application + Infrastructure (Storage) | Path traversal, RCE, leak | MIME/ext/size, permissions, public/private | Integration + functional | [25](25-files-and-uploads.md), [UPLOAD_SECURITY.md](legacy/UPLOAD_SECURITY.md) |
+| **SEO / meta / sitemap change** | Front + Application + Twig | Индексация, ranking | URL, canonical, sitemap, robots, JSON-LD | Functional SEO | [26](26-seo-architecture.md) |
+| **Route / URL change** | Front/API + Application + redirects | 301/410, sitemap | Конфликт маршрутов, sitemap, redirects | Functional + redirect test | [16](16-routing.md), [26](26-seo-architecture.md) |
+| **Files / uploads change** | Application + Infrastructure (Storage) | Path traversal, RCE, leak | MIME/ext/size, permissions, public/private | Integration + functional | [25](25-files-and-uploads.md) |
 | **Cache / Redis change** | Infrastructure | Stale data, hot keys | TTL, invalidation, key naming | Integration (cache hit/miss) | [23](23-cache-and-redis.md) |
 | **Messenger / worker change** | Application + Infrastructure + ops | Дубли, бесконечные ретраи | Idempotency, retry policy, graceful shutdown | Functional in-memory transport | [24](24-messenger-and-queues.md), [37](37-runbooks.md) |
-| **Deploy / config change** | DevOps | Сломанный релиз | Idempotency, dry-run, staging | Manual on staging | [34](34-deployment.md), [DEPLOY.md](legacy/DEPLOY.md) |
+| **Deploy / config change** | DevOps | Сломанный релиз | Idempotency, dry-run, staging | Manual on staging | [34](34-deployment.md) |
 | **Docker / local-dev change** | DevOps (local) | Сломанный onboarding | `make build && make up` чистый | Manual | [32](32-docker-architecture.md), [33](33-local-development.md) |
 | **systemd / Nginx / PHP-FPM change** | DevOps (prod) | Downtime, 502, регресс конфигов | Reload/test, runbook | Manual on staging | [34](34-deployment.md), [37](37-runbooks.md) |
-| **Observability / logging change** | Cross-cut | Шумные логи, leak секретов | Уровни, каналы, redaction | Unit logger | [28](28-logging-observability.md), [LOGGING.md](legacy/LOGGING.md) |
+| **Observability / logging change** | Cross-cut | Шумные логи, leak секретов | Уровни, каналы, redaction | Unit logger | [28](28-logging-observability.md) |
 | **Healthcheck change** | Infrastructure + ops | Сломанный rollout | Не тяжелее 200ms, readiness vs liveness | Functional /health | [29](29-healthchecks.md) |
-| **Security hardening** | Cross-cut | Регрессия пользовательского UX | Voters, headers, CSRF, rate limit | Functional security | [20](20-security-and-access-control.md), [SECURITY.md](legacy/SECURITY.md) |
+| **Security hardening** | Cross-cut | Регрессия пользовательского UX | Voters, headers, CSRF, rate limit | Functional security | [20](20-security-and-access-control.md) |
 | **Refactor** | Точечный слой | Изменение поведения | Тесты до = тесты после | Все существующие | [38](38-coding-standards.md) |
 
 > Если тип задачи не находится в матрице — сначала декомпозируй её на типы из матрицы.
@@ -631,10 +631,10 @@ yes/no — новые шаги в release script, рестарт worker'ов
 9. **Добавить breadcrumbs** через общий механизм (Twig partial / view model property `breadcrumbs`).
 10. **Добавить meta title / description / canonical / OG / robots** через единый SEO-блок (см. [26-seo-architecture](26-seo-architecture.md)). В `Page` уже есть `title`, `h1`, `indexable`, `metaDescription`, `canonicalUrl`, OpenGraph-поля и `jsonLd`; новые публичные страницы должны переиспользовать этот контракт и покрываться functional-тестами.
 11. **Добавить sitemap impact.**
-    - Если страница динамическая (`Page` entity) — она автоматически попадает в sitemap (см. [SEO_GUIDE.md](legacy/SEO_GUIDE.md)).
+    - Если страница динамическая (`Page` entity) — она автоматически попадает в sitemap (см. [26-seo-architecture](26-seo-architecture.md)).
     - Если код-страница — добавить в `SitemapController` или новый `SitemapSourceProviderInterface`.
 12. **Добавить tests.** Functional: статус 200, наличие h1, canonical, мета-теги.
-13. **Обновить docs.** [13-front-area](13-front-area.md), [16-routing](16-routing.md), [SEO_GUIDE.md](legacy/SEO_GUIDE.md).
+13. **Обновить docs.** [13-front-area](13-front-area.md), [16-routing](16-routing.md), [26-seo-architecture](26-seo-architecture.md).
 
 ### 7.2 Что делать нельзя
 
@@ -677,7 +677,7 @@ yes/no — новые шаги в release script, рестарт worker'ов
    - Audit log для опасных действий.
 9. **Flash / error handling.** После POST — redirect (PRG pattern), flash сообщение пользователю. Ошибки — через единый error handler ([30-error-handling](30-error-handling.md)).
 10. **Добавить tests.** Functional admin (логин под admin → action → проверка БД-состояния и UI).
-11. **Обновить docs.** [12-admin-area](12-admin-area.md), [ADMIN_FRONTEND.md](legacy/ADMIN_FRONTEND.md), [ADMIN_GUIDE.md](legacy/ADMIN_GUIDE.md), [ROLES.md](legacy/ROLES.md).
+11. **Обновить docs.** [12-admin-area](12-admin-area.md), [ADMIN_FRONTEND.md](ADMIN_FRONTEND.md), [ADMIN_GUIDE.md](ADMIN_GUIDE.md), [20-security-and-access-control](20-security-and-access-control.md).
 
 ### 8.2 Что делать нельзя
 
@@ -1052,7 +1052,7 @@ Mutating-изменения **разбиваются** на серию additive-
 ### 14.2 Mapping rules
 
 - Создать таблицу/файл `wp_url -> new_url` для каждого URL'а старого сайта.
-- Хранить mapping как часть `redirects` подсистемы (см. [REDIRECTS.md](legacy/REDIRECTS.md), [16-routing](16-routing.md)).
+- Хранить mapping как часть `redirects` подсистемы (см. [26-seo-architecture](26-seo-architecture.md), [16-routing](16-routing.md)).
 - Для удалённых страниц — 410 Gone; для перемещённых — 301.
 
 ### 14.3 Перенос страниц
@@ -1092,7 +1092,7 @@ Mutating-изменения **разбиваются** на серию additive-
 
 ### 14.9 Как фиксировать исключения
 
-- Любая страница, которая **не** мигрирует «как было» — фиксируется в [REDIRECTS.md](legacy/REDIRECTS.md) с обоснованием.
+- Любая страница, которая **не** мигрирует «как было» — фиксируется в [26-seo-architecture](26-seo-architecture.md) с обоснованием.
 - ADR в `docs/adr/` для крупных решений (например, перенос блогового раздела с агрессивным дедуплицированием).
 
 ### 14.10 Документировать решения миграции
@@ -1107,7 +1107,7 @@ Mutating-изменения **разбиваются** на серию additive-
 - [13-front-area](13-front-area.md)
 - [16-routing](16-routing.md)
 - [26-seo-architecture](26-seo-architecture.md)
-- [REDIRECTS.md](legacy/REDIRECTS.md)
+- [26-seo-architecture](26-seo-architecture.md)
 
 ---
 
@@ -1131,7 +1131,7 @@ Mutating-изменения **разбиваются** на серию additive-
 ### 15.2 Title / description / h1 / canonical
 
 - Источник истины — `Page.metaTitle`, `Page.metaDescription`, `Page.h1`, `Page.canonicalOverride`.
-- Если поле пустое — fallback по правилам в [SEO_GUIDE.md](legacy/SEO_GUIDE.md).
+- Если поле пустое — fallback по правилам в [26-seo-architecture](26-seo-architecture.md).
 - Длины: title 50–65 символов, description 140–160. Превышение — warning.
 - Canonical всегда абсолютный URL `https://zaborprofil.ru/...`.
 
@@ -1153,7 +1153,7 @@ Mutating-изменения **разбиваются** на серию additive-
 - Хранятся в БД (entity `Redirect` или аналог) либо в коде с явным списком.
 - Только server-side 301/410. Никаких meta-refresh / JS-redirect.
 - Цепочки запрещены: `A → B → C` всегда схлопывается.
-- См. [REDIRECTS.md](legacy/REDIRECTS.md).
+- См. [26-seo-architecture](26-seo-architecture.md).
 
 ### 15.6 Сохранение public URL contracts
 
@@ -1167,7 +1167,7 @@ Mutating-изменения **разбиваются** на серию additive-
 
 ### 15.8 Pagination / filter pages
 
-- Pagination — `?page=2`, canonical на page 1 либо self-canonical (выбрать стратегию и зафиксировать в [SEO_GUIDE.md](legacy/SEO_GUIDE.md)).
+- Pagination — `?page=2`, canonical на page 1 либо self-canonical (выбрать стратегию и зафиксировать в [26-seo-architecture](26-seo-architecture.md)).
 - Фильтры — обычно `noindex,follow` либо canonical на базовый URL.
 
 ### 15.9 Structured data / JSON-LD
@@ -1185,15 +1185,14 @@ Mutating-изменения **разбиваются** на серию additive-
 ### 15.11 Документирование SEO решений
 
 - ADR при значимом изменении (canonical strategy, robots strategy, hreflang).
-- [SEO_GUIDE.md](legacy/SEO_GUIDE.md) — оперативная инструкция редактору.
+- [26-seo-architecture](26-seo-architecture.md) — оперативная инструкция редактору.
 - [26-seo-architecture](26-seo-architecture.md) — техническая архитектура.
 
 ### 15.12 Связанные документы
 
 - [16-routing](16-routing.md)
 - [26-seo-architecture](26-seo-architecture.md)
-- [SEO_GUIDE.md](legacy/SEO_GUIDE.md)
-- [REDIRECTS.md](legacy/REDIRECTS.md)
+- [26-seo-architecture](26-seo-architecture.md)
 - [37-runbooks](37-runbooks.md)
 
 ---
@@ -1309,7 +1308,7 @@ Mutating-изменения **разбиваются** на серию additive-
 ### 17.9 Связанные документы
 
 - [25-files-and-uploads](25-files-and-uploads.md)
-- [UPLOAD_SECURITY.md](legacy/UPLOAD_SECURITY.md)
+- [25-files-and-uploads](25-files-and-uploads.md)
 - [36-backup-restore](36-backup-restore.md)
 - [20-security-and-access-control](20-security-and-access-control.md)
 
@@ -1351,8 +1350,8 @@ Mutating-изменения **разбиваются** на серию additive-
 ### 18.5 Обновить README / docs / install scripts / GitHub Actions
 
 - [27-config-and-env](27-config-and-env.md) — список всех env variables проекта.
-- [DEPLOY_VARIABLES.md](legacy/DEPLOY_VARIABLES.md) — env'ы для деплоя.
-- [INSTALL.md](legacy/INSTALL.md) / [33-local-development](33-local-development.md) — инструкции для разработчика.
+- [27-config-and-env](27-config-and-env.md) — env'ы для деплоя.
+- [33-local-development](33-local-development.md) — инструкции для разработчика.
 - [35-cicd](35-cicd.md) — секреты CI.
 
 ### 18.6 Избежать конфиг-хаоса
@@ -1370,7 +1369,7 @@ Mutating-изменения **разбиваются** на серию additive-
 
 - Каждое окружение имеет явный профиль env.
 - Test env (`.env.test`) — отдельная БД, отдельный Redis db / namespace.
-- Prod env — только через secrets management (см. [DEPLOY_VARIABLES.md](legacy/DEPLOY_VARIABLES.md)).
+- Prod env — только через secrets management (см. [27-config-and-env](27-config-and-env.md)).
 
 ### 18.9 Связанные документы
 
@@ -1378,7 +1377,7 @@ Mutating-изменения **разбиваются** на серию additive-
 - [33-local-development](33-local-development.md)
 - [34-deployment](34-deployment.md)
 - [35-cicd](35-cicd.md)
-- [DEPLOY_VARIABLES.md](legacy/DEPLOY_VARIABLES.md)
+- [27-config-and-env](27-config-and-env.md)
 
 ---
 
@@ -1582,7 +1581,7 @@ Mutating-изменения **разбиваются** на серию additive-
 ### 21.8 Связанные документы
 
 - [28-logging-observability](28-logging-observability.md)
-- [LOGGING.md](legacy/LOGGING.md)
+- [28-logging-observability](28-logging-observability.md)
 - [30-error-handling](30-error-handling.md)
 - [37-runbooks](37-runbooks.md)
 
@@ -1764,7 +1763,7 @@ Mutating-изменения **разбиваются** на серию additive-
 - [32-docker-architecture](32-docker-architecture.md)
 - [33-local-development](33-local-development.md)
 - [27-config-and-env](27-config-and-env.md)
-- [LOCAL_DOCKER.md](LOCAL_DOCKER.md)
+- [32-docker-architecture](32-docker-architecture.md)
 
 ---
 
@@ -1881,7 +1880,7 @@ client → Nginx :443 → static? yes → отдать; нет → fastcgi_pass 
 
 - `--help` выводит список флагов и примеры.
 - Сообщения логичные (`==> Applying migrations...`).
-- Обновить [DEPLOY.md](legacy/DEPLOY.md), [INSTALL.md](legacy/INSTALL.md), [34-deployment](34-deployment.md).
+- Обновить [34-deployment](34-deployment.md), [33-local-development](33-local-development.md).
 
 ### 26.6 Тесты
 
@@ -1900,8 +1899,8 @@ client → Nginx :443 → static? yes → отдать; нет → fastcgi_pass 
 - [34-deployment](34-deployment.md)
 - [36-backup-restore](36-backup-restore.md)
 - [37-runbooks](37-runbooks.md)
-- [DEPLOY.md](legacy/DEPLOY.md)
-- [INSTALL.md](legacy/INSTALL.md)
+- [34-deployment](34-deployment.md)
+- [33-local-development](33-local-development.md)
 
 ---
 
@@ -1954,7 +1953,7 @@ client → Nginx :443 → static? yes → отдать; нет → fastcgi_pass 
 ### 27.9 Failure handling
 
 - Job failure → fail pipeline.
-- Notifications — Slack / Telegram / email (см. [35-cicd](35-cicd.md), [CI_CD.md](legacy/CI_CD.md)).
+- Notifications — Slack / Telegram / email (см. [35-cicd](35-cicd.md)).
 
 ### 27.10 Rollback hints
 
@@ -1981,7 +1980,7 @@ client → Nginx :443 → static? yes → отдать; нет → fastcgi_pass 
 - [35-cicd](35-cicd.md)
 - [38-coding-standards](38-coding-standards.md)
 - [31-testing-strategy](31-testing-strategy.md)
-- [CI_CD.md](legacy/CI_CD.md)
+- [35-cicd](35-cicd.md)
 
 ---
 
@@ -1991,7 +1990,7 @@ client → Nginx :443 → static? yes → отдать; нет → fastcgi_pass 
 
 | Меняется | Также обновить |
 |----------|----------------|
-| Route / public URL | [16-routing](16-routing.md), [26-seo-architecture](26-seo-architecture.md), `redirects`, sitemap, functional test, [REDIRECTS.md](legacy/REDIRECTS.md) |
+| Route / public URL | [16-routing](16-routing.md), [26-seo-architecture](26-seo-architecture.md), `redirects`, sitemap, functional test |
 | Controller | Route, Twig template, Application service, functional test, controller docs |
 | Application use case | Command/Query DTO, controller/API caller, unit + integration tests, [09-application-layer](09-application-layer.md) |
 | Domain entity | Doctrine mapping, repository, migration, unit tests, [05-domain-model](05-domain-model.md), [10-domain-layer](10-domain-layer.md) |
@@ -2000,18 +1999,18 @@ client → Nginx :443 → static? yes → отдать; нет → fastcgi_pass 
 | Form / DTO | Validator, template / Vue form, controller, tests, [19-forms-dto-validation](19-forms-dto-validation.md) |
 | Doctrine entity | Migration, fixtures, repositories, tests, [17-doctrine-and-database](17-doctrine-and-database.md), [18-migrations](18-migrations.md) |
 | DB schema | Migration, entities, repositories, services, tests, deploy notes, [13. Раздел](#13-playbook-database-schema-change) |
-| Env vars | `config/services.yaml` validation, `.env`, `.env.example`, `.env.test`, deploy templates, README, install scripts, CI secrets, [27-config-and-env](27-config-and-env.md), [DEPLOY_VARIABLES.md](legacy/DEPLOY_VARIABLES.md) |
+| Env vars | `config/services.yaml` validation, `.env`, `.env.example`, `.env.test`, deploy templates, README, install scripts, CI secrets, [27-config-and-env](27-config-and-env.md) |
 | Redis / cache key | Invalidation hooks, tests, docs, [23-cache-and-redis](23-cache-and-redis.md), [44-troubleshooting](44-troubleshooting.md) |
 | Messenger message | Handler, retry policy, transport routing, tests, logs, worker config, [24-messenger-and-queues](24-messenger-and-queues.md) |
-| Uploads logic | Validators, security checks, backup/restore docs, cleanup, tests, [25-files-and-uploads](25-files-and-uploads.md), [UPLOAD_SECURITY.md](legacy/UPLOAD_SECURITY.md), [36-backup-restore](36-backup-restore.md) |
-| docker-compose | Local docs, install scripts, healthchecks, [32-docker-architecture](32-docker-architecture.md), [33-local-development](33-local-development.md), [LOCAL_DOCKER.md](LOCAL_DOCKER.md) |
+| Uploads logic | Validators, security checks, backup/restore docs, cleanup, tests, [25-files-and-uploads](25-files-and-uploads.md), [36-backup-restore](36-backup-restore.md) |
+| docker-compose | Local docs, install scripts, healthchecks, [32-docker-architecture](32-docker-architecture.md), [33-local-development](33-local-development.md) |
 | Nginx config | Routing/redirects, static assets, SSL, SEO checks, [34-deployment](34-deployment.md) |
-| CI workflow | Secrets, deploy checklist, docs, [35-cicd](35-cicd.md), [CI_CD.md](legacy/CI_CD.md) |
-| SEO metadata | Sitemap, canonical, JSON-LD, tests, [26-seo-architecture](26-seo-architecture.md), [SEO_GUIDE.md](legacy/SEO_GUIDE.md) |
-| Voter / role | Firewall config, controller `#[IsGranted]`, tests, [20-security-and-access-control](20-security-and-access-control.md), [ROLES.md](legacy/ROLES.md) |
+| CI workflow | Secrets, deploy checklist, docs, [35-cicd](35-cicd.md) |
+| SEO metadata | Sitemap, canonical, JSON-LD, tests, [26-seo-architecture](26-seo-architecture.md) |
+| Voter / role | Firewall config, controller `#[IsGranted]`, tests, [20-security-and-access-control](20-security-and-access-control.md) |
 | Logging | Log channel, runbook, alert rules, [28-logging-observability](28-logging-observability.md), [37-runbooks](37-runbooks.md) |
 | Healthcheck | Deploy script (post-deploy check), runbook, [29-healthchecks](29-healthchecks.md) |
-| Module | `services.yaml`, autoloading, README модуля, [MODULES.md](legacy/MODULES.md), [06-module-architecture](06-module-architecture.md), [43-module-development-guide](43-module-development-guide.md) |
+| Module | `services.yaml`, autoloading, README модуля, [06-module-architecture](06-module-architecture.md), [43-module-development-guide](43-module-development-guide.md) |
 
 ---
 
@@ -2338,7 +2337,7 @@ client → Nginx :443 → static? yes → отдать; нет → fastcgi_pass 
 
 - `src/Module/Menu/README.md`
 - [05-domain-model](05-domain-model.md) — добавить раздел.
-- [MODULES.md](legacy/MODULES.md) — статус модуля.
+- [06-module-architecture](06-module-architecture.md) — статус модуля.
 
 **Подозрительно широкий scope:** добавление Twig-шаблонов в Front-зоне, изменение sitemap, правка assets. Это другие задачи.
 
@@ -2363,7 +2362,7 @@ client → Nginx :443 → static? yes → отдать; нет → fastcgi_pass 
 
 **Документация:**
 
-- [CONTENT_ENGINE.md](legacy/CONTENT_ENGINE.md) — описать endpoint.
+- [14-api-area](14-api-area.md) — описать endpoint.
 
 ### 32.4 P4. Новая Entity
 
@@ -2391,7 +2390,7 @@ client → Nginx :443 → static? yes → отдать; нет → fastcgi_pass 
 7. Обновить tests.
 8. Обновить шаблоны/SEO рендер при необходимости.
 
-**Документация:** [05-domain-model](05-domain-model.md), [CONTENT_ENGINE.md](legacy/CONTENT_ENGINE.md).
+**Документация:** [05-domain-model](05-domain-model.md), [14-api-area](14-api-area.md).
 
 ### 32.6 P6. Новый API endpoint
 
@@ -2458,7 +2457,7 @@ final class SeoAuditCommand extends Command
 6. Sitemap controller учитывает.
 7. Tests + functional на canonical.
 
-**Документация:** [26-seo-architecture](26-seo-architecture.md), [SEO_GUIDE.md](legacy/SEO_GUIDE.md).
+**Документация:** [26-seo-architecture](26-seo-architecture.md).
 
 ### 32.11 P11. Новый sitemap source
 

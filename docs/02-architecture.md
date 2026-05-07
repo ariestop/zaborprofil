@@ -9,6 +9,17 @@
 - `src/Shared` — утилиты, контракты, инфраструктурные адаптеры, общий UI.
 - Жёсткое направление зависимостей: `UI -> Application -> Domain <- Infrastructure`.
 
+## Web root и runtime boundary
+
+- Веб-корень проекта: `public_html/` (не Symfony `public/`).
+- Публичный catch-all роут имеет низкий приоритет и обрабатывает только опубликованные страницы по `Page.path`.
+- Draft/archived контент не должен отдаваться публично и возвращает `404`.
+
+## Снимок модулей (фактическое состояние)
+
+- Реализованные: `Admin`, `Auth`, `User`, `Content`, `Seo`, `Settings`.
+- В стадии развития/расширения: `Media`, `Menu`, `Lead`, `AuditLog`, `Catalog`, `Order`, `Partner`.
+
 ## High-level diagram
 
 ```mermaid

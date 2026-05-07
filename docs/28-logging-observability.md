@@ -1,7 +1,5 @@
 # 28. Logging и observability
 
-См. также [LOGGING.md](legacy/LOGGING.md).
-
 ## Стек
 
 - Monolog 3 через `symfony/monolog-bundle`.
@@ -24,6 +22,13 @@
 | `business` | бизнес-события (lead.received, order.placed) |
 | `critical` | всё с уровнем `error+`, отправляется в Telegram |
 | `console` | CLI |
+
+Фактические события в канале `business`:
+
+- `page.published`
+- `page.pathChanged`
+- `setting.updated`
+- `setting.deleted`
 
 ## Handlers
 
@@ -65,6 +70,7 @@
 - Login attempts (success / fail).
 - Logout.
 - Admin actions (create/update/publish/archive/delete).
+- Audit trail для критичных admin-изменений (`Page`, `PageBlock`, `Setting`, `Redirect`) с `old/new` значениями.
 - Failed CSRF / Origin checks.
 - Rate limit hits.
 - Uploads (success / fail).
@@ -200,4 +206,4 @@ Monitoring timer использует `tools/deploy/monitoring-check.sh` и мо
 - [29-healthchecks](29-healthchecks.md)
 - [30-error-handling](30-error-handling.md)
 - [37-runbooks](37-runbooks.md)
-- [LOGGING.md](legacy/LOGGING.md)
+- [12-admin-area](12-admin-area.md)

@@ -1,129 +1,71 @@
 # 29. Healthchecks
 
-## Текущее состояние
+## Фактическое состояние
 
-`Shared\UI\Http\HealthCheckController` — endpoint `GET /health`, отдаёт `200 OK` если приложение поднято.
+Проект использует три HTTP endpoint:
 
-Используется:
+- `GET /health/live` — liveness (приложение отвечает на HTTP).
+- `GET /health/ready` — readiness (приложение готово обслуживать трафик).
+- `GET /health` — агрегированный статус.
 
-- Nginx upstream проверка.
-- Deploy скриптом после переключения релиза (`tools/deploy/health-check.sh`).
-- Local Docker `make health`.
+`/health/ready` возвращает:
 
-## Целевое состояние
+- `200 OK`, если обязательные проверки в норме;
+- `503 Service Unavailable`, если хотя бы одна критичная проверка в состоянии `fail`.
 
-Разделить на:
+## Что проверяется в readiness
 
-- **Liveness** (`/health/live`) — приложение запущено, отвечает на HTTP.
-- **Readiness** (`/health/ready`) — приложение готово принимать трафик: БД доступна, Redis доступен, миграции применены, FS writable.
-- **Status** (`bin/console app:healthcheck`) — расширенная диагностика для оператора.
+- приложение;
+- подключение к PostgreSQL;
+- Redis-backed cache;
+- writable storage (`var/cache`, `var/log`, `public_html/uploads`);
+- таблица Doctrine migrations (если уже создана).
 
-## Ready check (целевое)
+## Admin Health Center
 
-```php
-final class ReadinessController
-{
-    public function __construct(
-        private readonly Connection $db,
-        private readonly CacheInterface $cache,
-        private readonly MigrationsStatus $migrations,
-        private readonly FilesystemCheck $fs,
-    ) {
-    }
+- UI: `/admin/system/health`.
+- API: `GET /admin/api/system/health`.
+- В разделе отображаются статус, `APP_ENV`, `APP_DEBUG`, версия PHP, детали checks и системные предупреждения.
 
-    #[Route('/health/ready', methods: ['GET'])]
-    public function __invoke(): JsonResponse
-    {
-        $checks = [
-            'db' => $this->checkDb(),
-            'redis' => $this->checkRedis(),
-            'migrations' => $this->migrations->upToDate(),
-            'fs' => $this->fs->writable('var/cache') && $this->fs->writable('var/log'),
-        ];
+## Diagnostics CLI
 
-        $ok = !in_array(false, $checks, true);
-
-        return new JsonResponse(['ok' => $ok, 'checks' => $checks], $ok ? 200 : 503);
-    }
-}
+```bash
+php bin/console app:system:diagnostics
 ```
 
-## Что проверять
+Команда проверяет health checks, критичные PHP extensions, env-конфигурацию и наличие Vite manifest.
 
-| Проверка | Liveness | Readiness | Console status |
+## Матрица проверок
+
+| Проверка | `/health/live` | `/health/ready` | Diagnostics CLI |
 |---|---|---|---|
-| HTTP отвечает | да | да | n/a |
+| HTTP отвечает | да | да | да |
 | PostgreSQL connect | нет | да | да |
 | Redis ping | нет | да | да |
 | Миграции применены | нет | да | да |
 | `var/cache` writable | нет | да | да |
 | `var/log` writable | нет | да | да |
-| `public_html/build/manifest.json` существует | нет | опц. | да |
-| Messenger worker жив | нет | нет | да (через systemctl) |
-| Disk usage < 90% | нет | нет | да |
-| Memory usage / load | нет | нет | да |
+| `public_html/uploads` writable | нет | да | да |
+| Vite manifest существует | нет | опц. | да |
 
-## Docker healthcheck
+## Использование в деплое и мониторинге
 
-В `docker-compose.yml`:
+- `tools/deploy/health-check.sh` использует `/health` после переключения релиза.
+- `tools/deploy/staging-smoke.sh` проверяет `/health` и `/health/ready`.
+- Local Docker `make health` использует тот же health endpoint.
 
-- `postgres` — `pg_isready`.
-- `redis` — `redis-cli ping`.
-- `app` — целевое: `curl -f http://localhost/health` через nginx (если nginx в той же сети, использовать `wget --spider`).
-- `nginx` — целевое: `wget --spider http://localhost/health`.
+## Ограничения и безопасность
 
-## Nginx upstream health (production)
+- Health endpoints не должны делать write-операции.
+- Проверки должны быть быстрыми, без тяжелых SQL и без внешних HTTP-зависимостей.
+- Детальный readiness при необходимости ограничивается на nginx по IP.
 
-```nginx
-location = /health {
-    proxy_pass http://php_upstream;
-    proxy_set_header Host $host;
-    access_log off;
-}
-```
+## Целевое расширение
 
-`php_upstream` — `unix:/run/php/php8.5-fpm.sock` или TCP к php-fpm.
-
-## Что закрыть от внешнего мира
-
-- `/health/ready` может выдавать имя сервисов и состояние — закрыть на nginx по IP (`allow 127.0.0.1; deny all;`) или вынести на отдельный nginx vhost на нестандартный порт.
-- `/health/live` — можно открыть наружу, но также допустимо закрыть.
-- `bin/console app:healthcheck` — только SSH.
-
-## Console healthcheck (целевое)
-
-```bash
-php bin/console app:healthcheck --json
-```
-
-Возвращает exit code:
-
-- `0` — всё ок;
-- `1` — деградация;
-- `2` — критическая ошибка.
-
-Может вызываться из cron / monitoring.
-
-## Symfony lint commands
-
-В CI:
-
-- `php bin/console doctrine:migrations:status`
-- `php bin/console doctrine:schema:validate --skip-sync`
-- `php bin/console lint:container`
-- `php bin/console lint:twig templates`
-
-Это статические healthcheck’и, которые ловят проблемы до runtime.
-
-## Что НЕ должно делать healthcheck
-
-- Запускать тяжёлые SQL.
-- Зависеть от внешних сервисов (если внешний API лежит — приложение не «не готово»; это деградация, а не unready).
-- Делать write-operations.
-- Принимать input без validation.
+- Единый machine-readable console endpoint (`app:healthcheck --json`) с стандартизированными exit codes для systemd/timers.
 
 ## Связанные документы
 
-- [37-runbooks](37-runbooks.md)
 - [34-deployment](34-deployment.md)
-- [32-docker-architecture](32-docker-architecture.md)
+- [37-runbooks](37-runbooks.md)
+- [44-troubleshooting](44-troubleshooting.md)

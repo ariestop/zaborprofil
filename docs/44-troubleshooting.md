@@ -22,7 +22,7 @@ Native macOS / Linux: `brew install postgresql@18` / `apt install php8.5-pgsql`.
 
 ### `npm install` падает на `tailwindcss/typography`
 
-См. [INSTALL.md](legacy/INSTALL.md). Решение — `npm install` после `node -v >= 25.9.0`.
+См. [33-local-development](33-local-development.md). Решение — `npm install` после `node -v >= 25.9.0`.
 
 ### `Cannot find module '@tailwindcss/typography'` в IDE
 
@@ -247,5 +247,5 @@ make npm-build
 
 - [33-local-development](33-local-development.md)
 - [37-runbooks](37-runbooks.md)
-- [INSTALL.md](legacy/INSTALL.md)
-- [LOCAL_DOCKER.md](LOCAL_DOCKER.md)
+- [33-local-development](33-local-development.md)
+- [32-docker-architecture](32-docker-architecture.md)

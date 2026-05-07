@@ -4,7 +4,7 @@
 >
 > **Аудитория.** Backend-разработчики, frontend, контент-редакторы, SEO-специалист, AI-агенты, DevOps.
 >
-> **Связанные документы.** [SEO_GUIDE.md](legacy/SEO_GUIDE.md), [REDIRECTS.md](legacy/REDIRECTS.md), [13-front-area](13-front-area.md), [16-routing](16-routing.md), [21-templates-and-twig](21-templates-and-twig.md), [ADR-0010](adr/0010-seo-first-cms-architecture.md).
+> **Связанные документы.** [13-front-area](13-front-area.md), [16-routing](16-routing.md), [21-templates-and-twig](21-templates-and-twig.md), [ADR-0010](adr/0010-seo-first-cms-architecture.md).
 
 > SEO — **первоклассная часть домена**, а не «слой над контентом». Любая фича CMS должна осознанно отвечать на вопрос «как это влияет на SEO».
 
@@ -24,6 +24,14 @@
 8. **Изменение SEO-полей опубликованной страницы трактуется как production-risk операция** и сопровождается smoke-тестом в `app:seo:audit` (целевое).
 
 > **Запрещено.** Менять `Page.path` опубликованной страницы без `Redirect`. Удалять `Redirect`, который ведёт на живой URL. Включать `noindex` для главной без явного решения. Помещать утечки внутреннего контента в `<title>`/`<description>` (имена сотрудников, ID заказов и т. п.).
+
+## 1.1 Фактический SEO baseline
+
+- `/sitemap.xml` автоматически становится sitemap index, когда индексируемых страниц больше `app.sitemap_chunk_size`.
+- `RobotsController` в non-prod всегда отдаёт `Disallow: /`, в prod robots управляется через admin API.
+- `app:seo:audit` и `GET /admin/api/seo/audit/pages/{id}` работают как операционный SEO-контроль.
+- Публичные страницы кэшируются через `cache.public_page`; изменения контента и SEO-сущностей сбрасывают SEO-зависимый кэш.
+- Публичные lead-формы используют neutral `202` для spam и не создают SEO-шум.
 
 ---
 
@@ -229,8 +237,6 @@ Sitemap: https://zaborprofil.ru/sitemap.xml
 ---
 
 ## 7. Redirects
-
-См. также [REDIRECTS.md](legacy/REDIRECTS.md).
 
 ### 7.1 Контракт
 
@@ -694,7 +700,7 @@ flowchart LR
 
 Перед изменением:
 
-- [ ] Прочитан этот документ + [16-routing](16-routing.md) + [REDIRECTS.md](legacy/REDIRECTS.md) + [ADR-0010](adr/0010-seo-first-cms-architecture.md).
+- [ ] Прочитан этот документ + [16-routing](16-routing.md) + [ADR-0010](adr/0010-seo-first-cms-architecture.md).
 - [ ] Классифицировано как «SEO change» (см. [41-implementation-playbook](41-implementation-playbook.md) §15).
 - [ ] Составлен planning note (см. [41-implementation-playbook](41-implementation-playbook.md) §5).
 - [ ] Явно перечислены затронутые URL.
@@ -734,6 +740,4 @@ flowchart LR
 - [34-deployment](34-deployment.md)
 - [37-runbooks](37-runbooks.md) (инциденты 33–36 — SEO статусы, sitemap, robots, redirects)
 - [41-implementation-playbook](41-implementation-playbook.md) §15 — playbook SEO-изменения
-- [SEO_GUIDE.md](legacy/SEO_GUIDE.md)
-- [REDIRECTS.md](legacy/REDIRECTS.md)
 - [adr/0010-seo-first-cms-architecture](adr/0010-seo-first-cms-architecture.md)
