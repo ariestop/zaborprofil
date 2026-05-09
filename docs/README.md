@@ -125,3 +125,11 @@
 ### Архивные справочники (legacy)
 
 Исторические тематические документы верхнего уровня `docs/*.md` (без `NN-` префикса) остаются временным слоем совместимости. Канонический источник — нумерованные `NN-*.md` файлы. Карта соответствий и статус переноса: [48-documentation-normalization](48-documentation-normalization.md) и [legacy/README.md](legacy/README.md).
+
+### Admin frontend foundation
+
+- [admin/admin-architecture](admin/admin-architecture.md) — модель hybrid admin shell.
+- [admin/frontend-structure](admin/frontend-structure.md) — целевая структура `assets/admin/`.
+- [admin/api-layer](admin/api-layer.md) — API client + TanStack Query foundation.
+- [admin/page-builder](admin/page-builder.md) — builder contracts и hooks.
+- [admin/tiptap-grapesjs-integration](admin/tiptap-grapesjs-integration.md) — разделение ответственности редакторов.

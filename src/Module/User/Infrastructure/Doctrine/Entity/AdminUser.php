@@ -117,6 +117,26 @@ final class AdminUser implements UserInterface, PasswordAuthenticatedUserInterfa
     }
 
     /**
+     * @param list<string> $roles
+     */
+    public function updateRoles(array $roles): void
+    {
+        if ($roles === []) {
+            throw new InvalidArgumentException('At least one role is required.');
+        }
+
+        $normalizedRoles = array_values(array_unique(array_map(static fn (string $role): string => trim($role), $roles)));
+        $normalizedRoles = array_values(array_filter($normalizedRoles, static fn (string $role): bool => $role !== ''));
+
+        if ($normalizedRoles === []) {
+            throw new InvalidArgumentException('At least one valid role is required.');
+        }
+
+        $this->roles = $normalizedRoles;
+        $this->touch();
+    }
+
+    /**
      * @return non-empty-string
      */
     private static function normalizeEmail(string $email): string

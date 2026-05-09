@@ -14,8 +14,9 @@
 Используется `react-router-dom` для клиентской навигации и `zustand` для
 базового состояния текущего администратора (`assets/admin/stores/auth.ts`).
 
-Основные view-компоненты находятся в `assets/admin/views/*.tsx`,
-общие UI-элементы и редактор контента — в `assets/admin/components/`.
+Route-level страницы находятся в `assets/admin/pages/*.tsx`,
+layout/navigation — в `assets/admin/layouts/`,
+общие UI-элементы и API слой — в `assets/admin/shared/`.
 
 ## API-клиент
 

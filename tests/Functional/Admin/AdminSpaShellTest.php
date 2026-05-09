@@ -8,6 +8,7 @@ use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
 use App\Tests\Support\Database\SchemaTestHelper;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
@@ -48,6 +49,19 @@ final class AdminSpaShellTest extends WebTestCase
         self::assertSelectorExists('meta[name="admin-csrf-token"]');
     }
 
+    #[DataProvider('spaShellRoutesProvider')]
+    public function testAdminSpaShellRendersForNewFoundationRoutes(string $path): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+        $client->loginUser($this->createAdminUser());
+
+        $client->request('GET', $path);
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorExists('#admin-app');
+    }
+
     private function createAdminUser(string $email = 'spa@example.test', ?string $plainPassword = null): AdminUser
     {
         $entityManager = $this->entityManager();
@@ -86,5 +100,21 @@ final class AdminSpaShellTest extends WebTestCase
         }
 
         return $passwordHasher;
+    }
+
+    /**
+     * @return iterable<string, array{0:string}>
+     */
+    public static function spaShellRoutesProvider(): iterable
+    {
+        yield 'dashboard' => ['/admin/dashboard'];
+        yield 'pages' => ['/admin/pages'];
+        yield 'page detail' => ['/admin/pages/demo-page'];
+        yield 'builder' => ['/admin/pages/demo-page/builder'];
+        yield 'media' => ['/admin/media'];
+        yield 'seo' => ['/admin/seo'];
+        yield 'crm' => ['/admin/crm'];
+        yield 'settings' => ['/admin/settings'];
+        yield 'users' => ['/admin/users'];
     }
 }
