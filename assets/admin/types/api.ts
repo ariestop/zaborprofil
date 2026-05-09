@@ -151,6 +151,7 @@ export interface BlockSchemaItem {
   defaultSettings: Record<string, unknown>
   priority: string
   seoImpact: string
+  isLegacy: boolean
 }
 
 export interface PageTemplateItem {

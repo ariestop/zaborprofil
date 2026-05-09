@@ -24,6 +24,7 @@ final readonly class BlockSchema
         public array $defaultSettings = [],
         public string $priority = 'MVP',
         public string $seoImpact = 'medium',
+        public bool $isLegacy = false,
     ) {
     }
 
@@ -42,6 +43,7 @@ final readonly class BlockSchema
             'defaultSettings' => $this->defaultSettings,
             'priority' => $this->priority,
             'seoImpact' => $this->seoImpact,
+            'isLegacy' => $this->isLegacy,
         ];
     }
 }

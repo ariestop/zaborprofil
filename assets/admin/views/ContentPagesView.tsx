@@ -63,42 +63,6 @@ const templateLabels: Record<string, string> = {
   seo_landing: 'SEO-посадочная',
   default: 'Без шаблона',
 }
-const blockTypeLabels: Record<string, string> = {
-  hero: 'Первый экран',
-  text: 'Текст',
-  text_image: 'Текст с изображением',
-  image: 'Изображение',
-  gallery: 'Галерея',
-  video: 'Видео',
-  feature_grid: 'Преимущества',
-  price_cards: 'Карточки цен',
-  steps: 'Этапы работ',
-  faq: 'FAQ: вопросы и ответы',
-  cta_form: 'Форма заявки',
-  telegram_cta: 'Переход в Telegram',
-  contacts: 'Контакты',
-  map: 'Карта',
-  portfolio_grid: 'Сетка работ',
-  seo_text: 'SEO-текст',
-  html_embed: 'HTML-вставка',
-  table: 'Таблица',
-  accordion: 'Аккордеон',
-  calculator_placeholder: 'Место под калькулятор',
-  before_after: 'До/после',
-  review_cards: 'Отзывы',
-  documents: 'Документы',
-}
-const blockContentExamples: Record<string, Record<string, unknown>> = {
-  hero: { title: 'Заборы под ключ в Москве', text: 'Изготовим и установим забор на участке с гарантией.', cta: { text: 'Рассчитать стоимость', url: '#lead-form' } },
-  text: { title: 'Описание услуги', text: 'Короткий полезный текст для посетителя страницы.' },
-  text_image: { title: 'Почему выбирают нас', text: 'Работаем по договору, соблюдаем сроки и используем проверенные материалы.', image: '/uploads/example.webp', alt: 'Монтаж забора' },
-}
-const blockSettingsExamples: Record<string, Record<string, unknown>> = {
-  hero: { layout: 'default' },
-  gallery: { columns: 3 },
-  feature_grid: { columns: 3 },
-  faq: { schemaOrg: true },
-}
 
 function SortableBlockCard({
   block,
@@ -186,7 +150,7 @@ export default function ContentPagesView() {
   })
 
   const [blockForm, setBlockForm] = useState({
-    type: 'hero',
+    type: 'hero.classic',
     name: '',
     position: 0,
     isEnabled: true,
@@ -203,9 +167,17 @@ export default function ContentPagesView() {
   const selectedBlocks = useMemo(() => [...(selected?.blocks ?? [])].sort((left, right) => left.position - right.position), [selected])
   const selectedBlock = useMemo(() => selected?.blocks.find((block) => block.id === selectedBlockId) ?? null, [selected, selectedBlockId])
   const templatesForType = useMemo(() => templates.filter((template) => template.pageType === form.type), [templates, form.type])
+  const nonLegacyBlockSchemas = useMemo(() => blockSchemas.filter((schema) => !schema.isLegacy), [blockSchemas])
+  const blockTypeLabelMap = useMemo(() => {
+    const map: Record<string, string> = {}
+    for (const schema of blockSchemas) {
+      map[schema.type] = schema.label
+    }
+    return map
+  }, [blockSchemas])
   const selectedBlockSchema = useMemo(() => blockSchemas.find((item) => item.type === blockForm.type) ?? null, [blockSchemas, blockForm.type])
-  const selectedBlockExampleContent = useMemo(() => blockContentExamples[blockForm.type] ?? selectedBlockSchema?.defaultContent ?? {}, [blockForm.type, selectedBlockSchema])
-  const selectedBlockExampleSettings = useMemo(() => blockSettingsExamples[blockForm.type] ?? selectedBlockSchema?.defaultSettings ?? {}, [blockForm.type, selectedBlockSchema])
+  const selectedBlockExampleContent = useMemo(() => selectedBlockSchema?.defaultContent ?? {}, [selectedBlockSchema])
+  const selectedBlockExampleSettings = useMemo(() => selectedBlockSchema?.defaultSettings ?? {}, [selectedBlockSchema])
   const blockSupportsVisualEditor = supportsVisualEditor(blockForm.type)
   const availableStatusActions = useMemo(() => {
     if (!selected) return []
@@ -220,7 +192,7 @@ export default function ContentPagesView() {
   const pageTypeLabel = (type: string): string => pageTypeLabels[type] ?? type
   const visibilityLabel = (visibility: string): string => visibilityLabels[visibility] ?? visibility
   const templateLabel = (code: string, fallback?: string): string => templateLabels[code] ?? fallback ?? code
-  const blockTypeLabel = (type: string): string => blockTypeLabels[type] ?? type
+  const blockTypeLabel = (type: string): string => blockTypeLabelMap[type] ?? type
 
   const parseObject = (value: string, label: string): Record<string, unknown> => {
     const parsed = JSON.parse(value || '{}') as unknown
@@ -526,7 +498,7 @@ export default function ContentPagesView() {
     })
   }
 
-  const startNewBlock = (type = 'hero'): void => {
+  const startNewBlock = (type = 'hero.classic'): void => {
     setSelectedBlockId(null)
     const schema = blockSchemas.find((item) => item.type === type)
     setBlockForm({
@@ -855,7 +827,7 @@ export default function ContentPagesView() {
                   </div>
                   <div className="flex items-center gap-3">
                     <select value={blockForm.type} className="rounded-lg border border-slate-300 px-3 py-2 text-sm" onChange={(event) => startNewBlock(event.target.value)}>
-                      {blockSchemas.map((schema) => <option key={schema.type} value={schema.type}>{blockTypeLabel(schema.type)}</option>)}
+                      {nonLegacyBlockSchemas.map((schema) => <option key={schema.type} value={schema.type}>{schema.label}</option>)}
                     </select>
                     <button type="button" className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50" onClick={() => setBlockEditorOpen(false)}>Закрыть</button>
                   </div>
@@ -939,7 +911,7 @@ export default function ContentPagesView() {
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-4">
                   <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
-                    <p className="text-sm font-semibold text-slate-700">Пример контента для «{blockTypeLabel(blockForm.type)}»</p>
+                    <p className="text-sm font-semibold text-slate-700">Пример контента для «{selectedBlockSchema?.label ?? blockTypeLabel(blockForm.type)}»</p>
                     <pre className="mt-2 overflow-auto whitespace-pre-wrap text-xs text-slate-600">{JSON.stringify(selectedBlockExampleContent, null, 2)}</pre>
                   </div>
                   <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
