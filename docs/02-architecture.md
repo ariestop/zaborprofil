@@ -138,7 +138,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart LR
-    src[assets/site + assets/admin] --> Vite[vite build]
+    src[assets/site + admin] --> Vite[vite build]
     Vite --> Build[public_html/build/]
     Build --> Manifest[manifest.json]
     Twig[ViteAssetExtension] --> Manifest

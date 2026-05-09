@@ -9,7 +9,7 @@ alwaysApply: true
 - Do not build WordPress importers, shortcode parsers, Laravel code, Docker setup, or EasyAdmin as the primary admin UI.
 - The app lives at repository root. The web root is `public_html/`, not Symfony's default `public/`.
 - Public pages must be server-rendered with Symfony + Twig for SEO; do not turn the public site into a pure SPA.
-- The target stack is PHP `>=8.5`, Node.js `>=25.9.0` (npm `>=11.12.1`), nginx `>=1.30.0`, Symfony `8.x`, PostgreSQL `>=18`, Redis `>=8`, Doctrine, Twig, Tailwind CSS, Vite, Vue 3 admin UI.
+- The target stack is PHP `>=8.5`, Node.js `>=25.9.0` (npm `>=11.12.1`), nginx `>=1.30.0`, Symfony `8.x`, PostgreSQL `>=18`, Redis `>=8`, Doctrine, Twig, Tailwind CSS, Vite, React admin SPA (`admin/`).
 - Documentation must be written in Russian.
 - Development database state must be reproducible from Doctrine migrations plus fixtures/seed data. Do not commit Docker images, Docker volumes, real PostgreSQL backups, production/staging dumps, uploads, secrets, or personal data. Only a small manually reviewed anonymized dev snapshot is allowed in Git when fixtures are not enough.
 
@@ -19,6 +19,6 @@ alwaysApply: true
 - `src/Module/` contains bounded modules of the modular monolith.
 - `templates/` contains Twig templates.
 - `assets/site/` contains public site assets.
-- `assets/admin/` contains Vue admin assets.
+- `admin/` contains React admin SPA assets (Vite entry `admin/app.ts`).
 - `docs/` contains Russian project documentation.
 

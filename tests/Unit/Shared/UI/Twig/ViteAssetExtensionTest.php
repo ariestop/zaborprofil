@@ -22,10 +22,10 @@ final class ViteAssetExtensionTest extends TestCase
                 'isEntry' => true,
                 'css' => ['assets/site-ETMbyqVd.css'],
             ],
-            'assets/admin/app.ts' => [
-                'file' => 'assets/admin-UdkUeM9_.js',
+            'admin/app.ts' => [
+                'file' => 'admin-UdkUeM9_.js',
                 'name' => 'admin',
-                'src' => 'assets/admin/app.ts',
+                'src' => 'admin/app.ts',
                 'isEntry' => true,
                 'imports' => ['assets/site/app.ts'],
             ],
@@ -65,7 +65,7 @@ final class ViteAssetExtensionTest extends TestCase
 
         self::assertSame(
             '<link rel="stylesheet" href="/build/assets/site-ETMbyqVd.css">',
-            (string) $ext->renderLinkTags('assets/admin/app.ts'),
+            (string) $ext->renderLinkTags('admin/app.ts'),
         );
     }
 
@@ -73,17 +73,51 @@ final class ViteAssetExtensionTest extends TestCase
     {
         $ext = new ViteAssetExtension($this->manifestFile, '/build');
 
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Vite manifest does not contain entry "assets/missing/app.ts"');
-        $ext->renderScriptTags('assets/missing/app.ts');
+        try {
+            $ext->renderScriptTags('assets/missing/app.ts');
+            self::fail('Expected RuntimeException');
+        } catch (\RuntimeException $e) {
+            self::assertStringContainsString(
+                'Vite manifest does not contain entry "assets/missing/app.ts"',
+                $e->getMessage(),
+            );
+        }
     }
 
     public function testThrowsWhenManifestMissing(): void
     {
         $ext = new ViteAssetExtension('/tmp/nonexistent-vite-manifest.json', '/build');
 
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Vite manifest not found');
-        $ext->renderLinkTags('assets/site/app.ts');
+        try {
+            $ext->renderLinkTags('assets/site/app.ts');
+            self::fail('Expected RuntimeException');
+        } catch (\RuntimeException $e) {
+            self::assertStringContainsString('Vite manifest not found', $e->getMessage());
+        }
+    }
+
+    public function testResolvesLegacyAdminManifestEntryKey(): void
+    {
+        $legacyManifest = tempnam(sys_get_temp_dir(), 'vite-manifest-legacy-').'.json';
+        file_put_contents($legacyManifest, json_encode([
+            'assets/admin/app.ts' => [
+                'file' => 'assets/admin-legacy.js',
+                'name' => 'admin',
+                'src' => 'assets/admin/app.ts',
+                'isEntry' => true,
+            ],
+        ], \JSON_THROW_ON_ERROR));
+
+        try {
+            $ext = new ViteAssetExtension($legacyManifest, '/build');
+            self::assertSame(
+                '<script type="module" src="/build/assets/admin-legacy.js"></script>',
+                (string) $ext->renderScriptTags('admin/app.ts'),
+            );
+        } finally {
+            if (is_file($legacyManifest)) {
+                unlink($legacyManifest);
+            }
+        }
     }
 }

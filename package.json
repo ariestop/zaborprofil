@@ -10,10 +10,10 @@
     "typecheck": "tsc --noEmit",
     "test:frontend": "vitest run",
     "test:e2e:smoke": "playwright test tests/e2e/admin-smoke.spec.ts",
-    "lint:admin": "eslint \"assets/admin/{app,routes,layouts,pages,modules,features,entities,widgets,shared}/**/*.{ts,tsx}\"",
-    "lint:frontend": "eslint \"assets/**/*.{ts,tsx}\"",
+    "lint:admin": "eslint \"admin/{app,routes,layouts,pages,modules,features,entities,widgets,shared}/**/*.{ts,tsx}\"",
+    "lint:frontend": "eslint \"{assets,admin}/**/*.{ts,tsx}\"",
     "check:chunks": "node tools/perf/check-admin-chunks.mjs",
-    "format:check": "prettier --check \"assets/**/*.{ts,tsx,scss,css}\" \"docs/**/*.md\""
+    "format:check": "prettier --check \"assets/**/*.{ts,tsx,scss,css}\" \"admin/**/*.{ts,tsx,scss,css}\" \"docs/**/*.md\""
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

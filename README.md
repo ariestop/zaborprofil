@@ -36,7 +36,7 @@ Docker используется только для локальной разр�
 - `src/Shared/` — общие контракты, инфраструктура и UI-адаптеры.
 - `src/Module/` — модули модульного монолита.
 - `assets/site/` — frontend публичного сайта.
-- `assets/admin/` — React + TypeScript админ-панель.
+- `admin/` — React + TypeScript админ-панель.
 - `templates/` — Twig-шаблоны.
 - `docs/` — документация на русском языке.
 

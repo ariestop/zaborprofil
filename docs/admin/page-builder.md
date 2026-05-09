@@ -24,13 +24,13 @@ Builder переведен на **structured block model**:
 
 ## Ключевые frontend-модули
 
-- `assets/admin/pages/PageBuilderPage.tsx`
-- `assets/admin/modules/page-builder/types.ts`
-- `assets/admin/modules/page-builder/registry/blockCategories.ts`
-- `assets/admin/modules/page-builder/registry/blockRegistry.ts`
-- `assets/admin/modules/page-builder/utils/pageBlocks.ts`
-- `assets/admin/modules/page-builder/state/builderStore.ts`
-- `assets/admin/modules/page-builder/components/*`
+- `admin/pages/PageBuilderPage.tsx`
+- `admin/modules/page-builder/types.ts`
+- `admin/modules/page-builder/registry/blockCategories.ts`
+- `admin/modules/page-builder/registry/blockRegistry.ts`
+- `admin/modules/page-builder/utils/pageBlocks.ts`
+- `admin/modules/page-builder/state/builderStore.ts`
+- `admin/modules/page-builder/components/*`
 
 ## Ограничения этапа 1
 

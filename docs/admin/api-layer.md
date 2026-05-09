@@ -4,7 +4,7 @@
 
 Все запросы из admin frontend выполняются через единый клиент:
 
-- `assets/admin/shared/api/client.ts`
+- `admin/shared/api/client.ts`
 
 Клиент автоматически добавляет:
 

@@ -9,8 +9,8 @@
 
 ## Текущее состояние
 
-- Reusable rich text foundation: `assets/admin/features/rich-text/*`.
-- Builder runtime-контейнер: `assets/admin/modules/page-builder/*`.
+- Reusable rich text foundation: `admin/features/rich-text/*`.
+- Builder runtime-контейнер: `admin/modules/page-builder/*`.
 - Bridge для rich text в block settings реализован в `PageBuilderContainer`.
 
 ## Правила интеграции

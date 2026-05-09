@@ -53,7 +53,7 @@
 | **Content Engine** | Полная цепочка управления Page/PageBlock |
 | **Admin API** | JSON API под `/admin/api/...` |
 | **Public site** | SSR-зона публичного сайта |
-| **Vue admin SPA** | Admin интерфейс на Vue 3 в `assets/admin` |
+| **Admin SPA** | Админ-интерфейс на React + TypeScript в каталоге `admin/` (Vite entry `admin/app.ts`) |
 | **Vite manifest** | `public_html/build/.vite/manifest.json` для cache-busted asset URLs |
 
 ## DevOps

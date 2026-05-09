@@ -14,14 +14,14 @@
 ## Где живёт
 
 ```text
+admin/             # React admin SPA: app.ts, components/, pages/, modules/, ...
 assets/
-├── admin/         # React admin SPA entry: app.ts, components/, views/, ...
-└── site/          # Public site: main.ts/css, partial JS для публичного сайта
+└── site/          # Публичный сайт: app.ts и прочие entry для SSR-страниц
 public_html/
-└── build/         # Vite output (gitignored)
+└── build/         # Вывод Vite (обычно gitignored)
 ```
 
-`vite.config.ts` использует два entry: `assets/site/app.ts` и `assets/admin/app.ts` (один `manifest.json`).
+`vite.config.ts` использует два entry: `assets/site/app.ts` и `admin/app.ts` (один `manifest.json`).
 
 ## Build
 
@@ -51,7 +51,7 @@ make npm-dev        # vite dev на :5173, HMR
 {# В base.html.twig #}
 <link rel="stylesheet" href="{{ vite_asset('assets/site/main.ts') }}">
 {{ vite_styles() }}
-<script type="module" src="{{ vite_asset('assets/admin/main.ts') }}"></script>
+<script type="module" src="{{ vite_asset('admin/app.ts') }}"></script>
 ```
 
 `ViteAssetExtension`:
@@ -70,7 +70,7 @@ make npm-dev        # vite dev на :5173, HMR
 
 `tailwind.config.ts`:
 
-- `content`: `templates/**/*.html.twig`, `assets/**/*.{vue,ts,js}`.
+- `content`: `templates/**/*.html.twig`, `assets/**/*.{ts,tsx}`, `admin/**/*.{ts,tsx}`.
 - `plugins`: `@tailwindcss/typography`.
 - Кастомные цвета/шрифты — в config, не inline.
 
@@ -82,7 +82,7 @@ make npm-dev        # vite dev на :5173, HMR
 
 ## Admin SPA
 
-См. [ADMIN_FRONTEND.md](ADMIN_FRONTEND.md). Единый entry `assets/admin/app.ts`
+См. [ADMIN_FRONTEND.md](ADMIN_FRONTEND.md). Единый entry `admin/app.ts`
 грузится в `templates/admin/dashboard.html.twig` и стартует React-приложение в
 `<div id="admin-app">`. CSRF token читается из `<meta name="admin-csrf-token">`.
 
@@ -110,7 +110,7 @@ npm run build
 
 ## Чек-лист добавления frontend-фичи
 
-- [ ] Файл в `assets/site/...` или `assets/admin/...`.
+- [ ] Файл в `assets/site/...` или `admin/...`.
 - [ ] Используется TypeScript, типы прописаны.
 - [ ] Tailwind классы (а не custom CSS) для оформления.
 - [ ] `npm run build` проходит без warnings.

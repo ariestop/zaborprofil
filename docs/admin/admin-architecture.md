@@ -11,7 +11,7 @@
 
 ## Слои admin frontend
 
-`assets/admin/` разделён на слои:
+`admin/` разделён на слои:
 
 - `app/` — bootstrap, providers, global runtime.
 - `routes/` — SPA routing и route config.

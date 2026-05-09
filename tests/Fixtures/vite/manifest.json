@@ -1,8 +1,8 @@
 {
-  "assets/admin/app.ts": {
-    "file": "assets/admin-test.js",
+  "admin/app.ts": {
+    "file": "admin-test.js",
     "name": "admin",
-    "src": "assets/admin/app.ts",
+    "src": "admin/app.ts",
     "isEntry": true,
     "imports": [
       "assets/site/app.ts"

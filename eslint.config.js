@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 
 export default [
   {
-    files: ['assets/**/*.{ts,tsx}'],
+    files: ['assets/**/*.{ts,tsx}', 'admin/**/*.{ts,tsx}'],
     languageOptions: {
       parser: tsParser,
       parserOptions: {

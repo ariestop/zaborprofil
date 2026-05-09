@@ -6,6 +6,7 @@ export default {
   content: [
     './templates/**/*.twig',
     './assets/**/*.{ts,tsx}',
+    './admin/**/*.{ts,tsx}',
   ],
   theme: {
     extend: {

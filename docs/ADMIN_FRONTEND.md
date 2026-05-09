@@ -3,7 +3,7 @@
 Админка остается защищенной Symfony Security, а пользовательский интерфейс
 загружается как React + TypeScript приложение внутри Twig-шаблона `templates/admin/dashboard.html.twig`.
 
-Точка входа фронтенда: `assets/admin/app.ts`.
+Точка входа фронтенда: `admin/app.ts`.
 
 ## Маршрутизация
 
@@ -12,15 +12,15 @@
 - `/admin/api/*` остается JSON API и защищается CSRF subscriber.
 
 Используется `react-router-dom` для клиентской навигации и `zustand` для
-базового состояния текущего администратора (`assets/admin/stores/auth.ts`).
+базового состояния текущего администратора (`admin/stores/auth.ts`).
 
-Route-level страницы находятся в `assets/admin/pages/*.tsx`,
-layout/navigation — в `assets/admin/layouts/`,
-общие UI-элементы и API слой — в `assets/admin/shared/`.
+Route-level страницы находятся в `admin/pages/*.tsx`,
+layout/navigation — в `admin/layouts/`,
+общие UI-элементы и API слой — в `admin/shared/`.
 
 ## API-клиент
 
-`assets/admin/api/client.ts` автоматически добавляет:
+`admin/shared/api/client.ts` автоматически добавляет:
 
 - `X-CSRF-Token` для state-changing запросов;
 - `X-Requested-With: XMLHttpRequest`;
@@ -31,15 +31,15 @@ CSRF-токен передается из Twig через meta-теги.
 
 ## Редактор контента
 
-Рич-текст редактор реализован через TipTap (`assets/admin/components/TiptapRichTextEditor.tsx`).
+Рич-текст редактор реализован через TipTap (`admin/components/TiptapRichTextEditor.tsx`).
 Шаблоны вставок и кнопки тулбара вынесены в отдельные модули:
 
-- `assets/admin/components/tiptap-templates/`
-- `assets/admin/components/useTiptapToolbar.ts`
-- `assets/admin/components/hooks/`
+- `admin/components/tiptap-templates/`
+- `admin/components/useTiptapToolbar.ts`
+- `admin/components/hooks/`
 
 Для регрессий редактора используется Vitest-спека
-`assets/admin/components/TiptapRichTextEditor.spec.ts`.
+`admin/components/TiptapRichTextEditor.spec.ts`.
 
 ## Structured Page Builder
 
@@ -55,12 +55,12 @@ Page Builder реализован как **Structured Visual CMS Builder** и н
 
 Основные frontend-модули:
 
-- `assets/admin/modules/page-builder/types.ts`
-- `assets/admin/modules/page-builder/registry/*`
-- `assets/admin/modules/page-builder/utils/pageBlocks.ts`
-- `assets/admin/modules/page-builder/state/builderStore.ts`
-- `assets/admin/modules/page-builder/components/*`
-- `assets/admin/pages/PageBuilderPage.tsx`
+- `admin/modules/page-builder/types.ts`
+- `admin/modules/page-builder/registry/*`
+- `admin/modules/page-builder/utils/pageBlocks.ts`
+- `admin/modules/page-builder/state/builderStore.ts`
+- `admin/modules/page-builder/components/*`
+- `admin/pages/PageBuilderPage.tsx`
 
 ## Сборка и проверки
 

@@ -7,9 +7,9 @@
 
 ## Где находится
 
-- `assets/admin/modules/page-builder/registry/blockCategories.ts`
-- `assets/admin/modules/page-builder/registry/blockRegistry.ts`
-- `assets/admin/modules/page-builder/blocks/index.ts`
+- `admin/modules/page-builder/registry/blockCategories.ts`
+- `admin/modules/page-builder/registry/blockRegistry.ts`
+- `admin/modules/page-builder/blocks/index.ts`
 
 ## Что хранится в registry
 
@@ -22,7 +22,7 @@
 
 ## Как добавить новый блок
 
-1. Добавить новый `type` в `assets/admin/modules/page-builder/types.ts`.
+1. Добавить новый `type` в `admin/modules/page-builder/types.ts`.
 2. Добавить описание блока в `blockRegistry.ts`.
 3. Проверить, что `defaults` и Zod-схема валидны.
 4. Добавить/обновить Twig renderer для публичного SSR (если блок публичный).

@@ -291,7 +291,7 @@ CMS Engine — это **product** для редактора и **service** дл�
 |------------|-----------|----------------|------------------------|-------|------|
 | **Small bugfix** | Точечный слой | Регрессия | Reproduce → fix → test | Regression unit/functional | Changelog при необходимости |
 | **Frontend / Twig UI change** | Presentation (Twig) | Сломанная разметка, SEO-структура | Lint:twig, responsive, SEO heading hierarchy | Smoke functional | [21](21-templates-and-twig.md), [22](22-frontend-assets.md) |
-| **Vue / admin SPA change** | `assets/admin`, API | Расхождение API ↔ SPA | `npm run build`, e2e admin | Vue unit + admin functional | [22](22-frontend-assets.md), [12](12-admin-area.md) |
+| **React / admin SPA change** | `admin/`, API | Расхождение API ↔ SPA | `npm run build`, e2e admin | Vitest + admin functional | [22](22-frontend-assets.md), [12](12-admin-area.md) |
 | **Public page change** | Front controller + Twig + Application | SEO, URL, sitemap | URL collision, canonical, sitemap | Functional + SEO snapshot | [13](13-front-area.md), [16](16-routing.md), [26](26-seo-architecture.md) |
 | **Admin feature** | Admin controller + Application + Domain | RBAC, CSRF, audit | Voter, форма, flash, redirect after POST | Functional admin | [12](12-admin-area.md), [19](19-forms-dto-validation.md), [20](20-security-and-access-control.md) |
 | **API change** | API controller + Application | Контракт, версионирование | DTO contracts, error format, auth | Functional API | [14](14-api-area.md), [30](30-error-handling.md) |
@@ -529,13 +529,13 @@ yes/no — новые шаги в release script, рестарт worker'ов
 - **Признак неправильного:** в шаблоне есть `{% set products = ... %}` с обращением к Doctrine, бизнес-расчёты, conditional flow для бизнес-правил.
 - **Anti-pattern:** `{% if user.purchases|filter(...) %}` со сложной логикой. Должен быть готовый view model.
 
-#### When to change Vue / admin SPA
+#### When to change React / admin SPA
 
 - **Признак правильного:** меняется admin SPA UX или его связка с admin API.
 - **Признак неправильного:** SPA вызывает прямые SQL-эндпоинты или dev-only routes.
 - **Anti-pattern:** SPA знает про внутренние Doctrine ID без UUID/slug, ломается при любом рефакторинге БД.
 
-#### When to change frontend assets (`assets/site`, `assets/admin`)
+#### When to change frontend assets (`assets/site`, `admin`)
 
 - **Признак правильного:** меняется CSS/JS/Tailwind конфиг, Vite chunk.
 - **Признак неправильного:** меняется только asset, но не Twig — и наоборот.
@@ -1215,13 +1215,13 @@ Mutating-изменения **разбиваются** на серию additive-
 - Локальный кусок UI повторяется в 2+ местах — выделять partial.
 - Изменение касается одного блока без влияния на layout.
 
-### 16.4 Когда менять frontend assets (`assets/site`, `assets/admin`)
+### 16.4 Когда менять frontend assets (`assets/site`, `admin`)
 
 - Меняется CSS/JS/Tailwind конфиг.
 - Меняется entry point Vite.
 - Добавляется JS-модуль (валидаторы форм, lightbox, lazy load).
 
-### 16.5 Когда менять Vite / Vue / Tailwind
+### 16.5 Когда менять Vite / React / Tailwind
 
 - Vite — изменение entry/output, разделение бандлов, плагины.
 - Vue — изменение admin SPA.

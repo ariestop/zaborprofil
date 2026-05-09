@@ -52,7 +52,7 @@ make health
 - `src/Module/` — модули модульного монолита.
 - `templates/` — Twig-шаблоны публичного сайта и админки.
 - `assets/site/` — frontend публичного сайта.
-- `assets/admin/` — React + TypeScript entrypoint админ-панели.
+- `admin/` — React + TypeScript entrypoint админ-панели.
 - `docs/` — документация на русском языке.
 
 ## Архитектурные правила

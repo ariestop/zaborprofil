@@ -7,9 +7,9 @@ TipTap используется **только как редактор rich-text
 
 ## Где используется
 
-- `assets/admin/features/rich-text/RichTextEditor.tsx`
-- `assets/admin/modules/page-builder/components/BlockEditorPanel.tsx`
-- `assets/admin/components/TiptapRichTextEditor.tsx`
+- `admin/features/rich-text/RichTextEditor.tsx`
+- `admin/modules/page-builder/components/BlockEditorPanel.tsx`
+- `admin/components/TiptapRichTextEditor.tsx`
 
 ## Безопасность
 

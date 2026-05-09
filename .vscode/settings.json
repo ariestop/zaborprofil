@@ -1,0 +1,7 @@
+{
+    "php.validate.executablePath": "",
+    "intelephense.environment.includePaths": [
+        "${workspaceFolder}/tools/ide-stubs/twig",
+        "${workspaceFolder}/tools/ide-stubs/phpunit"
+    ]
+}

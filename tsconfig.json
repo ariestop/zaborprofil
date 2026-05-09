@@ -11,14 +11,14 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
-    "baseUrl": ".",
     "paths": {
-      "@admin/*": ["assets/admin/*"],
-      "@admin-ui/*": ["assets/admin/shared/ui/*"],
-      "@/components/*": ["assets/admin/components/tiptap-templates/*"],
-      "@/hooks/*": ["assets/admin/components/hooks/*"],
-      "@/lib/*": ["assets/admin/components/lib/*"]
+      "*": ["./*"],
+      "@admin/*": ["./admin/*"],
+      "@admin-ui/*": ["./admin/shared/ui/*"],
+      "@/components/*": ["./admin/components/tiptap-templates/*"],
+      "@/hooks/*": ["./admin/components/hooks/*"],
+      "@/lib/*": ["./admin/components/lib/*"]
     }
   },
-  "include": ["assets/**/*.ts", "assets/**/*.tsx", "src/**/*.d.ts", "vite.config.ts", "vitest.config.ts", "tailwind.config.ts"]
+  "include": ["assets/**/*.ts", "assets/**/*.tsx", "admin/**/*.ts", "admin/**/*.tsx", "src/**/*.d.ts", "vite.config.ts", "vitest.config.ts", "tailwind.config.ts"]
 }

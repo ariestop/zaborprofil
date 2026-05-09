@@ -11,7 +11,7 @@ use Twig\TwigFunction;
 /**
  * Reads the Vite-generated `manifest.json` and exposes Twig helpers that
  * render fingerprinted `<link>` and `<script>` tags for a given Vite entry
- * (for example `assets/site/app.ts` or `assets/admin/app.ts`).
+ * (for example `assets/site/app.ts` or `admin/app.ts`).
  *
  * Production-only manifest mode is supported — running the Vite dev server
  * is intentionally out of scope here; local workflow is `npm run build`.
@@ -80,14 +80,38 @@ final class ViteAssetExtension extends AbstractExtension
     {
         $manifest = $this->loadManifest();
 
-        if (!isset($manifest[$entry])) {
-            throw new \RuntimeException(\sprintf(
-                'Vite manifest does not contain entry "%s". Run `npm run build`.',
-                $entry,
-            ));
+        foreach ($this->manifestEntryKeys($entry) as $key) {
+            if (isset($manifest[$key])) {
+                return $manifest[$key];
+            }
         }
 
-        return $manifest[$entry];
+        throw new \RuntimeException(\sprintf(
+            'Vite manifest does not contain entry "%s". Run `npm run build`.',
+            $entry,
+        ));
+    }
+
+    /**
+     * Vite uses the repo-relative path to the entry file as the manifest key.
+     * After moving admin sources from `assets/admin/` to `admin/`, older builds
+     * still expose `assets/admin/app.ts`; newer builds use `admin/app.ts`.
+     *
+     * @return list<string>
+     */
+    private function manifestEntryKeys(string $entry): array
+    {
+        $keys = [$entry];
+
+        if ('admin/app.ts' === $entry) {
+            $keys[] = 'assets/admin/app.ts';
+        }
+
+        if ('assets/admin/app.ts' === $entry) {
+            $keys[] = 'admin/app.ts';
+        }
+
+        return $keys;
     }
 
     /**

@@ -45,11 +45,11 @@ export default defineConfig({
   ],
   resolve: {
     alias: [
-      { find: '@admin', replacement: fileURLToPath(new URL('./assets/admin', import.meta.url)) },
-      { find: '@admin-ui', replacement: fileURLToPath(new URL('./assets/admin/shared/ui', import.meta.url)) },
-      { find: '@/components', replacement: fileURLToPath(new URL('./assets/admin/components/tiptap-templates', import.meta.url)) },
-      { find: '@/hooks', replacement: fileURLToPath(new URL('./assets/admin/components/hooks', import.meta.url)) },
-      { find: '@/lib', replacement: fileURLToPath(new URL('./assets/admin/components/lib', import.meta.url)) },
+      { find: '@admin', replacement: fileURLToPath(new URL('./admin', import.meta.url)) },
+      { find: '@admin-ui', replacement: fileURLToPath(new URL('./admin/shared/ui', import.meta.url)) },
+      { find: '@/components', replacement: fileURLToPath(new URL('./admin/components/tiptap-templates', import.meta.url)) },
+      { find: '@/hooks', replacement: fileURLToPath(new URL('./admin/components/hooks', import.meta.url)) },
+      { find: '@/lib', replacement: fileURLToPath(new URL('./admin/components/lib', import.meta.url)) },
     ],
   },
   build: {
@@ -59,7 +59,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         ...(buildTarget !== 'admin' ? { site: 'assets/site/app.ts' } : {}),
-        ...(buildTarget !== 'site' ? { admin: 'assets/admin/app.ts' } : {}),
+        ...(buildTarget !== 'site' ? { admin: 'admin/app.ts' } : {}),
       },
       output: {
         manualChunks(id) {
