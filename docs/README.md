@@ -132,4 +132,4 @@
 - [admin/frontend-structure](admin/frontend-structure.md) — целевая структура `assets/admin/`.
 - [admin/api-layer](admin/api-layer.md) — API client + TanStack Query foundation.
 - [admin/page-builder](admin/page-builder.md) — builder contracts и hooks.
-- [admin/tiptap-grapesjs-integration](admin/tiptap-grapesjs-integration.md) — разделение ответственности редакторов.
+- [admin/tiptap-builder-integration](admin/tiptap-builder-integration.md) — разделение ответственности редакторов.

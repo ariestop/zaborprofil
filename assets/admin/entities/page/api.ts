@@ -29,6 +29,8 @@ export interface PageUpdatePayload {
   visibility: 'public' | 'hidden' | 'unlisted'
 }
 
+export type PageCreatePayload = PageUpdatePayload
+
 const BUILDER_BLOCK_TYPE = 'builder_canvas'
 
 function pagesQueryKey() {
@@ -90,6 +92,37 @@ export function useUpdatePageMutation(pageId: string) {
   })
 }
 
+export function usePublishPageMutation(pageId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => apiRequest<ContentPageItem>(`/admin/api/content/pages/${pageId}/publish`, {
+      method: 'POST',
+      body: {},
+    }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: pagesQueryKey() }),
+        queryClient.invalidateQueries({ queryKey: pageQueryKey(pageId) }),
+      ])
+    },
+  })
+}
+
+export function useCreatePageMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload: PageCreatePayload) => apiRequest<ContentPageItem>('/admin/api/content/pages', {
+      method: 'POST',
+      body: payload,
+    }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: pagesQueryKey() })
+    },
+  })
+}
+
 interface BuilderSnapshot {
   html: string
   css: string
@@ -135,7 +168,7 @@ export async function upsertBuilderCanvasBlock({
         css: snapshot.css,
       },
       settings: {
-        source: 'grapesjs',
+        source: 'page_builder',
       },
       isEnabled: true,
       visibility: 'public',

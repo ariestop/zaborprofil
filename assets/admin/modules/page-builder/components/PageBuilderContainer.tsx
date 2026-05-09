@@ -8,11 +8,9 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import { Button } from '../../../shared/ui'
 import type { BuilderBlockDefinition, BuilderBlockItem, BuilderSnapshot, BuilderVersionRecord } from '../types'
-import { isPageBuilderEnabled } from '../runtime/feature-flags'
-import { loadGrapesJsRuntime, type GrapesJsEditor } from '../runtime/grapesjs-runtime-bridge'
 
 const RichTextEditor = lazy(async () => import('../../../features/rich-text/RichTextEditor').then((module) => ({ default: module.RichTextEditor })))
 
@@ -76,10 +74,6 @@ export function PageBuilderContainer({
   onReorderBlocks,
   onSaveRichText,
 }: PageBuilderContainerProps) {
-  const canvasRef = useRef<HTMLDivElement | null>(null)
-  const editorRef = useRef<GrapesJsEditor | null>(null)
-  const snapshotAppliedRef = useRef(false)
-  const [builderRuntimeDisabled, setBuilderRuntimeDisabled] = useState(!isPageBuilderEnabled())
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(blocks[0]?.id ?? null)
   const [richTextDraft, setRichTextDraft] = useState(
     typeof blocks[0]?.content.richText === 'string'
@@ -87,66 +81,6 @@ export function PageBuilderContainer({
       : '<p>Rich text для текущего блока</p>',
   )
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
-
-  useEffect(() => {
-    if (canvasRef.current === null || editorRef.current !== null) {
-      return
-    }
-
-    let mounted = true
-
-    void loadGrapesJsRuntime()
-      .then((runtime) => {
-        if (!mounted || canvasRef.current === null) {
-          return
-        }
-
-        if (runtime === null) {
-          setBuilderRuntimeDisabled(true)
-          return
-        }
-
-        const editor = runtime.init({
-          container: canvasRef.current,
-          fromElement: false,
-          storageManager: false,
-          height: '600px',
-          panels: { defaults: [] },
-          blockManager: { appendTo: '#gjs-block-registry' },
-        })
-
-        editorRef.current = editor
-
-        editor.on('update', () => {
-          onSnapshotChange({
-            html: editor.getHtml(),
-            css: editor.getCss() ?? '',
-          })
-        })
-      })
-      .catch(() => {
-        if (mounted) {
-          setBuilderRuntimeDisabled(true)
-        }
-      })
-
-    return () => {
-      mounted = false
-      editorRef.current?.destroy()
-      editorRef.current = null
-      snapshotAppliedRef.current = false
-    }
-  }, [onSnapshotChange])
-
-  useEffect(() => {
-    if (editorRef.current === null || snapshotAppliedRef.current) {
-      return
-    }
-
-    editorRef.current.setComponents(snapshot.html)
-    editorRef.current.setStyle(snapshot.css)
-    snapshotAppliedRef.current = true
-  }, [snapshot.css, snapshot.html])
 
   const selectedBlock = useMemo(() => {
     if (selectedBlockId === null) {
@@ -182,23 +116,46 @@ export function PageBuilderContainer({
     await onReorderBlocks(reordered.map((item) => item.id))
   }
 
+  const updateSnapshotField = (field: 'html' | 'css', value: string) => {
+    onSnapshotChange({
+      ...snapshot,
+      [field]: value,
+    })
+  }
+
   return (
     <section className="space-y-4">
-      {builderRuntimeDisabled ? (
-        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-100">
-          Builder runtime выключен фичефлагом `VITE_ADMIN_PAGE_BUILDER_ENABLED`.
-        </div>
-      ) : null}
       <div className="rounded-xl border border-dashed border-slate-300 p-6 dark:border-slate-700">
-        <p className="text-sm font-semibold">GrapesJS runtime container</p>
+        <p className="text-sm font-semibold">Builder snapshot editor</p>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Страница `{pageId}`. Layout управляется GrapesJS, rich text блока редактируется через Tiptap bridge.
+          Страница `{pageId}`. Layout хранится в snapshot HTML/CSS, rich text блока редактируется через Tiptap bridge.
         </p>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1fr_340px]">
         <div className="space-y-4">
-          <div ref={canvasRef} className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800" />
+          <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+            <h3 className="text-sm font-semibold">Canvas HTML</h3>
+            <textarea
+              value={snapshot.html}
+              onChange={(event) => {
+                updateSnapshotField('html', event.currentTarget.value)
+              }}
+              className="mt-2 min-h-56 w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-xs dark:border-slate-700 dark:bg-slate-900"
+              data-testid="builder-html-editor"
+            />
+          </div>
+          <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+            <h3 className="text-sm font-semibold">Canvas CSS</h3>
+            <textarea
+              value={snapshot.css}
+              onChange={(event) => {
+                updateSnapshotField('css', event.currentTarget.value)
+              }}
+              className="mt-2 min-h-40 w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-mono text-xs dark:border-slate-700 dark:bg-slate-900"
+              data-testid="builder-css-editor"
+            />
+          </div>
           <div className="flex items-center gap-2">
             {previewUrl !== null ? (
               <a
@@ -216,11 +173,10 @@ export function PageBuilderContainer({
         <div className="space-y-4">
           <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
             <h3 className="text-sm font-semibold">Block registry</h3>
-            <div id="gjs-block-registry" className="mt-2 rounded-md border border-slate-200 p-2 dark:border-slate-700" />
             <ul className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
               {blockRegistry.map((block) => (
                 <li key={block.type}>
-                  {block.title} ({block.category})
+                  {block.category}: {block.title}
                 </li>
               ))}
             </ul>

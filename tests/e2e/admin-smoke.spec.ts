@@ -38,7 +38,7 @@ test.describe('Admin smoke flow', () => {
     await page.getByRole('link', { name: BUILDER_SELECTORS.openBuilderLinkName }).click()
 
     await expect(page).toHaveURL(new RegExp(`/admin/pages/${createdPage.id}/builder$`))
-    await expect(page.getByText(BUILDER_SELECTORS.grapesRuntimeText)).toBeVisible()
+    await expect(page.getByText(BUILDER_SELECTORS.runtimeText)).toBeVisible()
 
     await page.getByRole('button', { name: BUILDER_SELECTORS.saveNowButtonName }).click()
     const previewLink = page.getByRole('link', { name: BUILDER_SELECTORS.previewLinkName })

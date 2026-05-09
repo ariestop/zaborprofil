@@ -69,7 +69,7 @@ Backend API реализован под `/admin/api/system/*` через отд�
 
 Реализовано:
 
-- GrapesJS runtime для `PageBuilder`;
+- Snapshot runtime для `PageBuilder`;
 - TanStack Table для страниц/пользователей/CRM;
 - dnd-kit для reorder блоков в builder;
 - Recharts виджет на dashboard;

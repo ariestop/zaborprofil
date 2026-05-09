@@ -21,7 +21,7 @@ Page Builder отвечает за:
 
 Реализованы:
 
-- runtime-интеграция GrapesJS в `PageBuilderContainer`;
+- runtime на основе snapshot HTML/CSS в `PageBuilderContainer`;
 - real storage flow через `/admin/api/content/pages/{id}` и block endpoints;
 - autosave/load/save foundation через `BuilderStorageAdapter`;
 - preview link через `/admin/api/content/pages/{id}/preview-link`;

@@ -43,7 +43,7 @@ assets/admin/
   - `Pages` (TanStack Table);
   - `Users` (data-grid + role update form);
   - `CRM` (leads grid + status mutations);
-  - `PageBuilder` (GrapesJS runtime + DnD + bridge).
+  - `PageBuilder` (snapshot HTML/CSS + DnD + bridge).
 - Легаси `views/*`, `router/index.ts` и `components/AdminShell.tsx` удалены.
 - Основной runtime-путь админки: `app/AdminApp.tsx` + `routes/index.tsx` + `layouts/AdminShellLayout.tsx`.
 - Добавлен hardened prefetch-слой:

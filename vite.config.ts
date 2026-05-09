@@ -49,14 +49,6 @@ export default defineConfig({
             return 'vendor-charts'
           }
 
-          if (id.includes('grapesjs')) {
-            return 'vendor-grapesjs'
-          }
-
-          if (id.includes('backbone') || id.includes('underscore') || id.includes('grapesjs-parser-postcss')) {
-            return 'vendor-grapesjs-legacy'
-          }
-
           if (id.includes('@tiptap')) {
             return 'vendor-tiptap'
           }

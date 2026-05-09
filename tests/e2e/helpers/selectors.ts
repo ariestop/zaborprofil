@@ -11,11 +11,11 @@ export const ADMIN_LOGIN_SELECTORS = {
 } as const
 
 export const BUILDER_SELECTORS = {
-  openBuilderLinkName: 'Открыть Builder',
+  openBuilderLinkName: 'Перейти в Builder',
   saveNowButtonName: 'Save now',
   previewLinkName: 'Preview',
   dndSectionTitle: 'DnD blocks (backend reorder)',
   richTextAriaLabel: 'Main content area, start typing to enter text.',
   saveRichTextButtonName: 'Сохранить rich text в block settings',
-  grapesRuntimeText: 'GrapesJS runtime container',
+  runtimeText: 'Builder snapshot editor',
 } as const

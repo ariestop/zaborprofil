@@ -9,7 +9,6 @@ const budgets = [
   { name: 'admin-entry', maxBytes: 320 * 1024, patterns: [/\/admin-[^/]+\.js$/] },
   { name: 'page-builder-route', maxBytes: 120 * 1024, patterns: [/\/PageBuilderPage-[^/]+\.js$/] },
   { name: 'rich-text-runtime', maxBytes: 200 * 1024, patterns: [/\/RichTextEditor-[^/]+\.js$/] },
-  { name: 'vendor-grapesjs', maxBytes: 1250 * 1024, patterns: [/\/vendor-grapesjs-[^/]+\.js$/] },
   { name: 'vendor-tiptap', maxBytes: 280 * 1024, patterns: [/\/vendor-tiptap-[^/]+\.js$/] },
   { name: 'vendor-prosemirror', maxBytes: 370 * 1024, patterns: [/\/vendor-prosemirror-[^/]+\.js$/] },
 ]

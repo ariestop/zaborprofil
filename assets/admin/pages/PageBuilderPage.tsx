@@ -129,7 +129,7 @@ export default function PageBuilderPage() {
     <div>
       <PageHeader
         title={`Page Builder: ${id}`}
-        description="Runtime-конфигурация GrapesJS + autosave + preview + dnd reorder."
+        description="Snapshot HTML/CSS + autosave + preview + dnd reorder."
       />
 
       <Card title="Builder storage adapter">

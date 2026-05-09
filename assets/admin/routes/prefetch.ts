@@ -22,7 +22,6 @@ import {
   loadSystemSecurityPage,
   loadUsersPage,
 } from './loaders'
-import { warmupGrapesJsRuntimeOnIntent } from '../modules/page-builder/runtime/grapesjs-runtime-bridge'
 
 interface PrefetchTask {
   key: string
@@ -251,5 +250,4 @@ export function schedulePrefetchForCurrentRoute(path: string): void {
 
 export function preloadBuilderOnIntent(): void {
   enqueuePrefetchTask({ key: 'route-page-builder', run: loadPageBuilderPage })
-  warmupGrapesJsRuntimeOnIntent()
 }
