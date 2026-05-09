@@ -1,35 +1,32 @@
 import { describe, expect, it } from 'vitest'
-import { findBuilderCanvasBlock } from './api'
-import type { ContentBlockItem } from '../../types/api'
+import { createBlock, duplicateBlock, normalizePageBlocks, reorderBlocks, validatePageBlocks } from '../../modules/page-builder/utils/pageBlocks'
 
-function createBlock(type: string, id: string): ContentBlockItem {
-  return {
-    id,
-    pageId: 'page',
-    type,
-    name: type,
-    position: 0,
-    isEnabled: true,
-    visibility: 'public',
-    content: {},
-    settings: {},
-    createdAt: '2026-01-01T00:00:00+00:00',
-    updatedAt: '2026-01-01T00:00:00+00:00',
-  }
-}
-
-describe('findBuilderCanvasBlock', () => {
-  it('returns builder canvas block when present', () => {
-    const blocks = [
-      createBlock('hero', '1'),
-      createBlock('builder_canvas', '2'),
-    ]
-
-    expect(findBuilderCanvasBlock(blocks)?.id).toBe('2')
+describe('page builder utils', () => {
+  it('creates blocks with defaults', () => {
+    const block = createBlock('hero.classic', 0)
+    expect(block.type).toBe('hero.classic')
+    expect(block.enabled).toBe(true)
   })
 
-  it('returns undefined when builder block missing', () => {
-    const blocks = [createBlock('hero', '1')]
-    expect(findBuilderCanvasBlock(blocks)).toBeUndefined()
+  it('duplicates block with new id', () => {
+    const base = createBlock('cta', 1)
+    const copy = duplicateBlock(base, 2)
+    expect(copy.id).not.toBe(base.id)
+    expect(copy.position).toBe(2)
+  })
+
+  it('reorders block list', () => {
+    const first = createBlock('cta', 0)
+    const second = createBlock('gallery', 1)
+    const next = reorderBlocks([first, second], 0, 1)
+    expect(next[0]?.id).toBe(second.id)
+    expect(next[1]?.id).toBe(first.id)
+  })
+
+  it('normalizes and validates blocks', () => {
+    const block = createBlock('pricing', 10)
+    const normalized = normalizePageBlocks([block])
+    expect(normalized[0]?.position).toBe(0)
+    expect(validatePageBlocks(normalized).isValid).toBe(true)
   })
 })

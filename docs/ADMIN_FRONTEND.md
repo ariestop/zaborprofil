@@ -41,6 +41,27 @@ CSRF-токен передается из Twig через meta-теги.
 Для регрессий редактора используется Vitest-спека
 `assets/admin/components/TiptapRichTextEditor.spec.ts`.
 
+## Structured Page Builder
+
+Page Builder реализован как **Structured Visual CMS Builder** и не использует GrapesJS.
+
+Ключевые принципы:
+
+- каталог готовых блоков по категориям;
+- редактирование блока через формы/JSON панели;
+- drag & drop сортировка через `dnd-kit`;
+- dirty state, autosave foundation, unsaved changes guard;
+- preview и publish через backend builder endpoints.
+
+Основные frontend-модули:
+
+- `assets/admin/modules/page-builder/types.ts`
+- `assets/admin/modules/page-builder/registry/*`
+- `assets/admin/modules/page-builder/utils/pageBlocks.ts`
+- `assets/admin/modules/page-builder/state/builderStore.ts`
+- `assets/admin/modules/page-builder/components/*`
+- `assets/admin/pages/PageBuilderPage.tsx`
+
 ## Сборка и проверки
 
 Для локальной разработки и CI используйте make-цели:

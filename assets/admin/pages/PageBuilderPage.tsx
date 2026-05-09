@@ -1,144 +1,146 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { PageHeader, Card, ErrorState, PageLoadingState } from '../shared/ui'
-import type { BuilderSnapshot, BuilderStorageAdapter } from '../modules/page-builder/types'
-import { useBuilderDraft } from '../modules/page-builder/hooks/useBuilderDraft'
+import type { BuilderBlock } from '../modules/page-builder/types'
 import { useBuilderAutosave } from '../modules/page-builder/hooks/useBuilderAutosave'
 import {
-  findBuilderCanvasBlock,
-  reorderPageBlocks,
-  updateBlockRichText,
-  upsertBuilderCanvasBlock,
-  usePageDetailQuery,
-  usePagePreviewLinkQuery,
+  previewPageBuilder,
+  usePageBuilderQuery,
+  usePublishPageBuilderMutation,
   usePageRevisionsQuery,
+  useSavePageBuilderMutation,
 } from '../entities/page/api'
 import { useToast } from '../app/providers/toast-provider'
+import { useBuilderStore } from '../modules/page-builder/state/builderStore'
+import { createBlock, duplicateBlock, normalizePageBlocks, reorderBlocks, validatePageBlocks } from '../modules/page-builder/utils/pageBlocks'
+import { UnsavedChangesGuard } from '../modules/page-builder/components/UnsavedChangesGuard'
 
 const PageBuilderContainer = lazy(async () => import('../modules/page-builder/components/PageBuilderContainer').then((module) => ({ default: module.PageBuilderContainer })))
 
 export default function PageBuilderPage() {
   const { id = 'unknown' } = useParams()
   const { push } = useToast()
-  const pageQuery = usePageDetailQuery(id)
+  const pageBuilderQuery = usePageBuilderQuery(id)
   const revisionsQuery = usePageRevisionsQuery(id)
-  const previewQuery = usePagePreviewLinkQuery(id)
-  const { snapshot, setSnapshot } = useBuilderDraft({ html: '<section><h2>Builder canvas</h2></section>', css: '' })
+  const saveMutation = useSavePageBuilderMutation(id)
+  const publishMutation = usePublishPageBuilderMutation(id)
+  const [previewHtml, setPreviewHtml] = useState<string | null>(null)
 
-  const builderCanvasBlock = useMemo(
-    () => (pageQuery.data !== undefined ? findBuilderCanvasBlock(pageQuery.data.blocks) : undefined),
-    [pageQuery.data],
-  )
+  const {
+    blocks,
+    selectedBlockId,
+    dirty,
+    validationIssues,
+    setBlocks,
+    selectBlock,
+    updateBlock,
+    deleteBlock,
+    setDirty,
+    setValidationIssues,
+  } = useBuilderStore()
 
   useEffect(() => {
-    if (!pageQuery.isSuccess) {
+    if (!pageBuilderQuery.isSuccess) {
       return
     }
 
-    setSnapshot({
-      html: typeof builderCanvasBlock?.content.html === 'string'
-        ? builderCanvasBlock.content.html
-        : '<section><h2>Builder canvas</h2></section>',
-      css: typeof builderCanvasBlock?.content.css === 'string'
-        ? builderCanvasBlock.content.css
-        : '',
-    })
-  }, [builderCanvasBlock, pageQuery.isSuccess, setSnapshot])
+    setBlocks(normalizePageBlocks(pageBuilderQuery.data.blocks))
+  }, [pageBuilderQuery.data, pageBuilderQuery.isSuccess, setBlocks])
 
-  const storageAdapter = useMemo<BuilderStorageAdapter>(() => ({
-    load: async () => {
-      const page = await pageQuery.refetch()
-      const detail = page.data
-      if (detail === undefined) {
-        return { html: '<section><h2>Builder canvas</h2></section>', css: '' }
-      }
+  const saveBlocks = useCallback(async (nextBlocks: BuilderBlock[]) => {
+    const normalized = normalizePageBlocks(nextBlocks)
+    const validation = validatePageBlocks(normalized)
+    setValidationIssues(validation.issues)
 
-      const builderBlock = findBuilderCanvasBlock(detail.blocks)
-      return {
-        html: typeof builderBlock?.content.html === 'string' ? builderBlock.content.html : '<section><h2>Builder canvas</h2></section>',
-        css: typeof builderBlock?.content.css === 'string' ? builderBlock.content.css : '',
-      }
-    },
-    save: async (pageId: string, nextSnapshot: BuilderSnapshot) => {
-      await upsertBuilderCanvasBlock({
-        pageId,
-        snapshot: nextSnapshot,
-        existingBlock: builderCanvasBlock,
+    if (!validation.isValid) {
+      push({
+        title: 'Ошибка валидации',
+        description: 'Исправьте ошибки валидации перед сохранением.',
       })
-    },
-  }), [builderCanvasBlock, pageQuery])
+      return
+    }
 
-  const autosave = useCallback(async (pageId: string, nextSnapshot: BuilderSnapshot) => {
-    await storageAdapter.save(pageId, nextSnapshot)
+    await saveMutation.mutateAsync(normalized)
+    setDirty(false)
+  }, [push, saveMutation, setDirty, setValidationIssues])
+
+  const autosave = useCallback(async (_pageId: string, nextBlocks: BuilderBlock[]) => {
+    await saveBlocks(nextBlocks)
     push({
       title: 'Autosave выполнен',
-      description: `Черновик builder для ${pageId} сохранён.`,
+      description: `Черновик builder для ${id} сохранён.`,
     })
-  }, [push, storageAdapter])
+  }, [id, push, saveBlocks])
 
   useBuilderAutosave({
     pageId: id,
-    snapshot,
+    blocks,
     onAutosave: autosave,
-    enabled: pageQuery.isSuccess,
+    enabled: pageBuilderQuery.isSuccess && dirty,
+    intervalMs: 60_000,
   })
 
-  const loadSnapshot = useCallback(async () => {
-    const loaded = await storageAdapter.load(id)
-    setSnapshot(loaded)
-  }, [id, setSnapshot, storageAdapter])
+  const handleAddBlock = useCallback((type: BuilderBlock['type']) => {
+    const nextBlocks = [...blocks, createBlock(type, blocks.length)]
+    setBlocks(nextBlocks, true)
+  }, [blocks, setBlocks])
 
-  const saveRichText = useCallback(async (blockId: string, richText: string) => {
-    const detail = pageQuery.data
-    if (detail === undefined) {
+  const handleDuplicate = useCallback((blockId: string) => {
+    const index = blocks.findIndex((block) => block.id === blockId)
+    if (index < 0) {
       return
     }
-
-    const block = detail.blocks.find((item) => item.id === blockId)
+    const block = blocks[index]
     if (block === undefined) {
       return
     }
+    const duplicated = duplicateBlock(block, index + 1)
+    const nextBlocks = normalizePageBlocks([
+      ...blocks.slice(0, index + 1),
+      duplicated,
+      ...blocks.slice(index + 1),
+    ])
+    setBlocks(nextBlocks, true)
+    selectBlock(duplicated.id)
+  }, [blocks, selectBlock, setBlocks])
 
-    await updateBlockRichText(block, richText)
-    push({
-      title: 'Rich text обновлён',
-      description: 'Изменения сохранены в настройках блока.',
-    })
-    await pageQuery.refetch()
-  }, [pageQuery, push])
+  const handleDelete = useCallback((blockId: string) => {
+    deleteBlock(blockId)
+  }, [deleteBlock])
 
-  const reorderBlocks = useCallback(async (blockIds: string[]) => {
-    await reorderPageBlocks(id, blockIds)
-    await pageQuery.refetch()
-  }, [id, pageQuery])
+  const handleReorder = useCallback((sourceIndex: number, targetIndex: number) => {
+    const next = reorderBlocks(blocks, sourceIndex, targetIndex)
+    setBlocks(next, true)
+  }, [blocks, setBlocks])
 
-  if (pageQuery.isPending) {
+  if (pageBuilderQuery.isPending) {
     return <PageLoadingState />
   }
 
-  if (pageQuery.isError || pageQuery.data === undefined) {
+  if (pageBuilderQuery.isError || pageBuilderQuery.data === undefined) {
     return (
       <ErrorState
         title="Не удалось загрузить builder"
-        description="Проверьте доступ к странице и endpoint /admin/api/content/pages/{id}."
+        description="Проверьте доступ к странице и endpoint /admin/api/content/pages/{id}/builder."
       />
     )
   }
 
   return (
     <div>
+      <UnsavedChangesGuard when={dirty} />
       <PageHeader
         title={`Page Builder: ${id}`}
-        description="Snapshot HTML/CSS + autosave + preview + dnd reorder."
+        description="Structured Visual CMS Builder: каталог блоков, dnd, формы и preview."
       />
 
-      <Card title="Builder storage adapter">
+      <Card title="Builder actions">
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
             className="inline-flex h-9 items-center rounded-lg border border-slate-300 px-3 text-sm hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
             onClick={() => {
-              void loadSnapshot()
+              void pageBuilderQuery.refetch()
             }}
           >
             Reload from storage
@@ -147,7 +149,7 @@ export default function PageBuilderPage() {
             type="button"
             className="inline-flex h-9 items-center rounded-lg bg-emerald-600 px-3 text-sm font-medium text-white hover:bg-emerald-700"
             onClick={() => {
-              void autosave(id, snapshot)
+              void saveBlocks(blocks)
             }}
           >
             Save now
@@ -158,28 +160,49 @@ export default function PageBuilderPage() {
       <div className="mt-4">
         <Suspense fallback={<PageLoadingState />}>
           <PageBuilderContainer
-            pageId={id}
-            blocks={pageQuery.data.blocks}
-            snapshot={snapshot}
-            previewUrl={previewQuery.data?.previewUrl ?? null}
-            onSnapshotChange={setSnapshot}
-            onReorderBlocks={reorderBlocks}
-            onSaveRichText={saveRichText}
-            versions={(revisionsQuery.data ?? []).map((revision) => ({
-              id: revision.id,
-              createdAt: revision.createdAt,
-              author: 'system',
-              comment: revision.comment ?? `Revision #${revision.version}`,
-            }))}
-            blockRegistry={[
-              { type: 'hero', title: 'Hero', category: 'Маркетинг' },
-              { type: 'features', title: 'Feature Grid', category: 'Контент' },
-              { type: 'cta', title: 'CTA', category: 'Конверсия' },
-              { type: 'builder_canvas', title: 'Builder Canvas', category: 'Layout' },
-            ]}
+            blocks={blocks}
+            selectedBlockId={selectedBlockId}
+            dirty={dirty}
+            validationIssues={validationIssues}
+            previewHtml={previewHtml}
+            isSaving={saveMutation.isPending}
+            onAddBlock={handleAddBlock}
+            onSelectBlock={selectBlock}
+            onReorderBlocks={handleReorder}
+            onUpdateBlock={(block) => {
+              updateBlock(block.id, () => block)
+            }}
+            onDeleteBlock={handleDelete}
+            onDuplicateBlock={handleDuplicate}
+            onSave={() => {
+              void saveBlocks(blocks)
+            }}
+            onPreview={() => {
+              void previewPageBuilder(id, blocks).then((response) => {
+                setPreviewHtml(response.html)
+              })
+            }}
+            onPublish={() => {
+              void publishMutation.mutateAsync().then(() => {
+                push({
+                  title: 'Страница опубликована',
+                  description: 'Builder-версия опубликована успешно.',
+                })
+              })
+            }}
           />
         </Suspense>
       </div>
+
+      <Card title="Revision hooks">
+        <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+          {(revisionsQuery.data ?? []).map((revision) => (
+            <li key={revision.id}>
+              {revision.createdAt} — {revision.comment ?? `Revision #${revision.version}`}
+            </li>
+          ))}
+        </ul>
+      </Card>
     </div>
   )
 }

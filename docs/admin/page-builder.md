@@ -1,36 +1,40 @@
-# Page Builder runtime (Этап 2)
+# Structured Visual CMS Builder
 
-## Область ответственности
+## Зачем это сделано
 
-Page Builder отвечает за:
+Builder переведен на **structured block model**:
 
-- layout страницы;
-- секции и блоки;
-- drag & drop;
-- стили и responsive структуру.
+- без GrapesJS и без свободной HTML-верстки страницы;
+- с управляемым каталогом блоков;
+- с централизованной backend-валидацией структуры.
 
-## Что реализовано
+## Базовый UX
 
-Файлы:
+Путь: `/admin/pages/:id/builder`.
 
-- `assets/admin/modules/page-builder/types.ts`
-- `assets/admin/modules/page-builder/hooks/useBuilderDraft.ts`
-- `assets/admin/modules/page-builder/hooks/useBuilderAutosave.ts`
-- `assets/admin/modules/page-builder/components/PageBuilderContainer.tsx`
+Доступные операции:
+
+- добавить блок из каталога;
+- выбрать блок и редактировать его `content/settings`;
+- дублировать/удалить/включить/выключить блок;
+- отсортировать блоки через drag & drop;
+- сохранить черновик (`PUT /builder`);
+- посмотреть preview (`POST /builder/preview`);
+- опубликовать (`POST /builder/publish`).
+
+## Ключевые frontend-модули
+
 - `assets/admin/pages/PageBuilderPage.tsx`
+- `assets/admin/modules/page-builder/types.ts`
+- `assets/admin/modules/page-builder/registry/blockCategories.ts`
+- `assets/admin/modules/page-builder/registry/blockRegistry.ts`
+- `assets/admin/modules/page-builder/utils/pageBlocks.ts`
+- `assets/admin/modules/page-builder/state/builderStore.ts`
+- `assets/admin/modules/page-builder/components/*`
 
-Реализованы:
+## Ограничения этапа 1
 
-- runtime на основе snapshot HTML/CSS в `PageBuilderContainer`;
-- real storage flow через `/admin/api/content/pages/{id}` и block endpoints;
-- autosave/load/save foundation через `BuilderStorageAdapter`;
-- preview link через `/admin/api/content/pages/{id}/preview-link`;
-- versioning list через revisions endpoint;
-- DnD reorder блоков с backend синхронизацией (`/blocks/reorder`);
-- route `/admin/pages/:id/builder`.
-
-## Migration status (legacy -> stage2)
-
-- `PageBuilderPage` перешёл с in-memory режима на API-backed runtime.
-- Контракты builder сохранены и расширены (`BuilderSnapshot`, block item model).
-- Легаси visual-editor helper не используется как основной runtime-слой.
+- нет `custom html/js` блока;
+- rich text редактируется только через TipTap-поля блока;
+- визуальный preview опирается на backend-renderer и поддерживает только
+  зарегистрированные типы блоков.

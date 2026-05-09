@@ -96,7 +96,7 @@ export default function PageDetailPage() {
         description: 'Публичная версия страницы обновлена.',
       })
       await pageQuery.refetch()
-    } catch (_error) {
+    } catch {
       push({
         title: 'Ошибка публикации',
         description: 'Проверьте права pages.publish и попробуйте снова.',

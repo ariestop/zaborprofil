@@ -390,12 +390,14 @@ final class AdminContentApiTest extends WebTestCase
 
         $updatedBlockPayload = json_decode((string) $client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($updatedBlockPayload);
+        $updatedContent = $updatedBlockPayload['content'] ?? null;
+        self::assertIsArray($updatedContent);
         self::assertSame(
             '<p>Обновлённый текст с <em>форматированием</em>.</p>',
-            $updatedBlockPayload['content']['text'] ?? null,
+            $updatedContent['text'] ?? null,
         );
-        self::assertSame('/uploads/media/company-updated.webp', $updatedBlockPayload['content']['image'] ?? null);
-        self::assertSame('Обновлённое фото монтажа', $updatedBlockPayload['content']['alt'] ?? null);
+        self::assertSame('/uploads/media/company-updated.webp', $updatedContent['image'] ?? null);
+        self::assertSame('Обновлённое фото монтажа', $updatedContent['alt'] ?? null);
     }
 
     public function testAdminApiRejectsRequestWithoutCsrfToken(): void
@@ -415,15 +417,235 @@ final class AdminContentApiTest extends WebTestCase
         self::assertResponseStatusCodeSame(403);
     }
 
+    public function testBuilderEndpointsSupportGetAndPutFlow(): void
+    {
+        $client = self::createClient();
+        $this->prepareDatabase();
+        $client->loginUser($this->createAdminUser('builder-flow@example.test'));
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/content/pages', [
+            'type' => 'landing',
+            'title' => 'Builder flow',
+            'slug' => 'builder-flow',
+            'path' => '/builder-flow/',
+            'h1' => 'Builder flow',
+        ]);
+        self::assertResponseStatusCodeSame(201);
+        $pageId = $this->stringFromResponse((string) $client->getResponse()->getContent(), 'id');
+
+        $this->jsonRequestWithCsrf($client, 'PUT', \sprintf('/admin/api/content/pages/%s/builder', $pageId), [
+            'blocks' => [
+                [
+                    'id' => '01JQY3Y5SFSVCE00H9GQWQY56V',
+                    'type' => 'hero.classic',
+                    'enabled' => true,
+                    'position' => 0,
+                    'content' => [
+                        'title' => 'Заголовок',
+                        'subtitle' => 'Подзаголовок',
+                        'text' => 'Текст',
+                    ],
+                    'settings' => [],
+                    'metadata' => [
+                        'createdAt' => '2026-05-09T00:00:00+00:00',
+                        'updatedAt' => '2026-05-09T00:00:00+00:00',
+                    ],
+                ],
+                [
+                    'id' => '01JQY3Y5SFSVCE00H9GQWQY57A',
+                    'type' => 'rich-text',
+                    'enabled' => true,
+                    'position' => 1,
+                    'content' => [
+                        'html' => '<p>Structured builder block</p>',
+                    ],
+                    'settings' => [],
+                    'metadata' => [
+                        'createdAt' => '2026-05-09T00:00:00+00:00',
+                        'updatedAt' => '2026-05-09T00:00:00+00:00',
+                    ],
+                ],
+            ],
+        ]);
+        self::assertResponseIsSuccessful();
+
+        $this->jsonRequestWithCsrf($client, 'GET', \sprintf('/admin/api/content/pages/%s/builder', $pageId));
+        self::assertResponseIsSuccessful();
+        $payload = json_decode((string) $client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($payload);
+        $blocks = $payload['blocks'] ?? null;
+        self::assertIsArray($blocks);
+        self::assertCount(2, $blocks);
+        $firstBlock = $blocks[0];
+        self::assertIsArray($firstBlock);
+        self::assertSame('hero.classic', $firstBlock['type'] ?? null);
+    }
+
+    public function testBuilderEndpointRejectsUnknownBlockType(): void
+    {
+        $client = self::createClient();
+        $this->prepareDatabase();
+        $client->loginUser($this->createAdminUser('builder-invalid@example.test'));
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/content/pages', [
+            'type' => 'landing',
+            'title' => 'Builder invalid',
+            'slug' => 'builder-invalid',
+            'path' => '/builder-invalid/',
+            'h1' => 'Builder invalid',
+        ]);
+        self::assertResponseStatusCodeSame(201);
+        $pageId = $this->stringFromResponse((string) $client->getResponse()->getContent(), 'id');
+
+        $this->jsonRequestWithCsrf($client, 'PUT', \sprintf('/admin/api/content/pages/%s/builder', $pageId), [
+            'blocks' => [
+                [
+                    'id' => '01JQY3Y5SFSVCE00H9GQWQY580',
+                    'type' => 'unknown-block',
+                    'enabled' => true,
+                    'position' => 0,
+                    'content' => [],
+                    'settings' => [],
+                    'metadata' => [
+                        'createdAt' => '2026-05-09T00:00:00+00:00',
+                        'updatedAt' => '2026-05-09T00:00:00+00:00',
+                    ],
+                ],
+            ],
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+    }
+
+    public function testBuilderEndpointRejectsInvalidContentShape(): void
+    {
+        $client = self::createClient();
+        $this->prepareDatabase();
+        $client->loginUser($this->createAdminUser('builder-invalid-content@example.test'));
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/content/pages', [
+            'type' => 'landing',
+            'title' => 'Builder invalid content',
+            'slug' => 'builder-invalid-content',
+            'path' => '/builder-invalid-content/',
+            'h1' => 'Builder invalid content',
+        ]);
+        self::assertResponseStatusCodeSame(201);
+        $pageId = $this->stringFromResponse((string) $client->getResponse()->getContent(), 'id');
+
+        $this->jsonRequestWithCsrf($client, 'PUT', \sprintf('/admin/api/content/pages/%s/builder', $pageId), [
+            'blocks' => [
+                [
+                    'id' => '01JQY3Y5SFSVCE00H9GQWQY581',
+                    'type' => 'rich-text',
+                    'enabled' => 'yes',
+                    'position' => 0,
+                    'content' => ['html' => '<p>Invalid enabled type</p>'],
+                    'settings' => [],
+                    'metadata' => [
+                        'createdAt' => '2026-05-09T00:00:00+00:00',
+                        'updatedAt' => '2026-05-09T00:00:00+00:00',
+                    ],
+                ],
+            ],
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+    }
+
+    public function testBuilderEndpointRequiresAuthentication(): void
+    {
+        $client = self::createClient();
+        $client->jsonRequest('PUT', '/admin/api/content/pages/01KR6ZZZZZZZZZZZZZZZZZZZZ/builder', [
+            'blocks' => [],
+        ]);
+        self::assertResponseStatusCodeSame(403);
+    }
+
+    public function testBuilderPublishEndpointPublishesPage(): void
+    {
+        $client = self::createClient();
+        $this->prepareDatabase();
+        $client->loginUser($this->createAdminUser('builder-publish@example.test'));
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/content/pages', [
+            'type' => 'landing',
+            'title' => 'Builder publish',
+            'slug' => 'builder-publish',
+            'path' => '/builder-publish/',
+            'h1' => 'Builder publish',
+        ]);
+        self::assertResponseStatusCodeSame(201);
+        $pageId = $this->stringFromResponse((string) $client->getResponse()->getContent(), 'id');
+
+        $this->jsonRequestWithCsrf($client, 'POST', \sprintf('/admin/api/content/pages/%s/builder/publish', $pageId), []);
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('"status":"published"', (string) $client->getResponse()->getContent());
+    }
+
+    public function testBuilderSaveWritesAuditLogEvent(): void
+    {
+        $client = self::createClient();
+        $this->prepareDatabase();
+        $client->loginUser($this->createAdminUser('builder-audit@example.test'));
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/content/pages', [
+            'type' => 'landing',
+            'title' => 'Builder audit',
+            'slug' => 'builder-audit',
+            'path' => '/builder-audit/',
+            'h1' => 'Builder audit',
+        ]);
+        self::assertResponseStatusCodeSame(201);
+        $pageId = $this->stringFromResponse((string) $client->getResponse()->getContent(), 'id');
+
+        $this->jsonRequestWithCsrf($client, 'PUT', \sprintf('/admin/api/content/pages/%s/builder', $pageId), [
+            'blocks' => [
+                [
+                    'id' => '01JQY3Y5SFSVCE00H9GQWQY583',
+                    'type' => 'rich-text',
+                    'enabled' => true,
+                    'position' => 0,
+                    'content' => ['html' => '<p>Audit text</p>'],
+                    'settings' => [],
+                    'metadata' => [
+                        'createdAt' => '2026-05-09T00:00:00+00:00',
+                        'updatedAt' => '2026-05-09T00:00:00+00:00',
+                    ],
+                ],
+            ],
+        ]);
+        self::assertResponseIsSuccessful();
+
+        $this->jsonRequestWithCsrf($client, 'GET', '/admin/api/system/audit/legacy?limit=20');
+        self::assertResponseIsSuccessful();
+        $entries = json_decode((string) $client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($entries);
+        $hasPageBlockEntry = false;
+        foreach ($entries as $entry) {
+            if (!\is_array($entry)) {
+                continue;
+            }
+            if (($entry['entityType'] ?? null) === 'App\\Module\\Content\\Domain\\Entity\\PageBlock') {
+                $hasPageBlockEntry = true;
+                break;
+            }
+        }
+        self::assertTrue($hasPageBlockEntry);
+    }
+
     private function prepareDatabase(): void
     {
         SchemaTestHelper::recreateSchema($this->entityManager());
     }
 
-    private function createAdminUser(string $email): AdminUser
+    /**
+     * @param list<string> $roles
+     */
+    private function createAdminUser(string $email, array $roles = ['ROLE_ADMIN']): AdminUser
     {
         $entityManager = $this->entityManager();
-        $user = new AdminUser($email, 'hash', ['ROLE_ADMIN']);
+        $user = new AdminUser($email, 'hash', $roles);
         $entityManager->persist($user);
         $entityManager->flush();
 

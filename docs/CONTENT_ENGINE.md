@@ -99,9 +99,35 @@ Snapshot хранит:
 создавать и отправлять страницы на review; SEO может approve; admin/super admin
 управляют публикацией, снятием, архивом, restore и rollback.
 
+## Structured Visual CMS Builder
+
+В админке используется **Structured Visual CMS Builder** (без GrapesJS):
+
+- страница состоит из управляемого списка блоков;
+- каждый блок хранится как JSON (`content` + `settings`) и валидируется на backend;
+- свободный HTML-конструктор и custom JS-блоки на первом этапе запрещены;
+- rich text допускается только через безопасный pipeline (TipTap + backend sanitize).
+
+Единый контракт блока:
+
+```json
+{
+  "id": "uuid",
+  "type": "hero.classic",
+  "enabled": true,
+  "position": 10,
+  "content": {},
+  "settings": {},
+  "metadata": {
+    "createdAt": "2026-05-09T00:00:00+00:00",
+    "updatedAt": "2026-05-09T00:00:00+00:00"
+  }
+}
+```
+
 ## Admin API
 
-API защищен admin firewall и предназначен для будущей Vue-админки.
+API защищен admin firewall и используется React + TypeScript админкой.
 
 ### Создать Страницу
 
@@ -154,6 +180,16 @@ API защищен admin firewall и предназначен для будущ�
 - `PUT /admin/api/content/blocks/{id}`
 - `POST /admin/api/content/pages/{pageId}/blocks/reorder`
 - `DELETE /admin/api/content/blocks/{id}`
+
+### Builder API (основной контракт для визуального редактора)
+
+- `GET /admin/api/content/pages/{id}/builder`
+- `PUT /admin/api/content/pages/{id}/builder`
+- `POST /admin/api/content/pages/{id}/builder/preview`
+- `POST /admin/api/content/pages/{id}/builder/publish`
+
+`PUT /builder` принимает массив блоков structured-контракта и синхронизирует
+состав/порядок/включенность блоков страницы атомарно.
 
 Для block type `text` и `text_image` в админке предусмотрен визуальный режим редактирования на базе Vue TipTap.
 Он работает поверх тех же полей `content/settings` и сохраняет HTML в `content.text` (JSONB) без изменения API-контракта.

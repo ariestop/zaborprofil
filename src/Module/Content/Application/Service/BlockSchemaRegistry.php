@@ -14,7 +14,7 @@ final readonly class BlockSchemaRegistry
      */
     public function all(): array
     {
-        return [
+        $schemas = [
             new BlockSchema(BlockType::Hero, 'Hero', 'Первый экран страницы.', ['title'], ['home', 'landing', 'service', 'seo_landing'], ['title' => '', 'text' => '', 'cta' => []], ['layout' => 'default'], 'MVP', 'high'),
             new BlockSchema(BlockType::Text, 'Text', 'Текстовый блок.', ['text'], ['text_page', 'material_landing'], ['title' => '', 'text' => ''], ['width' => 'prose'], 'MVP', 'medium'),
             new BlockSchema(BlockType::TextImage, 'Text + Image', 'Текст с изображением.', ['title', 'text'], ['service', 'material_landing', 'seo_landing'], ['title' => '', 'text' => '', 'image' => null, 'alt' => ''], ['imageSide' => 'right'], 'MVP', 'high'),
@@ -39,6 +39,31 @@ final readonly class BlockSchemaRegistry
             new BlockSchema(BlockType::ReviewCards, 'Review cards', 'Отзывы.', ['items'], ['home', 'landing'], ['items' => []], ['columns' => 3], 'Later', 'medium'),
             new BlockSchema(BlockType::Documents, 'Documents', 'Документы и сертификаты.', ['items'], ['material_landing', 'text_page'], ['items' => []], ['layout' => 'list'], 'Later', 'medium'),
         ];
+
+        $known = [];
+        foreach ($schemas as $schema) {
+            $known[$schema->type->value] = true;
+        }
+
+        foreach (BlockType::cases() as $type) {
+            if (isset($known[$type->value])) {
+                continue;
+            }
+
+            $schemas[] = new BlockSchema(
+                $type,
+                str_replace(['.', '-'], ' ', $type->value),
+                'Structured block',
+                [],
+                [],
+                [],
+                [],
+                'MVP',
+                'medium',
+            );
+        }
+
+        return $schemas;
     }
 
     public function get(BlockType $type): BlockSchema

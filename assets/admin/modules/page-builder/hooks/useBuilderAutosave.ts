@@ -1,17 +1,17 @@
 import { useEffect } from 'react'
-import type { BuilderSnapshot } from '../types'
+import type { BuilderBlock } from '../types'
 
 interface AutosaveOptions {
   pageId: string
-  snapshot: BuilderSnapshot
-  onAutosave: (pageId: string, snapshot: BuilderSnapshot) => Promise<void>
+  blocks: BuilderBlock[]
+  onAutosave: (pageId: string, blocks: BuilderBlock[]) => Promise<void>
   enabled?: boolean
   intervalMs?: number
 }
 
 export function useBuilderAutosave({
   pageId,
-  snapshot,
+  blocks,
   onAutosave,
   enabled = true,
   intervalMs = 30_000,
@@ -22,9 +22,9 @@ export function useBuilderAutosave({
     }
 
     const timer = window.setInterval(() => {
-      void onAutosave(pageId, snapshot)
+      void onAutosave(pageId, blocks)
     }, intervalMs)
 
     return () => window.clearInterval(timer)
-  }, [enabled, intervalMs, onAutosave, pageId, snapshot])
+  }, [blocks, enabled, intervalMs, onAutosave, pageId])
 }

@@ -10,13 +10,27 @@ use Twig\Error\Error;
 
 final readonly class TwigBlockRenderer
 {
+    /**
+     * @var array<string, string>
+     */
+    private const TEMPLATE_ALIASES = [
+        'hero.classic' => 'hero',
+        'rich-text' => 'text',
+        'features' => 'feature_grid',
+        'cta' => 'cta_form',
+        'contact-form' => 'contacts',
+        'price-table' => 'table',
+        'portfolio' => 'gallery',
+    ];
+
     public function __construct(private Environment $twig)
     {
     }
 
     public function render(PageBlockView $block): string
     {
-        $template = \sprintf('public/blocks/%s.html.twig', $block->type);
+        $templateType = self::TEMPLATE_ALIASES[$block->type] ?? $block->type;
+        $template = \sprintf('public/blocks/%s.html.twig', $templateType);
 
         try {
             return $this->twig->render($template, ['block' => $block]);

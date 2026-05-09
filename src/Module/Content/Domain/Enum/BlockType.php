@@ -6,6 +6,58 @@ namespace App\Module\Content\Domain\Enum;
 
 enum BlockType: string
 {
+    case Section = 'section';
+    case Container = 'container';
+    case Grid = 'grid';
+    case Columns = 'columns';
+    case Spacer = 'spacer';
+    case Divider = 'divider';
+    case Tabs = 'tabs';
+
+    case HeroClassic = 'hero.classic';
+    case HeroCentered = 'hero.centered';
+    case HeroSplit = 'hero.split';
+    case HeroWithImage = 'hero.with-image';
+    case HeroCta = 'hero.cta';
+    case HeroMinimal = 'hero.minimal';
+
+    case RichText = 'rich-text';
+    case TextWithImage = 'text-with-image';
+    case ArticleSection = 'article-section';
+    case Benefits = 'benefits';
+    case Features = 'features';
+    case IconsList = 'icons-list';
+
+    case BeforeAfterStructured = 'before-after';
+    case Slider = 'slider';
+
+    case Cta = 'cta';
+    case ContactForm = 'contact-form';
+    case LeadForm = 'lead-form';
+    case CallbackForm = 'callback-form';
+    case CalculatorPlaceholderStructured = 'calculator-placeholder';
+    case Pricing = 'pricing';
+    case Reviews = 'reviews';
+    case TrustBadges = 'trust-badges';
+
+    case FenceTypes = 'fence-types';
+    case Materials = 'materials';
+    case Portfolio = 'portfolio';
+    case WorksGallery = 'works-gallery';
+    case ServiceCards = 'service-cards';
+    case Advantages = 'advantages';
+    case InstallationSteps = 'installation-steps';
+    case PriceTable = 'price-table';
+    case ContactsMap = 'contacts-map';
+    case PartnerCta = 'partner-cta';
+
+    case Breadcrumbs = 'breadcrumbs';
+    case SitemapSection = 'sitemap-section';
+    case RelatedPages = 'related-pages';
+    case InternalLinks = 'internal-links';
+    case SchemaFaq = 'schema-faq';
+    case SchemaLocalBusiness = 'schema-local-business';
+
     case Hero = 'hero';
     case Text = 'text';
     case TextImage = 'text_image';

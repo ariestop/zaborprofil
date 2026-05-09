@@ -1,17 +1,15 @@
 import { useMemo, useState } from 'react'
-import type { BuilderSnapshot } from '../types'
+import type { BuilderBlock } from '../types'
 
-const EMPTY_SNAPSHOT: BuilderSnapshot = { html: '', css: '' }
-
-export function useBuilderDraft(initialSnapshot: BuilderSnapshot = EMPTY_SNAPSHOT) {
-  const [snapshot, setSnapshot] = useState(initialSnapshot)
+export function useBuilderDraft(initialBlocks: BuilderBlock[] = []) {
+  const [blocks, setBlocks] = useState<BuilderBlock[]>(initialBlocks)
   const [previewMode, setPreviewMode] = useState(false)
 
-  const isEmpty = useMemo(() => snapshot.html.trim() === '', [snapshot.html])
+  const isEmpty = useMemo(() => blocks.length === 0, [blocks.length])
 
   return {
-    snapshot,
-    setSnapshot,
+    blocks,
+    setBlocks,
     previewMode,
     setPreviewMode,
     isEmpty,

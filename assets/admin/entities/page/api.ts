@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiRequest } from '../../shared/api/client'
 import { adminQueryKeys, queryOptions } from '../../shared/api/query'
-import type { ContentBlockItem, ContentPageDetail, ContentPageItem, PageRevisionItem } from '../../types/api'
+import type { ContentPageDetail, ContentPageItem, PageRevisionItem } from '../../types/api'
+import type { BuilderBlock } from '../../modules/page-builder/types'
 
 export interface PageListResponse {
   pages: ContentPageItem[]
@@ -30,8 +31,6 @@ export interface PageUpdatePayload {
 }
 
 export type PageCreatePayload = PageUpdatePayload
-
-const BUILDER_BLOCK_TYPE = 'builder_canvas'
 
 function pagesQueryKey() {
   return adminQueryKeys.pages
@@ -123,85 +122,61 @@ export function useCreatePageMutation() {
   })
 }
 
-interface BuilderSnapshot {
-  html: string
-  css: string
-}
-
-interface UpsertBuilderCanvasArgs {
+export interface BuilderDocumentResponse {
   pageId: string
-  snapshot: BuilderSnapshot
-  existingBlock?: ContentBlockItem
+  updatedAt: string | null
+  blocks: BuilderBlock[]
 }
 
-export async function upsertBuilderCanvasBlock({
-  pageId,
-  snapshot,
-  existingBlock,
-}: UpsertBuilderCanvasArgs): Promise<ContentBlockItem> {
-  if (existingBlock !== undefined) {
-    return apiRequest<ContentBlockItem>(`/admin/api/content/blocks/${existingBlock.id}`, {
+export interface BuilderPreviewResponse {
+  html: string
+}
+
+export function usePageBuilderQuery(pageId: string) {
+  return useQuery(queryOptions(
+    ['admin', 'pages', pageId, 'builder'],
+    () => apiRequest<BuilderDocumentResponse>(`/admin/api/content/pages/${pageId}/builder`),
+  ))
+}
+
+export function useSavePageBuilderMutation(pageId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (blocks: BuilderBlock[]) => apiRequest<BuilderDocumentResponse>(`/admin/api/content/pages/${pageId}/builder`, {
       method: 'PUT',
-      body: {
-        type: existingBlock.type,
-        name: existingBlock.name,
-        content: {
-          ...existingBlock.content,
-          html: snapshot.html,
-          css: snapshot.css,
-        },
-        settings: existingBlock.settings,
-        isEnabled: existingBlock.isEnabled,
-        visibility: existingBlock.visibility,
-      },
-    })
-  }
-
-  return apiRequest<ContentBlockItem>(`/admin/api/content/pages/${pageId}/blocks`, {
-    method: 'POST',
-    body: {
-      type: BUILDER_BLOCK_TYPE,
-      name: 'Builder Canvas',
-      position: 0,
-      content: {
-        html: snapshot.html,
-        css: snapshot.css,
-      },
-      settings: {
-        source: 'page_builder',
-      },
-      isEnabled: true,
-      visibility: 'public',
+      body: { blocks },
+    }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin', 'pages', pageId, 'builder'] }),
+        queryClient.invalidateQueries({ queryKey: pageQueryKey(pageId) }),
+      ])
     },
   })
 }
 
-export async function reorderPageBlocks(pageId: string, blockIds: string[]): Promise<ContentBlockItem[]> {
-  const response = await apiRequest<{ blocks: ContentBlockItem[] }>(`/admin/api/content/pages/${pageId}/blocks/reorder`, {
+export async function previewPageBuilder(pageId: string, blocks: BuilderBlock[]): Promise<BuilderPreviewResponse> {
+  return apiRequest<BuilderPreviewResponse>(`/admin/api/content/pages/${pageId}/builder/preview`, {
     method: 'POST',
-    body: { blockIds },
+    body: { blocks },
   })
-
-  return response.blocks
 }
 
-export async function updateBlockRichText(block: ContentBlockItem, richText: string): Promise<ContentBlockItem> {
-  return apiRequest<ContentBlockItem>(`/admin/api/content/blocks/${block.id}`, {
-    method: 'PUT',
-    body: {
-      type: block.type,
-      name: block.name,
-      content: {
-        ...block.content,
-        richText,
-      },
-      settings: block.settings,
-      isEnabled: block.isEnabled,
-      visibility: block.visibility,
+export function usePublishPageBuilderMutation(pageId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => apiRequest<ContentPageItem>(`/admin/api/content/pages/${pageId}/builder/publish`, {
+      method: 'POST',
+      body: {},
+    }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin', 'pages', pageId, 'builder'] }),
+        queryClient.invalidateQueries({ queryKey: pageQueryKey(pageId) }),
+        queryClient.invalidateQueries({ queryKey: pagesQueryKey() }),
+      ])
     },
   })
-}
-
-export function findBuilderCanvasBlock(blocks: ContentBlockItem[]): ContentBlockItem | undefined {
-  return blocks.find((block) => block.type === BUILDER_BLOCK_TYPE)
 }
