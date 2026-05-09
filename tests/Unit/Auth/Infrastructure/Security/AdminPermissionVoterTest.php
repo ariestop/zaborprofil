@@ -28,4 +28,12 @@ final class AdminPermissionVoterTest extends TestCase
 
         self::assertSame(1, $voter->vote($token, null, [AdminPermission::USERS_MANAGE]));
     }
+
+    public function testAdminCanManageUsers(): void
+    {
+        $voter = new AdminPermissionVoter();
+        $token = new UsernamePasswordToken(new AdminUser('admin@example.test', 'hash', ['ROLE_ADMIN']), 'main', ['ROLE_ADMIN']);
+
+        self::assertSame(1, $voter->vote($token, null, [AdminPermission::USERS_MANAGE]));
+    }
 }

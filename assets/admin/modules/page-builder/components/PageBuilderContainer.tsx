@@ -8,11 +8,11 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import grapesjs from 'grapesjs'
-import 'grapesjs/dist/css/grapes.min.css'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '../../../shared/ui'
 import type { BuilderBlockDefinition, BuilderBlockItem, BuilderSnapshot, BuilderVersionRecord } from '../types'
+import { isPageBuilderEnabled } from '../runtime/feature-flags'
+import { loadGrapesJsRuntime, type GrapesJsEditor } from '../runtime/grapesjs-runtime-bridge'
 
 const RichTextEditor = lazy(async () => import('../../../features/rich-text/RichTextEditor').then((module) => ({ default: module.RichTextEditor })))
 
@@ -46,6 +46,7 @@ function SortableBlockRow({
       ref={setNodeRef}
       type="button"
       onClick={onSelect}
+      data-testid={`builder-block-row-${block.id}`}
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
@@ -76,8 +77,9 @@ export function PageBuilderContainer({
   onSaveRichText,
 }: PageBuilderContainerProps) {
   const canvasRef = useRef<HTMLDivElement | null>(null)
-  const editorRef = useRef<ReturnType<typeof grapesjs.init> | null>(null)
+  const editorRef = useRef<GrapesJsEditor | null>(null)
   const snapshotAppliedRef = useRef(false)
+  const [builderRuntimeDisabled, setBuilderRuntimeDisabled] = useState(!isPageBuilderEnabled())
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(blocks[0]?.id ?? null)
   const [richTextDraft, setRichTextDraft] = useState(
     typeof blocks[0]?.content.richText === 'string'
@@ -91,26 +93,46 @@ export function PageBuilderContainer({
       return
     }
 
-    const editor = grapesjs.init({
-      container: canvasRef.current,
-      fromElement: false,
-      storageManager: false,
-      height: '600px',
-      panels: { defaults: [] },
-      blockManager: { appendTo: '#gjs-block-registry' },
-    })
+    let mounted = true
 
-    editorRef.current = editor
+    void loadGrapesJsRuntime()
+      .then((runtime) => {
+        if (!mounted || canvasRef.current === null) {
+          return
+        }
 
-    editor.on('update', () => {
-      onSnapshotChange({
-        html: editor.getHtml(),
-        css: editor.getCss() ?? '',
+        if (runtime === null) {
+          setBuilderRuntimeDisabled(true)
+          return
+        }
+
+        const editor = runtime.init({
+          container: canvasRef.current,
+          fromElement: false,
+          storageManager: false,
+          height: '600px',
+          panels: { defaults: [] },
+          blockManager: { appendTo: '#gjs-block-registry' },
+        })
+
+        editorRef.current = editor
+
+        editor.on('update', () => {
+          onSnapshotChange({
+            html: editor.getHtml(),
+            css: editor.getCss() ?? '',
+          })
+        })
       })
-    })
+      .catch(() => {
+        if (mounted) {
+          setBuilderRuntimeDisabled(true)
+        }
+      })
 
     return () => {
-      editor.destroy()
+      mounted = false
+      editorRef.current?.destroy()
       editorRef.current = null
       snapshotAppliedRef.current = false
     }
@@ -162,6 +184,11 @@ export function PageBuilderContainer({
 
   return (
     <section className="space-y-4">
+      {builderRuntimeDisabled ? (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-100">
+          Builder runtime выключен фичефлагом `VITE_ADMIN_PAGE_BUILDER_ENABLED`.
+        </div>
+      ) : null}
       <div className="rounded-xl border border-dashed border-slate-300 p-6 dark:border-slate-700">
         <p className="text-sm font-semibold">GrapesJS runtime container</p>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -242,6 +269,7 @@ export function PageBuilderContainer({
                 <Button
                   type="button"
                   size="sm"
+                  data-testid="builder-save-richtext"
                   onClick={() => {
                     void onSaveRichText(selectedBlock.id, richTextDraft)
                   }}

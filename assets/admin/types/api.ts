@@ -224,3 +224,92 @@ export interface LeadItem {
   createdAt: string
   updatedAt: string
 }
+
+export interface SystemOverviewResponse extends SystemHealthResponse {
+  canManageDangerousActions: boolean
+}
+
+export interface SystemProcessStatusResponse {
+  host: string
+  environment: string
+  supportedActions: {
+    restart: string[]
+    reload: string[]
+  }
+  checkedAt: string
+}
+
+export interface SystemCommandResult {
+  action: string
+  command: string
+  exitCode: number
+  output: string
+  startedAt: string
+  finishedAt: string
+}
+
+export interface SystemLogsResponse {
+  channel: string
+  path: string
+  content: string
+  readAt: string
+}
+
+export interface SystemQueuesResponse {
+  transports: {
+    async: number
+    failed: number
+  }
+  checkedAt: string
+}
+
+export interface SystemCacheResponse {
+  adapter: string
+  namespace: string
+  checkedAt: string
+}
+
+export interface SystemDatabaseResponse {
+  databaseName: string
+  platform: string
+  serverVersion: string
+  connected: boolean
+  checkedAt: string
+}
+
+export interface SystemSecurityResponse {
+  csrfRequired: boolean
+  originCheckRequired: boolean
+  actor: {
+    identifier?: string
+    roles: string[]
+  }
+  dangerousActions: {
+    requiresRole: string
+    requiresConfirmToken: boolean
+    requiresAuditLog: boolean
+  }
+  checkedAt: string
+}
+
+export interface SystemBackupFile {
+  name: string
+  size: number
+  modifiedAt: string | null
+}
+
+export interface SystemBackupsResponse {
+  backupDirectory: string
+  latestBackup: SystemBackupFile | null
+  files: SystemBackupFile[]
+  checkedAt: string
+}
+
+export interface SystemDeployResponse {
+  release: string | null
+  commit: string | null
+  builtAt: string | null
+  deployedAt: string | null
+  releaseInfoPath: string
+  checkedAt: string
+}

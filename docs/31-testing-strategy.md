@@ -5,6 +5,7 @@
 - PHPUnit 12.
 - `symfony/browser-kit` + `symfony/css-selector` для functional.
 - `symfony/phpunit-bridge` для интеграции.
+- Playwright (`@playwright/test`) для browser smoke E2E admin-flow.
 - (целевое) `infection/infection` для mutation testing.
 
 ## Пирамида
@@ -20,7 +21,7 @@ flowchart TB
 | Unit | `tests/Unit/<Module>/...` | Domain entities, enums, value objects, application handlers с моками |
 | Integration | `tests/Integration/<Module>/...` | Doctrine repositories на тестовой БД, listeners, subscribers |
 | Functional | `tests/Functional/<Module>/...` | HTTP контроллеры через `WebTestCase` |
-| E2E сценарии | `tests/E2E/...` | эксплуатационные сценарии и ручные регрессионные чек-листы |
+| E2E сценарии | `tests/E2E/...`, `tests/e2e/...` | ручные чек-листы + browser smoke/regression для admin runtime |
 | Support | `tests/Support/...` | хелперы (`SchemaTestHelper`) |
 
 ## Naming
@@ -108,6 +109,19 @@ PHPUnit `createMock`/`createStub` — для interface, не для конкре
 
 Functional тесты на `/health`, `/sitemap.xml`, `/robots.txt`, `/admin/login` — обязательны. После любых изменений infrastructure они должны проходить.
 
+Для admin runtime дополнительно обязательны regression smoke-пути:
+
+- `/admin/pages` -> `/admin/pages/{id}` -> `/admin/pages/{id}/builder`;
+- builder save/reorder/rich-text update;
+- preview-link generation для страницы.
+- negative API contract smoke: невалидный payload возвращает `422` с validation details.
+
+Текущий Playwright слой организован через helper-модули:
+
+- `tests/e2e/helpers/admin.ts` — login + API mutations + runtime assertions;
+- `tests/e2e/helpers/selectors.ts` — централизованные UI selectors/labels;
+- `tests/e2e/helpers/fixtures.ts` — генерация deterministic payloads.
+
 ## SEO tests (целевое)
 
 - canonical присутствует на каждой публичной странице;
@@ -122,6 +136,10 @@ vendor/bin/phpunit
 make test
 make smoke          # release-readiness smoke checks
 make quality        # validate + syntax + cs + phpstan + rector + schema/lint + phpunit + smoke + npm build
+npm run typecheck
+npm run test:frontend
+npm run lint:admin
+npm run test:e2e:smoke
 ```
 
 В CI — `composer test` (см. composer.json scripts).
@@ -145,14 +163,19 @@ npm run test:frontend
 - [ ] Schema validate ok.
 - [ ] `lint:container`, `lint:twig` ok.
 - [ ] `php bin/console app:smoke:test` ok.
+- [ ] `npm run typecheck` ok.
+- [ ] `npm run test:frontend` ok.
+- [ ] `npm run lint:admin` ok.
+- [ ] `npm run test:e2e:smoke` ok.
 - [ ] `npm run build` ok.
+- [ ] `npm run check:chunks` ok.
 
 ## Что проверять при новой фиче
 
 - [ ] Unit-тест на domain entity / enum / value object.
 - [ ] Unit-тест на application handler.
 - [ ] Integration-тест на repository, если новый.
-- [ ] Functional-тест на новый endpoint (200/401/403/404/422).
+- [ ] Functional-тест на новый endpoint (200 + edge-cases 401/403/404/422).
 - [ ] Subscriber/listener покрыт тестом.
 - [ ] Logging покрыт (если критично).
 - [ ] Edge case: empty input, big input, invalid input.

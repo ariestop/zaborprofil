@@ -49,6 +49,16 @@ final class AdminSpaShellTest extends WebTestCase
         self::assertSelectorExists('meta[name="admin-csrf-token"]');
     }
 
+    public function testAnonymousUserIsRedirectedToLoginForAdminShellRoute(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+
+        $client->request('GET', '/admin/pages');
+
+        self::assertResponseRedirects('/admin/login');
+    }
+
     #[DataProvider('spaShellRoutesProvider')]
     public function testAdminSpaShellRendersForNewFoundationRoutes(string $path): void
     {

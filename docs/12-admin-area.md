@@ -29,6 +29,12 @@
 
 Права (`AdminPermission`): `pages.view`, `pages.create`, `pages.edit`, `pages.publish`, `pages.delete`, `seo.edit`, `media.upload`, `media.delete`, `leads.view`, `leads.manage`, `settings.edit`, `users.manage`, `system.view`, `system.manage`.
 
+Для опасных системных операций введено отдельное разрешение `system.dangerous`:
+
+- `system.view` — чтение разделов System Center (доступно `ROLE_ADMIN`, `ROLE_SUPER_ADMIN`);
+- `system.manage` — стандартные mutating-операции;
+- `system.dangerous` — restart/reload/clear-cache/retry-failed/remove-failed (только `ROLE_SUPER_ADMIN`).
+
 Проверка прав — централизованная через `AdminPermissionVoter`. В контроллере:
 
 ```php
@@ -80,9 +86,25 @@ Admin API использует **double-submit CSRF**:
 
 ## System разделы (фактическое состояние)
 
-- `/admin/system/health` + `GET /admin/api/system/health` — health center.
-- `/admin/system/maintenance` + `GET/POST /admin/api/system/maintenance/*` — maintenance mode.
-- `/admin/system/audit` + `GET /admin/api/system/audit` — audit log критичных действий (`Page`, `PageBlock`, `Setting`, `Redirect`).
+- `/admin/system` + `GET /admin/api/system/overview` — обзор системы.
+- `/admin/system/processes` + `GET/POST /admin/api/system/processes*` — процессы и сервисы.
+- `/admin/system/logs` + `GET /admin/api/system/logs` — системные логи.
+- `/admin/system/queues` + `GET/POST /admin/api/system/queues*` — очереди Symfony Messenger.
+- `/admin/system/cache` + `GET/POST /admin/api/system/cache*` — кэш.
+- `/admin/system/database` + `GET /admin/api/system/database` — состояние БД.
+- `/admin/system/security` + `GET /admin/api/system/security` + `POST /admin/api/system/security/confirm-token` — security posture и confirm token для опасных действий.
+- `/admin/system/backups` + `GET /admin/api/system/backups` — статус бэкапов.
+- `/admin/system/deploy` + `GET /admin/api/system/deploy` — deploy/release info.
+- `/admin/system/audit` + `GET /admin/api/system/audit` — аудит действий админов.
+
+Legacy endpoint аудита сохранён по `GET /admin/api/system/audit/legacy`.
+
+### Confirm flow для опасных действий
+
+1. UI показывает пользователю confirm-диалог.
+2. После подтверждения frontend запрашивает `POST /admin/api/system/security/confirm-token` с `action`.
+3. Полученный `confirmToken` отправляется в dangerous endpoint.
+4. Backend валидирует токен (одноразовый, TTL, привязка к actor/action), проверяет `system.dangerous`, выполняет только whitelist-команду и пишет audit `attempt/success/failure`.
 
 ## Что НЕЛЬЗЯ в admin area
 

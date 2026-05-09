@@ -49,9 +49,10 @@ final class AdminPermissionVoter extends Voter
         AdminPermission::CATALOG_VIEW => ['ROLE_EDITOR', 'ROLE_MANAGER', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
         AdminPermission::CATALOG_MANAGE => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
         AdminPermission::SETTINGS_EDIT => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
-        AdminPermission::USERS_MANAGE => ['ROLE_SUPER_ADMIN'],
+        AdminPermission::USERS_MANAGE => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
         AdminPermission::SYSTEM_VIEW => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
         AdminPermission::SYSTEM_MANAGE => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+        AdminPermission::SYSTEM_DANGEROUS => ['ROLE_SUPER_ADMIN'],
     ];
 
     protected function supports(string $attribute, mixed $subject): bool

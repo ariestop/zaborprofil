@@ -34,10 +34,10 @@ assets/admin/
 
 ## Совместимость
 
-Легаси-файлы старой структуры (`views/`, `components/`) сохраняются на переходный период.
-Новые реализации должны идти через новую структуру и постепенно вытеснять старые части без больших одномоментных миграций.
+Легаси-файлы старой структуры уже выведены из эксплуатации.
+Новые реализации добавляются только в слои новой структуры (`app/routes/layouts/pages/modules/features/entities/widgets/shared`).
 
-## Migration status (Этап 2)
+## Migration status (Этап 3)
 
 - `pages/*` теперь содержат реальные API-backed экраны для:
   - `Pages` (TanStack Table);
@@ -46,3 +46,15 @@ assets/admin/
   - `PageBuilder` (GrapesJS runtime + DnD + bridge).
 - Легаси `views/*`, `router/index.ts` и `components/AdminShell.tsx` удалены.
 - Основной runtime-путь админки: `app/AdminApp.tsx` + `routes/index.tsx` + `layouts/AdminShellLayout.tsx`.
+- Добавлен hardened prefetch-слой:
+  - idle-first prefetch для вероятных переходов (`routes/prefetch.ts`);
+  - bounded concurrency (ограничение параллельных prefetch задач);
+  - network/device-aware деградация (slow network/save-data/low-end устройство -> более консервативный prefetch);
+  - hover/focus prefetch на sidebar навигации.
+
+## Quality gates для frontend слоя
+
+- Обязательный `npm run typecheck`.
+- Обязательный `npm run test:frontend`.
+- Scoped lint для admin runtime: `npm run lint:admin`.
+- Build guardrail по размерам критичных чанков: `npm run check:chunks`.

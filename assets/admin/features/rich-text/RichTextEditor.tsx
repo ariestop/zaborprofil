@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import TiptapRichTextEditor from '../../components/TiptapRichTextEditor'
 import { ToolbarFoundation } from './ToolbarFoundation'
 
@@ -9,10 +9,6 @@ interface RichTextEditorProps {
 
 export function RichTextEditor({ initialValue = '<p>Контент страницы</p>', onChange }: RichTextEditorProps) {
   const [value, setValue] = useState(initialValue)
-
-  useEffect(() => {
-    setValue(initialValue)
-  }, [initialValue])
 
   return (
     <section>

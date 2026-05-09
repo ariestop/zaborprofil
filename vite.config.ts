@@ -29,16 +29,8 @@ export default defineConfig({
             return
           }
 
-          if (id.includes('grapesjs')) {
-            return 'vendor-grapesjs'
-          }
-
-          if (id.includes('@tiptap') || id.includes('prosemirror') || id.includes('lowlight')) {
-            return 'vendor-tiptap'
-          }
-
-          if (id.includes('recharts') || id.includes('d3-')) {
-            return 'vendor-charts'
+          if (id.includes('@tanstack/react-query') || id.includes('@tanstack/query-core')) {
+            return 'vendor-query'
           }
 
           if (id.includes('@tanstack/react-table')) {
@@ -47,6 +39,38 @@ export default defineConfig({
 
           if (id.includes('@dnd-kit')) {
             return 'vendor-dnd'
+          }
+
+          if (id.includes('react-hook-form') || id.includes('@hookform/resolvers') || id.includes('/zod/')) {
+            return 'vendor-forms'
+          }
+
+          if (id.includes('recharts') || id.includes('/d3-')) {
+            return 'vendor-charts'
+          }
+
+          if (id.includes('grapesjs')) {
+            return 'vendor-grapesjs'
+          }
+
+          if (id.includes('backbone') || id.includes('underscore') || id.includes('grapesjs-parser-postcss')) {
+            return 'vendor-grapesjs-legacy'
+          }
+
+          if (id.includes('@tiptap')) {
+            return 'vendor-tiptap'
+          }
+
+          if (id.includes('prosemirror')) {
+            return 'vendor-prosemirror'
+          }
+
+          if (id.includes('lowlight') || id.includes('highlight.js')) {
+            return 'vendor-highlight'
+          }
+
+          if (id.includes('lodash.throttle')) {
+            return 'vendor-utils'
           }
 
           return

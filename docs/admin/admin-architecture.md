@@ -32,6 +32,32 @@ Shell отвечает за:
 - глобальные системные паттерны (error boundary, loading fallback, toasts, dialogs);
 - foundation для command palette, global search и dark/light mode.
 
+## System Center foundation
+
+В admin-shell добавлен модуль `System Center` (`/admin/system/*`) с 10 подразделами:
+
+1. Обзор системы
+2. Процессы и сервисы
+3. Логи
+4. Очереди Symfony Messenger
+5. Кэш
+6. База данных
+7. Безопасность
+8. Бэкапы
+9. Деплой
+10. Аудит действий админов
+
+Backend API реализован под `/admin/api/system/*` через отдельные контроллеры `System*Controller` и сервисы `*Service`.
+
+Ключевые ограничения:
+
+- frontend не передаёт произвольные shell-команды;
+- опасные действия выполняются только через backend whitelist-команд;
+- все mutating-запросы требуют CSRF + Origin;
+- для dangerous действий обязателен одноразовый `confirmToken` (TTL + actor/action binding);
+- dangerous actions доступны только `ROLE_SUPER_ADMIN` (`system.dangerous`);
+- каждое системное действие логируется в audit log (attempt/success/failure).
+
 ## Symfony integration points
 
 - Twig shell template: `templates/admin/dashboard.html.twig`.
@@ -39,18 +65,29 @@ Shell отвечает за:
 - Security/session/access control: `config/packages/security.yaml`.
 - CSRF для mutating API-запросов: `src/Module/Admin/Infrastructure/Http/AdminApiCsrfSubscriber.php`.
 
-## Статус Этапа 2
+## Статус Этапа 3 (stabilization)
 
-Реализовано в текущем этапе:
+Реализовано:
 
 - GrapesJS runtime для `PageBuilder`;
 - TanStack Table для страниц/пользователей/CRM;
 - dnd-kit для reorder блоков в builder;
 - Recharts виджет на dashboard;
 - доменные API hooks в `entities/*`.
+- Functional regression для admin API edge-cases: 401/403/404/422 + csrf/origin/session.
+- Regression flow-тест editor-пути: pages -> detail -> builder -> reorder -> rich-text -> preview.
+- Усиленный CI frontend gate: отдельные `typecheck`, `test:frontend`, `lint:admin`, chunk budgets.
+- Prefetch policy с network/device-aware деградацией и bounded concurrency.
 
-Остаётся на следующий шаг:
+## Release readiness checklist
 
-- расширение e2e/регрессионных тестов builder+editors;
-- полный вывод из эксплуатации legacy `views/*` и старых component flows;
-- расширение аналитики dashboard и server-side фильтров таблиц.
+- [ ] Backend CI зелёный (`composer check:*`, migrations, schema validate, phpunit, smoke).
+- [ ] Frontend CI зелёный (`npm run typecheck`, `npm run test:frontend`, `npm run lint:admin`, `npm run build`, `npm run check:chunks`).
+- [ ] Ручная проверка критичных путей: login, pages list/detail, builder save/reorder/rich-text, preview.
+- [ ] Legacy-ссылки на `views/*`/старый router отсутствуют в коде и docs.
+- [ ] Известные ограничения и rollback-план актуализированы перед merge.
+
+## Known limitations
+
+- Browser smoke E2E на Playwright подключён только для критичного admin-flow; расширенные editor regression кейсы пока остаются в ручных чек-листах `tests/E2E`.
+- Dashboard analytics пока закрывает только базовый виджет; расширенная бизнес-аналитика запланирована отдельно.

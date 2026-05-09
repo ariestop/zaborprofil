@@ -36,6 +36,7 @@ final class AdminPermission
     public const string USERS_MANAGE = 'users.manage';
     public const string SYSTEM_VIEW = 'system.view';
     public const string SYSTEM_MANAGE = 'system.manage';
+    public const string SYSTEM_DANGEROUS = 'system.dangerous';
 
     /**
      * @return list<string>
@@ -73,6 +74,7 @@ final class AdminPermission
             self::USERS_MANAGE,
             self::SYSTEM_VIEW,
             self::SYSTEM_MANAGE,
+            self::SYSTEM_DANGEROUS,
         ];
     }
 }

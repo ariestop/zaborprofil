@@ -54,6 +54,19 @@ services:
         arguments:
             $command: '%app.asset_build_command%'
 
+    App\Module\Admin\Application\Service\WhitelistCommandRunner:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
+            $environment: '%kernel.environment%'
+
+    App\Module\Admin\Application\Service\CacheManagerService:
+        arguments:
+            $appCache: '@cache.app'
+
+    App\Module\Admin\Application\Service\DeployInfoService:
+        arguments:
+            $releaseInfoPath: '%app.release_info_path%'
+
     App\Module\Seo\Domain\Repository\RedirectRepositoryInterface:
         alias: App\Module\Seo\Infrastructure\Doctrine\Repository\DoctrineRedirectRepository
 

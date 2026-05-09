@@ -10,13 +10,13 @@ import { applyServerValidationErrors } from '../shared/api/validation'
 
 const assignRoleSchema = z.object({
   email: z.string().email('Укажите корректный email'),
-  role: z.enum(['ROLE_ADMIN', 'ROLE_EDITOR', 'ROLE_SEO']),
+  role: z.enum(['ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_EDITOR', 'ROLE_SEO']),
 })
 
 type AssignRoleFormData = z.infer<typeof assignRoleSchema>
 
 export default function UsersPage() {
-  const [role, setRole] = useState<'ROLE_ADMIN' | 'ROLE_EDITOR' | 'ROLE_SEO'>('ROLE_EDITOR')
+  const [role, setRole] = useState<'ROLE_SUPER_ADMIN' | 'ROLE_ADMIN' | 'ROLE_EDITOR' | 'ROLE_SEO'>('ROLE_EDITOR')
   const usersQuery = useAdminUsersQuery()
   const updateRolesMutation = useUpdateUserRolesMutation()
   const { push } = useToast()
@@ -91,11 +91,12 @@ export default function UsersPage() {
           <Select
             value={role}
             onValueChange={(nextValue) => {
-              const nextRole = nextValue as 'ROLE_ADMIN' | 'ROLE_EDITOR' | 'ROLE_SEO'
+              const nextRole = nextValue as 'ROLE_SUPER_ADMIN' | 'ROLE_ADMIN' | 'ROLE_EDITOR' | 'ROLE_SEO'
               setRole(nextRole)
               form.setValue('role', nextRole)
             }}
             options={[
+              { value: 'ROLE_SUPER_ADMIN', label: 'Суперадминистратор' },
               { value: 'ROLE_ADMIN', label: 'Администратор' },
               { value: 'ROLE_EDITOR', label: 'Редактор' },
               { value: 'ROLE_SEO', label: 'SEO' },

@@ -45,7 +45,24 @@
 2. Setup Node 25.9.0.
 3. `npm ci`.
 4. `npm audit --audit-level=high`.
-5. `npm run build` (включает `tsc --noEmit`).
+5. `npm run typecheck`.
+6. `npm run test:frontend`.
+7. `npm run lint:admin`.
+8. `npm run build`.
+9. `npm run check:chunks`.
+
+#### E2E Smoke job
+
+Дополнительно запускается `E2E Smoke` job:
+
+1. Поднимает Postgres/Redis services.
+2. Применяет migrations в `test` env.
+3. Создаёт e2e admin user через `tools/testing/seed-e2e-admin.php`.
+4. Собирает frontend.
+5. Поднимает встроенный PHP server (`php -S`) на `127.0.0.1:8000`.
+6. Устанавливает Chromium (`npx playwright install --with-deps chromium`).
+7. Запускает `npm run test:e2e:smoke` (happy-path + mutation smoke + negative 422 contract check).
+8. При падении публикует Playwright artifacts (`test-results`, `playwright-report`, app server log).
 
 ### `.github/workflows/deploy.yml`
 
@@ -107,7 +124,12 @@ GitHub Environments дают:
 - PHPUnit (Postgres).
 - `app:smoke:test` для базовой release readiness.
 - npm audit.
-- npm/Vite build (включая `tsc --noEmit`).
+- Frontend typecheck как отдельный quality gate.
+- Frontend unit tests (`test:frontend`).
+- Scoped admin lint (`lint:admin`).
+- npm/Vite build.
+- Budget guardrail по критичным admin chunks (`check:chunks`).
+- Browser smoke regression admin-flow (`test:e2e:smoke`).
 
 ## Что НЕ автоматизировано (целевое)
 
