@@ -9,7 +9,7 @@ export function AdminShellLayout() {
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <Topbar />
-      <div className="mx-auto grid max-w-7xl grid-cols-[260px_1fr] gap-6 px-4 py-6 lg:px-6">
+      <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 lg:px-6">
         <SidebarNav />
         <main className="space-y-4">
           <Breadcrumbs />

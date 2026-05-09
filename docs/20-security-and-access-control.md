@@ -92,6 +92,7 @@ public function publish(...) {}
 
 - Login form — Symfony `enable_csrf: true`.
 - Logout — `enable_csrf: true`.
+- Для неудачных входов на `admin_login` логируется диагностическое событие `Admin login rejected...` с контекстом `Origin/Referer/Host`, чтобы быстрее находить проблемы same-origin и reverse proxy.
 - Admin JSON API — double-submit:
   - токен `admin_api` рендерится в `<meta name="admin-csrf-token">`;
   - React SPA шлёт `X-CSRF-Token`;

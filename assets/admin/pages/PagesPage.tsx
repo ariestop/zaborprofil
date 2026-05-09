@@ -1,11 +1,15 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { createColumnHelper } from '@tanstack/react-table'
-import { PageHeader, Card, DataTable, ErrorState, PageLoadingState } from '../shared/ui'
-import { usePagesQuery } from '../entities/page/api'
+import { PageHeader, Card, DataTable, ErrorState, PageLoadingState, Button } from '../shared/ui'
+import { useCreatePageMutation, usePagesQuery } from '../entities/page/api'
 import type { ContentPageItem } from '../types/api'
+import { useToast } from '../app/providers/toast-provider'
 
 export default function PagesPage() {
+  const navigate = useNavigate()
+  const { push } = useToast()
   const pagesQuery = usePagesQuery()
+  const createPageMutation = useCreatePageMutation()
   const columnHelper = createColumnHelper<ContentPageItem>()
   const columns = [
     columnHelper.accessor('slug', { header: 'Slug' }),
@@ -38,11 +42,48 @@ export default function PagesPage() {
     )
   }
 
+  const createPage = async (): Promise<void> => {
+    const suffix = Date.now().toString(36)
+    const slug = `new-page-${suffix}`
+
+    try {
+      const createdPage = await createPageMutation.mutateAsync({
+        type: 'landing',
+        title: `Новая страница ${suffix}`,
+        slug,
+        path: `/${slug}/`,
+        h1: `Новая страница ${suffix}`,
+        template: 'default',
+        sortOrder: 0,
+        isIndexable: true,
+        parentId: null,
+        visibility: 'public',
+      })
+
+      push({
+        title: 'Страница создана',
+        description: 'Открываю редактирование новой страницы.',
+      })
+
+      navigate(`/admin/pages/${createdPage.id}`)
+    } catch (_error) {
+      push({
+        title: 'Не удалось создать страницу',
+        description: 'Проверьте доступ pages.create и попробуйте снова.',
+      })
+    }
+  }
+
   return (
     <div>
       <PageHeader
         title="Pages"
         description="Управление страницами через TanStack Table и backend API."
+        actions={(
+          <Button type="button" onClick={createPage} disabled={createPageMutation.isPending}>
+            {createPageMutation.isPending ? 'Создание...' : 'Создать страницу'}
+          </Button>
+        )}
       />
       <Card>
         <DataTable columns={columns} data={pagesQuery.data ?? []} />

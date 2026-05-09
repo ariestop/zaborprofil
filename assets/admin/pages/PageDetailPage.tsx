@@ -1,10 +1,10 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { PageHeader, Card, Button, Dialog, ErrorState, Input, Select, PageLoadingState, Switch } from '../shared/ui'
-import { usePageDetailQuery, useUpdatePageMutation } from '../entities/page/api'
+import { PageHeader, Card, Button, ErrorState, Input, Select, PageLoadingState, Switch } from '../shared/ui'
+import { usePageDetailQuery, usePublishPageMutation, useUpdatePageMutation } from '../entities/page/api'
 import { useToast } from '../app/providers/toast-provider'
 import { applyServerValidationErrors } from '../shared/api/validation'
 import { preloadBuilderOnIntent } from '../routes/prefetch'
@@ -29,9 +29,9 @@ type PageFormData = z.infer<typeof pageSchema>
 export default function PageDetailPage() {
   const { id = 'unknown' } = useParams()
   const { push } = useToast()
-  const [isBuilderOpen, setBuilderOpen] = useState(false)
   const pageQuery = usePageDetailQuery(id)
   const updateMutation = useUpdatePageMutation(id)
+  const publishMutation = usePublishPageMutation(id)
   const form = useForm<PageFormData>({
     resolver: zodResolver(pageSchema),
     defaultValues: {
@@ -88,6 +88,22 @@ export default function PageDetailPage() {
     }
   })
 
+  const publish = async (): Promise<void> => {
+    try {
+      await publishMutation.mutateAsync()
+      push({
+        title: 'Страница опубликована',
+        description: 'Публичная версия страницы обновлена.',
+      })
+      await pageQuery.refetch()
+    } catch (_error) {
+      push({
+        title: 'Ошибка публикации',
+        description: 'Проверьте права pages.publish и попробуйте снова.',
+      })
+    }
+  }
+
   if (pageQuery.isPending) {
     return <PageLoadingState />
   }
@@ -109,49 +125,16 @@ export default function PageDetailPage() {
         title={`Page: ${id}`}
         description="Foundation-экран редактирования страницы. Layout и блоки будут редактироваться отдельно в Builder."
         actions={(
-          <button
-            type="button"
+          <a
+            href={builderPath}
             className="inline-flex h-10 items-center rounded-lg bg-emerald-600 px-4 text-sm font-medium text-white hover:bg-emerald-700"
             onMouseEnter={preloadBuilderOnIntent}
             onFocus={preloadBuilderOnIntent}
-            onClick={() => setBuilderOpen(true)}
           >
-            Открыть Builder
-          </button>
+            Перейти в Builder
+          </a>
         )}
       />
-      <Dialog
-        open={isBuilderOpen}
-        onOpenChange={setBuilderOpen}
-        title={`Builder: ${id}`}
-        description="Builder открывается в pop-up и закрывается только кнопкой."
-        contentClassName="max-w-[96vw]"
-        closeOnInteractOutside={false}
-        closeOnEscape={false}
-      >
-        <div className="space-y-3">
-          <div className="h-[78vh] overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
-            <iframe
-              title={`page-builder-${id}`}
-              src={builderPath}
-              className="h-full w-full bg-white"
-            />
-          </div>
-          <div className="flex items-center justify-end gap-2">
-            <a
-              href={builderPath}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex h-9 items-center rounded-lg border border-slate-300 px-3 text-sm hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
-            >
-              Открыть в новой вкладке
-            </a>
-            <Button type="button" onClick={() => setBuilderOpen(false)}>
-              Закрыть
-            </Button>
-          </div>
-        </div>
-      </Dialog>
       <Card title="Основные поля страницы">
         <form className="grid gap-3 md:grid-cols-2" onSubmit={submit}>
           <Input placeholder="type" {...form.register('type')} />
@@ -184,9 +167,23 @@ export default function PageDetailPage() {
             />
           </div>
           <div className="md:col-span-2">
-            <Button type="submit" disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? 'Сохранение...' : 'Сохранить страницу'}
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button type="submit" disabled={updateMutation.isPending}>
+                {updateMutation.isPending ? 'Сохранение...' : 'Сохранить страницу'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={publish}
+                disabled={publishMutation.isPending || pageQuery.data.status === 'published'}
+              >
+                {publishMutation.isPending
+                  ? 'Публикация...'
+                  : pageQuery.data.status === 'published'
+                    ? 'Опубликовано'
+                    : 'Опубликовать'}
+              </Button>
+            </div>
           </div>
         </form>
       </Card>
