@@ -624,6 +624,30 @@ export default function ContentPagesView() {
     }
   }
 
+  const deletePage = async (): Promise<void> => {
+    if (!selected || statusChanging !== null) return
+
+    const confirmed = window.confirm(`Удалить страницу "${selected.title}"?`)
+    if (!confirmed) {
+      return
+    }
+
+    setError(null)
+    setStatusChanging('deleted')
+    try {
+      await apiRequest<ContentPageItem>(`/admin/api/content/pages/${selected.id}/status`, {
+        method: 'PATCH',
+        body: { status: 'deleted' },
+      })
+      await loadPages()
+      resetPageForm()
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Не удалось удалить страницу')
+    } finally {
+      setStatusChanging(null)
+    }
+  }
+
   const buildPreviewLink = async (): Promise<void> => {
     if (!selected) return
     const response = await apiRequest<{ previewUrl: string }>(`/admin/api/content/pages/${selected.id}/preview-link`)
@@ -803,6 +827,18 @@ export default function ContentPagesView() {
                   {statusChanging === status ? '...' : statusLabel(status)}
                 </button>
               ))}
+              {selected && selected.status !== 'deleted' && (
+                <button
+                  type="button"
+                  className="rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={statusChanging !== null}
+                  onClick={() => {
+                    void deletePage()
+                  }}
+                >
+                  {statusChanging === 'deleted' ? 'Удаление...' : 'Удалить страницу'}
+                </button>
+              )}
               {selected && <button type="button" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" onClick={() => { void buildPreviewLink() }}>Предпросмотр</button>}
               {previewUrl && <a href={previewUrl} target="_blank" rel="noreferrer" className="text-sm font-medium text-emerald-700">Открыть предпросмотр</a>}
               {selected && <button type="button" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" onClick={() => { void runSeoAudit() }}>Проверить SEO</button>}

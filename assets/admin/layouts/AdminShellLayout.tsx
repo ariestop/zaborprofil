@@ -4,6 +4,7 @@ import { Topbar } from './Topbar'
 import { Breadcrumbs } from './Breadcrumbs'
 import { CommandPaletteDialog } from '../widgets/CommandPaletteDialog'
 import { GlobalSearchDialog } from '../widgets/GlobalSearchDialog'
+import AssetBuildWidget from '../components/AssetBuildWidget'
 
 export function AdminShellLayout() {
   return (
@@ -20,6 +21,7 @@ export function AdminShellLayout() {
       </div>
       <CommandPaletteDialog />
       <GlobalSearchDialog />
+      <AssetBuildWidget />
     </div>
   )
 }

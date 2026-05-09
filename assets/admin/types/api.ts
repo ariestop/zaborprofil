@@ -67,6 +67,12 @@ export interface MaintenanceStatus {
 export interface AssetBuildStatus {
   status: 'idle' | 'running' | 'success' | 'failed'
   command: string
+  selectedTargets: string[]
+  availableTargets: Array<{
+    id: string
+    label: string
+    description: string
+  }>
   startedAt: string | null
   finishedAt: string | null
   exitCode: number | null

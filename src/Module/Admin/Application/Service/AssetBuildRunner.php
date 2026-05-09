@@ -12,6 +12,9 @@ final readonly class AssetBuildRunner
 {
     private const string DEFAULT_COMMAND = 'npm run build';
     private const int MAX_LOG_BYTES = 40000;
+    private const string TARGET_ALL = 'all';
+    private const string TARGET_SITE = 'site';
+    private const string TARGET_ADMIN = 'admin';
 
     private string $projectDir;
     private string $command;
@@ -56,9 +59,11 @@ final readonly class AssetBuildRunner
     }
 
     /**
+     * @param list<string> $requestedTargets
+     *
      * @return array<string, mixed>
      */
-    public function start(): array
+    public function start(array $requestedTargets = []): array
     {
         $currentStatus = $this->status();
         if ($currentStatus['status'] === 'running') {
@@ -66,20 +71,23 @@ final readonly class AssetBuildRunner
         }
 
         $this->ensureStateDir();
+        $selectedTargets = $this->normalizeRequestedTargets($requestedTargets);
+        $command = $this->commandForTargets($selectedTargets);
 
         $startedAt = (new DateTimeImmutable())->format(DATE_ATOM);
         $initialStatus = [
             'status' => 'running',
-            'command' => $this->command,
+            'command' => $command,
             'startedAt' => $startedAt,
             'finishedAt' => null,
             'exitCode' => null,
             'pid' => null,
+            'selectedTargets' => $selectedTargets,
         ];
 
-        file_put_contents($this->logPath, \sprintf("Запуск %s...\n", $this->command), \LOCK_EX);
+        file_put_contents($this->logPath, \sprintf("Запуск %s...\n", $command), \LOCK_EX);
         $this->writeStatus($initialStatus);
-        $this->writeRunnerScript($startedAt);
+        $this->writeRunnerScript($startedAt, $command, $selectedTargets);
 
         $pid = $this->startBackgroundProcess();
         if ($pid <= 0) {
@@ -127,6 +135,7 @@ final readonly class AssetBuildRunner
                 'finishedAt' => null,
                 'exitCode' => null,
                 'pid' => null,
+                'selectedTargets' => [self::TARGET_ALL],
             ];
         }
 
@@ -139,6 +148,7 @@ final readonly class AssetBuildRunner
                 'finishedAt' => null,
                 'exitCode' => null,
                 'pid' => null,
+                'selectedTargets' => [self::TARGET_ALL],
             ];
         }
 
@@ -186,7 +196,10 @@ final readonly class AssetBuildRunner
         return '[...лог обрезан до последних ' . self::MAX_LOG_BYTES . " байт...]\n" . (string) $logs;
     }
 
-    private function writeRunnerScript(string $startedAt): void
+    /**
+     * @param list<string> $selectedTargets
+     */
+    private function writeRunnerScript(string $startedAt, string $command, array $selectedTargets): void
     {
         $script = <<<'SH'
 #!/bin/sh
@@ -233,7 +246,7 @@ else
 fi
 
 cat > __STATUS_TMP_PATH__ <<EOF
-{"status":"$state","command":"__STATUS_COMMAND__","startedAt":"__STARTED_AT__","finishedAt":"$finished_at","exitCode":$exit_code,"pid":null}
+{"status":"$state","command":"__STATUS_COMMAND__","selectedTargets":__STATUS_TARGETS_JSON__,"startedAt":"__STARTED_AT__","finishedAt":"$finished_at","exitCode":$exit_code,"pid":null}
 EOF
 mv __STATUS_TMP_PATH__ __STATUS_PATH__
 exit "$exit_code"
@@ -244,9 +257,10 @@ SH;
             '__STATE_DIR__' => escapeshellarg($this->stateDir),
             '__NPM_CACHE_DIR__' => escapeshellarg($this->stateDir . '/npm-cache'),
             '__LOG_PATH__' => escapeshellarg($this->logPath),
-            '__BUILD_COMMAND__' => $this->command,
-            '__REQUIRES_NPM__' => str_starts_with($this->command, 'npm') ? '1' : '0',
-            '__STATUS_COMMAND__' => addcslashes($this->command, "\\\"\n\r\t"),
+            '__BUILD_COMMAND__' => $command,
+            '__REQUIRES_NPM__' => $this->requiresNpmCommand($command) ? '1' : '0',
+            '__STATUS_COMMAND__' => addcslashes($command, "\\\"\n\r\t"),
+            '__STATUS_TARGETS_JSON__' => json_encode($selectedTargets, \JSON_THROW_ON_ERROR),
             '__STATUS_TMP_PATH__' => escapeshellarg($this->statusPath . '.tmp'),
             '__STATUS_PATH__' => escapeshellarg($this->statusPath),
             '__STARTED_AT__' => $startedAt,
@@ -291,16 +305,126 @@ SH;
     private function withRuntimeFields(array $status, string $logs): array
     {
         $state = \is_string($status['status'] ?? null) ? $status['status'] : 'idle';
+        $selectedTargets = $this->normalizeTargetsFromStatus($status['selectedTargets'] ?? [self::TARGET_ALL]);
+        $command = \is_string($status['command'] ?? null) && trim((string) $status['command']) !== ''
+            ? (string) $status['command']
+            : $this->commandForTargets($selectedTargets);
 
         return [
             'status' => \in_array($state, ['idle', 'running', 'success', 'failed'], true) ? $state : 'idle',
-            'command' => $this->command,
+            'command' => $command,
+            'selectedTargets' => $selectedTargets,
+            'availableTargets' => $this->availableTargets(),
             'startedAt' => $status['startedAt'] ?? null,
             'finishedAt' => $status['finishedAt'] ?? null,
             'exitCode' => $status['exitCode'] ?? null,
             'progress' => $this->progress($state, $logs),
             'logs' => $logs,
         ];
+    }
+
+    /**
+     * @return list<array{id: string, label: string, description: string}>
+     */
+    public function availableTargets(): array
+    {
+        return [
+            [
+                'id' => self::TARGET_ALL,
+                'label' => 'Все бандлы',
+                'description' => 'Полная сборка site + admin с очисткой build директории.',
+            ],
+            [
+                'id' => self::TARGET_SITE,
+                'label' => 'Site',
+                'description' => 'Собрать только публичный SSR bundle.',
+            ],
+            [
+                'id' => self::TARGET_ADMIN,
+                'label' => 'Admin',
+                'description' => 'Собрать только admin SPA bundle.',
+            ],
+        ];
+    }
+
+    private function commandForTargets(array $selectedTargets): string
+    {
+        if ($selectedTargets === [self::TARGET_ALL]) {
+            return $this->command;
+        }
+
+        $commands = [];
+        foreach ($selectedTargets as $target) {
+            if ($target === self::TARGET_SITE) {
+                $commands[] = 'VITE_BUILD_TARGET=site ' . $this->command;
+                continue;
+            }
+
+            if ($target === self::TARGET_ADMIN) {
+                $commands[] = 'VITE_BUILD_TARGET=admin ' . $this->command;
+            }
+        }
+
+        if ($commands === []) {
+            return $this->command;
+        }
+
+        return implode(' && ', $commands);
+    }
+
+    /**
+     * @param list<string> $requestedTargets
+     *
+     * @return list<string>
+     */
+    private function normalizeRequestedTargets(array $requestedTargets): array
+    {
+        $normalized = [];
+
+        foreach ($requestedTargets as $target) {
+            if (!\is_string($target)) {
+                continue;
+            }
+
+            $trimmedTarget = trim($target);
+            if (!\in_array($trimmedTarget, [self::TARGET_ALL, self::TARGET_SITE, self::TARGET_ADMIN], true)) {
+                continue;
+            }
+
+            if (!\in_array($trimmedTarget, $normalized, true)) {
+                $normalized[] = $trimmedTarget;
+            }
+        }
+
+        if (\in_array(self::TARGET_ALL, $normalized, true) || $normalized === []) {
+            return [self::TARGET_ALL];
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function normalizeTargetsFromStatus(mixed $targets): array
+    {
+        if (!\is_array($targets)) {
+            return [self::TARGET_ALL];
+        }
+
+        $stringTargets = [];
+        foreach ($targets as $target) {
+            if (\is_string($target)) {
+                $stringTargets[] = $target;
+            }
+        }
+
+        return $this->normalizeRequestedTargets($stringTargets);
+    }
+
+    private function requiresNpmCommand(string $command): bool
+    {
+        return preg_match('/(^|[;&| ]+)npm([ ]|$)/', $command) === 1;
     }
 
     private function progress(string $state, string $logs): int

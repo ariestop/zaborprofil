@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "build:admin": "tsc --noEmit && VITE_BUILD_TARGET=admin vite build",
+    "build:site": "tsc --noEmit && VITE_BUILD_TARGET=site vite build",
     "typecheck": "tsc --noEmit",
     "test:frontend": "vitest run",
     "test:e2e:smoke": "playwright test tests/e2e/admin-smoke.spec.ts",

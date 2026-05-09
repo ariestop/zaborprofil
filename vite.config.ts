@@ -1,10 +1,48 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { fileURLToPath, URL } from 'node:url'
+
+const buildTarget = process.env.VITE_BUILD_TARGET === 'admin' || process.env.VITE_BUILD_TARGET === 'site'
+  ? process.env.VITE_BUILD_TARGET
+  : 'all'
+const outDir = 'public_html/build'
+const manifestRelativePath = '.vite/manifest.json'
+const manifestPath = resolve(process.cwd(), outDir, manifestRelativePath)
+const shouldMergeManifest = buildTarget !== 'all'
+const previousManifestSnapshot = shouldMergeManifest ? readManifest(manifestPath) : {}
+
+function readManifest(manifestFilePath: string): Record<string, unknown> {
+  if (!existsSync(manifestFilePath)) {
+    return {}
+  }
+
+  try {
+    const raw = readFileSync(manifestFilePath, 'utf-8')
+    const parsed = JSON.parse(raw) as unknown
+    return typeof parsed === 'object' && parsed !== null ? parsed as Record<string, unknown> : {}
+  } catch {
+    return {}
+  }
+}
 
 export default defineConfig({
   base: '/build/',
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'merge-selective-manifest',
+      closeBundle() {
+        if (!shouldMergeManifest) {
+          return
+        }
+
+        const currentManifest = readManifest(manifestPath)
+        writeFileSync(manifestPath, JSON.stringify({ ...previousManifestSnapshot, ...currentManifest }, null, 2) + '\n', 'utf-8')
+      },
+    },
+  ],
   resolve: {
     alias: [
       { find: '@admin', replacement: fileURLToPath(new URL('./assets/admin', import.meta.url)) },
@@ -15,13 +53,13 @@ export default defineConfig({
     ],
   },
   build: {
-    outDir: 'public_html/build',
-    emptyOutDir: true,
+    outDir,
+    emptyOutDir: buildTarget === 'all',
     manifest: true,
     rollupOptions: {
       input: {
-        site: 'assets/site/app.ts',
-        admin: 'assets/admin/app.ts',
+        ...(buildTarget !== 'admin' ? { site: 'assets/site/app.ts' } : {}),
+        ...(buildTarget !== 'site' ? { admin: 'assets/admin/app.ts' } : {}),
       },
       output: {
         manualChunks(id) {
