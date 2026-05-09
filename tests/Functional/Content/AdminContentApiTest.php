@@ -583,6 +583,43 @@ final class AdminContentApiTest extends WebTestCase
         self::assertStringContainsString('"status":"published"', (string) $client->getResponse()->getContent());
     }
 
+    public function testBuilderVersionHooksExposeVersionsAndRollback(): void
+    {
+        $client = self::createClient();
+        $this->prepareDatabase();
+        $client->loginUser($this->createAdminUser('builder-versions@example.test'));
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/content/pages', [
+            'type' => 'landing',
+            'title' => 'Builder versions',
+            'slug' => 'builder-versions',
+            'path' => '/builder-versions/',
+            'h1' => 'Builder versions',
+        ]);
+        self::assertResponseStatusCodeSame(201);
+        $pageId = $this->stringFromResponse((string) $client->getResponse()->getContent(), 'id');
+
+        $this->jsonRequestWithCsrf($client, 'POST', \sprintf('/admin/api/content/pages/%s/builder/publish', $pageId), []);
+        self::assertResponseIsSuccessful();
+
+        $this->jsonRequestWithCsrf($client, 'GET', \sprintf('/admin/api/content/pages/%s/builder/versions', $pageId));
+        self::assertResponseIsSuccessful();
+        $versionsPayload = json_decode((string) $client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($versionsPayload);
+        $revisions = $versionsPayload['revisions'] ?? null;
+        self::assertIsArray($revisions);
+        self::assertNotEmpty($revisions);
+        $firstRevision = $revisions[0] ?? null;
+        self::assertIsArray($firstRevision);
+        $revisionId = $firstRevision['id'] ?? null;
+        self::assertIsString($revisionId);
+
+        $this->jsonRequestWithCsrf($client, 'POST', \sprintf('/admin/api/content/pages/%s/builder/rollback', $pageId), [
+            'revisionId' => $revisionId,
+        ]);
+        self::assertResponseIsSuccessful();
+    }
+
     public function testBuilderSaveWritesAuditLogEvent(): void
     {
         $client = self::createClient();

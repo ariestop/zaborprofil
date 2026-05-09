@@ -67,6 +67,16 @@ export function usePageRevisionsQuery(pageId: string) {
   ))
 }
 
+export function usePageBuilderVersionsQuery(pageId: string) {
+  return useQuery(queryOptions(
+    ['admin', 'pages', pageId, 'builder-versions'],
+    async () => {
+      const response = await apiRequest<PageRevisionsResponse>(`/admin/api/content/pages/${pageId}/builder/versions`)
+      return response.revisions
+    },
+  ))
+}
+
 export function usePagePreviewLinkQuery(pageId: string) {
   return useQuery(queryOptions(
     ['admin', 'pages', pageId, 'preview-link'],
@@ -176,6 +186,24 @@ export function usePublishPageBuilderMutation(pageId: string) {
         queryClient.invalidateQueries({ queryKey: ['admin', 'pages', pageId, 'builder'] }),
         queryClient.invalidateQueries({ queryKey: pageQueryKey(pageId) }),
         queryClient.invalidateQueries({ queryKey: pagesQueryKey() }),
+      ])
+    },
+  })
+}
+
+export function useRollbackPageBuilderMutation(pageId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (revisionId: string) => apiRequest<ContentPageItem>(`/admin/api/content/pages/${pageId}/builder/rollback`, {
+      method: 'POST',
+      body: { revisionId },
+    }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin', 'pages', pageId, 'builder'] }),
+        queryClient.invalidateQueries({ queryKey: ['admin', 'pages', pageId, 'builder-versions'] }),
+        queryClient.invalidateQueries({ queryKey: pageQueryKey(pageId) }),
       ])
     },
   })

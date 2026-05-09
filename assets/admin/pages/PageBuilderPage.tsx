@@ -6,8 +6,9 @@ import { useBuilderAutosave } from '../modules/page-builder/hooks/useBuilderAuto
 import {
   previewPageBuilder,
   usePageBuilderQuery,
+  usePageBuilderVersionsQuery,
   usePublishPageBuilderMutation,
-  usePageRevisionsQuery,
+  useRollbackPageBuilderMutation,
   useSavePageBuilderMutation,
 } from '../entities/page/api'
 import { useToast } from '../app/providers/toast-provider'
@@ -21,9 +22,10 @@ export default function PageBuilderPage() {
   const { id = 'unknown' } = useParams()
   const { push } = useToast()
   const pageBuilderQuery = usePageBuilderQuery(id)
-  const revisionsQuery = usePageRevisionsQuery(id)
+  const revisionsQuery = usePageBuilderVersionsQuery(id)
   const saveMutation = useSavePageBuilderMutation(id)
   const publishMutation = usePublishPageBuilderMutation(id)
+  const rollbackMutation = useRollbackPageBuilderMutation(id)
   const [previewHtml, setPreviewHtml] = useState<string | null>(null)
 
   const {
@@ -197,8 +199,24 @@ export default function PageBuilderPage() {
       <Card title="Revision hooks">
         <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
           {(revisionsQuery.data ?? []).map((revision) => (
-            <li key={revision.id}>
-              {revision.createdAt} — {revision.comment ?? `Revision #${revision.version}`}
+            <li key={revision.id} className="flex items-center justify-between gap-2">
+              <span>{revision.createdAt} — {revision.comment ?? `Revision #${revision.version}`}</span>
+              <button
+                type="button"
+                className="rounded-md border border-slate-300 px-2 py-1 text-xs dark:border-slate-700"
+                onClick={() => {
+                  void rollbackMutation.mutateAsync(revision.id).then(() => {
+                    void pageBuilderQuery.refetch()
+                    void revisionsQuery.refetch()
+                    push({
+                      title: 'Rollback выполнен',
+                      description: `Версия ${revision.version} восстановлена.`,
+                    })
+                  })
+                }}
+              >
+                Rollback
+              </button>
             </li>
           ))}
         </ul>

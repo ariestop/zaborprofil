@@ -52,12 +52,12 @@ final readonly class BlockSchemaRegistry
 
             $schemas[] = new BlockSchema(
                 $type,
-                str_replace(['.', '-'], ' ', $type->value),
-                'Structured block',
+                $this->structuredLabel($type),
+                $this->structuredDescription($type),
+                $this->structuredRequiredFields($type),
                 [],
-                [],
-                [],
-                [],
+                $this->structuredDefaultContent($type),
+                $this->structuredDefaultSettings($type),
                 'MVP',
                 'medium',
             );
@@ -91,5 +91,172 @@ final readonly class BlockSchemaRegistry
                 throw new InvalidArgumentException('HTML embed cannot contain script tags.');
             }
         }
+    }
+
+    private function structuredLabel(BlockType $type): string
+    {
+        return match ($type) {
+            BlockType::Section => 'Секция',
+            BlockType::Container => 'Контейнер',
+            BlockType::Grid => 'Сетка',
+            BlockType::Columns => 'Колонки',
+            BlockType::Spacer => 'Отступ',
+            BlockType::Divider => 'Разделитель',
+            BlockType::Tabs => 'Табы',
+            BlockType::HeroClassic => 'Первый экран (классика)',
+            BlockType::HeroCentered => 'Первый экран (центр)',
+            BlockType::HeroSplit => 'Первый экран (сплит)',
+            BlockType::HeroWithImage => 'Первый экран с изображением',
+            BlockType::HeroCta => 'Первый экран с CTA',
+            BlockType::HeroMinimal => 'Первый экран (минимал)',
+            BlockType::RichText => 'Форматированный текст',
+            BlockType::TextWithImage => 'Текст с изображением',
+            BlockType::ArticleSection => 'Секция статьи',
+            BlockType::Benefits => 'Преимущества',
+            BlockType::Features => 'Особенности',
+            BlockType::IconsList => 'Список с иконками',
+            BlockType::Cta => 'Призыв к действию',
+            BlockType::ContactForm => 'Контактная форма',
+            BlockType::LeadForm => 'Лид-форма',
+            BlockType::CallbackForm => 'Форма обратного звонка',
+            BlockType::Pricing => 'Тарифы',
+            BlockType::Reviews => 'Отзывы',
+            BlockType::TrustBadges => 'Бейджи доверия',
+            BlockType::PriceTable => 'Таблица цен',
+            BlockType::SchemaFaq => 'Schema FAQ',
+            BlockType::SchemaLocalBusiness => 'Schema LocalBusiness',
+            default => ucwords(str_replace(['.', '-'], ' ', $type->value)),
+        };
+    }
+
+    private function structuredDescription(BlockType $type): string
+    {
+        return match ($type) {
+            BlockType::Section => 'Секция layout страницы.',
+            BlockType::Container => 'Контейнер для ограничения ширины контента.',
+            BlockType::Grid => 'Сетка карточек или контента.',
+            BlockType::Columns => 'Колонки для контента.',
+            BlockType::Spacer => 'Вертикальный отступ между блоками.',
+            BlockType::Divider => 'Визуальный разделитель секций.',
+            BlockType::Tabs => 'Табы для переключаемого контента.',
+            BlockType::HeroClassic, BlockType::HeroCentered, BlockType::HeroSplit, BlockType::HeroWithImage, BlockType::HeroCta, BlockType::HeroMinimal => 'Первый экран страницы.',
+            BlockType::RichText => 'Форматированный текстовый блок.',
+            BlockType::TextWithImage => 'Текстовый блок с изображением.',
+            BlockType::ArticleSection => 'Секция статьи с заголовком и текстом.',
+            BlockType::Quote => 'Цитата или отзыв клиента.',
+            BlockType::Faq, BlockType::SchemaFaq => 'FAQ-блок с вопросами и ответами.',
+            BlockType::Steps, BlockType::InstallationSteps => 'Последовательность шагов.',
+            BlockType::Benefits, BlockType::Features, BlockType::Advantages => 'Список преимуществ.',
+            BlockType::IconsList => 'Список пунктов с иконками.',
+            BlockType::Image, BlockType::Gallery, BlockType::WorksGallery, BlockType::Portfolio => 'Медиа-контент.',
+            BlockType::BeforeAfterStructured, BlockType::Slider => 'Сравнение или слайдер изображений.',
+            BlockType::Video => 'Видео блок.',
+            BlockType::Cta, BlockType::PartnerCta => 'Призыв к действию.',
+            BlockType::ContactForm, BlockType::LeadForm, BlockType::CallbackForm => 'Форма заявки.',
+            BlockType::CalculatorPlaceholderStructured => 'Заглушка будущего калькулятора.',
+            BlockType::Pricing, BlockType::PriceTable => 'Блок с ценами.',
+            BlockType::Reviews => 'Отзывы клиентов.',
+            BlockType::TrustBadges => 'Бейджи доверия и гарантии.',
+            BlockType::FenceTypes, BlockType::Materials, BlockType::ServiceCards => 'Бизнес-контент для каталога услуг.',
+            BlockType::ContactsMap, BlockType::Map => 'Карта и контактные данные.',
+            BlockType::Breadcrumbs => 'Хлебные крошки для навигации.',
+            BlockType::SitemapSection => 'Раздел карты сайта.',
+            BlockType::RelatedPages, BlockType::InternalLinks => 'Блок внутренних ссылок.',
+            BlockType::SchemaLocalBusiness => 'Structured data LocalBusiness.',
+            default => 'Structured block',
+        };
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function structuredRequiredFields(BlockType $type): array
+    {
+        return match ($type) {
+            BlockType::HeroClassic, BlockType::HeroCentered, BlockType::HeroSplit, BlockType::HeroWithImage, BlockType::HeroCta, BlockType::HeroMinimal => ['title'],
+            BlockType::RichText => ['html'],
+            BlockType::TextWithImage, BlockType::ArticleSection => ['title', 'text'],
+            BlockType::Quote => ['quote'],
+            BlockType::Faq, BlockType::SchemaFaq => ['items'],
+            BlockType::Steps, BlockType::Benefits, BlockType::Features, BlockType::IconsList => ['items'],
+            BlockType::Image => ['src', 'alt'],
+            BlockType::Gallery, BlockType::Portfolio, BlockType::WorksGallery => ['items'],
+            BlockType::Video => ['url'],
+            BlockType::Cta, BlockType::PartnerCta, BlockType::ContactForm, BlockType::LeadForm, BlockType::CallbackForm => ['title'],
+            BlockType::Pricing => ['items'],
+            BlockType::PriceTable => ['columns', 'rows'],
+            BlockType::SchemaLocalBusiness => ['name', 'address'],
+            default => [],
+        };
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function structuredDefaultContent(BlockType $type): array
+    {
+        return match ($type) {
+            BlockType::Section, BlockType::Container => ['title' => 'Новый раздел', 'subtitle' => ''],
+            BlockType::Grid => ['columns' => 3],
+            BlockType::Columns => ['columns' => 2],
+            BlockType::Spacer => ['height' => 24],
+            BlockType::Divider => ['label' => ''],
+            BlockType::Tabs => ['items' => [['title' => 'Вкладка 1', 'text' => 'Контент вкладки']]],
+            BlockType::HeroClassic, BlockType::HeroCentered, BlockType::HeroSplit, BlockType::HeroWithImage, BlockType::HeroCta => [
+                'title' => 'Заборы под ключ в Москве',
+                'subtitle' => 'Производство, доставка и монтаж',
+                'text' => 'Изготовим и установим забор под ваш участок с гарантией.',
+                'cta' => ['label' => 'Рассчитать стоимость', 'href' => '#lead-form'],
+                'image' => '',
+                'imageAlt' => '',
+            ],
+            BlockType::HeroMinimal => ['title' => 'Заголовок раздела', 'subtitle' => 'Короткий подзаголовок'],
+            BlockType::RichText => ['html' => '<p>Добавьте форматированный текст для блока.</p>'],
+            BlockType::TextWithImage => ['title' => 'О компании', 'text' => '<p>Текст о преимуществах компании.</p>', 'image' => '', 'imageAlt' => ''],
+            BlockType::ArticleSection => ['title' => 'Заголовок секции', 'subtitle' => '', 'text' => '<p>Контент секции статьи.</p>'],
+            BlockType::Quote => ['quote' => 'Работа выполнена в срок, качеством довольны.', 'author' => 'Клиент'],
+            BlockType::Faq, BlockType::SchemaFaq => ['items' => [['question' => 'Сколько стоит монтаж?', 'answer' => 'Стоимость зависит от типа и длины забора.']]],
+            BlockType::Steps, BlockType::InstallationSteps => ['items' => [['title' => 'Замер', 'text' => 'Выезд на объект и расчет.']]],
+            BlockType::Benefits, BlockType::Features, BlockType::Advantages => ['items' => [['title' => 'Собственное производство', 'text' => 'Контроль качества на каждом этапе.']]],
+            BlockType::IconsList => ['items' => [['icon' => 'check', 'text' => 'Гарантия 5 лет']]],
+            BlockType::Image => ['src' => '', 'alt' => 'Изображение', 'caption' => ''],
+            BlockType::Gallery, BlockType::WorksGallery, BlockType::Portfolio => ['items' => [['src' => '', 'alt' => 'Фото объекта']]],
+            BlockType::BeforeAfterStructured => ['before' => '', 'after' => ''],
+            BlockType::Video => ['url' => 'https://www.youtube.com/watch?v=', 'title' => 'Видео о проекте'],
+            BlockType::Slider => ['items' => [['src' => '', 'alt' => 'Слайд']]],
+            BlockType::Cta, BlockType::PartnerCta => ['title' => 'Оставьте заявку', 'subtitle' => '', 'text' => 'Подготовим персональное предложение.', 'cta' => ['label' => 'Отправить', 'href' => '#lead-form']],
+            BlockType::ContactForm, BlockType::LeadForm, BlockType::CallbackForm => ['title' => 'Свяжитесь с нами'],
+            BlockType::CalculatorPlaceholderStructured => ['title' => 'Калькулятор скоро будет доступен', 'text' => 'Пока оставьте заявку для расчета менеджером.'],
+            BlockType::Pricing => ['items' => [['title' => 'Базовый', 'price' => 'от 3 500 ₽/м', 'features' => ['Монтаж', 'Гарантия']]]],
+            BlockType::Reviews => ['items' => [['author' => 'Иван', 'text' => 'Отличная работа и сервис.']]],
+            BlockType::TrustBadges => ['items' => [['title' => 'Гарантия 5 лет', 'text' => 'На материалы и монтаж']]],
+            BlockType::FenceTypes => ['items' => [['title' => 'Забор жалюзи', 'text' => 'Современный внешний вид', 'image' => '']]],
+            BlockType::Materials => ['items' => [['title' => 'Металл', 'text' => 'Оцинкованный профиль']]],
+            BlockType::ServiceCards => ['items' => [['title' => 'Монтаж под ключ', 'text' => 'Работы в согласованные сроки', 'href' => '/services/']]],
+            BlockType::PriceTable => [
+                'columns' => ['Тип', 'Цена'],
+                'rows' => [['Профнастил', 'от 2 900 ₽/м'], ['Штакетник', 'от 3 500 ₽/м']],
+            ],
+            BlockType::ContactsMap => ['address' => 'Москва, ул. Пример, 1', 'embedUrl' => ''],
+            BlockType::Breadcrumbs => ['enabled' => true],
+            BlockType::SitemapSection => ['title' => 'Разделы сайта'],
+            BlockType::RelatedPages, BlockType::InternalLinks => ['items' => [['title' => 'Заборы из профнастила', 'href' => '/zabory-iz-profnastila/']]],
+            BlockType::SchemaLocalBusiness => ['name' => 'ЗаборПрофиль', 'address' => 'Москва, ул. Пример, 1', 'phone' => '+7 (999) 000-00-00'],
+            default => ['title' => 'Новый блок'],
+        };
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function structuredDefaultSettings(BlockType $type): array
+    {
+        return match ($type) {
+            BlockType::Grid => ['className' => '', 'columns' => 3],
+            BlockType::Gallery, BlockType::WorksGallery, BlockType::Portfolio => ['className' => '', 'columns' => 3],
+            BlockType::Faq, BlockType::SchemaFaq => ['className' => '', 'schemaOrg' => true],
+            BlockType::Image, BlockType::Video => ['className' => '', 'lazy' => true],
+            default => ['className' => ''],
+        };
     }
 }

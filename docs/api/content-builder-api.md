@@ -68,6 +68,20 @@ firewall) и дополнительно проверяют `AdminPermission`.
 Публикует страницу через существующий publish-flow (`PageRevision`,
 `PagePublication`, SEO pre-publish checklist).
 
+### GET `/admin/api/content/pages/{id}/builder/versions`
+
+Возвращает список ревизий, доступных для builder-level rollback.
+
+### POST `/admin/api/content/pages/{id}/builder/rollback`
+
+Откатывает страницу к указанной ревизии:
+
+```json
+{
+  "revisionId": "01J..."
+}
+```
+
 ## Ошибки
 
 Формат ошибок общий для Content API:

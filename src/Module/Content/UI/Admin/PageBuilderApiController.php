@@ -6,9 +6,12 @@ namespace App\Module\Content\UI\Admin;
 
 use App\Module\Auth\Domain\Security\AdminPermission;
 use App\Module\Content\Application\Command\PublishPageCommand;
+use App\Module\Content\Application\Command\RollbackPageRevisionCommand;
 use App\Module\Content\Application\DTO\BuilderBlockOutput;
+use App\Module\Content\Application\DTO\PageRevisionOutput;
 use App\Module\Content\Application\DTO\PageBuilderDocumentOutput;
 use App\Module\Content\Application\Handler\PublishPageHandler;
+use App\Module\Content\Application\Handler\RollbackPageRevisionHandler;
 use App\Module\Content\Application\Service\ContentId;
 use App\Module\Content\Application\Service\PublicPageCacheInvalidator;
 use App\Module\Content\Application\Service\StructuredBlockDocumentService;
@@ -16,6 +19,7 @@ use App\Module\Content\Application\Service\PageBlockView;
 use App\Module\Content\Domain\Entity\PageBlock;
 use App\Module\Content\Domain\Repository\PageBlockRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
+use App\Module\Content\Domain\Repository\PageRevisionRepositoryInterface;
 use App\Module\Content\Domain\ValueObject\PageVisibility;
 use App\Module\Content\UI\Web\TwigBlockRenderer;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -213,6 +217,47 @@ final readonly class PageBuilderApiController
 
         try {
             return new JsonResponse($handler(new PublishPageCommand($id, null))->toArray());
+        } catch (Throwable $exception) {
+            return $this->responder->error($exception);
+        }
+    }
+
+    #[Route('/{id}/builder/versions', name: 'admin_api_content_page_builder_versions', methods: ['GET'])]
+    public function versions(
+        string $id,
+        PageRevisionRepositoryInterface $revisions,
+    ): JsonResponse {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_VIEW_REVISIONS)) {
+            return $this->accessDenied();
+        }
+
+        try {
+            return new JsonResponse([
+                'revisions' => array_map(
+                    static fn ($revision): array => PageRevisionOutput::fromRevision($revision)->toArray(),
+                    $revisions->findByPage($id),
+                ),
+            ]);
+        } catch (Throwable $exception) {
+            return $this->responder->error($exception);
+        }
+    }
+
+    #[Route('/{id}/builder/rollback', name: 'admin_api_content_page_builder_rollback', methods: ['POST'])]
+    public function rollback(
+        string $id,
+        Request $request,
+        RollbackPageRevisionHandler $handler,
+    ): JsonResponse {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_ROLLBACK_REVISION)) {
+            return $this->accessDenied();
+        }
+
+        try {
+            $payload = $this->jsonRequest->payload($request);
+            $revisionId = $this->jsonRequest->string($payload, 'revisionId');
+
+            return new JsonResponse($handler(new RollbackPageRevisionCommand($id, $revisionId))->toArray());
         } catch (Throwable $exception) {
             return $this->responder->error($exception);
         }

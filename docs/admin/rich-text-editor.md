@@ -13,7 +13,8 @@ TipTap используется **только как редактор rich-text
 
 ## Безопасность
 
-На backend rich-text проходит sanitize-процедуру:
+На backend rich-text проходит sanitize-процедуру через
+`StructuredRichTextSanitizer`:
 
 - удаляются `<script>` теги;
 - удаляются inline-обработчики (`on*="..."`).

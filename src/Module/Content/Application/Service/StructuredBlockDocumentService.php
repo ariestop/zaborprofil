@@ -14,6 +14,8 @@ final class StructuredBlockDocumentService
 
     public function __construct(
         private readonly BlockSchemaRegistry $blockSchemas,
+        private readonly StructuredBlockPayloadValidator $payloadValidator,
+        private readonly StructuredRichTextSanitizer $richTextSanitizer,
     ) {
     }
 
@@ -47,6 +49,7 @@ final class StructuredBlockDocumentService
         $settings = $this->sanitizeRichTextValues($settings);
 
         $this->blockSchemas->validate($type, $content);
+        $this->payloadValidator->validate($type, $content, $settings);
 
         return [
             'id' => $id,
@@ -109,9 +112,7 @@ final class StructuredBlockDocumentService
             }
 
             if (\is_string($item) && \in_array($key, self::RICH_TEXT_KEYS, true)) {
-                $cleaned = preg_replace('/<\s*script\b[^>]*>(.*?)<\s*\/\s*script>/is', '', $item) ?? '';
-                $cleaned = preg_replace('/\bon\w+="[^"]*"/i', '', $cleaned) ?? '';
-                $sanitized[$key] = $cleaned;
+                $sanitized[$key] = $this->richTextSanitizer->sanitize($item);
                 continue;
             }
 
