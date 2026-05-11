@@ -29,4 +29,25 @@ describe('page builder utils', () => {
     expect(normalized[0]?.position).toBe(0)
     expect(validatePageBlocks(normalized).isValid).toBe(true)
   })
+
+  it('creates slider block with extended defaults', () => {
+    const block = createBlock('slider', 0)
+    const firstSlide = (block.content.items as Array<Record<string, unknown>>)[0]
+
+    expect(firstSlide).toMatchObject({
+      src: '',
+      alt: 'Слайд 1',
+      title: 'Заголовок слайда',
+      text: 'Короткое описание слайда.',
+      buttonLabel: 'Подробнее',
+      buttonHref: '#',
+    })
+    expect(block.settings).toMatchObject({
+      autoplay: true,
+      loop: true,
+      pagination: true,
+      navigation: true,
+      delayMs: 4500,
+    })
+  })
 })

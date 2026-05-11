@@ -71,6 +71,34 @@ final class AdminSettingsApiTest extends WebTestCase
         self::assertFalse($this->cacheItemPool($client)->getItem($key)->isHit());
     }
 
+    public function testAdminCanSavePublicBlocksSourceSetting(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+        $client->loginUser($this->createAdminUser('settings-render-mode@example.test'));
+
+        $this->jsonRequestWithCsrf($client, 'PUT', '/admin/api/settings/content/public_page_blocks_source', [
+            'value' => 'live',
+            'description' => 'Источник блоков для публичного рендера',
+        ]);
+        self::assertResponseIsSuccessful();
+
+        $client->request('GET', '/admin/api/settings?scope=content');
+        self::assertResponseIsSuccessful();
+
+        $payload = json_decode($client->getResponse()->getContent() ?: '[]', true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($payload);
+        self::assertNotEmpty($payload);
+
+        $renderMode = array_values(array_filter(
+            $payload,
+            static fn (array $setting): bool => ($setting['key'] ?? null) === 'public_page_blocks_source',
+        ));
+
+        self::assertCount(1, $renderMode);
+        self::assertSame('live', $renderMode[0]['value'] ?? null);
+    }
+
     private function createAdminUser(string $email): AdminUser
     {
         $entityManager = $this->entityManager();

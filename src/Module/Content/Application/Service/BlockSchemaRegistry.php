@@ -242,7 +242,16 @@ final readonly class BlockSchemaRegistry
             BlockType::Gallery, BlockType::WorksGallery, BlockType::Portfolio => ['items' => [['src' => '', 'alt' => 'Фото объекта']]],
             BlockType::BeforeAfterStructured => ['before' => '', 'after' => ''],
             BlockType::Video => ['url' => 'https://www.youtube.com/watch?v=', 'title' => 'Видео о проекте'],
-            BlockType::Slider => ['items' => [['src' => '', 'alt' => 'Слайд']]],
+            BlockType::Slider => [
+                'items' => [[
+                    'src' => '',
+                    'alt' => 'Слайд',
+                    'title' => 'Заголовок слайда',
+                    'text' => 'Короткое описание слайда.',
+                    'buttonLabel' => 'Подробнее',
+                    'buttonHref' => '#',
+                ]],
+            ],
             BlockType::Cta, BlockType::PartnerCta => ['title' => 'Оставьте заявку', 'subtitle' => '', 'text' => 'Подготовим персональное предложение.', 'cta' => ['label' => 'Отправить', 'href' => '#lead-form']],
             BlockType::ContactForm, BlockType::LeadForm, BlockType::CallbackForm => ['title' => 'Свяжитесь с нами'],
             BlockType::CalculatorPlaceholderStructured => ['title' => 'Калькулятор скоро будет доступен', 'text' => 'Пока оставьте заявку для расчета менеджером.'],
@@ -275,6 +284,14 @@ final readonly class BlockSchemaRegistry
             BlockType::Gallery, BlockType::WorksGallery, BlockType::Portfolio => ['className' => '', 'columns' => 3],
             BlockType::Faq, BlockType::SchemaFaq => ['className' => '', 'schemaOrg' => true],
             BlockType::Image, BlockType::Video => ['className' => '', 'lazy' => true],
+            BlockType::Slider => [
+                'className' => '',
+                'autoplay' => true,
+                'loop' => true,
+                'pagination' => true,
+                'navigation' => true,
+                'delayMs' => 4500,
+            ],
             default => ['className' => ''],
         };
     }

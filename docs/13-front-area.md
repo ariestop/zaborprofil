@@ -34,6 +34,12 @@ flowchart LR
 - Блоки сортируются по `position`.
 - Блок с `isEnabled=false` пропускается.
 - Неизвестный `BlockType` — fallback на `templates/public/blocks/default.html.twig`.
+- `slider` рендерится отдельным partial `templates/public/blocks/slider.html.twig`,
+  а интерактивность (Swiper) инициализируется в `assets/site/app.ts`.
+- Источник блоков управляется системной настройкой
+  `content.public_page_blocks_source`:
+  - `snapshot` — блоки из `publishedRevision` (стабильный immutable рендер);
+  - `live` — блоки из текущего builder-состояния опубликованной страницы.
 
 ## Layouts и partial’ы
 
@@ -73,6 +79,8 @@ templates/
 - Пул `cache.public_page` сконфигурирован (TTL 3600 сек), но **сейчас не используется**: `PublicPageController` всегда читает из БД. Целевое — обернуть рендер в этот пул (`#[Target('public_page')] CacheInterface`) с инвалидацией в Page/PageBlock-хендлерах. См. [23-cache-and-redis](23-cache-and-redis.md).
 - Vite-build с manifest — отдаём предсобранные ассеты.
 - HTTP cache (целевое): `Cache-Control` headers + `ETag` для статики и публичных страниц.
+- Для `slider` используется lazy-loading изображений (`loading=\"lazy\"`) и
+  client-side инициализация только при наличии `.js-site-slider` на странице.
 
 ## Что НЕЛЬЗЯ во Front
 

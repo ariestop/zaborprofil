@@ -1,4 +1,80 @@
 import '../shared/styles/app.css'
+import Swiper from 'swiper'
+import { Autoplay, Navigation, Pagination } from 'swiper/modules'
+import 'swiper/css'
+import 'swiper/css/navigation'
+import 'swiper/css/pagination'
+
+interface SiteSliderSettings {
+  autoplay: boolean
+  loop: boolean
+  pagination: boolean
+  navigation: boolean
+  delayMs: number
+}
+
+const defaultSliderSettings: SiteSliderSettings = {
+  autoplay: true,
+  loop: true,
+  pagination: true,
+  navigation: true,
+  delayMs: 4500,
+}
+
+function sliderSettings(element: HTMLElement): SiteSliderSettings {
+  const payload = element.dataset.sliderSettings
+  if (payload === undefined || payload === '') {
+    return defaultSliderSettings
+  }
+
+  try {
+    const parsed = JSON.parse(payload) as Partial<SiteSliderSettings>
+    return {
+      autoplay: parsed.autoplay ?? defaultSliderSettings.autoplay,
+      loop: parsed.loop ?? defaultSliderSettings.loop,
+      pagination: parsed.pagination ?? defaultSliderSettings.pagination,
+      navigation: parsed.navigation ?? defaultSliderSettings.navigation,
+      delayMs: parsed.delayMs ?? defaultSliderSettings.delayMs,
+    }
+  } catch {
+    return defaultSliderSettings
+  }
+}
+
+function initSiteSliders(): void {
+  document.querySelectorAll<HTMLElement>('.js-site-slider').forEach((container) => {
+    const settings = sliderSettings(container)
+    const pagination = container.querySelector<HTMLElement>('.js-site-slider-pagination')
+    const next = container.querySelector<HTMLElement>('.js-site-slider-next')
+    const prev = container.querySelector<HTMLElement>('.js-site-slider-prev')
+
+    new Swiper(container, {
+      modules: [Autoplay, Navigation, Pagination],
+      slidesPerView: 1,
+      speed: 500,
+      loop: settings.loop,
+      autoplay: settings.autoplay
+        ? {
+          delay: settings.delayMs,
+          disableOnInteraction: false,
+          pauseOnMouseEnter: true,
+        }
+        : false,
+      pagination: settings.pagination && pagination !== null
+        ? {
+          el: pagination,
+          clickable: true,
+        }
+        : false,
+      navigation: settings.navigation && next !== null && prev !== null
+        ? {
+          nextEl: next,
+          prevEl: prev,
+        }
+        : false,
+    })
+  })
+}
 
 function formPayload(form: HTMLFormElement): Record<string, unknown> {
   const data = new FormData(form)
@@ -43,3 +119,5 @@ document.querySelectorAll<HTMLFormElement>('.js-lead-form').forEach((form) => {
     status!.textContent = 'Спасибо! Заявка отправлена.'
   })
 })
+
+initSiteSliders()

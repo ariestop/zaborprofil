@@ -12,6 +12,7 @@ import { ctaBlockSchema, ctaBlockDefaults, CtaEditor, CtaPreview } from './cta'
 import { contactFormBlockSchema, contactFormBlockDefaults, ContactFormEditor, ContactFormPreview } from './contact-form'
 import { priceTableBlockSchema, priceTableBlockDefaults, PriceTableEditor, PriceTablePreview } from './price-table'
 import { portfolioBlockSchema, portfolioBlockDefaults, PortfolioEditor, PortfolioPreview } from './portfolio'
+import { sliderBlockSchema, sliderBlockDefaults, SliderEditor, SliderPreview } from './slider'
 
 export interface BlockModuleDefinition {
   schema: z.ZodType<Record<string, unknown>>
@@ -88,5 +89,11 @@ export const blockModules: Record<BuilderBlockType, BlockModuleDefinition> = {
     defaults: portfolioBlockDefaults,
     Editor: PortfolioEditor,
     Preview: PortfolioPreview,
+  },
+  slider: {
+    schema: sliderBlockSchema as z.ZodType<Record<string, unknown>>,
+    defaults: sliderBlockDefaults,
+    Editor: SliderEditor,
+    Preview: SliderPreview,
   },
 }

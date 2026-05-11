@@ -80,6 +80,12 @@ make npm-dev        # vite dev на :5173, HMR
 
 Публичный сайт — преимущественно SSR. JS на публичных страницах — минимальный (формы, lightbox, аналитика).
 
+Для блока `slider` используется локально установленный `swiper`:
+
+- JS и CSS импортируются в `assets/site/app.ts`;
+- инициализация выполняется только для элементов `.js-site-slider`;
+- настройки (`autoplay`, `loop`, `pagination`, `navigation`, `delayMs`) передаются из SSR через `data-slider-settings`.
+
 ## Admin SPA
 
 См. [ADMIN_FRONTEND.md](ADMIN_FRONTEND.md). Единый entry `admin/app.ts`

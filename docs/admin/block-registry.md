@@ -28,6 +28,22 @@
 4. Добавить/обновить Twig renderer для публичного SSR (если блок публичный).
 5. Добавить тесты на `createBlock`, `normalizePageBlocks` и валидацию.
 
+## Блок `slider` (Swiper)
+
+Тип `slider` относится к категории `media` и использует расширенный контракт:
+
+- `content.items[]`:
+  - `src`, `alt`;
+  - `title`, `text`;
+  - `buttonLabel`, `buttonHref`.
+- `settings`:
+  - `autoplay`, `loop`, `pagination`, `navigation`;
+  - `delayMs` (1000..15000);
+  - `className`.
+
+Публичный SSR-рендер находится в `templates/public/blocks/slider.html.twig`,
+инициализация Swiper — в `assets/site/app.ts`.
+
 ## Почему без GrapesJS
 
 Проекту нужен предсказуемый SEO-friendly output и строгий контроль структуры

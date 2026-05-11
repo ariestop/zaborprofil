@@ -25,4 +25,16 @@ final class BlockSchemaRegistryTest extends TestCase
 
         (new BlockSchemaRegistry())->validate(BlockType::HtmlEmbed, ['html' => '<script>alert(1)</script>']);
     }
+
+    public function testSliderStructuredDefaultsContainExtendedFields(): void
+    {
+        $schema = (new BlockSchemaRegistry())->get(BlockType::Slider);
+
+        self::assertArrayHasKey('items', $schema->defaultContent);
+        self::assertIsArray($schema->defaultContent['items']);
+        self::assertNotEmpty($schema->defaultContent['items']);
+        self::assertSame('Заголовок слайда', $schema->defaultContent['items'][0]['title'] ?? null);
+        self::assertSame('Подробнее', $schema->defaultContent['items'][0]['buttonLabel'] ?? null);
+        self::assertSame(4500, $schema->defaultSettings['delayMs'] ?? null);
+    }
 }

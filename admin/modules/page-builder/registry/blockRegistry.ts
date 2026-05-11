@@ -12,8 +12,25 @@ const ctaSchema = z.object({
   href: z.string().default('#'),
 })
 
+const sliderItemSchema = z.object({
+  src: z.string().default(''),
+  alt: z.string().default(''),
+  title: z.string().default(''),
+  text: z.string().default(''),
+  buttonLabel: z.string().default(''),
+  buttonHref: z.string().default(''),
+})
+
 const simpleSettingsSchema = z.object({
   className: z.string().default(''),
+})
+
+const sliderSettingsSchema = simpleSettingsSchema.extend({
+  autoplay: z.boolean().default(true),
+  loop: z.boolean().default(true),
+  pagination: z.boolean().default(true),
+  navigation: z.boolean().default(true),
+  delayMs: z.number().int().min(1000).max(15000).default(4500),
 })
 
 function def(
@@ -71,7 +88,26 @@ export const blockRegistry: BlockDefinition[] = [
   def('gallery', 'Галерея', 'media', 20, 'Галерея изображений.', z.object({ items: z.array(z.object({ src: z.string(), alt: z.string().default('') })).default([]) })),
   def('before-after', 'До/После', 'media', 30, 'Блок сравнения до/после.', z.object({ before: z.string().default(''), after: z.string().default('') })),
   def('video', 'Видео', 'media', 40, 'Видео-блок.', z.object({ url: z.string().default(''), title: z.string().default('') })),
-  def('slider', 'Слайдер', 'media', 50, 'Слайдер.', z.object({ items: z.array(z.object({ src: z.string(), alt: z.string().default('') })).default([]) })),
+  def(
+    'slider',
+    'Слайдер',
+    'media',
+    50,
+    'Слайдер изображений с текстом и CTA на каждом слайде.',
+    z.object({
+      items: z.array(sliderItemSchema).default([
+        sliderItemSchema.parse({
+          src: '',
+          alt: 'Слайд 1',
+          title: 'Заголовок слайда',
+          text: 'Короткое описание слайда.',
+          buttonLabel: 'Подробнее',
+          buttonHref: '#',
+        }),
+      ]),
+    }),
+    sliderSettingsSchema,
+  ),
 
   def('cta', 'Призыв к действию', 'conversion', 10, 'Призыв к действию.', z.object({ ...textSchema.shape, cta: ctaSchema.default({ label: 'Оставить заявку', href: '#lead' }) })),
   def('contact-form', 'Контактная форма', 'conversion', 20, 'Контактная форма.', z.object({ title: z.string().default('Свяжитесь с нами') })),
