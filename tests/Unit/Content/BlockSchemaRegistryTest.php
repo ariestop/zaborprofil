@@ -36,5 +36,10 @@ final class BlockSchemaRegistryTest extends TestCase
         self::assertSame('Заголовок слайда', $schema->defaultContent['items'][0]['title'] ?? null);
         self::assertSame('Подробнее', $schema->defaultContent['items'][0]['buttonLabel'] ?? null);
         self::assertSame(4500, $schema->defaultSettings['delayMs'] ?? null);
+        self::assertSame('slide', $schema->defaultSettings['effect'] ?? null);
+        self::assertSame(500, $schema->defaultSettings['speedMs'] ?? null);
+        self::assertSame('Предыдущий слайд', $schema->defaultSettings['a11yLabels']['prevSlide'] ?? null);
+        self::assertSame(6, $schema->defaultSettings['cardsEffect']['perSlideOffset'] ?? null);
+        self::assertSame(18, $schema->defaultSettings['coverflowEffect']['rotate'] ?? null);
     }
 }

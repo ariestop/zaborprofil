@@ -39,6 +39,11 @@
 - `settings`:
   - `autoplay`, `loop`, `pagination`, `navigation`;
   - `delayMs` (1000..15000);
+  - `effect` (`slide|fade|cards|coverflow`), `pauseOnHover`, `disableOnInteraction`, `speedMs`;
+  - `breakpoints` (mobile/tablet/desktop `slidesPerView` + `spaceBetween`);
+  - `a11yLabels` (`prevSlide`, `nextSlide`, `paginationBullet`);
+  - `cardsEffect` (`perSlideOffset`, `perSlideRotate`, `rotate`, `slideShadows`);
+  - `coverflowEffect` (`rotate`, `stretch`, `depth`, `modifier`, `slideShadows`);
   - `className`.
 
 Публичный SSR-рендер находится в `templates/public/blocks/slider.html.twig`,

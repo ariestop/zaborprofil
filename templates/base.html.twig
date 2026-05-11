@@ -89,6 +89,8 @@
                 </footer>
             {% endif %}
         {% endblock %}
-        {% block javascripts %}{% endblock %}
+        {% block javascripts %}
+            {{ vite_entry_script_tags('assets/site/app.ts') }}
+        {% endblock %}
     </body>
 </html>

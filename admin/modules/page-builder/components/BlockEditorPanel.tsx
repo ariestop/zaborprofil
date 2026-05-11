@@ -90,7 +90,7 @@ export function BlockEditorPanel({ block, onUpdate, onDelete, onDuplicate }: Blo
         </div>
       ) : null}
 
-      {ModuleEditor !== undefined ? <ModuleEditor block={block} /> : null}
+      {ModuleEditor !== undefined ? <ModuleEditor block={block} onChange={onUpdate} /> : null}
 
       <form
         className="space-y-3"

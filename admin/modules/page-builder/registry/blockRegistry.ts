@@ -31,6 +31,58 @@ const sliderSettingsSchema = simpleSettingsSchema.extend({
   pagination: z.boolean().default(true),
   navigation: z.boolean().default(true),
   delayMs: z.number().int().min(1000).max(15000).default(4500),
+  effect: z.enum(['slide', 'fade', 'cards', 'coverflow']).default('slide'),
+  pauseOnHover: z.boolean().default(true),
+  disableOnInteraction: z.boolean().default(false),
+  speedMs: z.number().int().min(100).max(2000).default(500),
+  breakpoints: z.object({
+    mobileSlidesPerView: z.number().int().min(1).max(2).default(1),
+    tabletSlidesPerView: z.number().int().min(1).max(3).default(1),
+    desktopSlidesPerView: z.number().int().min(1).max(4).default(1),
+    mobileSpaceBetween: z.number().int().min(0).max(64).default(8),
+    tabletSpaceBetween: z.number().int().min(0).max(64).default(16),
+    desktopSpaceBetween: z.number().int().min(0).max(64).default(24),
+  }).default({
+    mobileSlidesPerView: 1,
+    tabletSlidesPerView: 1,
+    desktopSlidesPerView: 1,
+    mobileSpaceBetween: 8,
+    tabletSpaceBetween: 16,
+    desktopSpaceBetween: 24,
+  }),
+  a11yLabels: z.object({
+    prevSlide: z.string().default('Предыдущий слайд'),
+    nextSlide: z.string().default('Следующий слайд'),
+    paginationBullet: z.string().default('Перейти к слайду {{index}}'),
+  }).default({
+    prevSlide: 'Предыдущий слайд',
+    nextSlide: 'Следующий слайд',
+    paginationBullet: 'Перейти к слайду {{index}}',
+  }),
+  cardsEffect: z.object({
+    perSlideOffset: z.number().int().min(0).max(40).default(6),
+    perSlideRotate: z.number().int().min(0).max(30).default(1),
+    rotate: z.boolean().default(true),
+    slideShadows: z.boolean().default(false),
+  }).default({
+    perSlideOffset: 6,
+    perSlideRotate: 1,
+    rotate: true,
+    slideShadows: false,
+  }),
+  coverflowEffect: z.object({
+    rotate: z.number().int().min(0).max(80).default(18),
+    stretch: z.number().int().min(-120).max(120).default(0),
+    depth: z.number().int().min(0).max(300).default(90),
+    modifier: z.number().min(0.1).max(5).default(1),
+    slideShadows: z.boolean().default(false),
+  }).default({
+    rotate: 18,
+    stretch: 0,
+    depth: 90,
+    modifier: 1,
+    slideShadows: false,
+  }),
 })
 
 function def(

@@ -1,6 +1,7 @@
 import { z } from 'zod'
+import type { ComponentType } from 'react'
 import { blockRegistry } from '../registry/blockRegistry'
-import type { BuilderBlockType } from '../types'
+import type { BuilderBlock, BuilderBlockType } from '../types'
 import { GenericBlockEditor } from './shared/GenericBlockEditor'
 import { GenericBlockPreview } from './shared/GenericBlockPreview'
 import { heroClassicSchema, heroClassicDefaults, HeroClassicEditor, HeroClassicPreview } from './hero-classic'
@@ -20,7 +21,10 @@ export interface BlockModuleDefinition {
     content: Record<string, unknown>
     settings: Record<string, unknown>
   }
-  Editor: typeof GenericBlockEditor
+  Editor: ComponentType<{
+    block: BuilderBlock
+    onChange?: (nextBlock: BuilderBlock) => void
+  }>
   Preview: typeof GenericBlockPreview
 }
 

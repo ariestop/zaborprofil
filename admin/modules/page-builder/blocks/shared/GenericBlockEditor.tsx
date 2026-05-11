@@ -2,6 +2,7 @@ import type { BuilderBlock } from '../../types'
 
 interface GenericBlockEditorProps {
   block: BuilderBlock
+  onChange?: (nextBlock: BuilderBlock) => void
 }
 
 export function GenericBlockEditor({ block }: GenericBlockEditorProps) {

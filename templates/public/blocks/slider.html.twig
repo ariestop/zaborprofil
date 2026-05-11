@@ -5,7 +5,24 @@
         loop: block.settings.loop ?? true,
         pagination: block.settings.pagination ?? true,
         navigation: block.settings.navigation ?? true,
-        delayMs: block.settings.delayMs ?? 4500
+        delayMs: block.settings.delayMs ?? 4500,
+        effect: block.settings.effect ?? 'slide',
+        pauseOnHover: block.settings.pauseOnHover ?? true,
+        disableOnInteraction: block.settings.disableOnInteraction ?? false,
+        speedMs: block.settings.speedMs ?? 500,
+        breakpoints: {
+            mobileSlidesPerView: block.settings.breakpoints.mobileSlidesPerView ?? 1,
+            tabletSlidesPerView: block.settings.breakpoints.tabletSlidesPerView ?? 1,
+            desktopSlidesPerView: block.settings.breakpoints.desktopSlidesPerView ?? 1,
+            mobileSpaceBetween: block.settings.breakpoints.mobileSpaceBetween ?? 8,
+            tabletSpaceBetween: block.settings.breakpoints.tabletSpaceBetween ?? 16,
+            desktopSpaceBetween: block.settings.breakpoints.desktopSpaceBetween ?? 24
+        },
+        a11yLabels: {
+            prevSlide: block.settings.a11yLabels.prevSlide ?? 'Предыдущий слайд',
+            nextSlide: block.settings.a11yLabels.nextSlide ?? 'Следующий слайд',
+            paginationBullet: block.settings.a11yLabels.paginationBullet ?? 'Перейти к слайду {{index}}'
+        }
     } %}
 
     <section class="not-prose space-y-6">
@@ -52,14 +69,14 @@
                 <button
                     type="button"
                     class="js-site-slider-prev pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-800 shadow transition hover:bg-white"
-                    aria-label="Предыдущий слайд"
+                    aria-label="{{ sliderSettings.a11yLabels.prevSlide }}"
                 >
                     <span aria-hidden="true">←</span>
                 </button>
                 <button
                     type="button"
                     class="js-site-slider-next pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-800 shadow transition hover:bg-white"
-                    aria-label="Следующий слайд"
+                    aria-label="{{ sliderSettings.a11yLabels.nextSlide }}"
                 >
                     <span aria-hidden="true">→</span>
                 </button>

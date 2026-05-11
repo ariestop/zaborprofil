@@ -48,6 +48,36 @@ describe('page builder utils', () => {
       pagination: true,
       navigation: true,
       delayMs: 4500,
+      effect: 'slide',
+      pauseOnHover: true,
+      disableOnInteraction: false,
+      speedMs: 500,
+      breakpoints: {
+        mobileSlidesPerView: 1,
+        tabletSlidesPerView: 1,
+        desktopSlidesPerView: 1,
+        mobileSpaceBetween: 8,
+        tabletSpaceBetween: 16,
+        desktopSpaceBetween: 24,
+      },
+      a11yLabels: {
+        prevSlide: 'Предыдущий слайд',
+        nextSlide: 'Следующий слайд',
+        paginationBullet: 'Перейти к слайду {{index}}',
+      },
+      cardsEffect: {
+        perSlideOffset: 6,
+        perSlideRotate: 1,
+        rotate: true,
+        slideShadows: false,
+      },
+      coverflowEffect: {
+        rotate: 18,
+        stretch: 0,
+        depth: 90,
+        modifier: 1,
+        slideShadows: false,
+      },
     })
   })
 })
