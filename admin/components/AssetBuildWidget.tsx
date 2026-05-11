@@ -26,6 +26,26 @@ interface WidgetState {
   isCollapsed: boolean
 }
 
+/** Короткий заголовок под «Assets»: не обрезать техническую команду с префиксом VITE_BUILD_TARGET. */
+function formatAssetBuildHeadline(selectedTargets: string[]): string {
+  const targets = selectedTargets.length > 0 ? selectedTargets : ['all']
+  if (targets.includes('all')) {
+    return 'Полная сборка фронтенда'
+  }
+  const parts: string[] = []
+  if (targets.includes('site')) {
+    parts.push('публичный сайт')
+  }
+  if (targets.includes('admin')) {
+    parts.push('админ-панель')
+  }
+  if (parts.length > 0) {
+    return parts.length === 2 ? `Сборка: ${parts.join(' и ')}` : `Сборка: ${parts[0]}`
+  }
+
+  return 'Сборка фронтенда'
+}
+
 function initialWidgetState(): WidgetState {
   const fallback = {
     isExpanded: false,
@@ -105,6 +125,10 @@ export default function AssetBuildWidget() {
   const activeTargets = useMemo(() => (
     status.availableTargets.length > 0 ? status.availableTargets : defaultBuildTargets
   ), [status.availableTargets])
+  const assetsHeadline = useMemo(
+    () => formatAssetBuildHeadline(status.selectedTargets),
+    [status.selectedTargets],
+  )
 
   const stopPolling = (): void => {
     if (pollTimer.current === null) {
@@ -294,7 +318,12 @@ export default function AssetBuildWidget() {
         <div className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50">
           <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setIsExpanded((value) => !value)}>
             <span className="block text-xs font-semibold uppercase tracking-wide text-emerald-700">Assets</span>
-            <span className="mt-1 block truncate text-sm font-bold text-slate-950">{status.command}</span>
+            <span
+              className="mt-1 block truncate text-sm font-bold text-slate-950"
+              title={status.command}
+            >
+              {assetsHeadline}
+            </span>
           </button>
           <span className={['shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold', statusToneClass].join(' ')}>
             {statusLabel}
