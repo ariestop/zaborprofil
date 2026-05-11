@@ -70,6 +70,24 @@ function initialWidgetState(): WidgetState {
   }
 }
 
+function fallbackCopyText(text: string): boolean {
+  const element = document.createElement('textarea')
+  element.value = text
+  element.setAttribute('readonly', 'true')
+  element.style.position = 'fixed'
+  element.style.left = '-9999px'
+  element.style.top = '0'
+  document.body.appendChild(element)
+  element.focus()
+  element.select()
+
+  try {
+    return document.execCommand('copy')
+  } finally {
+    document.body.removeChild(element)
+  }
+}
+
 export default function AssetBuildWidget() {
   const initialState = initialWidgetState()
   const [status, setStatus] = useState<AssetBuildStatus>({
@@ -252,11 +270,21 @@ export default function AssetBuildWidget() {
       return
     }
 
-    await navigator.clipboard.writeText(status.logs)
-    setIsLogCopied(true)
-    window.setTimeout(() => {
-      setIsLogCopied(false)
-    }, 1600)
+    try {
+      if ('clipboard' in navigator && window.isSecureContext) {
+        await navigator.clipboard.writeText(status.logs)
+      } else if (!fallbackCopyText(status.logs)) {
+        throw new Error('Fallback copy failed')
+      }
+
+      setIsLogCopied(true)
+      setError(null)
+      window.setTimeout(() => {
+        setIsLogCopied(false)
+      }, 1600)
+    } catch {
+      setError('Не удалось скопировать лог в буфер. Проверьте доступ к clipboard в браузере.')
+    }
   }
 
   const formatDate = (value: string | null): string => {
