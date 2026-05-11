@@ -1,4 +1,5 @@
 export { sliderBlockSchema } from './schema'
 export { sliderBlockDefaults } from './defaults'
+export { heroPreset, catalogPreset, seoContentPreset } from './presets'
 export { SliderEditor } from './SliderEditor'
 export { SliderPreview } from './SliderPreview'

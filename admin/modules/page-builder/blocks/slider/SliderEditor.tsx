@@ -1,69 +1,10 @@
 import type { BuilderBlock } from '../../types'
 import { Button } from '../../../../shared/ui'
+import { catalogPreset, heroPreset, seoContentPreset, type SliderPreset } from './presets'
 
 interface SliderEditorProps {
   block: BuilderBlock
   onChange?: (nextBlock: BuilderBlock) => void
-}
-
-const heroPreset = {
-  effect: 'fade',
-  autoplay: true,
-  loop: true,
-  pagination: true,
-  navigation: true,
-  delayMs: 5000,
-  pauseOnHover: true,
-  disableOnInteraction: false,
-  speedMs: 650,
-  breakpoints: {
-    mobileSlidesPerView: 1,
-    tabletSlidesPerView: 1,
-    desktopSlidesPerView: 1,
-    mobileSpaceBetween: 8,
-    tabletSpaceBetween: 16,
-    desktopSpaceBetween: 24,
-  },
-}
-
-const catalogPreset = {
-  effect: 'slide',
-  autoplay: false,
-  loop: false,
-  pagination: true,
-  navigation: true,
-  delayMs: 4500,
-  pauseOnHover: true,
-  disableOnInteraction: false,
-  speedMs: 450,
-  breakpoints: {
-    mobileSlidesPerView: 1,
-    tabletSlidesPerView: 2,
-    desktopSlidesPerView: 3,
-    mobileSpaceBetween: 8,
-    tabletSpaceBetween: 16,
-    desktopSpaceBetween: 20,
-  },
-}
-
-const seoContentPreset = {
-  effect: 'fade',
-  autoplay: false,
-  loop: false,
-  pagination: true,
-  navigation: true,
-  delayMs: 6000,
-  pauseOnHover: true,
-  disableOnInteraction: false,
-  speedMs: 550,
-  breakpoints: {
-    mobileSlidesPerView: 1,
-    tabletSlidesPerView: 1,
-    desktopSlidesPerView: 1,
-    mobileSpaceBetween: 8,
-    tabletSpaceBetween: 12,
-    desktopSpaceBetween: 16,
-  },
 }
 
 export function SliderEditor({ block, onChange }: SliderEditorProps) {
@@ -77,7 +18,7 @@ export function SliderEditor({ block, onChange }: SliderEditorProps) {
   const speedMs = typeof settings.speedMs === 'number' ? settings.speedMs : 500
   const canApplyPreset = onChange !== undefined
 
-  const applyPreset = (preset: Record<string, unknown>) => {
+  const applyPreset = (preset: SliderPreset) => {
     if (onChange === undefined) {
       return
     }

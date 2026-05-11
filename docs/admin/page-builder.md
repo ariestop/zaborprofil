@@ -12,6 +12,15 @@ Builder переведен на **structured block model**:
 
 Путь: `/admin/pages/:id/builder`.
 
+Как открыть:
+
+1. Перейти в список страниц `/admin/pages`.
+2. Выбрать нужную страницу.
+3. Нажать `Открыть Builder` в списке или перейти по прямому URL `/admin/pages/:id/builder`.
+
+Важно: экран `/admin/pages` содержит legacy-редактор страниц/блоков (JSON-first),
+а `Page Builder` — отдельный экран структурированного редактирования.
+
 Доступные операции:
 
 - добавить блок из каталога;
@@ -21,6 +30,14 @@ Builder переведен на **structured block model**:
 - сохранить черновик (`PUT /builder`);
 - посмотреть preview (`POST /builder/preview`);
 - опубликовать (`POST /builder/publish`).
+
+## Когда использовать Page Builder, а когда legacy
+
+- `Page Builder` — основной режим для контент-редактирования (структурные блоки, меньше ручного JSON, удобнее для операторов).
+- Legacy-редактор в `/admin/pages` — экспертный/fallback режим для точечных правок JSON и низкоуровневой диагностики payload.
+- Для блока `slider` пресеты доступны в обоих интерфейсах:
+  - в `Page Builder` через `admin/modules/page-builder/blocks/slider/SliderEditor.tsx`;
+  - в legacy-модалке блока (`/admin/pages`) через секцию `Пресеты слайдера`.
 
 ## Ключевые frontend-модули
 

@@ -4,12 +4,19 @@ import { CSS } from '@dnd-kit/utilities'
 import { useEffect, useMemo, useState } from 'react'
 import { apiRequest } from '../api/client'
 import TiptapRichTextEditor from '../components/TiptapRichTextEditor'
+import { catalogPreset, heroPreset, seoContentPreset } from '../modules/page-builder/blocks/slider/presets'
 import type { BlockSchemaItem, ContentBlockItem, ContentPageDetail, ContentPageItem, MediaAssetItem, PageRevisionItem, PageTemplateItem } from '../types/api'
 import { createVisualState, supportsVisualEditor, toBlockContent, type BlockEditorMode, type VisualBlockFormState } from '../utils/blockVisualEditor'
 
 type PageStatus = ContentPageItem['status']
 type SeoAuditIssue = { severity: string; code: string; message: string; field: string }
 type SeoAuditResult = { passed: boolean; issues: SeoAuditIssue[] }
+type SliderPresetOption = {
+  key: string
+  label: string
+  hint: string
+  settings: Record<string, unknown>
+}
 
 const pageTypes = ['home', 'landing', 'service', 'product_category_landing', 'material_landing', 'portfolio_index', 'portfolio_item', 'contacts', 'prices', 'text_page', 'seo_landing', 'system_page']
 const statusTransitions: Record<PageStatus, PageStatus[]> = {
@@ -184,6 +191,27 @@ const blockTypeSortOrder: Record<string, number> = {
   'schema-local-business': 60,
 }
 
+const sliderPresetOptions: SliderPresetOption[] = [
+  {
+    key: 'hero',
+    label: 'Hero preset',
+    hint: 'Один акцентный слайд, fade, автопрокрутка и плавная анимация.',
+    settings: heroPreset,
+  },
+  {
+    key: 'catalog',
+    label: 'Catalog preset',
+    hint: 'Несколько карточек в ряду, ручная навигация, удобно для каталога.',
+    settings: catalogPreset,
+  },
+  {
+    key: 'seo-content',
+    label: 'SEO/Content preset',
+    hint: 'Статичный режим для чтения контента без навязчивой автопрокрутки.',
+    settings: seoContentPreset,
+  },
+]
+
 function resolveBlockPurpose(type: string): BlockPurposeId {
   return blockTypePurposeMap[type] ?? 'content'
 }
@@ -356,6 +384,30 @@ export default function ContentPagesView() {
       throw new Error(`${label} должен быть JSON-объектом.`)
     }
     return parsed as Record<string, unknown>
+  }
+
+  const applySliderPreset = (presetSettings: Record<string, unknown>): void => {
+    setBlockForm((current) => {
+      let currentSettings: Record<string, unknown> = {}
+
+      try {
+        currentSettings = parseObject(current.settings, 'Settings')
+      } catch {
+        currentSettings = {}
+      }
+
+      return {
+        ...current,
+        settings: JSON.stringify(
+          {
+            ...currentSettings,
+            ...presetSettings,
+          },
+          null,
+          2,
+        ),
+      }
+    })
   }
 
   const parseJsonLdInput = (): Record<string, unknown>[] | null => {
@@ -830,10 +882,22 @@ export default function ContentPagesView() {
             <p className="mb-3 text-sm font-semibold text-slate-700">Страницы</p>
             {loading && <p className="text-sm text-slate-500">Загрузка...</p>}
             {pages.map((page) => (
-              <button key={page.id} type="button" className="mb-2 block w-full rounded-lg border border-slate-200 px-3 py-2 text-left text-sm hover:bg-slate-50" onClick={() => { void selectPage(page.id) }}>
-                <span className="block font-medium text-slate-900">{page.title}</span>
-                <span className="block text-xs text-slate-500">{page.path} · {statusLabel(page.status)}</span>
-              </button>
+              <div key={page.id} className="mb-2 rounded-lg border border-slate-200 p-2">
+                <button
+                  type="button"
+                  className="block w-full rounded-md px-2 py-1 text-left text-sm hover:bg-slate-50"
+                  onClick={() => { void selectPage(page.id) }}
+                >
+                  <span className="block font-medium text-slate-900">{page.title}</span>
+                  <span className="block text-xs text-slate-500">{page.path} · {statusLabel(page.status)}</span>
+                </button>
+                <a
+                  href={`/admin/pages/${page.id}/builder`}
+                  className="mt-2 inline-flex rounded-md border border-emerald-300 px-2 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
+                >
+                  Открыть Builder
+                </a>
+              </div>
             ))}
           </div>
 
@@ -1054,6 +1118,34 @@ export default function ContentPagesView() {
                         </label>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {blockForm.type === 'slider' && (
+                  <div className="mt-4 rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+                    <p className="text-sm font-semibold text-indigo-900">Пресеты слайдера</p>
+                    <p className="mt-1 text-xs text-indigo-800">
+                      Применяют рекомендуемые параметры в «Настройки блока JSON».
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {sliderPresetOptions.map((preset) => (
+                        <button
+                          key={preset.key}
+                          type="button"
+                          className="rounded-lg border border-indigo-300 bg-white px-3 py-2 text-xs font-semibold text-indigo-700 hover:bg-indigo-100"
+                          onClick={() => applySliderPreset(preset.settings)}
+                        >
+                          Применить {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                    <ul className="mt-3 space-y-1 text-xs text-indigo-800">
+                      {sliderPresetOptions.map((preset) => (
+                        <li key={`${preset.key}-hint`}>
+                          <span className="font-semibold">{preset.label}:</span> {preset.hint}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
 

@@ -49,6 +49,30 @@
 Публичный SSR-рендер находится в `templates/public/blocks/slider.html.twig`,
 инициализация Swiper — в `assets/site/app.ts`.
 
+### Пресеты `slider` в админке
+
+Рекомендуемые пресеты (`Hero`, `Catalog`, `SEO/Content`) вынесены в
+`admin/modules/page-builder/blocks/slider/presets.ts`.
+
+Где применяются:
+
+- `Page Builder` (`/admin/pages/:id/builder`) — через `SliderEditor`;
+- legacy-редактор (`/admin/pages`, модалка `Редактор блоков`) — через секцию
+  `Пресеты слайдера`.
+
+### Актуальный SSR-макет (full-width hero)
+
+Текущая реализация публичного `slider` ориентирована на hero-секцию главной:
+
+- секция рендерится на всю ширину viewport (`w-screen`) через full-bleed паттерн;
+- каждый слайд использует `content.items[*].src` как фоновое изображение;
+- поверх изображения добавляется затемняющий overlay для контраста текста;
+- `title` и `text` выводятся как отдельные плашки поверх фонового кадра;
+- `buttonLabel/buttonHref` формируют CTA-кнопку (если заполнены).
+
+`settings.className` используется как дополнительный CSS-hook для страницы/кампании
+без изменения контракта блока.
+
 ## Почему без GrapesJS
 
 Проекту нужен предсказуемый SEO-friendly output и строгий контроль структуры

@@ -24,48 +24,58 @@
             paginationBullet: block.settings.a11yLabels.paginationBullet ?? 'Перейти к слайду {{index}}'
         }
     } %}
+    {% set customClass = block.settings.className ?? '' %}
 
-    <section class="not-prose space-y-6">
+    <section class="not-prose relative left-1/2 w-screen -translate-x-1/2 {{ customClass }}">
         <div
-            class="swiper js-site-slider relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+            class="swiper js-site-slider relative w-full overflow-hidden bg-slate-950"
             data-slider-settings='{{ sliderSettings|json_encode(constant('JSON_UNESCAPED_UNICODE'))|e('html_attr') }}'
         >
             <div class="swiper-wrapper">
                 {% for item in items %}
                     <article class="swiper-slide">
-                        <div class="grid gap-6 p-6 md:grid-cols-2 md:items-center">
-                            <div class="space-y-4">
+                        <div class="relative isolate min-h-[340px] sm:min-h-[420px] lg:min-h-[520px]">
+                            {% if item.src is defined and item.src %}
+                                <img
+                                    src="{{ item.src }}"
+                                    alt="{{ item.alt is defined ? item.alt : '' }}"
+                                    class="absolute inset-0 h-full w-full object-cover"
+                                    loading="lazy"
+                                >
+                            {% else %}
+                                <div class="absolute inset-0 bg-gradient-to-br from-slate-900 to-slate-700"></div>
+                            {% endif %}
+
+                            <div class="absolute inset-0 bg-black/30"></div>
+
+                            <div class="relative z-10 mx-auto flex h-full w-full max-w-6xl items-end px-6 py-10 sm:py-14 lg:py-20">
+                                <div class="space-y-4">
                                 {% if item.title is defined and item.title %}
-                                    <h2 class="text-2xl font-semibold text-slate-950 md:text-3xl">{{ item.title }}</h2>
+                                    <h2 class="inline-block bg-red-700/90 px-3 py-2 text-3xl font-semibold leading-tight text-white sm:px-4 sm:py-3 sm:text-4xl lg:text-6xl">
+                                        {{ item.title }}
+                                    </h2>
                                 {% endif %}
                                 {% if item.text is defined and item.text %}
-                                    <p class="text-base leading-7 text-slate-700">{{ item.text }}</p>
+                                    <p class="inline-block bg-black/80 px-3 py-2 text-lg leading-tight text-white sm:px-4 sm:py-3 sm:text-2xl">
+                                        {{ item.text }}
+                                    </p>
                                 {% endif %}
                                 {% if item.buttonLabel is defined and item.buttonLabel %}
                                     <a
                                         href="{{ item.buttonHref is defined and item.buttonHref ? item.buttonHref : '#' }}"
-                                        class="inline-flex items-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                                        class="inline-flex items-center rounded-md bg-white/95 px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-white"
                                     >
                                         {{ item.buttonLabel }}
                                     </a>
                                 {% endif %}
                             </div>
-                            {% if item.src is defined and item.src %}
-                                <figure class="overflow-hidden rounded-xl bg-slate-100">
-                                    <img
-                                        src="{{ item.src }}"
-                                        alt="{{ item.alt is defined ? item.alt : '' }}"
-                                        class="h-full w-full object-cover"
-                                        loading="lazy"
-                                    >
-                                </figure>
-                            {% endif %}
+                            </div>
                         </div>
                     </article>
                 {% endfor %}
             </div>
 
-            <div class="pointer-events-none absolute inset-x-0 top-1/2 z-10 hidden -translate-y-1/2 justify-between px-3 md:flex">
+            <div class="pointer-events-none absolute inset-x-0 top-1/2 z-20 hidden -translate-y-1/2 justify-between px-3 md:flex lg:px-6">
                 <button
                     type="button"
                     class="js-site-slider-prev pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-800 shadow transition hover:bg-white"
@@ -82,7 +92,7 @@
                 </button>
             </div>
 
-            <div class="js-site-slider-pagination px-6 pb-4"></div>
+            <div class="js-site-slider-pagination absolute bottom-3 left-1/2 z-20 -translate-x-1/2"></div>
         </div>
     </section>
 {% endif %}

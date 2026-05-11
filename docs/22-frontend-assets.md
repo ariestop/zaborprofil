@@ -84,7 +84,15 @@ make npm-dev        # vite dev на :5173, HMR
 
 - JS и CSS импортируются в `assets/site/app.ts`;
 - инициализация выполняется только для элементов `.js-site-slider`;
-- настройки (`autoplay`, `loop`, `pagination`, `navigation`, `delayMs`) передаются из SSR через `data-slider-settings`.
+- настройки (`autoplay`, `loop`, `pagination`, `navigation`, `delayMs`) передаются из SSR через `data-slider-settings`;
+- публичный Twig (`templates/public/blocks/slider.html.twig`) рендерит full-width
+  hero-слайд: фон из `item.src`, overlay, контент поверх.
+
+Для стабильного full-bleed внутри ограниченного `main` контейнера используется
+комбинация:
+
+- `left-1/2 w-screen -translate-x-1/2` на внешней секции;
+- `w-full` на `.swiper` контейнере.
 
 ## Admin SPA
 
