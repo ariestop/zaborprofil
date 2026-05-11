@@ -148,7 +148,7 @@ flowchart LR
 ## Слои
 
 | Слой | Где живёт | Роль | Можно ли зависеть от Symfony/Doctrine |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Presentation (Twig templates) | `templates/` | SSR разметка | Только Twig API |
 | Controller / UI | `src/Module/*/UI`, `src/Shared/UI` | Вход HTTP/CLI, парсинг DTO | Да, Symfony HTTP Foundation |
 | Application | `src/Module/*/Application` | Use cases, command/query, DTO, оркестрация | Только PHP/Symfony Validator/PSR; **не** Request/Response/EntityManager |
@@ -261,7 +261,7 @@ flowchart LR
 ## Где живёт бизнес-логика
 
 | Должна жить | Не должна жить |
-|---|---|
+| --- | --- |
 | `Domain/Entity` (rich behaviour, инварианты) | `Controller` — никогда |
 | `Domain/Service` (вычисления без I/O) | `Twig` — никогда |
 | `Application/Handler` (оркестрация транзакций, событий, side effects) | `EventSubscriber` (кроме инфраструктурных subscriber’ов: security headers, request_id, admin csrf) |

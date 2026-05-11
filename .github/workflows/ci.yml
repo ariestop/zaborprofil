@@ -8,8 +8,8 @@ on:
     branches:
       - main
       - develop
-      - 'feature/**'
-      - 'fix/**'
+      - feature/**
+      - fix/**
   pull_request:
     branches:
       - main
@@ -151,6 +151,14 @@ jobs:
       - backend
       - frontend
 
+    env:
+      POSTGRES_USER: zaborprofil_test
+      POSTGRES_PASSWORD: zaborprofil_test
+      POSTGRES_DB: zaborprofil_test
+      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_PORT: '5432'
+      REDIS_URL: redis://127.0.0.1:6379/1
+
     services:
       postgres:
         image: postgres:18
@@ -202,6 +210,9 @@ jobs:
       - name: Use PostgreSQL for test environment
         run: cp .env.test.ci .env.test.local
 
+      - name: Generate E2E admin password
+        run: echo "E2E_ADMIN_PASSWORD=$(openssl rand -hex 24)" >> "$GITHUB_ENV"
+
       - name: Run Doctrine migrations for E2E database
         run: php bin/console doctrine:migrations:migrate --env=test --no-interaction --allow-no-migration
 
@@ -209,11 +220,11 @@ jobs:
         env:
           APP_ENV: test
           APP_DEBUG: 0
-          DATABASE_URL: postgresql://zaborprofil_test:zaborprofil_test@127.0.0.1:5432/zaborprofil_test?serverVersion=18&charset=utf8
-          REDIS_URL: redis://127.0.0.1:6379/1
           E2E_ADMIN_EMAIL: e2e-admin@example.test
-          E2E_ADMIN_PASSWORD: e2e-admin-password
-        run: php tools/testing/seed-e2e-admin.php
+          E2E_ADMIN_PASSWORD: ${{ env.E2E_ADMIN_PASSWORD }}
+        run: |
+          export DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?serverVersion=18&charset=utf8"
+          php tools/testing/seed-e2e-admin.php
 
       - name: Build frontend assets
         run: npm run build
@@ -225,11 +236,11 @@ jobs:
         env:
           APP_ENV: test
           APP_DEBUG: 0
-          DATABASE_URL: postgresql://zaborprofil_test:zaborprofil_test@127.0.0.1:5432/zaborprofil_test?serverVersion=18&charset=utf8
-          REDIS_URL: redis://127.0.0.1:6379/1
           SITE_URL: http://127.0.0.1:8000
           DEFAULT_URI: http://127.0.0.1:8000
-        run: php -S 127.0.0.1:8000 -t public_html >/tmp/e2e-app.log 2>&1 &
+        run: |
+          export DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?serverVersion=18&charset=utf8"
+          php -S 127.0.0.1:8000 -t public_html >/tmp/e2e-app.log 2>&1 &
 
       - name: Wait for app server
         run: |
@@ -247,7 +258,7 @@ jobs:
         env:
           E2E_BASE_URL: http://127.0.0.1:8000
           E2E_ADMIN_EMAIL: e2e-admin@example.test
-          E2E_ADMIN_PASSWORD: e2e-admin-password
+          E2E_ADMIN_PASSWORD: ${{ env.E2E_ADMIN_PASSWORD }}
         run: npm run test:e2e:smoke
 
       - name: Upload Playwright artifacts
