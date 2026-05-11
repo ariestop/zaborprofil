@@ -1,5 +1,6 @@
-import { Suspense, lazy } from 'react'
+import { Suspense, lazy, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useLocation } from 'react-router-dom'
 import { apiRequest } from '../shared/api/client'
 import { adminQueryKeys, queryOptions } from '../shared/api/query'
 import { PageHeader, Card, Badge, ErrorState, Skeleton } from '../shared/ui'
@@ -18,6 +19,14 @@ export default function DashboardPage() {
     () => apiRequest<HealthPayload>('/admin/api/system/health'),
   ))
   const leadsQuery = useLeadsQuery()
+  const location = useLocation()
+  const csrfEnabled = useMemo(() => {
+    const csrfHeader = document.querySelector<HTMLMetaElement>('meta[name="admin-csrf-header"]')?.content
+    const csrfToken = document.querySelector<HTMLMetaElement>('meta[name="admin-csrf-token"]')?.content
+
+    return (csrfHeader?.trim().length ?? 0) > 0 && (csrfToken?.trim().length ?? 0) > 0
+  }, [])
+  const routingReady = location.pathname.startsWith('/admin')
 
   return (
     <div>
@@ -32,6 +41,28 @@ export default function DashboardPage() {
           <Badge tone="success">Toasts</Badge>
           <Badge tone="success">Theme</Badge>
         </div>
+      </Card>
+      <Card className="mt-4" title="Быстрый статус">
+        <dl className="space-y-3 text-sm">
+          <div className="flex items-center justify-between">
+            <dt className="text-slate-500 dark:text-slate-400">API-клиент</dt>
+            <dd className={healthQuery.isSuccess ? 'font-semibold text-emerald-700 dark:text-emerald-400' : healthQuery.isError ? 'font-semibold text-red-700 dark:text-red-400' : 'font-semibold text-amber-700 dark:text-amber-400'}>
+              {healthQuery.isSuccess ? 'ГОТОВ' : healthQuery.isError ? 'ОШИБКА' : 'ПРОВЕРКА'}
+            </dd>
+          </div>
+          <div className="flex items-center justify-between">
+            <dt className="text-slate-500 dark:text-slate-400">CSRF</dt>
+            <dd className={csrfEnabled ? 'font-semibold text-emerald-700 dark:text-emerald-400' : 'font-semibold text-red-700 dark:text-red-400'}>
+              {csrfEnabled ? 'ВКЛЮЧЕН' : 'ОТКЛЮЧЕН'}
+            </dd>
+          </div>
+          <div className="flex items-center justify-between">
+            <dt className="text-slate-500 dark:text-slate-400">SPA routing</dt>
+            <dd className={routingReady ? 'font-semibold text-emerald-700 dark:text-emerald-400' : 'font-semibold text-amber-700 dark:text-amber-400'}>
+              {routingReady ? 'ГОТОВ' : 'ПРОВЕРКА'}
+            </dd>
+          </div>
+        </dl>
       </Card>
       <Card className="mt-4" title="System health через TanStack Query">
         {healthQuery.isPending ? <Skeleton className="h-5 w-48" /> : null}
@@ -49,11 +80,14 @@ export default function DashboardPage() {
       </Card>
       <Card className="mt-4" title="Leads status (Recharts)">
         <Suspense fallback={<Skeleton className="h-40 w-full" />}>
-          {leadsQuery.data !== undefined ? (
-            <LeadsStatusChart leads={leadsQuery.data.leads} />
-          ) : (
-            <p className="text-sm text-slate-500 dark:text-slate-400">Недостаточно данных для графика.</p>
-          )}
+          {leadsQuery.isPending ? <Skeleton className="h-40 w-full" /> : null}
+          {leadsQuery.isError ? (
+            <ErrorState
+              title="Не удалось загрузить данные по лидам"
+              description="Проверьте endpoint /admin/api/leads и права leads.view."
+            />
+          ) : null}
+          {leadsQuery.isSuccess ? <LeadsStatusChart leads={leadsQuery.data.leads} statuses={leadsQuery.data.statuses} /> : null}
         </Suspense>
       </Card>
     </div>

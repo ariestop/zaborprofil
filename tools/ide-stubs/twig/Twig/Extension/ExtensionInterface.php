@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Twig\Extension;
 
 /**
- * Минимальный стаб для Intelephense: реальный `vendor/twig` в Docker лежит в томе `php_vendor`
- * и недоступен на хосте.
+ * Минимальный стаб для Intelephense, когда в рабочей копии ещё нет `vendor/` после `composer install`.
  */
 interface ExtensionInterface
 {

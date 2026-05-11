@@ -63,6 +63,130 @@ const templateLabels: Record<string, string> = {
   seo_landing: 'SEO-посадочная',
   default: 'Без шаблона',
 }
+type BlockPurposeId = 'layout' | 'hero' | 'content' | 'media' | 'conversion' | 'business' | 'seo_system'
+
+const blockPurposeOrder: BlockPurposeId[] = ['layout', 'hero', 'content', 'media', 'conversion', 'business', 'seo_system']
+const blockPurposeLabels: Record<BlockPurposeId, string> = {
+  layout: 'Каркас страницы',
+  hero: 'Первый экран (Hero)',
+  content: 'Текстовый контент',
+  media: 'Медиа и интерактив',
+  conversion: 'Конверсия (CTA и формы)',
+  business: 'Каталог и продукт',
+  seo_system: 'SEO и системные блоки',
+}
+const blockTypePurposeMap: Record<string, BlockPurposeId> = {
+  section: 'layout',
+  container: 'layout',
+  grid: 'layout',
+  columns: 'layout',
+  spacer: 'layout',
+  divider: 'layout',
+  tabs: 'layout',
+  accordion: 'layout',
+  'hero.classic': 'hero',
+  'hero.centered': 'hero',
+  'hero.split': 'hero',
+  'hero.with-image': 'hero',
+  'hero.cta': 'hero',
+  'hero.minimal': 'hero',
+  'rich-text': 'content',
+  'text-with-image': 'content',
+  'article-section': 'content',
+  quote: 'content',
+  faq: 'content',
+  steps: 'content',
+  benefits: 'content',
+  features: 'content',
+  'icons-list': 'content',
+  image: 'media',
+  gallery: 'media',
+  'before-after': 'media',
+  video: 'media',
+  slider: 'media',
+  cta: 'conversion',
+  'contact-form': 'conversion',
+  'lead-form': 'conversion',
+  'callback-form': 'conversion',
+  'calculator-placeholder': 'conversion',
+  pricing: 'conversion',
+  reviews: 'conversion',
+  'trust-badges': 'conversion',
+  'fence-types': 'business',
+  materials: 'business',
+  portfolio: 'business',
+  'works-gallery': 'business',
+  'service-cards': 'business',
+  advantages: 'business',
+  'installation-steps': 'business',
+  'price-table': 'business',
+  'contacts-map': 'business',
+  'partner-cta': 'business',
+  breadcrumbs: 'seo_system',
+  'sitemap-section': 'seo_system',
+  'related-pages': 'seo_system',
+  'internal-links': 'seo_system',
+  'schema-faq': 'seo_system',
+  'schema-local-business': 'seo_system',
+}
+const blockTypeSortOrder: Record<string, number> = {
+  section: 10,
+  container: 20,
+  grid: 30,
+  columns: 40,
+  spacer: 50,
+  divider: 60,
+  tabs: 70,
+  accordion: 80,
+  'hero.classic': 10,
+  'hero.centered': 20,
+  'hero.split': 30,
+  'hero.with-image': 40,
+  'hero.cta': 50,
+  'hero.minimal': 60,
+  'rich-text': 10,
+  'text-with-image': 20,
+  'article-section': 30,
+  quote: 40,
+  faq: 50,
+  steps: 60,
+  benefits: 70,
+  features: 80,
+  'icons-list': 90,
+  image: 10,
+  gallery: 20,
+  'before-after': 30,
+  video: 40,
+  slider: 50,
+  cta: 10,
+  'contact-form': 20,
+  'lead-form': 30,
+  'callback-form': 40,
+  'calculator-placeholder': 50,
+  pricing: 60,
+  reviews: 70,
+  'trust-badges': 80,
+  'fence-types': 10,
+  materials: 20,
+  portfolio: 30,
+  'works-gallery': 40,
+  'service-cards': 50,
+  advantages: 60,
+  'installation-steps': 70,
+  'price-table': 80,
+  'contacts-map': 90,
+  'partner-cta': 100,
+  breadcrumbs: 10,
+  'sitemap-section': 20,
+  'related-pages': 30,
+  'internal-links': 40,
+  'schema-faq': 50,
+  'schema-local-business': 60,
+}
+
+function resolveBlockPurpose(type: string): BlockPurposeId {
+  return blockTypePurposeMap[type] ?? 'content'
+}
 
 function SortableBlockCard({
   block,
@@ -168,6 +292,38 @@ export default function ContentPagesView() {
   const selectedBlock = useMemo(() => selected?.blocks.find((block) => block.id === selectedBlockId) ?? null, [selected, selectedBlockId])
   const templatesForType = useMemo(() => templates.filter((template) => template.pageType === form.type), [templates, form.type])
   const nonLegacyBlockSchemas = useMemo(() => blockSchemas.filter((schema) => !schema.isLegacy), [blockSchemas])
+  const groupedNonLegacyBlockSchemas = useMemo(() => {
+    const collator = new Intl.Collator('ru', { sensitivity: 'base', numeric: true })
+    const grouped = new Map<BlockPurposeId, BlockSchemaItem[]>()
+
+    for (const schema of nonLegacyBlockSchemas) {
+      const purpose = resolveBlockPurpose(schema.type)
+      const current = grouped.get(purpose) ?? []
+      current.push(schema)
+      grouped.set(purpose, current)
+    }
+
+    return blockPurposeOrder
+      .map((purpose) => {
+        const schemas = [...(grouped.get(purpose) ?? [])].sort((left, right) => {
+          const leftOrder = blockTypeSortOrder[left.type] ?? Number.MAX_SAFE_INTEGER
+          const rightOrder = blockTypeSortOrder[right.type] ?? Number.MAX_SAFE_INTEGER
+
+          if (leftOrder !== rightOrder) {
+            return leftOrder - rightOrder
+          }
+
+          return collator.compare(left.label, right.label)
+        })
+
+        return {
+          purpose,
+          title: blockPurposeLabels[purpose],
+          schemas,
+        }
+      })
+      .filter((group) => group.schemas.length > 0)
+  }, [nonLegacyBlockSchemas])
   const blockTypeLabelMap = useMemo(() => {
     const map: Record<string, string> = {}
     for (const schema of blockSchemas) {
@@ -827,7 +983,11 @@ export default function ContentPagesView() {
                   </div>
                   <div className="flex items-center gap-3">
                     <select value={blockForm.type} className="rounded-lg border border-slate-300 px-3 py-2 text-sm" onChange={(event) => startNewBlock(event.target.value)}>
-                      {nonLegacyBlockSchemas.map((schema) => <option key={schema.type} value={schema.type}>{schema.label}</option>)}
+                      {groupedNonLegacyBlockSchemas.map((group) => (
+                        <optgroup key={group.purpose} label={group.title}>
+                          {group.schemas.map((schema) => <option key={schema.type} value={schema.type}>{schema.label}</option>)}
+                        </optgroup>
+                      ))}
                     </select>
                     <button type="button" className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50" onClick={() => setBlockEditorOpen(false)}>Закрыть</button>
                   </div>

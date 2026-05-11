@@ -47,10 +47,9 @@ final readonly class LogReaderService
 
     private function resolveLogFile(?string $channel): string
     {
-        $env = $this->kernel->getEnvironment();
         $base = $this->kernel->getProjectDir().'/var/log';
         if ($channel === null || trim($channel) === '') {
-            return $base.'/'.$env.'.log';
+            return $base.'/app.log';
         }
 
         return $base.'/'.preg_replace('/[^a-z0-9_-]/i', '', $channel).'.log';

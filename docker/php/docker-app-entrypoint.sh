@@ -3,8 +3,8 @@ set -eu
 
 cd /var/www/html || exit 1
 
-mkdir -p var/cache var/log public_html/uploads
-chown -R www-data:www-data var public_html/uploads
+mkdir -p var/cache var/log public_html/uploads vendor
+chown -R www-data:www-data var public_html/uploads vendor
 
 # Локальный override монтирует named volume node_modules; до chown он root:root,
 # иначе npm ci из PHP-FPM (www-data) получает EACCES.

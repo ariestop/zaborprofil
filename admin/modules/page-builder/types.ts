@@ -118,6 +118,7 @@ export interface BlockDefinition {
   type: BuilderBlockType
   title: string
   category: BlockCategory
+  sortOrder: number
   description: string
   defaults: {
     content: Record<string, unknown>

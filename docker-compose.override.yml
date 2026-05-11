@@ -8,7 +8,6 @@ services:
       # Тот же named volume, что у node: иначе app видит ./node_modules с хоста без прав www-data.
       CHOWN_NODE_MODULES: "1"
     volumes:
-      - php_vendor:/var/www/html/vendor
       - php_cache:/var/www/html/var/cache
       - php_logs:/var/www/html/var/log
       - node_modules:/var/www/html/node_modules
@@ -31,7 +30,6 @@ services:
       - ${REDIS_PORT:-16379}:6379
 
 volumes:
-  php_vendor:
   php_cache:
   php_logs:
   node_modules:

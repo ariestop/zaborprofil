@@ -1,5 +1,7 @@
 {
     "php.validate.executablePath": "/usr/bin/php",
+    "php.validate.enable": false,
+    "intelephense.maxMemory": 4096,
     "intelephense.environment.includePaths": [
         "${workspaceFolder}/tools/ide-stubs/twig",
         "${workspaceFolder}/tools/ide-stubs/phpunit"
