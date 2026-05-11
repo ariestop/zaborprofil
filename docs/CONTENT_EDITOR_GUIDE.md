@@ -94,9 +94,16 @@ Spam-заявки могут появиться со статусом `spam`; э
 
 ## Типы Блоков
 
-В enum уже заведены основные типы блоков: `hero`, `text`, `text_image`, `image`, `gallery`, `video`, `price_cards`, `feature_grid`, `steps`, `faq`, `cta_form`, `telegram_cta`, `contacts`, `map`, `portfolio_grid`, `seo_text`, `html_embed`, `table`, `accordion`, `quote`, `before_after`, `calculator_placeholder`.
+В проекте поддерживаются два семейства типов:
 
-Сейчас Twig partials добавлены для `hero`, `text`, `seo_text` и fallback `default`. Остальные partials будут расширяться при разработке визуального редактора и публичного дизайна.
+- legacy (`hero`, `text`, `feature_grid`, `cta_form`, `contacts`, ...);
+- structured builder (`hero.classic`, `rich-text`, `features`, `contact-form`, `cta`, ...).
+
+Публичный рендер умеет работать с обоими форматами: часть structured-типов
+рендерится напрямую своими partials, часть — через алиасы в `TwigBlockRenderer`.
+
+Для редактора это означает: используйте типы из builder (они приоритетны), а
+legacy остаются для совместимости и поэтапной миграции старого контента.
 
 ## Визуальный редактор `text` и `text_image`
 

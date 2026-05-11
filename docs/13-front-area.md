@@ -20,10 +20,13 @@
 
 ```mermaid
 flowchart LR
-    R[/Request /some-path/] --> Resolver[PublicPageResolver]
-    Resolver -->|published| PageView[PublicPageView]
+    R[/Request /some-path/] --> CacheResolver[CachedPublicPageResolver]
+    CacheResolver -->|cache miss| Resolver[PublicPageResolver]
+    Resolver -->|published revision| PageView[PublicPageView from revision snapshot]
+    Resolver -->|legacy fallback| PageEntity[Page published entity]
     Resolver -->|draft / archived / not found| NF[404]
     PageView --> Twig[public/page/show.html.twig]
+    PageEntity --> Twig
     Twig --> Block[block partial по BlockType]
 ```
 
@@ -36,10 +39,14 @@ flowchart LR
 - Неизвестный `BlockType` — fallback на `templates/public/blocks/default.html.twig`.
 - `slider` рендерится отдельным partial `templates/public/blocks/slider.html.twig`,
   а интерактивность (Swiper) инициализируется в `assets/site/app.ts`.
-- Источник блоков управляется системной настройкой
-  `content.public_page_blocks_source`:
-  - `snapshot` — блоки из `publishedRevision` (стабильный immutable рендер);
-  - `live` — блоки из текущего builder-состояния опубликованной страницы.
+  Для главной используется hero-вариант: full-width секция (full-bleed из
+  ограниченного container), фон-слайда из `content.items[*].src`, overlay и
+  текстовые плашки поверх изображения.
+- Для страницы с `publishedRevision` публичный рендер берет и поля страницы, и блоки
+  из snapshot ревизии (консистентное опубликованное состояние без смешивания с
+  текущим draft/live-билдером).
+- Legacy fallback остается для старых записей без `PagePublication`:
+  используется опубликованная `Page`-сущность.
 
 ## Layouts и partial’ы
 
@@ -51,6 +58,7 @@ templates/
     └── blocks/
         ├── default.html.twig      # fallback
         ├── hero.html.twig
+        ├── slider.html.twig
         ├── seo_text.html.twig
         └── text.html.twig
 ```
@@ -76,7 +84,9 @@ templates/
 
 ## Производительность
 
-- Пул `cache.public_page` сконфигурирован (TTL 3600 сек), но **сейчас не используется**: `PublicPageController` всегда читает из БД. Целевое — обернуть рендер в этот пул (`#[Target('public_page')] CacheInterface`) с инвалидацией в Page/PageBlock-хендлерах. См. [23-cache-and-redis](23-cache-and-redis.md).
+- Пул `cache.public_page` используется через `CachedPublicPageResolver`.
+- Ключ строится от нормализованного `path`, TTL по умолчанию `300` секунд.
+- Инвалидация делается в content handlers при изменениях страницы/блоков/SEO и при публикации.
 - Vite-build с manifest — отдаём предсобранные ассеты.
 - HTTP cache (целевое): `Cache-Control` headers + `ETag` для статики и публичных страниц.
 - Для `slider` используется lazy-loading изображений (`loading=\"lazy\"`) и

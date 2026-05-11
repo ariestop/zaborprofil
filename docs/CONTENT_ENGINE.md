@@ -63,8 +63,11 @@ Snapshot хранит:
 - автора, дату, комментарий и summary изменения.
 
 Публичный resolver сначала пытается отдать `publishedRevision` из `PagePublication`.
-Если у старой страницы еще нет publication state, используется прежний fallback на
-текущие `Page` + `PageBlock`. Это нужно для staged rollout без остановки сайта.
+Если revision существует, рендер строится целиком из snapshot (поля страницы и
+блоки) без смешивания с текущим draft/live состоянием билдера.
+
+Если у старой страницы еще нет publication state, используется fallback на
+опубликованную `Page`-сущность (legacy rollout без остановки сайта).
 
 ### PagePublication
 
@@ -227,17 +230,24 @@ API защищен admin firewall и используется React + TypeScript
 
 - cache key строится от нормализованного `Page.path`;
 - cache item получает глобальный tag и path-specific tag;
+- TTL по умолчанию — 300 секунд;
 - изменения страниц, блоков и SEO metadata сбрасывают path-specific cache;
 - изменения settings, robots.txt и redirects сбрасывают глобальный public page cache tag.
 
 Preview-ссылки создаются через `GET /admin/api/content/pages/{id}/preview-link` и подписываются HMAC-токеном. Preview доступен для draft/published/archived страниц по `/_preview/content/pages/{id}/{token}` и всегда отдаёт `X-Robots-Tag: noindex,nofollow` + meta robots `noindex, nofollow`.
 
-Текущие partials:
+Текущие partials включают legacy и structured-варианты, в том числе:
 
 - `templates/public/blocks/hero.html.twig`
-- `templates/public/blocks/text.html.twig`
-- `templates/public/blocks/seo_text.html.twig`
+- `templates/public/blocks/hero.classic.html.twig`
+- `templates/public/blocks/features.html.twig`
+- `templates/public/blocks/rich-text.html.twig`
+- `templates/public/blocks/contact-form.html.twig`
+- `templates/public/blocks/cta.html.twig`
 - `templates/public/blocks/default.html.twig`
+
+Часть structured-типов дополнительно маппится на legacy partial через алиасы в
+`TwigBlockRenderer` (например, `features -> feature_grid`, `cta -> cta_form`).
 
 ## Тесты
 
