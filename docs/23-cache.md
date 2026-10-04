@@ -215,11 +215,74 @@ php bin/console cache:pool:prune                      # удалить прот�
 
 В release-deploy — `cache:clear --env=prod --no-warmup` уже выполняется в скрипте.
 
-## HTTP cache (целевое)
+## HTTP-кэш публичных страниц
 
-- Reverse proxy на Nginx (`proxy_cache`) для публичных страниц.
-- `Cache-Control: public, max-age=...`, `ETag`/`Last-Modified`.
-- Cache vary by language/headers — не используется (один язык).
+Реализован в [`PublicPageHttpCache`](../src/Module/Content/UI/Web/PublicPageHttpCache.php) и применяется в `PublicPageController` к успешным (`200`) GET/HEAD-ответам.
+
+| Заголовок | Значение по умолчанию | Назначение |
+|---|---|---|
+| `Cache-Control` | `public, max-age=0, s-maxage=300, stale-while-revalidate=60` | Браузер каждый раз сверяет ETag (после публикации редактор сразу видит новую версию), общие кэши держат копию 5 минут |
+| `ETag` | `xxh128` от тела ответа | Учитывает содержимое страницы, меню и настройки; при совпадении `If-None-Match` отдаётся `304` без тела |
+| `X-Accel-Expires` | равен `s-maxage` | nginx читает его раньше `Cache-Control` и не передаёт клиенту |
+
+`Last-Modified` не используется: ETag от тела надёжнее, чем `updatedAt` страницы, потому что меню и настройки живут отдельно от страницы.
+
+Публичные заголовки **не** выставляются (ответ остаётся `private, no-cache`), если:
+
+- кэш выключен (`PUBLIC_HTTP_CACHE_ENABLED=0`);
+- `APP_ENV=staging` (стенд закрыт Basic Auth);
+- запрос пришёл с сессионной cookie (администратор, вошедший в админку) или с заголовком `Authorization`;
+- метод не GET/HEAD или статус не `200` (404, редиректы, 503 режима обслуживания);
+- это preview страницы (`/_preview/...` всегда `no-store, private`) и страницы каталога.
+
+Форма заявки в HTML статична: `formLoadedAt` (антиспам «слишком быстрая отправка») и `pageUrl` заполняет JavaScript в браузере ([`assets/site/leadForm.ts`](../assets/site/leadForm.ts)), CSRF-токена в форме нет. Поэтому страницу с формой можно кэшировать.
+
+### Переменные окружения
+
+| Переменная | По умолчанию | Описание |
+|---|---|---|
+| `PUBLIC_HTTP_CACHE_ENABLED` | `1` в `prod`, иначе `0` | Включает публичные заголовки кэша |
+| `PUBLIC_HTTP_CACHE_MAX_AGE` | `0` | `max-age` для браузера, сек. |
+| `PUBLIC_HTTP_CACHE_S_MAXAGE` | `300` | `s-maxage` и `X-Accel-Expires` для nginx/CDN, сек. |
+| `PUBLIC_HTTP_CACHE_STALE_WHILE_REVALIDATE` | `60` | `stale-while-revalidate`, сек.; `0` отключает |
+| `NGINX_FASTCGI_CACHE_DIR` | пусто | Абсолютный путь `fastcgi_cache_path`; пусто — сброс кэша nginx отключён |
+| `NGINX_FASTCGI_CACHE_LEVELS` | `1:2` | Значение `levels` из `fastcgi_cache_path` |
+
+### nginx `fastcgi_cache` (production VPS)
+
+Приложение само не требует nginx-кэша: заголовки работают и без него (браузеры, CDN). Для снижения нагрузки на PHP-FPM:
+
+```nginx
+# http { ... }
+fastcgi_cache_path /var/cache/nginx/zaborprofil levels=1:2 keys_zone=zaborprofil:20m max_size=256m inactive=1h use_temp_path=off;
+
+# Ключ строится без query string: страница от неё не зависит, а сброс кэша знает точный ключ.
+map $request_uri $public_cache_path {
+    ~^(?<path>[^?]*) $path;
+    default          $request_uri;
+}
+
+# server { ... } внутри location ~ ^/index\.php(/|$)
+fastcgi_cache zaborprofil;
+fastcgi_cache_key "$scheme://$host$public_cache_path";
+fastcgi_cache_methods GET HEAD;
+fastcgi_cache_bypass $cookie_PHPSESSID $http_authorization;
+fastcgi_no_cache $cookie_PHPSESSID $http_authorization;
+fastcgi_cache_use_stale error timeout updating http_500 http_503;
+fastcgi_cache_background_update on;
+fastcgi_cache_lock on;
+add_header X-Cache-Status $upstream_cache_status always;
+```
+
+nginx кэширует ответ только если его заголовки разрешают (`X-Accel-Expires`/`Cache-Control`), поэтому `private`, `no-store`, ответы с `Set-Cookie` и все не-`200` ответы приложения в кэш не попадают. Админка (`/admin`), API и preview отдают `no-store`/`private` и не кэшируются.
+
+**Сброс кэша.** `PublicPageCacheInvalidator` (публикация, правка, смена `path`, архивирование) вызывает [`NginxFastcgiCachePurger`](../src/Module/Content/Infrastructure/Http/NginxFastcgiCachePurger.php): он считает `md5("<scheme>://<host><path>")` (схема и хост берутся из `SITE_URL`) и удаляет файл из `NGINX_FASTCGI_CACHE_DIR` по правилам `levels`. Для адреса с завершающим слэшем и без него удаляются обе копии. `invalidateAll()` (настройки, редиректы, `robots.txt`) и любое изменение меню очищают весь каталог (удаляются только файлы с именем из 32 hex-символов). Для работы сброса пользователь PHP-FPM должен иметь право записи в каталог кэша (обычно общий пользователь `www-data` либо группа с `g+w` и `umask 002` у nginx). Ошибки удаления логируются предупреждением и не прерывают публикацию; без сброса устаревшая копия живёт не дольше `s-maxage`.
+
+Ограничение: сброс знает только хост из `SITE_URL`; для дополнительных доменов (`www.`) действует `s-maxage`.
+
+### Lighthouse
+
+Workflow `Lighthouse` (`.github/workflows/lighthouse.yml`) запускается вручную (`workflow_dispatch`) и замеряет 3–5 ключевых URL выбранного стенда по порогам из `lighthouserc.json` (предупреждения, без блокировки PR). Для staging используется секрет `STAGING_BASIC_AUTH`.
 
 ## Что нельзя кешировать
 
@@ -227,6 +290,7 @@ php bin/console cache:pool:prune                      # удалить прот�
 - Любые ответы с user-specific данными (admin shell, авторизованные).
 - Стэйт сессии.
 - Paginated списки с приватными фильтрами без учёта прав (риск утечки между ролями).
+- Страницы и ответы администратора (сессионная cookie), `staging`, preview.
 
 ## Anti-patterns
 

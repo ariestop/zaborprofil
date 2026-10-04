@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Module\Menu\Application\Service;
 
+use App\Module\Content\Application\Service\PublicHttpCachePurgerInterface;
 use App\Module\Menu\Domain\Repository\MenuItemRepositoryInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\Cache\CacheInterface;
@@ -15,6 +16,7 @@ final readonly class MenuProvider
         private MenuItemRepositoryInterface $items,
         #[Autowire(service: 'cache.menu')]
         private CacheInterface $cache,
+        private PublicHttpCachePurgerInterface $httpCachePurger,
     ) {
     }
 
@@ -33,6 +35,7 @@ final readonly class MenuProvider
     public function invalidate(string $position): void
     {
         $this->cache->delete($this->cacheKey($position));
+        $this->httpCachePurger->purgeAll();
     }
 
     private function cacheKey(string $position): string

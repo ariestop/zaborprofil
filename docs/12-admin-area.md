@@ -88,6 +88,7 @@ Admin API использует **double-submit CSRF**:
 
 | Метод | URL | Действие |
 |---|---|---|
+| `GET` | `/admin/api/content/pages` | Список страниц целиком; с `page`/`perPage` (до 100) и фильтрами `q` (название или адрес), `status` — страница списка и `meta` (`total`, `page`, `perPage`, `pages`) |
 | `POST` | `/admin/api/content/pages` | Создать страницу |
 | `PUT` | `/admin/api/content/pages/{id}` | Обновить страницу |
 | `POST` | `/admin/api/content/pages/{id}/publish` | Опубликовать |
