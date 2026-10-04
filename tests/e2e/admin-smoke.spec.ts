@@ -62,7 +62,7 @@ test.describe('Admin smoke flow', () => {
     await page.getByLabel(PAGE_EDITOR_SELECTORS.createTitleLabel).fill(title)
     await page.getByRole('button', { name: PAGE_EDITOR_SELECTORS.createSubmitName }).click()
 
-    await expect(page).toHaveURL(/\/admin\/pages\/[0-9A-Za-z-]+$/)
+    await expect(page).toHaveURL(/\/admin\/pages\/(?!new$)[0-9A-Za-z-]+$/)
     const pageId = new URL(page.url()).pathname.split('/').pop() ?? ''
     await expect(page.getByTestId('page-editor')).toBeVisible()
     await expect(page.getByRole('heading', { name: title })).toBeVisible()
