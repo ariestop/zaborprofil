@@ -22,4 +22,23 @@ interface MediaAssetRepositoryInterface
     public function findLatest(int $limit = 100): array;
 
     public function search(MediaAssetCriteria $criteria): MediaAssetPage;
+
+    public function findOneByFileHash(string $fileHash): ?MediaAsset;
+
+    /**
+     * @return list<MediaAsset>
+     */
+    public function findWithoutFileHash(int $limit): array;
+
+    /**
+     * @return list<array{name: string, count: int}>
+     */
+    public function folders(): array;
+
+    /**
+     * Карта «публичный путь файла или варианта» => «идентификатор ассета».
+     *
+     * @return array<string, string>
+     */
+    public function publicPathMap(): array;
 }

@@ -27,7 +27,7 @@
 
 См. [20-security-and-access-control](20-security-and-access-control.md).
 
-Права (`AdminPermission`): `pages.view`, `pages.create`, `pages.edit`, `pages.publish`, `pages.delete`, `seo.edit`, `media.upload`, `media.delete`, `leads.view`, `leads.manage`, `settings.edit`, `users.manage`, `system.view`, `system.manage`.
+Права (`AdminPermission`): `pages.view`, `pages.create`, `pages.edit`, `pages.publish`, `pages.delete`, `seo.edit`, `media.upload`, `media.delete`, `leads.view`, `leads.manage`, `leads.export`, `settings.edit`, `users.manage`, `system.view`, `system.manage`.
 
 Для опасных системных операций введено отдельное разрешение `system.dangerous`:
 

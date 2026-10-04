@@ -1,10 +1,15 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiRequest, apiUpload } from '../../shared/api/client'
 import { adminQueryKeys } from '../../shared/api/query'
-import type { MediaAssetItem, MediaPagination } from '../../types/api'
+import type { MediaAssetItem, MediaFolderItem, MediaPagination, MediaUsageResponse } from '../../types/api'
 
 export type MediaTypeFilter = '' | 'image' | 'document'
-export type MediaSort = 'newest' | 'oldest' | 'name' | 'size'
+export type MediaSort = 'newest' | 'oldest' | 'name' | 'size' | 'size_asc'
+export type MediaFormatFilter = '' | 'jpeg' | 'png' | 'webp' | 'avif' | 'pdf'
+export type MediaUsageFilter = '' | 'used' | 'unused'
+
+/** Служебное значение фильтра по папке: файлы без папки. */
+export const MEDIA_FOLDER_NONE = '__none__'
 
 export interface MediaListParams {
   page: number
@@ -12,6 +17,11 @@ export interface MediaListParams {
   q: string
   type: MediaTypeFilter
   sort: MediaSort
+  folder?: string
+  format?: MediaFormatFilter
+  usage?: MediaUsageFilter
+  from?: string
+  to?: string
 }
 
 export interface MediaListResponse {
@@ -42,6 +52,19 @@ export function buildMediaListPath(params: MediaListParams): string {
     query.set('type', params.type)
   }
 
+  const optional: Array<[string, string | undefined]> = [
+    ['folder', params.folder],
+    ['format', params.format],
+    ['usage', params.usage],
+    ['from', params.from],
+    ['to', params.to],
+  ]
+  for (const [key, value] of optional) {
+    if (value !== undefined && value !== '') {
+      query.set(key, value)
+    }
+  }
+
   return `/admin/api/media/assets?${query.toString()}`
 }
 
@@ -57,12 +80,32 @@ export function useMediaAssetsQuery(params: MediaListParams = DEFAULT_MEDIA_LIST
   })
 }
 
+export function useMediaFoldersQuery() {
+  return useQuery({
+    queryKey: [...adminQueryKeys.media, 'folders'] as const,
+    queryFn: ({ signal }) => apiRequest<{ folders: MediaFolderItem[] }>('/admin/api/media/folders', { signal }),
+    select: (data) => data.folders,
+  })
+}
+
+export function useMediaUsagesQuery(id: string | null) {
+  return useQuery({
+    queryKey: [...adminQueryKeys.media, 'usages', id] as const,
+    queryFn: ({ signal }) => apiRequest<MediaUsageResponse>(`/admin/api/media/assets/${id}/usages`, { signal }),
+    enabled: id !== null,
+    gcTime: 0,
+  })
+}
+
 export function uploadMediaAsset(
   file: File,
-  options: { signal?: AbortSignal; onProgress?: (fraction: number) => void } = {},
+  options: { signal?: AbortSignal; onProgress?: (fraction: number) => void; folder?: string } = {},
 ): Promise<MediaAssetItem> {
   const body = new FormData()
   body.append('file', file)
+  if (options.folder !== undefined && options.folder !== '') {
+    body.append('folder', options.folder)
+  }
 
   return apiUpload<MediaAssetItem>('/admin/api/media/assets', body, options)
 }
@@ -77,11 +120,11 @@ export function useUpdateMediaAssetMutation() {
   const invalidate = useInvalidateMediaAssets()
 
   return useMutation({
-    mutationFn: (input: { id: string; alt: string; title: string }) =>
-      apiRequest<MediaAssetItem>(`/admin/api/media/assets/${input.id}`, {
-        method: 'PATCH',
-        body: { alt: input.alt, title: input.title },
-      }),
+    mutationFn: (input: { id: string; alt: string; title: string; description?: string; folder?: string }) => {
+      const { id, ...fields } = input
+
+      return apiRequest<MediaAssetItem>(`/admin/api/media/assets/${id}`, { method: 'PATCH', body: fields })
+    },
     onSuccess: invalidate,
   })
 }
@@ -90,7 +133,11 @@ export function useDeleteMediaAssetMutation() {
   const invalidate = useInvalidateMediaAssets()
 
   return useMutation({
-    mutationFn: (id: string) => apiRequest<null>(`/admin/api/media/assets/${id}`, { method: 'DELETE' }),
+    mutationFn: (input: string | { id: string; force?: boolean }) => {
+      const { id, force } = typeof input === 'string' ? { id: input, force: false } : input
+
+      return apiRequest<null>(`/admin/api/media/assets/${id}${force === true ? '?force=1' : ''}`, { method: 'DELETE' })
+    },
     onSuccess: invalidate,
   })
 }

@@ -6,6 +6,7 @@ import { PageLoadingState } from '../shared/ui/page-loading-state'
 import {
   loadCrmPage,
   loadDashboardPage,
+  loadLeadDetailPage,
   loadMediaPage,
   loadPageCreatePage,
   loadPageEditorPage,
@@ -34,6 +35,7 @@ const PageEditorPage = lazy(loadPageEditorPage)
 const MediaPage = lazy(loadMediaPage)
 const SeoPage = lazy(loadSeoPage)
 const CrmPage = lazy(loadCrmPage)
+const LeadDetailPage = lazy(loadLeadDetailPage)
 const SettingsPage = lazy(loadSettingsPage)
 const SettingsMigrationsPage = lazy(loadSettingsMigrationsPage)
 const UsersPage = lazy(loadUsersPage)
@@ -80,6 +82,7 @@ function createAdminRouter() {
         { path: '/admin/media', element: <MediaPage /> },
         { path: '/admin/seo', element: <SeoPage /> },
         { path: '/admin/crm', element: <CrmPage /> },
+        { path: '/admin/crm/:leadId', element: <LeadDetailPage /> },
         { path: '/admin/settings', element: <SettingsPage /> },
         { path: '/admin/settings/migrations', element: <SettingsMigrationsPage /> },
         { path: '/admin/users', element: <UsersPage /> },

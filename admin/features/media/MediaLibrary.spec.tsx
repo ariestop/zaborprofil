@@ -33,6 +33,9 @@ function makeAsset(id: string, overrides: Partial<MediaAssetItem> = {}): MediaAs
     variants: [],
     alt: null,
     title: null,
+    description: null,
+    folder: null,
+    fileHash: null,
     createdAt: '2026-01-01T00:00:00+00:00',
     ...overrides,
   }
@@ -57,6 +60,22 @@ function renderWithProviders(node: ReactNode) {
 function lastListPath(): string {
   const calls = apiRequest.mock.calls.filter(([path]) => typeof path === 'string' && path.startsWith('/admin/api/media/assets?'))
   return String(calls[calls.length - 1]?.[0])
+}
+
+function mockApi(handlers: {
+  list?: (path: string) => unknown
+  usages?: (path: string) => unknown
+  folders?: Array<{ name: string; count: number }>
+  mutate?: (path: string, options: { method?: string; body?: unknown }) => unknown
+}): void {
+  apiRequest.mockImplementation(async (path: string, options?: { method?: string; body?: unknown }) => {
+    if (options?.method !== undefined && options.method !== 'GET') {
+      return handlers.mutate?.(path, options) ?? null
+    }
+    if (path.startsWith('/admin/api/media/folders')) return { folders: handlers.folders ?? [] }
+    if (/\/assets\/[^/?]+\/usages/.test(path)) return handlers.usages?.(path) ?? { total: 0, usages: [] }
+    return handlers.list?.(path) ?? listResponse([])
+  })
 }
 
 beforeEach(() => {
@@ -148,28 +167,59 @@ describe('MediaLibrary', () => {
     await waitFor(() => expect(apiUpload).toHaveBeenCalledTimes(1))
   })
 
-  it('asks for confirmation before deleting', async () => {
-    apiRequest.mockImplementation(async (path: string, options?: { method?: string }) => {
-      if (options?.method === 'DELETE') return null
-      return listResponse([makeAsset('gone')])
-    })
+  it('deletes an unused file after a plain confirmation without force', async () => {
+    mockApi({ list: () => listResponse([makeAsset('gone', { usageCount: 0 })]) })
     renderWithProviders(<MediaLibrary mode="manage" />)
 
     fireEvent.click(await screen.findByRole('button', { name: /gone\.jpg/ }))
     const details = await screen.findByTestId('asset-details')
+    expect(await within(details).findByText('Нигде не используется.')).toBeTruthy()
     fireEvent.click(within(details).getByRole('button', { name: 'Удалить' }))
 
     const dialog = await screen.findByRole('dialog')
     expect(apiRequest).not.toHaveBeenCalledWith('/admin/api/media/assets/gone', expect.anything())
+    expect(await within(dialog).findByText(/нигде не используется/)).toBeTruthy()
     fireEvent.click(within(dialog).getByRole('button', { name: 'Удалить' }))
 
     await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('/admin/api/media/assets/gone', { method: 'DELETE' }))
   })
 
-  it('saves alt and title through PATCH', async () => {
-    apiRequest.mockImplementation(async (path: string, options?: { method?: string; body?: unknown }) => {
-      if (options?.method === 'PATCH') return makeAsset('a', { alt: 'Новый alt', title: 'T' })
-      return listResponse([makeAsset('a')])
+  it('blocks deleting a used file until the user confirms, then sends force', async () => {
+    mockApi({
+      list: () => listResponse([makeAsset('hero', { usageCount: 2 })]),
+      usages: () => ({
+        total: 2,
+        usages: [
+          { type: 'page_block', sourceId: 'B1', title: 'Заборы из профнастила', location: 'Блок «Hero» (hero)', adminPath: '/admin/pages/P1/builder', status: 'published' },
+          { type: 'page_seo', sourceId: 'P2', title: 'Ворота', location: 'OG-изображение', adminPath: '/admin/pages/P2', status: 'draft' },
+        ],
+      }),
+    })
+    renderWithProviders(<MediaLibrary mode="manage" />)
+
+    fireEvent.click(await screen.findByRole('button', { name: /hero\.jpg/ }))
+    const details = await screen.findByTestId('asset-details')
+    fireEvent.click(within(details).getByRole('button', { name: 'Удалить' }))
+
+    const dialog = await screen.findByRole('dialog')
+    expect(await within(dialog).findByText('Файл используется в 2 местах. После удаления изображения на этих страницах перестанут отображаться.')).toBeTruthy()
+    const links = within(dialog).getAllByRole('link')
+    expect(links.map((link) => link.getAttribute('href'))).toEqual(['/admin/pages/P1/builder', '/admin/pages/P2'])
+
+    const confirm = within(dialog).getByRole('button', { name: 'Удалить всё равно' }) as HTMLButtonElement
+    expect(confirm.disabled).toBe(true)
+    fireEvent.click(within(dialog).getByRole('checkbox'))
+    expect(confirm.disabled).toBe(false)
+    fireEvent.click(confirm)
+
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('/admin/api/media/assets/hero?force=1', { method: 'DELETE' }))
+  })
+
+  it('saves alt, title, description and folder through PATCH', async () => {
+    mockApi({
+      list: () => listResponse([makeAsset('a')]),
+      folders: [{ name: 'Заборы', count: 3 }],
+      mutate: () => makeAsset('a', { alt: 'Новый alt', title: 'T' }),
     })
     renderWithProviders(<MediaLibrary mode="manage" />)
 
@@ -177,11 +227,69 @@ describe('MediaLibrary', () => {
     const details = await screen.findByTestId('asset-details')
     fireEvent.change(within(details).getByLabelText(/Alt/), { target: { value: 'Новый alt' } })
     fireEvent.change(within(details).getByLabelText(/Title/), { target: { value: 'T' } })
+    fireEvent.change(within(details).getByLabelText(/Описание/), { target: { value: 'Объект на Ленина' } })
+    fireEvent.change(within(details).getByLabelText(/Папка/), { target: { value: ' Заборы ' } })
     fireEvent.click(within(details).getByRole('button', { name: 'Сохранить' }))
 
     await waitFor(() =>
-      expect(apiRequest).toHaveBeenCalledWith('/admin/api/media/assets/a', { method: 'PATCH', body: { alt: 'Новый alt', title: 'T' } }),
+      expect(apiRequest).toHaveBeenCalledWith('/admin/api/media/assets/a', {
+        method: 'PATCH',
+        body: { alt: 'Новый alt', title: 'T', description: 'Объект на Ленина', folder: 'Заборы' },
+      }),
     )
+  })
+
+  it('sends extended filters, resets them and changes the page size', async () => {
+    mockApi({ list: () => listResponse([makeAsset('a')], { total: 60, totalPages: 3 }), folders: [{ name: 'Заборы', count: 3 }] })
+    renderWithProviders(<MediaLibrary mode="manage" />)
+    await screen.findByTestId('media-grid')
+
+    fireEvent.change(screen.getByLabelText('Формат'), { target: { value: 'webp' } })
+    await waitFor(() => expect(lastListPath()).toContain('format=webp'))
+    fireEvent.change(screen.getByLabelText('Использование'), { target: { value: 'unused' } })
+    await waitFor(() => expect(lastListPath()).toContain('usage=unused'))
+    await screen.findByRole('option', { name: 'Заборы (3)' })
+    fireEvent.change(screen.getByLabelText('Папка'), { target: { value: 'Заборы' } })
+    await waitFor(() => expect(lastListPath()).toContain('folder=%D0%97%D0%B0%D0%B1%D0%BE%D1%80%D1%8B'))
+    fireEvent.change(screen.getByLabelText('Загружены с'), { target: { value: '2026-01-01' } })
+    fireEvent.change(screen.getByLabelText('Загружены по'), { target: { value: '2026-02-01' } })
+    await waitFor(() => expect(lastListPath()).toContain('to=2026-02-01'))
+    expect(lastListPath()).toContain('from=2026-01-01')
+
+    fireEvent.change(screen.getByLabelText('Файлов на странице'), { target: { value: '48' } })
+    await waitFor(() => expect(lastListPath()).toContain('perPage=48'))
+    expect(screen.getByTestId('media-range').textContent).toContain('из 60')
+
+    fireEvent.click(screen.getByRole('button', { name: 'В конец' }))
+    await waitFor(() => expect(lastListPath()).toContain('page=3'))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Сбросить фильтры' }))
+    await waitFor(() => expect(lastListPath()).not.toContain('format='))
+    expect(lastListPath()).not.toContain('usage=')
+    expect(lastListPath()).not.toContain('folder=')
+    expect(lastListPath()).not.toContain('from=')
+    expect(lastListPath()).toContain('page=1')
+  })
+
+  it('shows usage badges in the grid', async () => {
+    mockApi({ list: () => listResponse([makeAsset('used', { usageCount: 3 }), makeAsset('free', { usageCount: 0 })]) })
+    renderWithProviders(<MediaLibrary mode="manage" />)
+
+    const grid = await screen.findByTestId('media-grid')
+    expect(within(grid).getByText('Используется · 3')).toBeTruthy()
+    expect(within(grid).getByText('Не используется')).toBeTruthy()
+  })
+
+  it('tells the user when an upload matched an existing file', async () => {
+    mockApi({ list: () => listResponse([]) })
+    apiUpload.mockResolvedValue(makeAsset('same', { duplicate: true }))
+    renderWithProviders(<MediaLibrary mode="manage" />)
+    await screen.findByText('Медиатека пуста')
+
+    fireEvent.change(screen.getByTestId('media-file-input'), { target: { files: [new File(['x'], 'same.png', { type: 'image/png' })] } })
+
+    expect((await screen.findByTestId('duplicate-note')).textContent).toContain('уже есть в медиатеке')
+    expect(screen.getByText('Уже в медиатеке')).toBeTruthy()
   })
 
   it('shows an error state when the list fails', async () => {

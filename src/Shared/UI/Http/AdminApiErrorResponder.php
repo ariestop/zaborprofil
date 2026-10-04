@@ -26,6 +26,7 @@ final readonly class AdminApiErrorResponder
     public const string CODE_VALIDATION = 'VALIDATION';
     public const string CODE_NOT_FOUND = 'NOT_FOUND';
     public const string CODE_BAD_REQUEST = 'BAD_REQUEST';
+    public const string CODE_CONFLICT = 'CONFLICT';
     public const string CODE_INTERNAL = 'INTERNAL';
 
     public function __construct(
@@ -66,6 +67,14 @@ final readonly class AdminApiErrorResponder
     public function notFound(string $message = 'Not found.'): JsonResponse
     {
         return $this->json($message, self::CODE_NOT_FOUND, 404);
+    }
+
+    /**
+     * @param array<string, mixed> $extra дополнительные поля ответа (например, список блокирующих объектов)
+     */
+    public function conflict(string $message, string $code = self::CODE_CONFLICT, array $extra = []): JsonResponse
+    {
+        return new JsonResponse(['error' => $message, 'code' => $code, ...$extra], 409);
     }
 
     public function badRequest(string $message): JsonResponse

@@ -1,40 +1,23 @@
 import { useMemo } from 'react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import type { LeadItem } from '../types/api'
+import { LEAD_STATUS_LABELS } from '../entities/lead/model'
+import type { LeadStatus } from '../types/api'
 
 interface LeadsStatusChartProps {
-  leads: LeadItem[]
-  statuses?: LeadItem['status'][]
+  byStatus: Record<string, number>
+  statuses?: LeadStatus[]
 }
 
-const LEAD_STATUS_LABELS: Record<LeadItem['status'], string> = {
-  new: 'Новые',
-  in_progress: 'В работе',
-  done: 'Завершены',
-  spam: 'Спам',
-}
-
-export default function LeadsStatusChart({ leads, statuses = [] }: LeadsStatusChartProps) {
+export default function LeadsStatusChart({ byStatus, statuses = [] }: LeadsStatusChartProps) {
   const data = useMemo(() => {
-    const catalog = statuses.length > 0
-      ? statuses
-      : ['new', 'in_progress', 'done', 'spam']
-    const counters = new Map<string, number>()
+    const catalog = statuses.length > 0 ? statuses : (Object.keys(LEAD_STATUS_LABELS) as LeadStatus[])
 
-    for (const status of catalog) {
-      counters.set(status, 0)
-    }
-
-    for (const lead of leads) {
-      counters.set(lead.status, (counters.get(lead.status) ?? 0) + 1)
-    }
-
-    return Array.from(counters.entries()).map(([status, total]) => ({
+    return catalog.map((status) => ({
       status,
-      label: LEAD_STATUS_LABELS[status as LeadItem['status']] ?? status,
-      total,
+      label: LEAD_STATUS_LABELS[status] ?? status,
+      total: byStatus[status] ?? 0,
     }))
-  }, [leads, statuses])
+  }, [byStatus, statuses])
 
   return (
     <div className="h-56 w-full">

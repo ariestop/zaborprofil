@@ -211,6 +211,12 @@ test.describe('Admin smoke flow', () => {
       details.getByRole('button', { name: 'Сохранить' }).click(),
     ])
 
+    await Promise.all([
+      page.waitForResponse((response) => response.url().endsWith('/admin/api/media/assets') && response.request().method() === 'POST' && response.status() === 200),
+      page.getByTestId('media-file-input').setInputFiles({ name: `copy-${fileName}`, mimeType: 'image/png', buffer: MEDIA_SELECTORS.pngBuffer }),
+    ])
+    await expect(page.getByTestId('duplicate-note').first()).toBeVisible()
+
     await page.getByLabel('Поиск по медиатеке').fill('профнастила E2E')
     await expect(page.getByTestId('media-grid').getByRole('button', { name: new RegExp(fileName) })).toBeVisible()
 

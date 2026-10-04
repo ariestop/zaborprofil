@@ -13,9 +13,14 @@ use Symfony\Component\Uid\Ulid;
 #[ORM\Table(name: 'media_assets')]
 #[ORM\Index(name: 'idx_media_assets_created_at', columns: ['created_at'])]
 #[ORM\Index(name: 'idx_media_assets_mime_type', columns: ['mime_type'])]
+#[ORM\Index(name: 'idx_media_assets_file_hash', columns: ['file_hash'])]
+#[ORM\Index(name: 'idx_media_assets_folder', columns: ['folder'])]
 final class MediaAsset
 {
     public const int METADATA_MAX_LENGTH = 255;
+    public const int DESCRIPTION_MAX_LENGTH = 2000;
+    public const int FOLDER_MAX_LENGTH = 120;
+    public const string FOLDER_NONE = '__none__';
 
     #[ORM\Id]
     #[ORM\Column(type: 'ulid', unique: true)]
@@ -54,6 +59,15 @@ final class MediaAsset
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $title = null;
 
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $description = null;
+
+    #[ORM\Column(length: self::FOLDER_MAX_LENGTH, nullable: true)]
+    private ?string $folder = null;
+
+    #[ORM\Column(name: 'file_hash', length: 64, nullable: true)]
+    private ?string $fileHash = null;
+
     #[ORM\Column]
     private DateTimeImmutable $createdAt;
 
@@ -69,6 +83,7 @@ final class MediaAsset
         ?int $width,
         ?int $height,
         array $variants = [],
+        ?string $fileHash = null,
     ) {
         if ($size <= 0) {
             throw new InvalidArgumentException('Media asset size must be positive.');
@@ -83,6 +98,7 @@ final class MediaAsset
         $this->width = $width;
         $this->height = $height;
         $this->variants = self::normalizeVariants($variants);
+        $this->fileHash = self::normalizeHash($fileHash);
         $this->createdAt = new DateTimeImmutable();
     }
 
@@ -96,10 +112,53 @@ final class MediaAsset
         return $this->publicPath;
     }
 
-    public function updateMetadata(?string $alt, ?string $title): void
+    /**
+     * @return list<string>
+     */
+    public function allPublicPaths(): array
+    {
+        return array_values(array_unique([
+            $this->publicPath,
+            ...array_map(static fn (array $variant): string => $variant['publicPath'], $this->variants),
+        ]));
+    }
+
+    public function alt(): ?string
+    {
+        return $this->alt;
+    }
+
+    public function title(): ?string
+    {
+        return $this->title;
+    }
+
+    public function description(): ?string
+    {
+        return $this->description;
+    }
+
+    public function folder(): ?string
+    {
+        return $this->folder;
+    }
+
+    public function fileHash(): ?string
+    {
+        return $this->fileHash;
+    }
+
+    public function updateMetadata(?string $alt, ?string $title, ?string $description = null, ?string $folder = null): void
     {
         $this->alt = self::optionalText($alt, 'alt');
         $this->title = self::optionalText($title, 'title');
+        $this->description = self::optionalText($description, 'description', self::DESCRIPTION_MAX_LENGTH);
+        $this->folder = self::normalizeFolder($folder);
+    }
+
+    public function attachFileHash(string $fileHash): void
+    {
+        $this->fileHash = self::normalizeHash($fileHash);
     }
 
     /**
@@ -127,6 +186,9 @@ final class MediaAsset
             'variants' => $this->variants,
             'alt' => $this->alt,
             'title' => $this->title,
+            'description' => $this->description,
+            'folder' => $this->folder,
+            'fileHash' => $this->fileHash,
             'createdAt' => $this->createdAt->format(DATE_ATOM),
         ];
     }
@@ -157,7 +219,7 @@ final class MediaAsset
         return $normalized;
     }
 
-    private static function optionalText(?string $value, string $field): ?string
+    private static function optionalText(?string $value, string $field, int $maxLength = self::METADATA_MAX_LENGTH): ?string
     {
         if ($value === null) {
             return null;
@@ -168,11 +230,39 @@ final class MediaAsset
             return null;
         }
 
-        if (mb_strlen($normalized) > self::METADATA_MAX_LENGTH) {
-            throw new InvalidArgumentException(\sprintf('Media asset %s cannot be longer than %d characters.', $field, self::METADATA_MAX_LENGTH));
+        if (mb_strlen($normalized) > $maxLength) {
+            throw new InvalidArgumentException(\sprintf('Media asset %s cannot be longer than %d characters.', $field, $maxLength));
         }
 
         return $normalized;
+    }
+
+    public static function normalizeFolder(?string $value): ?string
+    {
+        $folder = self::optionalText($value, 'folder', self::FOLDER_MAX_LENGTH);
+        if ($folder === null) {
+            return null;
+        }
+
+        if ($folder === self::FOLDER_NONE || preg_match('/[\x00-\x1F\x7F\/\\\\]/u', $folder) === 1) {
+            throw new InvalidArgumentException('Media asset folder contains forbidden characters.');
+        }
+
+        return $folder;
+    }
+
+    private static function normalizeHash(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $hash = strtolower(trim($value));
+        if (preg_match('/^[a-f0-9]{64}$/', $hash) !== 1) {
+            throw new InvalidArgumentException('Media asset file hash must be a SHA-256 hex digest.');
+        }
+
+        return $hash;
     }
 
     private static function required(string $value, string $message): string
