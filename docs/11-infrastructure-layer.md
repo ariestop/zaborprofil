@@ -2,7 +2,7 @@
 
 ## Назначение
 
-Infrastructure реализует контракты Application/Domain поверх внешних технологий: Doctrine, Redis, Mailer, Filesystem, HTTP, Telegram.
+Infrastructure реализует контракты Application/Domain поверх внешних технологий: Doctrine, Filesystem Cache, Mailer, Filesystem, HTTP, Telegram.
 
 ## Состав (фактическое + целевое)
 
@@ -106,13 +106,15 @@ App\Module\Content\Domain\Repository\PageRepositoryInterface:
 - **FileStorage:** интерфейс `FileStorageInterface` (целевое) с реализацией `LocalFileStorage` сейчас и `S3FileStorage` потом.
 - **HTTP-клиенты:** `Symfony\Contracts\HttpClient\HttpClientInterface` обёрнут в integration-class с timeout, retry и логированием.
 
-## Cache (Redis)
+## Cache (Filesystem)
 
-См. [23-cache-and-redis](23-cache-and-redis.md).
+См. [23-cache](23-cache.md).
 
 - Symfony Cache pools `cache.public_page`, `cache.settings`, `cache.menu`, `cache.seo`.
+- Пулы построены поверх `cache.adapter.filesystem` (каталог `var/cache/<env>/pools/app`); в `test` — array adapter.
 - Тип-хинт: `CacheInterface` (через DI с `#[Target('public_page')]`).
-- Никаких прямых вызовов `Predis\Client` из Application — только через Symfony Cache adapter.
+- Никаких прямых обращений к файлам кэша из Application — только через Symfony Cache adapter.
+- Файловый кэш не разделяется между серверами и релизами; при замене адаптера (например, на Redis в будущем) код Application меняться не должен.
 
 ## Logging
 
@@ -160,7 +162,7 @@ App\Module\Content\Domain\Repository\PageRepositoryInterface:
 
 - Бизнес-логика в EventSubscriber.
 - Repository, отдающий QueryBuilder наружу.
-- Прямой `Predis\Client` в Application.
+- Прямая работа с файлами кэша (`var/cache/...`) в Application.
 - Mailer-вызов из Domain.
 - Catch-all `try/catch (\Throwable)` без логирования.
 
@@ -169,7 +171,7 @@ App\Module\Content\Domain\Repository\PageRepositoryInterface:
 - [ ] Реализован интерфейс из Domain/Application.
 - [ ] Класс `final`.
 - [ ] Зависимости — через DI, без `new`.
-- [ ] Не утекают типы Doctrine/Redis наружу.
+- [ ] Не утекают типы Doctrine/Cache наружу.
 - [ ] Тесты integration/unit добавлены.
 - [ ] Logging добавлен.
 - [ ] Если новая интеграция — добавлены timeout, retry, idempotency.
@@ -179,5 +181,5 @@ App\Module\Content\Domain\Repository\PageRepositoryInterface:
 - [10-domain-layer](10-domain-layer.md)
 - [09-application-layer](09-application-layer.md)
 - [17-doctrine-and-database](17-doctrine-and-database.md)
-- [23-cache-and-redis](23-cache-and-redis.md)
+- [23-cache](23-cache.md)
 - [24-messenger-and-queues](24-messenger-and-queues.md)

@@ -11,7 +11,7 @@
 
 В `test` оба транспорта — `in-memory://`.
 
-> **Важно.** В проекте Messenger использует **Doctrine transport**, а не Redis transport. Это сознательно: одна точка отказа меньше, транзакционность с БД, простой backup. См. [ADR-0007](adr/0007-redis-cache-and-messenger.md).
+> **Важно.** В проекте Messenger использует **Doctrine transport**, а не внешний брокер (Redis/AMQP не используются). Это сознательно: одна точка отказа меньше, транзакционность с БД (таблица `messenger_messages` в MySQL), простой backup (`mysqldump`). См. [ADR-0007](adr/0007-filesystem-cache-and-doctrine-messenger.md).
 
 ## Зачем нужен Messenger
 

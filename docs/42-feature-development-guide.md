@@ -20,7 +20,7 @@ SEO, админки, публичной части, API, миграций, де�
 - админка (Twig + постепенный Vue 3 SPA),
 - API-зона,
 - модульный монолит из доменных модулей (Page, SEO, Media, Menu, Form, Settings, Catalog, Order, Partner Cabinet, …),
-- инфраструктура: PostgreSQL ≥ 18, Redis ≥ 8, Doctrine ORM, Symfony Messenger, Symfony Cache,
+- инфраструктура: MySQL ≥ 8.4, Doctrine ORM, Symfony Messenger, Symfony Cache,
 - Docker для local dev, native VPS stack (Nginx + PHP-FPM + systemd) для production.
 
 В таком контексте даже маленькая фича может затронуть SEO, миграции БД, кэш, очереди,
@@ -29,7 +29,7 @@ SEO, админки, публичной части, API, миграций, де�
 - архитектурные правила слоёв ([04-layer-rules](04-layer-rules.md)),
 - стабильность URL и канонических ссылок ([26-seo-architecture](26-seo-architecture.md)),
 - админ-разрешения ([20-security-and-access-control](20-security-and-access-control.md)),
-- стратегию кэша ([23-cache-and-redis](23-cache-and-redis.md)),
+- стратегию кэша ([23-cache](23-cache.md)),
 - безопасность миграций ([18-migrations](18-migrations.md)),
 - процесс деплоя ([34-deployment](34-deployment.md), [35-cicd](35-cicd.md)).
 
@@ -49,7 +49,7 @@ SEO, админки, публичной части, API, миграций, де�
 - Каждая публичная страница — потенциальный landing page → любое изменение URL может
   снести трафик и индексацию.
 - Контент-редакторы работают через админку → любая регрессия в `/admin` блокирует бизнес.
-- Контент кэшируется на нескольких уровнях (Symfony Cache, HTTP, fragment, Redis) →
+- Контент кэшируется на нескольких уровнях (Symfony Cache на файловой системе, HTTP, fragment) →
   скрытое изменение генерации страницы может протухнуть месяцами.
 - Миграции на боевой БД с реальными статьями необратимы без бэкапа.
 - API-контракт постепенно становится публичным (партнёры, интеграции) → backward
@@ -94,7 +94,7 @@ SEO, админки, публичной части, API, миграций, де�
 - [08-controller-architecture](08-controller-architecture.md) — Front / Admin / API / Dev контроллеры.
 - [09-application-layer](09-application-layer.md) — use cases, DTO, command/query.
 - [10-domain-layer](10-domain-layer.md) — Entity, Value Object, Domain Service.
-- [11-infrastructure-layer](11-infrastructure-layer.md) — Doctrine, Redis, Mailer, Storage.
+- [11-infrastructure-layer](11-infrastructure-layer.md) — Doctrine, Cache, Mailer, Storage.
 - [12-admin-area](12-admin-area.md) — `/admin` зона.
 - [13-front-area](13-front-area.md) — публичный сайт.
 - [14-api-area](14-api-area.md) — публичные и admin API.
@@ -103,13 +103,13 @@ SEO, админки, публичной части, API, миграций, де�
 
 ### Подсистемы
 
-- [17-doctrine-and-database](17-doctrine-and-database.md) — PostgreSQL, ORM, naming, индексы.
+- [17-doctrine-and-database](17-doctrine-and-database.md) — MySQL, ORM, naming, индексы.
 - [18-migrations](18-migrations.md) — Doctrine Migrations, правила и чек-листы.
 - [19-forms-dto-validation](19-forms-dto-validation.md) — DTO + Validator, когда FormType.
 - [20-security-and-access-control](20-security-and-access-control.md) — Symfony Security, RBAC, voters, CSRF.
 - [21-templates-and-twig](21-templates-and-twig.md) — Twig структура, partial’ы, view models.
 - [22-frontend-assets](22-frontend-assets.md) — Vite, Vue 3, Tailwind, admin SPA.
-- [23-cache-and-redis](23-cache-and-redis.md) — пулы Symfony Cache, инвалидация.
+- [23-cache](23-cache.md) — пулы Symfony Cache, инвалидация.
 - [24-messenger-and-queues](24-messenger-and-queues.md) — Doctrine transport, worker.
 - [25-files-and-uploads](25-files-and-uploads.md) — uploads, безопасность, хранение.
 - [26-seo-architecture](26-seo-architecture.md) — URL, sitemap, robots, redirects, JSON-LD.
@@ -128,7 +128,7 @@ SEO, админки, публичной части, API, миграций, де�
 - [33-local-development](33-local-development.md) — пошаговый local guide.
 - [34-deployment](34-deployment.md) — релизы на VPS без Docker.
 - [35-cicd](35-cicd.md) — GitHub Actions, gates.
-- [36-backup-restore](36-backup-restore.md) — бэкапы PostgreSQL и uploads.
+- [36-backup-restore](36-backup-restore.md) — бэкапы MySQL и uploads.
 - [37-runbooks](37-runbooks.md) — что делать при инцидентах.
 
 ### Стандарты и гайды
@@ -154,7 +154,7 @@ SEO, админки, публичной части, API, миграций, де�
 | Нужно добавить API endpoint | [14-api-area](14-api-area.md), [20-security-and-access-control](20-security-and-access-control.md), [30-error-handling](30-error-handling.md) |
 | Нужно изменить БД | [17-doctrine-and-database](17-doctrine-and-database.md), [18-migrations](18-migrations.md) |
 | Нужно добавить форму | [19-forms-dto-validation](19-forms-dto-validation.md), [20-security-and-access-control](20-security-and-access-control.md) |
-| Нужно добавить кэширование | [23-cache-and-redis](23-cache-and-redis.md) |
+| Нужно добавить кэширование | [23-cache](23-cache.md) |
 | Нужно добавить async job | [24-messenger-and-queues](24-messenger-and-queues.md) |
 | Нужно добавить загрузку файлов | [25-files-and-uploads](25-files-and-uploads.md) |
 | Нужно изменить SEO-поведение | [26-seo-architecture](26-seo-architecture.md) |
@@ -191,14 +191,14 @@ SEO, админки, публичной части, API, миграций, де�
 | **Admin UX awareness** | Контент-редактор должен мочь работать без разработчика. | Иначе CMS превращается в hardcode. | Сценарий редактора пройден руками. |
 | **API compatibility** | Не ломаем существующие endpoints без версии или редиректа. | Внешние интеграции/партнёры. | См. [14-api-area](14-api-area.md). |
 | **Clear module ownership** | У каждой сущности один владелец-модуль. | Иначе циклы зависимостей. | См. [06-module-architecture](06-module-architecture.md). |
-| **Domain/Application/Infrastructure separation** | Domain не знает про Doctrine, Redis, HTTP. | Тестируемость и переиспользуемость. | Domain не имеет `use Doctrine\…`/`use Symfony\…\HttpFoundation`. |
+| **Domain/Application/Infrastructure separation** | Domain не знает про Doctrine, Cache, HTTP.  | Тестируемость и переиспользуемость. | Domain не имеет `use Doctrine\…`/`use Symfony\…\HttpFoundation`. |
 | **DTO-first input model** | Вход контроллера/use case — типизированный DTO. | Валидация и контракт. | См. [19-forms-dto-validation](19-forms-dto-validation.md). |
 | **Validation before persistence** | Validator → Use Case → Repository. | Invariants нельзя поручать БД. | Тесты на негативные сценарии. |
 | **Testability** | Use case можно вызвать без HTTP. | Unit/integration тесты дешёвые. | Есть unit-тест use case. |
 | **Observability** | Важные операции пишут логи и метрики. | Без логов баги невидимы в prod. | См. [28-logging-observability](28-logging-observability.md). |
 | **Config discipline** | Любая настройка — через `.env` + `.env.example`. | Воспроизводимость окружений. | Diff `.env.example` совпадает с design note. |
 | **Migration discipline** | Ровно одна миграция на фичу, обратимая. | Откат на prod. | См. [18-migrations](18-migrations.md). |
-| **Cache awareness** | Понимаем, что/где/как инвалидируется. | Иначе stale контент в SEO. | См. [23-cache-and-redis](23-cache-and-redis.md). |
+| **Cache awareness** | Понимаем, что/где/как инвалидируется. | Иначе stale контент в SEO. | См. [23-cache](23-cache.md). |
 | **Deployment awareness** | Знаем, что нужно сделать на VPS. | Иначе фича «работает у меня локально». | Раздел deploy impact в design note. |
 | **Documentation completeness** | docs обновлены вместе с кодом. | Через 3 месяца никто не вспомнит. | См. [§24](#24-documentation-requirements-for-new-features). |
 | **Rollback thinking** | Знаем, как откатить фичу. | Без отката нельзя релизить. | Раздел rollback в design note. |
@@ -214,7 +214,7 @@ SEO, админки, публичной части, API, миграций, де�
 3. **User flow design** — шаги пользователя/редактора/admin.
 4. **Architecture fit** — фича вписана в текущую архитектуру или явно расширяет её.
 5. **Affected modules analysis** — список затронутых модулей и слоёв.
-6. **Data model decision** — нужны ли новые Entity/поля/JSONB/индексы.
+6. **Data model decision** — нужны ли новые Entity/поля/JSON/индексы.
 7. **Cache decision** — кэшируем ли результат, как инвалидируем.
 8. **SEO impact decision** — затрагиваются ли URL, sitemap, canonical, redirects, robots.
 9. **Admin impact decision** — нужны ли admin screens, permissions, аудит.
@@ -238,7 +238,7 @@ SEO, админки, публичной части, API, миграций, де�
 | 3 | User flow design | Описать UX | Step-by-step | Только happy path | User story + edge cases |
 | 4 | Architecture fit | Найти место в системе | Module/layer | Изобретение нового слоя | Ссылки на 04, 06, 09, 10, 11 |
 | 5 | Affected modules analysis | Понять blast radius | Список модулей | «Только эта папка» | Раздел affected в design note |
-| 6 | Data model decision | Решить про БД | Schema diff | JSONB как универсальный hammer | Migration draft |
+| 6 | Data model decision | Решить про БД | Schema diff | JSON как универсальный hammer | Migration draft |
 | 7 | Cache decision | Решить про cache | Cache strategy | Молчаливый кэш в Twig | Раздел cache impact |
 | 8 | SEO impact decision | Защитить трафик | SEO checklist | Сменили URL без 301 | SEO impact раздел |
 | 9 | Admin impact decision | Учесть редактора | Admin screens | Hardcode без админки | Admin impact раздел |
@@ -277,8 +277,8 @@ SEO, админки, публичной части, API, миграций, де�
 | Partner cabinet feature | Partner module, Security | Изоляция данных | Voter + functional | [20](20-security-and-access-control.md) | RBAC |
 | Auth/security feature | Security, Voters, Firewall | Доступы | Security tests | [20](20-security-and-access-control.md) | Сначала dry-run |
 | Role/permission feature | Security, Voters | Эскалация прав | Voter unit + functional | [20](20-security-and-access-control.md) | Аудит изменений ролей |
-| Cache/performance feature | Cache, Front, Application | Stale content | Cache invalidation tests | [23](23-cache-and-redis.md) | Прогрев и инвалидация |
-| Search feature | Search module, Persistence, Cache | Релевантность | Functional | [17](17-doctrine-and-database.md), [23](23-cache-and-redis.md) | Индексы БД |
+| Cache/performance feature | Cache, Front, Application | Stale content | Cache invalidation tests | [23](23-cache.md) | Прогрев и инвалидация |
+| Search feature | Search module, Persistence, Cache | Релевантность | Functional | [17](17-doctrine-and-database.md), [23](23-cache.md) | Индексы БД |
 | Integration feature | Integration module, HttpClient, Messenger | Внешние сбои | Mock tests | [11](11-infrastructure-layer.md), [24](24-messenger-and-queues.md) | Timeouts, retries |
 | Console command feature | Console area, Application | Долгие задачи на prod | Command unit + integration | [15](15-dev-area.md), [37](37-runbooks.md) | Запуск через systemd, logs |
 | Messenger/async feature | Messenger handler, Application | Дубли, потери | Handler tests + idempotency | [24](24-messenger-and-queues.md) | Рестарт воркеров |
@@ -304,7 +304,7 @@ SEO, админки, публичной части, API, миграций, де�
 - [ ] Нужна ли валидация?
 - [ ] Нужен ли новый Service / UseCase?
 - [ ] Нужен ли новый Repository?
-- [ ] Нужен ли Redis (cache / lock / rate-limit / sessions)?
+- [ ] Нужен ли lock / rate-limit (файловый `cache.app`, `FlockStore`/`PdoStore`; Redis в проекте нет)?
 - [ ] Нужен ли Messenger (async job)?
 - [ ] Нужен ли HTTP/Twig fragment cache?
 - [ ] Нужны ли новые env-переменные?
@@ -341,7 +341,7 @@ Use case = одно бизнес-действие пользователя. Од
 |---|---|
 | Бизнес-инвариант сущности (например, «опубликованная страница не может быть без slug») | **Domain** ([10](10-domain-layer.md)) |
 | Координация: загрузить, валидировать инвариант, сохранить, отправить событие | **Application** ([09](09-application-layer.md)) |
-| Работа с БД, Redis, файлами, HTTP-клиентами, почтой | **Infrastructure** ([11](11-infrastructure-layer.md)) |
+| Работа с БД, кэшем, файлами, HTTP-клиентами, почтой | **Infrastructure** ([11](11-infrastructure-layer.md)) |
 | Преобразование HTTP/CLI в DTO и DTO в Response | **UI / Controller** ([08](08-controller-architecture.md)) |
 | Только отображение | **Twig templates** ([21](21-templates-and-twig.md)) |
 
@@ -359,7 +359,7 @@ Use case = одно бизнес-действие пользователя. Од
 | **Messenger Message + Handler** | Долгая операция, ретраи, асинхронность | Быстрая операция в рамках запроса |
 | **Console Command** | Регулярная или административная задача | Если нужно дёргать руками — лучше admin UI |
 | **Symfony Cache** | Дорогие read-only данные с понятной инвалидацией | Данные, меняющиеся непредсказуемо |
-| **Redis (вне Cache)** | Locks, rate-limit, sessions, очереди | Если хватает Symfony Cache поверх Redis |
+| **Lock / rate-limit (вне Cache)** | Locks (`symfony/lock`: `FlockStore` или `PdoStore`), rate-limit, очереди (Doctrine transport) | Если хватает Symfony Cache (filesystem); Redis в проекте не используется |
 | **Новый env** | Внешняя настройка/секрет, отличается между окружениями | Внутренняя бизнес-настройка → Settings module |
 | **Новый route** | Публичный/админский/API endpoint | Внутренний вызов — без route |
 | **Twig template** | Любая SSR-страница/partial | API JSON — не Twig |
@@ -419,7 +419,7 @@ Edge cases:
 
 ## Data model impact
 - Новые таблицы / поля / индексы / constraints
-- JSONB? обоснование
+- JSON? обоснование
 
 ## Migration impact
 - Имя миграции
@@ -453,7 +453,7 @@ Edge cases:
 
 ## Deploy impact
 - Миграции / asset build / worker restart
-- Изменения Nginx / systemd / Redis
+- Изменения Nginx / systemd / MySQL
 
 ## Tests
 - Unit / Integration / Functional / API / Security / Migration
@@ -612,7 +612,7 @@ public function show(string $slug, EntityManagerInterface $em): Response
 - `use Doctrine\...`.
 - `use Symfony\...\HttpFoundation\...`.
 - `use Symfony\...\Cache\...`.
-- Работа с файловой системой / Redis / HTTP.
+- Работа с файловой системой / HTTP.
 - Любая I/O.
 
 ### 9.7 Infrastructure Layer
@@ -622,7 +622,7 @@ public function show(string $slug, EntityManagerInterface $em): Response
 **Можно:**
 
 - Doctrine implementations Repository.
-- Redis adapters, Mailer adapters, HttpClient адаптеры.
+- Cache adapters, Mailer adapters, HttpClient адаптеры.
 - File storage.
 - Реализация интерфейсов из Domain/Application.
 
@@ -795,7 +795,7 @@ src/Module/Page/
 7. Twig template с готовой view-model. Никакой бизнес-логики в шаблоне.
 8. Breadcrumbs — через Menu/Page module, не вручную в template.
 9. Canonical URL и meta — через единую SEO-services-точку ([26-seo-architecture](26-seo-architecture.md)).
-10. Cache strategy — выбрать пул и ключи ([23-cache-and-redis](23-cache-and-redis.md)).
+10. Cache strategy — выбрать пул и ключи ([23-cache](23-cache.md)).
 11. Тесты: functional (`WebTestCase`) + SEO regression (snapshot `<head>`).
 12. Обновить docs: [13-front-area](13-front-area.md), [16-routing](16-routing.md), [26-seo-architecture](26-seo-architecture.md).
 
@@ -823,7 +823,7 @@ src/Module/Page/
 3. Request DTO + Validator.
 4. Response DTO (никогда не отдаём Entity напрямую).
 5. Auth требования: Bearer / session / OAuth — см. [20-security-and-access-control](20-security-and-access-control.md).
-6. Rate-limit (Redis-based) при публичных endpoint’ах.
+6. Rate-limit (на `cache.app`, filesystem) при публичных endpoint’ах.
 7. Стандартизованные ошибки — формат из [30-error-handling](30-error-handling.md).
 8. Версионирование: `/api/v1/...`. При breaking change — `v2` + deprecation.
 9. Тесты: API contract tests, негативные сценарии, авторизация.
@@ -864,7 +864,7 @@ src/Module/Page/
 |---|---|---|
 | Новая таблица | Новая бизнес-сущность с identity, отдельный жизненный цикл | Расширение существующей сущности |
 | Новое поле | Атрибут существующей сущности | Если поле нужно только одной странице — view model |
-| JSONB | Изменчивая структура, нет нужды индексировать всё | Если поля стабильны и нужны индексы |
+| JSON | Изменчивая структура, нет нужды индексировать всё (индекс возможен через generated column) | Если поля стабильны и нужны индексы |
 | Денормализация | Read-performance критична | Простая выборка с join |
 
 **Migration safety:**
@@ -917,7 +917,7 @@ src/Module/Page/
 **Naming convention:**
 
 - `UPPER_SNAKE_CASE`.
-- Префикс по подсистеме: `MAILER_*`, `REDIS_*`, `APP_*`, `<MODULE>_*`.
+- Префикс по подсистеме: `MAILER_*`, `MYSQL_*`, `APP_*`, `<MODULE>_*`.
 - Не использовать generic-имена `URL`, `KEY`, `TOKEN`.
 
 **Обязательно при добавлении env:**
@@ -936,7 +936,7 @@ src/Module/Page/
 
 ## 16. Developing a cache/performance feature
 
-Подробно см. [23-cache-and-redis](23-cache-and-redis.md).
+Подробно см. [23-cache](23-cache.md).
 
 **Когда кэшировать:**
 
@@ -952,7 +952,7 @@ src/Module/Page/
 
 **Уровни:**
 
-- `cache.app` (Redis) — application data.
+- `cache.app` (filesystem) — application data.
 - HTTP cache — для статичных публичных страниц с осторожной инвалидацией.
 - Twig fragment cache — для тяжёлых partial’ов.
 - Doctrine query/result cache — точечно, под конкретный запрос.
@@ -1082,7 +1082,7 @@ SEO-критичный раздел. Любая ошибка стоит траф
 ## 20. Developing a Form/Lead feature
 
 - Public form flow → DTO + Validator + CSRF.
-- Anti-spam: honeypot + rate-limit (Redis) + опционально hCaptcha.
+- Anti-spam: honeypot + rate-limit (`cache.app`) + опционально hCaptcha.
 - Persistence: Lead Entity с created_at, IP, user-agent (с учётом 152-ФЗ).
 - Email notification — async через Messenger + Mailer.
 - Admin view: список + фильтр + статусы (new / in_progress / closed).
@@ -1102,7 +1102,7 @@ SEO-критичный раздел. Любая ошибка стоит траф
 - API auth — Bearer / session, явно описано в [20-security-and-access-control](20-security-and-access-control.md).
 - Rate limiting на публичных action.
 - Audit logging для смены ролей, доступа к чувствительным данным.
-- Sensitive data: пароли — `password_hash`, токены — Redis с TTL.
+- Sensitive data: пароли — `password_hash`, токены — одноразовые, с TTL, хранить хеш (в БД или `cache.app`).
 - Secrets — только через env, не в коде, не в commit.
 - Тесты: voter unit, functional (запрещённый доступ → 403), API auth.
 
@@ -1197,7 +1197,7 @@ SEO-критичный раздел. Любая ошибка стоит траф
 | Security | [20](20-security-and-access-control.md) |
 | Templates | [21](21-templates-and-twig.md) |
 | Frontend assets | [22](22-frontend-assets.md) |
-| Cache | [23](23-cache-and-redis.md) |
+| Cache | [23](23-cache.md) |
 | Messenger | [24](24-messenger-and-queues.md) |
 | Uploads | [25](25-files-and-uploads.md) |
 | SEO | [26](26-seo-architecture.md) |
@@ -1231,8 +1231,8 @@ SEO-поведение, миграции или публичный контра�
 | Нужны ли изменения Docker compose? | Новый сервис, новый порт, новый volume |
 | Нужны ли изменения Nginx? | Новый location, новый upstream, изменение headers |
 | Нужны ли новые PHP extensions? | Новая зависимость на ext-* |
-| Нужны ли изменения Redis? | Новые пулы, изменение memory policy |
-| Нужны ли миграции PostgreSQL и в каком порядке? | Любое изменение schema |
+| Нужны ли изменения кэша? | Новые пулы, TTL, прогрев после деплоя (кэш локален для релиза) |
+| Нужны ли миграции MySQL и в каком порядке? | Любое изменение schema |
 | Нужны ли новые secrets/env? | См. [§15](#15-developing-a-config-driven-feature) |
 | Нужен ли cache warmup? | Когда холодный старт даёт деградацию |
 | Нужен ли restart воркеров Messenger? | Любые изменения handler / message payload |
@@ -1481,7 +1481,7 @@ AI-агенты в этом проекте обязаны соблюдать [40
 
 **CSRF:** ON (публичная форма с session или stateless с одноразовым токеном).
 
-**Rate-limit:** Redis-based, например 5/час на IP.
+**Rate-limit:** на `cache.app` (filesystem), например 5/час на IP.
 
 **Persistence:** `Lead` Entity, статусы.
 
@@ -1555,7 +1555,7 @@ Daily-use шпаргалка. 15 правил.
 
 1. Сначала design note ([§8](#8-feature-design-template)) — потом код.
 2. Никогда не класть бизнес-логику в контроллер.
-3. Domain не знает про Doctrine, Symfony HttpFoundation, Twig, Redis.
+3. Domain не знает про Doctrine, Symfony HttpFoundation, Twig, cache-адаптеры.
 4. Любой вход — через DTO + Validator.
 5. Любое изменение БД — через Doctrine Migration с `up()` и `down()`.
 6. Любое изменение env — обновить `.env.example` и [27-config-and-env](27-config-and-env.md).

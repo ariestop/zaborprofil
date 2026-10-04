@@ -43,13 +43,13 @@ final class PageBlock
     /**
      * @var array<string, mixed>
      */
-    #[ORM\Column(type: 'json', options: ['jsonb' => true])]
+    #[ORM\Column(type: 'json')]
     private array $content;
 
     /**
      * @var array<string, mixed>
      */
-    #[ORM\Column(type: 'json', options: ['jsonb' => true])]
+    #[ORM\Column(type: 'json')]
     private array $settings;
 
     #[ORM\Column]

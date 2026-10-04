@@ -166,7 +166,7 @@ final class CreatePageHandler
 | Новый Twig partial / шаблон / view-data | [21-templates-and-twig.md](21-templates-and-twig.md), [13-front-area.md](13-front-area.md) |
 | Изменение SEO-рендера, sitemap, robots, redirects | [26-seo-architecture.md](26-seo-architecture.md), при необходимости [13-front-area.md](13-front-area.md) |
 | Изменение security/firewall/voter/access_control | [20-security-and-access-control.md](20-security-and-access-control.md) |
-| Изменение кэш-пула / инвалидации | [23-cache-and-redis.md](23-cache-and-redis.md) |
+| Изменение кэш-пула / инвалидации | [23-cache.md](23-cache.md) |
 | Новый Messenger handler / message | [24-messenger-and-queues.md](24-messenger-and-queues.md) |
 | Новый upload-флоу | [25-files-and-uploads.md](25-files-and-uploads.md) |
 | Изменение `.env` / `config/packages/*.yaml` | [27-config-and-env.md](27-config-and-env.md), при необходимости связанный nn-* документ |

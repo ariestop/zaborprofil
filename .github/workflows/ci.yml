@@ -25,28 +25,21 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      postgres:
-        image: postgres:18
+      mysql:
+        image: mysql:8.4
         env:
-          POSTGRES_DB: zaborprofil_test
-          POSTGRES_USER: zaborprofil_test
-          POSTGRES_PASSWORD: zaborprofil_test
+          MYSQL_DATABASE: zaborprofil_test
+          MYSQL_USER: zaborprofil_test
+          MYSQL_PASSWORD: zaborprofil_test
+          MYSQL_ROOT_PASSWORD: root
         ports:
-          - 5432:5432
+          - 3306:3306
         options: >-
-          --health-cmd "pg_isready -U zaborprofil_test -d zaborprofil_test"
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
           --health-interval 10s
           --health-timeout 5s
-          --health-retries 5
-      redis:
-        image: redis:8
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
+          --health-start-period 30s
 
     steps:
       - name: Checkout
@@ -56,7 +49,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.5'
-          extensions: ctype, iconv, intl, mbstring, opcache, pdo_pgsql, redis
+          extensions: ctype, iconv, intl, mbstring, opcache, pdo_mysql
           coverage: none
           tools: composer:v2
 
@@ -81,13 +74,13 @@ jobs:
       - name: Rector dry run
         run: composer check:rector
 
-      - name: Use PostgreSQL for test environment
+      - name: Use MySQL for test environment
         run: cp .env.test.ci .env.test.local
 
       - name: Doctrine migrations status
         run: php bin/console doctrine:migrations:status --env=test --no-interaction
 
-      - name: Run Doctrine migrations on the CI Postgres
+      - name: Run Doctrine migrations on the CI MySQL
         run: php bin/console doctrine:migrations:migrate --env=test --no-interaction --allow-no-migration
 
       - name: Doctrine schema validation

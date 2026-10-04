@@ -33,12 +33,12 @@ WordPress-импортёр **не строится**. Контент перен�
 ## Ключевые архитектурные решения
 
 - Symfony 8.1+ как основной фреймворк ([ADR-0001](adr/0001-symfony-as-main-framework.md)).
-- PostgreSQL 18+ как основная БД ([ADR-0002](adr/0002-postgresql-as-main-database.md)).
+- MySQL 8.4+ как основная БД ([ADR-0002](adr/0002-mysql-as-main-database.md)).
 - Clean Architecture + Modular Monolith ([ADR-0003](adr/0003-clean-architecture.md)).
 - Doctrine ORM 3 / DBAL 4 / Migrations 4 ([ADR-0004](adr/0004-doctrine-orm-usage.md)).
 - DTO + Symfony Validator вместо тяжёлых FormType по умолчанию ([ADR-0005](adr/0005-dto-validator-over-heavy-formtype.md)).
 - Разделение зон Front / Admin / API / Dev ([ADR-0006](adr/0006-separate-front-admin-api-dev-areas.md)).
-- Redis 8 для cache, Doctrine для Messenger transport ([ADR-0007](adr/0007-redis-cache-and-messenger.md)).
+- Файловый кэш (Symfony Cache `filesystem`) и Doctrine для Messenger transport ([ADR-0007](adr/0007-filesystem-cache-and-doctrine-messenger.md)).
 - Docker только для local development ([ADR-0008](adr/0008-docker-for-local-development.md)).
 - VPS-деплой без Docker для staging/production ([ADR-0009](adr/0009-vps-deployment-strategy.md)).
 - SEO-first CMS-архитектура ([ADR-0010](adr/0010-seo-first-cms-architecture.md)).
@@ -52,8 +52,7 @@ WordPress-импортёр **не строится**. Контент перен�
 | Node.js | 25.9.0 |
 | npm | 11.12.1 |
 | Nginx | 1.30.0 |
-| PostgreSQL | 18 |
-| Redis | 8 |
+| MySQL | 8.4 |
 | Composer | актуальный 2.x |
 
 ## Текущие функциональные возможности (фактическое состояние)
@@ -86,7 +85,7 @@ WordPress-импортёр **не строится**. Контент перен�
 
 - **Нарушение слоёв.** Без жёсткого контроля Domain быстро обрастает Symfony/Doctrine, и проект превращается в очередной legacy. Mitigation — [04-layer-rules](04-layer-rules.md), PHPStan, ревью.
 - **SEO-регрессии.** Изменение URL без 301-редиректа — потеря трафика. Mitigation — [26-seo-architecture](26-seo-architecture.md) и обязательный `Redirect` при изменении `Page.path`.
-- **Расхождение Docker (dev) и VPS (prod).** Версии PHP/Postgres/Redis должны совпадать; контролируется в [32-docker-architecture](32-docker-architecture.md) и [34-deployment](34-deployment.md).
+- **Расхождение Docker (dev) и VPS (prod).** Версии PHP/MySQL должны совпадать; контролируется в [32-docker-architecture](32-docker-architecture.md) и [34-deployment](34-deployment.md).
 - **Падение деплоя.** Mitigation — `tools/deploy/rollback.sh`, healthcheck после переключения релиза, обязательный backup перед prod-миграциями.
 - **Утечка секретов.** Mitigation — `.env.local` / `.env.production` всегда вне Git, секреты только через GitHub Environments на CI.
 

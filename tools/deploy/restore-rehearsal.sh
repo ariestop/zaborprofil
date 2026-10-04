@@ -15,11 +15,11 @@ usage() {
   cat <<'USAGE'
 Usage:
   CONFIRM_RESTORE_REHEARSAL=yes tools/deploy/restore-rehearsal.sh \
-    --db-backup /path/to/database.dump \
+    --db-backup /path/to/database.sql.gz \
     --uploads-backup /path/to/uploads.tar.gz
 
 Options:
-  --db-backup PATH       PostgreSQL custom-format dump to restore.
+  --db-backup PATH       gzip-архив mysqldump (*.sql.gz) для восстановления.
   --uploads-backup PATH  Optional uploads tar.gz archive to extract and verify.
   --restore-db NAME      Optional temporary database name.
   --keep-db              Keep the restored database for manual inspection.
@@ -58,43 +58,42 @@ done
 [[ -n "$DB_BACKUP_FILE" && -f "$DB_BACKUP_FILE" ]] || fail "Database backup file is required."
 
 require_command "$PHP_BIN"
-require_command createdb
-require_command dropdb
-require_command pg_restore
-require_command psql
+require_command mysql
+require_command gzip
 
 prepare_shared_layout
 load_shared_env
-export_pg_env_from_database_url "$DATABASE_URL"
+prepare_mysql_client_from_database_url "$DATABASE_URL"
 
-SOURCE_DB="$PGDATABASE"
+SOURCE_DB="$MYSQL_DB_NAME"
 RESTORE_DB_NAME="${RESTORE_DB_NAME:-${SOURCE_DB}_restore_rehearsal_$(date '+%Y%m%d_%H%M%S')}"
 
 [[ "$RESTORE_DB_NAME" != "$SOURCE_DB" ]] || fail "Refusing to restore into source database: $SOURCE_DB"
 
 cleanup_restore_db() {
   if [[ "$KEEP_RESTORE_DB" != "yes" ]]; then
-    dropdb --if-exists "$RESTORE_DB_NAME" >/dev/null 2>&1 || true
+    mysql_cli --execute "DROP DATABASE IF EXISTS \`${RESTORE_DB_NAME}\`" >/dev/null 2>&1 || true
   fi
+  cleanup_mysql_client_files
 }
 trap cleanup_restore_db EXIT
 
-log "Verify PostgreSQL backup metadata: $DB_BACKUP_FILE"
-pg_restore -l "$DB_BACKUP_FILE" >/dev/null
+log "Verify MySQL backup archive: $DB_BACKUP_FILE"
+gzip -t "$DB_BACKUP_FILE"
 
 log "Create temporary restore database: $RESTORE_DB_NAME"
-dropdb --if-exists "$RESTORE_DB_NAME" >/dev/null 2>&1 || true
-createdb "$RESTORE_DB_NAME"
+mysql_cli --execute "DROP DATABASE IF EXISTS \`${RESTORE_DB_NAME}\`"
+mysql_cli --execute "CREATE DATABASE \`${RESTORE_DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci"
 
 log "Restore database backup into $RESTORE_DB_NAME"
-pg_restore --dbname="$RESTORE_DB_NAME" --no-owner --no-privileges "$DB_BACKUP_FILE"
+gzip -dc "$DB_BACKUP_FILE" | mysql_cli --default-character-set=utf8mb4 "$RESTORE_DB_NAME"
 
-table_count="$(psql --dbname="$RESTORE_DB_NAME" --tuples-only --no-align --command "select count(*) from information_schema.tables where table_schema = 'public';")"
+table_count="$(mysql_cli --batch --skip-column-names --execute "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '${RESTORE_DB_NAME}'")"
 if [[ "${table_count:-0}" -lt 1 ]]; then
-  fail "Restore produced no public tables in $RESTORE_DB_NAME"
+  fail "Restore produced no tables in $RESTORE_DB_NAME"
 fi
 
-log "Restored database has $table_count public tables"
+log "Restored database has $table_count tables"
 
 if [[ -n "$UPLOADS_BACKUP_FILE" ]]; then
   [[ -f "$UPLOADS_BACKUP_FILE" ]] || fail "Uploads backup file does not exist: $UPLOADS_BACKUP_FILE"

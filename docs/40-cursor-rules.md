@@ -56,7 +56,7 @@ Cursor существует, чтобы **помогать реализовыв�
 | Forms / DTO / Validation            | `docs/19-forms-dto-validation.md`, `docs/09-application-layer.md`                                                                          |
 | Security                            | `docs/20-security-and-access-control.md`, `docs/27-config-and-env.md`, `docs/30-error-handling.md`                                         |
 | SEO                                 | `docs/26-seo-architecture.md`, `docs/13-front-area.md`, `docs/16-routing.md`, `docs/21-templates-and-twig.md`                              |
-| Cache / Redis                       | `docs/23-cache-and-redis.md`, `docs/11-infrastructure-layer.md`                                                                            |
+| Cache                               | `docs/23-cache.md`, `docs/11-infrastructure-layer.md`                                                                            |
 | Messenger / Workers                 | `docs/24-messenger-and-queues.md`, `docs/07-request-flow.md`, `docs/09-application-layer.md`                                               |
 | Files / Uploads                     | `docs/25-files-and-uploads.md`, `docs/20-security-and-access-control.md`, `docs/36-backup-restore.md`                                      |
 | Config / Env                        | `docs/27-config-and-env.md`, `docs/33-local-development.md`, `docs/34-deployment.md`                                                       |
@@ -170,9 +170,9 @@ Cursor существует, чтобы **помогать реализовыв�
 **Прямые запреты.**
 
 - Не класть бизнес-логику в controllers.
-- Не тащить Doctrine `EntityManager`, Symfony `Request`, Redis, Nginx-знание в Domain.
+- Не тащить Doctrine `EntityManager`, Symfony `Request`, cache-адаптеры, Nginx-знание в Domain.
 - Не вызывать `shell_exec`/`exec`/`system`/`proc_open` из произвольных мест.
-- Не делать direct infrastructure calls из Domain (`file_get_contents`, `curl_*`, `\Redis`).
+- Не делать direct infrastructure calls из Domain (`file_get_contents`, `curl_*`, прямая работа с файлами `var/cache`).
 - Не обходить Application/use case слой ради «упростить контроллер».
 - Не смешивать Twig presentation logic с domain logic (никаких вычислений правил в шаблоне).
 - Не писать огромные god-functions.
@@ -310,7 +310,7 @@ Cursor существует, чтобы **помогать реализовыв�
 
 - Не выкатывать env переменную в код без записи в `.env.example`.
 - Не менять `Restart=always` на `Restart=no` без обоснования.
-- Не открывать порты Redis/Postgres наружу.
+- Не открывать порт MySQL (3306) наружу.
 - Не отключать security headers в Nginx «попутно».
 - Не упрощать deploy скрипт за счёт идемпотентности.
 
@@ -412,15 +412,15 @@ Cursor существует, чтобы **помогать реализовыв�
 
 ---
 
-## 17. Rules for cache/Redis code
+## 17. Rules for cache code
 
 - Cache keys предсказуемы (`<module>.<entity>.<id>` / `<module>.<query>.<hash>`).
 - Версионирование ключа (`v1`, `v2`) при изменении формата.
 - Invalidation спроектирована **до** добавления cache.
 - Не кэшировать секреты, токены, пароли.
 - Не кэшировать private user data в shared pool.
-- Stale data risk описан в комментарии или docs (`docs/23-cache-and-redis.md`).
-- Redis outage не должен крашить flow, который может работать без cache (graceful fallback).
+- Stale data risk описан в комментарии или docs (`docs/23-cache.md`).
+- Сбой кэша (нет прав/места в `var/cache`, повреждённый файл) не должен крашить flow, который может работать без cache (graceful fallback).
 - Cache behavior упомянут в `docs/23` для нетривиальных случаев.
 - Tests на cache-sensitive логику где возможно (write → read → invalidate → read).
 
@@ -461,7 +461,7 @@ Cursor существует, чтобы **помогать реализовыв�
 - **Никогда** не вводить unsafe shell execution без airtight justification (и без code review).
 - Validate URLs (формат, схема, host allow-list, no internal IPs).
 - Защита от path traversal (allow-list директорий, `Path::join`, `realpath` + проверка префикса).
-- Не выставлять internal services наружу (Redis, Postgres, MailHog, MinIO bind 127.0.0.1).
+- Не выставлять internal services наружу (MySQL, MailHog, MinIO bind 127.0.0.1).
 - Не утекать temp file paths в response/log.
 - Не хранить secrets в коде.
 - Не ослаблять Nginx/firewall defaults.
@@ -496,7 +496,7 @@ Cursor существует, чтобы **помогать реализовыв�
 | Admin behavior                              | `docs/12-admin-area.md`, `docs/ADMIN_GUIDE.md`                                                        |
 | API behavior                                | `docs/14-api-area.md`, `docs/30-error-handling.md`                                                    |
 | Queue/worker behavior                       | `docs/24-messenger-and-queues.md`, `docs/37-runbooks.md`                                              |
-| Cache behavior                              | `docs/23-cache-and-redis.md`                                                                          |
+| Cache behavior                              | `docs/23-cache.md`                                                                          |
 | Files / uploads                             | `docs/25-files-and-uploads.md`, `docs/UPLOAD_SECURITY.md`                                             |
 | Security / RBAC                             | `docs/20-security-and-access-control.md`, `docs/ROLES.md`                                             |
 | Logging / observability                     | `docs/28-logging-observability.md`                                                                    |
@@ -613,7 +613,7 @@ Cursor существует, чтобы **помогать реализовыв�
 
 1. **Сначала читать docs, потом код, потом править.**
 2. **Минимальный diff. Никаких unrelated правок.**
-3. **Domain не знает про Symfony, Doctrine, Redis, HTTP, Twig.**
+3. **Domain не знает про Symfony, Doctrine, HTTP, Twig.**
 4. **Контроллеры тонкие. Бизнес-логика в Application.**
 5. **Doctrine entities не отдаются наружу — только DTO/view models.**
 6. **URL/route/slug/canonical не меняем без 301 и SEO reasoning.**

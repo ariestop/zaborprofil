@@ -28,11 +28,10 @@ sudo apt install -y make
 
 Native (без Docker, опционально, для OSPanel/диагностики):
 
-- PHP 8.5 + extensions `ctype, iconv, intl, mbstring, pdo_pgsql, redis`.
+- PHP 8.5 + extensions `ctype, iconv, intl, mbstring, pdo_mysql`.
 - Composer 2.
 - Node.js 25.9.0 / npm 11.12.1.
-- PostgreSQL 18.
-- Redis 8.
+- MySQL 8.4.
 
 ## Первый запуск (Docker)
 
@@ -96,7 +95,7 @@ make health
 ssh -N -L 8081:127.0.0.1:8081 user@dev-server.example
 ```
 
-Пока сессия SSH открыта, на ноутбуке доступны те же URL, что и на сервере, например `http://127.0.0.1:8081/`. При необходимости добавьте цепочку `-L` для других портов из `.env.local` (часто: `5173` — Vite, `8025` — Mailpit, `8080` — Adminer, `15432` — Postgres).
+Пока сессия SSH открыта, на ноутбуке доступны те же URL, что и на сервере, например `http://127.0.0.1:8081/`. При необходимости добавьте цепочку `-L` для других портов из `.env.local` (часто: `5173` — Vite, `8025` — Mailpit, `8080` — Adminer, `13306` — MySQL).
 
 **Постоянная настройка в `~/.ssh/config`** на ноутбуке:
 
@@ -145,11 +144,11 @@ ss -tln '( sport = :8081 )'
 
 Ожидается bind на `0.0.0.0:8081` или `[::]:8081`.
 
-Для безопасности оставляйте инфраструктурные порты (`POSTGRES_PORT`, `REDIS_PORT`, `MAILPIT_PORT`, `ADMINER_PORT`) на `127.0.0.1:...`.
+Для безопасности оставляйте инфраструктурные порты (`MYSQL_PORT`, `MAILPIT_PORT`, `ADMINER_PORT`) на `127.0.0.1:...`.
 
 ## Создание администратора
 
-Целевое: консольная команда `app:user:create-admin` (пока отсутствует). Сейчас: сгенерировать bcrypt-хеш и вставить строку в `admin_users` (тип `id` в PostgreSQL — **UUID**, соответствующий ULID в PHP; колонки: `email`, `roles` jsonb, `password_hash`, `active`, `created_at`, `updated_at`).
+Целевое: консольная команда `app:user:create-admin` (пока отсутствует). Сейчас: сгенерировать bcrypt-хеш и вставить строку в `admin_users` (тип `id` в MySQL — **BINARY(16)**, бинарное представление ULID из PHP; колонки: `email`, `roles` JSON, `password_hash`, `active`, `created_at`, `updated_at`).
 
 Сгенерировать хеш пароля (из корня проекта, внутри app-контейнера при Docker):
 
@@ -157,13 +156,13 @@ ss -tln '( sport = :8081 )'
 docker compose exec app php bin/console security:hash-password 'your-password' --no-interaction
 ```
 
-Получить UUID для нового ULID (подставьте свой ULID из `Symfony\Component\Uid\Ulid` или сгенерируйте новый):
+Получить hex бинарного представления нового ULID (для `UNHEX()` в MySQL):
 
 ```bash
-docker compose exec app php -r 'require "vendor/autoload.php"; echo (new Symfony\Component\Uid\Ulid())->toRfc4122();'
+docker compose exec app php -r 'require "vendor/autoload.php"; echo bin2hex((new Symfony\Component\Uid\Ulid())->toBinary());'
 ```
 
-Далее `INSERT` через Adminer/psql с полученными `id` (uuid), `email`, `roles` (например `'["ROLE_ADMIN"]'::jsonb`), `password_hash` и метками времени. Не копируйте чужие примеры с устаревшими именами колонок (`password`, `is_active`): актуальная схема — в миграции `Version20260501000100` и entity `AdminUser`.
+Далее `INSERT` через Adminer или `make db` с `id` (`UNHEX('<hex>')`), `email`, `roles` (JSON-строка, например `'["ROLE_ADMIN"]'`), `password_hash` и метками времени. Не копируйте чужие примеры с устаревшими именами колонок (`password`, `is_active`): актуальная схема — в миграции `Version20261004000100` и entity `AdminUser`.
 
 ## Ежедневные команды
 
@@ -184,8 +183,7 @@ make npm-install
 make npm-dev                  # vite dev server
 make npm-build                # vite build
 make health                   # curl SITE_URL/health
-make db                       # psql внутри postgres
-make redis                    # redis-cli
+make db                       # mysql-клиент внутри сервиса mysql
 make down                     # остановить
 ```
 
@@ -203,8 +201,7 @@ php bin/console doctrine:migrations:migrate
 ```dotenv
 APP_ENV=dev
 APP_SECRET=change-this-secret
-DATABASE_URL="postgresql://user:password@127.0.0.1:5432/zaborprofil?serverVersion=18&charset=utf8"
-REDIS_URL="redis://127.0.0.1:6379"
+DATABASE_URL="mysql://user:password@127.0.0.1:3306/zaborprofil?serverVersion=8.4&charset=utf8mb4"
 MESSENGER_TRANSPORT_DSN=doctrine://default?auto_setup=0
 MAILER_DSN=null://null
 SITE_URL=http://localhost:8000
@@ -247,7 +244,7 @@ make npm-dev          # vite на :5173
 | `Cannot find module '@tailwindcss/typography'` | нет `node_modules/` | `make npm-install` или `npm install` |
 | 502 на `http://localhost` | php контейнер ещё не поднялся | `make logs`, дождаться FPM ready |
 | `permission denied` на `var/cache` | mount-перезапись прав | `make shell` → `chown -R www-data:www-data var` или `make build` |
-| Postgres конфликтует с локальным | порт `5432` занят | `POSTGRES_PORT=15432` уже в default; либо ставите свой |
+| MySQL конфликтует с локальным | порт `3306` занят | на хост пробрасывается `MYSQL_PORT=13306` (default); либо ставите свой |
 | HMR Vite не работает / правки видны только после сборки | не задан `VITE_DEV_SERVER_URL` или не запущен dev server | `VITE_DEV_SERVER_URL=http://localhost:5173` в `.env.local` и `make npm-dev` |
 | Страницы без стилей и JS после включения dev-режима | задан `VITE_DEV_SERVER_URL`, но `make npm-dev` не запущен | запустить `make npm-dev` или закомментировать переменную |
 | Тесты падают на CSRF | нет `.env.test.local` | используйте phpunit с дефолтным `.env.test`, для CI используется `.env.test.ci` |

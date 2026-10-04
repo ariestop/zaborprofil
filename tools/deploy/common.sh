@@ -266,7 +266,7 @@ cleanup_old_releases() {
 }
 
 cleanup_old_backups() {
-  find "$DB_BACKUP_DIR" -type f -name '*.dump' -mtime +"$BACKUP_RETENTION_DAYS" -delete 2>/dev/null || true
+  find "$DB_BACKUP_DIR" -type f -name '*.sql.gz' -mtime +"$BACKUP_RETENTION_DAYS" -delete 2>/dev/null || true
   find "$UPLOADS_BACKUP_DIR" -type f -name '*.tar.gz' -mtime +"$BACKUP_RETENTION_DAYS" -delete 2>/dev/null || true
 }
 
@@ -277,36 +277,61 @@ load_shared_env() {
   set +a
 }
 
-export_pg_env_from_database_url() {
+MYSQL_DEFAULTS_FILE=""
+MYSQL_DB_NAME=""
+
+# Разбирает DATABASE_URL (mysql://user:pass@host:port/db) и создаёт временный
+# defaults-файл для клиентов mysql/mysqldump, чтобы пароль не попадал в argv.
+prepare_mysql_client_from_database_url() {
   local database_url="${1:-${DATABASE_URL:-}}"
 
   [[ -n "$database_url" ]] || fail "DATABASE_URL is not set"
 
-  local pg_env_file
-  pg_env_file="$(mktemp)"
+  cleanup_mysql_client_files
 
-  DATABASE_URL_TO_PARSE="$database_url" "$PHP_BIN" <<'PHP' >"$pg_env_file"
+  MYSQL_DEFAULTS_FILE="$(mktemp)"
+  chmod 600 "$MYSQL_DEFAULTS_FILE"
+
+  local db_name_file
+  db_name_file="$(mktemp)"
+
+  DATABASE_URL_TO_PARSE="$database_url" DB_NAME_FILE="$db_name_file" "$PHP_BIN" <<'PHP' >"$MYSQL_DEFAULTS_FILE"
 <?php
 $url = getenv('DATABASE_URL_TO_PARSE') ?: '';
 $parts = parse_url($url);
-if ($parts === false || ($parts['scheme'] ?? '') === '') {
-    fwrite(STDERR, "DATABASE_URL is not parseable\n");
+if ($parts === false || !in_array($parts['scheme'] ?? '', ['mysql', 'mariadb'], true)) {
+    fwrite(STDERR, "DATABASE_URL must use mysql:// scheme\n");
     exit(1);
 }
-foreach ([
-    'PGHOST' => $parts['host'] ?? '127.0.0.1',
-    'PGPORT' => (string) ($parts['port'] ?? 5432),
-    'PGDATABASE' => isset($parts['path']) ? ltrim($parts['path'], '/') : '',
-    'PGUSER' => $parts['user'] ?? '',
-    'PGPASSWORD' => $parts['pass'] ?? '',
-] as $key => $value) {
-    echo 'export ', $key, '=', escapeshellarg($value), PHP_EOL;
-}
+$quote = static fn (string $value): string => '"'.addcslashes($value, "\"\\").'"';
+echo "[client]\n";
+echo 'host=', $quote($parts['host'] ?? '127.0.0.1'), "\n";
+echo 'port=', (int) ($parts['port'] ?? 3306), "\n";
+echo 'user=', $quote(rawurldecode($parts['user'] ?? '')), "\n";
+echo 'password=', $quote(rawurldecode($parts['pass'] ?? '')), "\n";
+echo "default-character-set=utf8mb4\n";
+file_put_contents((string) getenv('DB_NAME_FILE'), rawurldecode(ltrim($parts['path'] ?? '', '/')));
 PHP
 
-  # shellcheck disable=SC1091
-  source "$pg_env_file"
-  rm -f "$pg_env_file"
+  MYSQL_DB_NAME="$(cat "$db_name_file")"
+  rm -f "$db_name_file"
+
+  [[ -n "$MYSQL_DB_NAME" ]] || fail "Database name is missing in DATABASE_URL"
+}
+
+cleanup_mysql_client_files() {
+  if [[ -n "${MYSQL_DEFAULTS_FILE:-}" ]]; then
+    rm -f "$MYSQL_DEFAULTS_FILE"
+    MYSQL_DEFAULTS_FILE=""
+  fi
+}
+
+mysql_cli() {
+  mysql --defaults-extra-file="$MYSQL_DEFAULTS_FILE" "$@"
+}
+
+mysqldump_cli() {
+  mysqldump --defaults-extra-file="$MYSQL_DEFAULTS_FILE" "$@"
 }
 
 backup_database() {
@@ -318,19 +343,19 @@ backup_database() {
     return
   fi
 
-  require_command pg_dump
+  require_command mysqldump
+  require_command gzip
   load_shared_env
 
   mkdir -p "$DB_BACKUP_DIR"
 
-  local backup_file="$DB_BACKUP_DIR/${release_name}_database.dump"
-  export_pg_env_from_database_url "$DATABASE_URL"
+  local backup_file="$DB_BACKUP_DIR/${release_name}_database.sql.gz"
+  prepare_mysql_client_from_database_url "$DATABASE_URL"
 
-  pg_dump --format=custom --file="$backup_file"
+  mysqldump_cli --single-transaction --routines --triggers --no-tablespaces --default-character-set=utf8mb4 "$MYSQL_DB_NAME" | gzip -9 >"$backup_file"
+  cleanup_mysql_client_files
 
-  if command -v pg_restore >/dev/null 2>&1; then
-    pg_restore -l "$backup_file" >/dev/null
-  fi
+  gzip -t "$backup_file"
 
   log "Database backup created: $backup_file"
 }

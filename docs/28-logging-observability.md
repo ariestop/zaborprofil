@@ -77,7 +77,7 @@
 - Deploy события.
 - Slow queries (через Doctrine middleware — целевое).
 - Async message handle (start/end/fail).
-- Cache failures (Redis недоступен).
+- Cache failures (файловый кэш недоступен: каталог `var/cache/<env>/pools/app` не существует или нет прав на запись).
 
 ## Что логировать НЕЛЬЗЯ
 
@@ -177,7 +177,7 @@ Monitoring timer использует `tools/deploy/monitoring-check.sh` и мо
 
 ## Observability roadmap
 
-- Prometheus exporter (PHP-FPM, Nginx, Postgres, Redis).
+- Prometheus exporter (PHP-FPM, Nginx, MySQL).
 - Loki/Grafana для logs.
 - OpenTelemetry tracing (целевое).
 - Sentry для error tracking (опционально).

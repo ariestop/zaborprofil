@@ -4,7 +4,7 @@
 
 Domain — самый стабильный, самый важный слой. Здесь живут **правила бизнеса**.
 
-Если завтра уйдёт Symfony, Doctrine, Redis, Twig — Domain должен пережить.
+Если завтра уйдёт Symfony, Doctrine, Twig — Domain должен пережить.
 
 ## Состав
 
@@ -31,7 +31,6 @@ Domain — самый стабильный, самый важный слой. З
 
 - `Symfony\Component\HttpFoundation\*`
 - `Twig\*`
-- `Predis\*` / `Redis`
 - Файловая система (`fopen`, `file_*`)
 - `Symfony\Component\Mailer\*`
 - `Symfony\Component\Cache\*`

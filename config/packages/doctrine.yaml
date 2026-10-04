@@ -1,7 +1,13 @@
 doctrine:
     dbal:
         url: '%env(resolve:DATABASE_URL)%'
-        server_version: '18'
+        driver: pdo_mysql
+        server_version: '8.4'
+        charset: utf8mb4
+        default_table_options:
+            charset: utf8mb4
+            collation: utf8mb4_0900_ai_ci
+            engine: InnoDB
         profiling_collect_backtrace: '%kernel.debug%'
 
     orm:

@@ -14,7 +14,7 @@
 
 AI-агенты по умолчанию ведут себя как «генератор PHP-файлов»: дописывают код в ближайшее место, переносят
 бизнес-логику в контроллеры, тащат `EntityManager` в Twig, выдумывают несуществующие сервисы и переписывают
-unrelated файлы «по пути». В CMS-проекте с SEO, миграциями PostgreSQL, очередями Messenger и
+unrelated файлы «по пути». В CMS-проекте с SEO, миграциями MySQL, очередями Messenger и
 production-VPS это приводит к одному из четырёх сценариев:
 
 1. молчаливая деградация архитектурных границ;
@@ -47,7 +47,7 @@ production-VPS это приводит к одному из четырёх сц�
   Любое изменение URL или canonical = риск потери поискового трафика.
 - Это **модульный монолит** (Clean Architecture + DDD-light). Размытие границ модулей деградирует
   систему за 5–10 PR'ов до неподдерживаемого состояния.
-- На production используется **native VPS stack** (Nginx + PHP-FPM + PostgreSQL + Redis + systemd),
+- На production используется **native VPS stack** (Nginx + PHP-FPM + MySQL + systemd),
   а не Docker. Изменения в deploy и Nginx не имеют «отката одной кнопкой».
 - В будущем планируются интернет-магазин, B2B/B2C кабинеты, партнёрская программа, CRM-интеграции.
   Хаос в текущей архитектуре сделает их невозможными.
@@ -70,8 +70,8 @@ production-VPS это приводит к одному из четырёх сц�
 - **Clean Architecture + Modular Monolith**: слои UI → Application → Domain ← Infrastructure.
 - **Bounded modules** в `src/Module/<Name>/{Domain, Application, Infrastructure, UI}`.
 - **Web root** — `public_html/`, не Symfony default `public/`.
-- **PostgreSQL 18+** как основная БД, миграции через Doctrine Migrations.
-- **Redis 8+** только для cache (Symfony Cache pools). Sessions — нативные файлы, Messenger — Doctrine transport. См. [ADR-0007](adr/0007-redis-cache-and-messenger.md).
+- **MySQL 8.4+** (InnoDB, `utf8mb4`) как основная БД, миграции через Doctrine Migrations. DDL в MySQL не транзакционен — перед боевой миграцией обязателен `mysqldump`.
+- **Filesystem cache** (Symfony Cache pools, `cache.adapter.filesystem`), Redis не используется. Sessions — нативные файлы, Messenger — Doctrine transport. См. [ADR-0007](adr/0007-filesystem-cache-and-doctrine-messenger.md).
 - **VPS deployment** через bash + systemd, без Docker на проде.
 
 ### 2.1.1 Windows / WSL2 execution model
@@ -85,7 +85,7 @@ production-VPS это приводит к одному из четырёх сц�
 - `make`, `docker compose`, `composer`, `npm`, Doctrine и PHPUnit запускаются из WSL, не из PowerShell/CMD.
 - Первый запуск: `cp .env.local.example .env.local`, затем `make init` и `make health`.
 - Если порт `80` занят на Windows, агент предлагает изменить `.env.local`: `HTTP_PORT=8081`, `SITE_URL=http://localhost:8081`, `DEFAULT_URI=http://localhost:8081`.
-- Проверки БД и тесты по-прежнему выполняются только через Docker Compose и PostgreSQL service `postgres`; SQLite запрещён.
+- Проверки БД и тесты по-прежнему выполняются только через Docker Compose и MySQL service `mysql`; SQLite запрещён.
 
 ### 2.2 Как думать о проекте
 
@@ -115,7 +115,7 @@ production-VPS это приводит к одному из четырёх сц�
 1. **Routing + slug + redirects** — ломаются тихо и платятся SEO-трафиком.
 2. **Doctrine миграции** — destructive changes на production откатываются дорого.
 3. **Messenger transport** — задачи в очереди могут пережить deploy и сломаться при изменении DTO.
-4. **Cache invalidation** — stale данные в Redis после миграций или deploy.
+4. **Cache invalidation** — stale данные в файловом кэше после миграций или deploy.
 5. **Nginx конфиг** — правила `location`, `try_files`, redirects влияют на каждый запрос.
 6. **Security: voters, форма логина, uploads, CSRF** — регрессии тихие и опасные.
 
@@ -134,12 +134,12 @@ production-VPS это приводит к одному из четырёх сц�
 
 ### 3.1 Слои
 
-- Domain не зависит от Symfony, Doctrine ORM (вызовов), Redis, Twig, HTTP, FS, Mailer.
+- Domain не зависит от Symfony, Doctrine ORM (вызовов), Twig, HTTP, FS, Mailer.
   Допустимо: Doctrine attributes для маппинга, `Symfony\Component\Uid`, PHP stdlib, `App\Shared\Domain\*`.
 - Application не зависит от `Request/Response`, `EntityManagerInterface`, конкретных Doctrine repositories,
   Twig, Symfony bundles. Использует только interfaces из Domain/Application + чистые value-classes.
 - Infrastructure реализует interfaces Domain/Application. Здесь живут Doctrine repositories, Mailer,
-  Redis, HTTP-clients, файловое хранилище.
+  cache-адаптеры, HTTP-clients, файловое хранилище.
 - UI (controllers, console, messenger handlers) — **тонкий адаптер**: парсит вход → вызывает Application → формирует ответ.
 
 ### 3.2 Контроллеры
@@ -249,7 +249,7 @@ AI-агент **обязан** читать документацию по пра
 | Forms / DTO / Validation                | `docs/19-forms-dto-validation.md`, `docs/09-application-layer.md`                                                                       |
 | Security                                | `docs/20-security-and-access-control.md`, `docs/27-config-and-env.md`, `docs/30-error-handling.md`                                      |
 | SEO                                     | `docs/26-seo-architecture.md`, `docs/13-front-area.md`, `docs/16-routing.md`, `docs/21-templates-and-twig.md`                           |
-| Cache / Redis                           | `docs/23-cache-and-redis.md`, `docs/11-infrastructure-layer.md`                                                                         |
+| Cache                                   | `docs/23-cache.md`, `docs/11-infrastructure-layer.md`                                                                         |
 | Messenger / Queues / Workers            | `docs/24-messenger-and-queues.md`, `docs/07-request-flow.md`, `docs/09-application-layer.md`                                            |
 | Files / Uploads                         | `docs/25-files-and-uploads.md`, `docs/20-security-and-access-control.md`, `docs/36-backup-restore.md`                                   |
 | Config / Env                            | `docs/27-config-and-env.md`, `docs/33-local-development.md`, `docs/34-deployment.md`                                                    |
@@ -287,10 +287,10 @@ AI-агент **обязан** читать документацию по пра
 | UI/Twig                        | templates, assets, view models                           | accessibility, mobile, SEO-теги                                         | `docs/21`, `docs/22`                                                         | functional snapshot где применимо                                    |
 | Админка                        | `/admin` controllers, React SPA, voters                  | RBAC, audit log, CSRF                                                  | `docs/12`, `docs/20`                                                         | functional + security                                                |
 | API                            | `/api/*` controllers, DTO, normalizer                    | backward compatibility, error format, exposed fields                    | `docs/14`, `docs/30`                                                         | API contract tests                                                   |
-| Инфраструктурное               | Nginx, PHP-FPM, systemd, Redis, PostgreSQL config        | runbook, rollback                                                       | `docs/32`, `docs/34`, `docs/37`                                              | smoke + healthcheck                                                  |
+| Инфраструктурное               | Nginx, PHP-FPM, systemd, MySQL config                   | runbook, rollback                                                       | `docs/32`, `docs/34`, `docs/37`                                              | smoke + healthcheck                                                  |
 | Миграция БД                    | `migrations/`, entities, repositories                    | expand/contract, data migration, rollback                              | `docs/17`, `docs/18`, `docs/05`                                              | migration test, repository test                                      |
 | Doctrine mapping change        | entity attributes, indexes, types                         | реальная миграция, performance, indexes                                | `docs/17`                                                                    | repository tests + migration                                         |
-| Cache/Redis                    | cache pools, key namespaces, invalidation                | stale data, secrets, TTL                                                | `docs/23`                                                                    | cache invalidation tests                                             |
+| Cache                          | cache pools, key namespaces, invalidation                | stale data, secrets, TTL                                                | `docs/23`                                                                    | cache invalidation tests                                             |
 | Messenger/worker               | message DTO, handlers, transport config                  | idempotency, retries, schema compatibility со старыми очередями         | `docs/24`, runbooks                                                          | handler unit + integration                                           |
 | Deployment                     | `deploy/`, systemd, GitHub Actions                       | идемпотентность, rollback, maintenance mode                             | `docs/34`, `docs/35`, `docs/37`                                              | dry-run, staging                                                     |
 | Refactor                       | внутренности модуля                                      | публичные контракты не меняются, тесты зелёные                          | внутренний readme модуля                                                     | существующие тесты + новые юнит                                      |
@@ -364,7 +364,7 @@ AI-агент **обязан** читать документацию по пра
 - [ ] Затрагивает ли SEO metadata (title/description/h1/canonical/og:*/JSON-LD)?
 - [ ] Затрагивает ли redirects / canonical / sitemap / robots.txt?
 - [ ] Затрагивает ли cache (ключи, TTL, invalidation)?
-- [ ] Затрагивает ли Redis (cache pools, lock — целевое; sessions/messenger в Redis не используются)?
+- [ ] Затрагивает ли файловый кэш (cache pools; lock/rate-limiter — целевое, `FlockStore`/`PdoStore`; sessions — файлы, messenger — Doctrine)?
 - [ ] Затрагивает ли Messenger (DTO сообщений, transport, retry)?
 - [ ] Затрагивает ли deploy (`deploy/`, systemd, Nginx, PHP-FPM)?
 - [ ] Затрагивает ли Nginx (location, redirects, headers, rate limiting)?
@@ -393,15 +393,15 @@ AI-агент **обязан** читать документацию по пра
 | Public/HTTP             | приём запросов через Nginx → PHP-FPM                          | конфиг Nginx, FastCGI                                        | бизнес-логика                                                              | `docs/32`, `docs/34`                          |
 | Controllers             | парсинг запроса, вызов Application, формирование Response     | Application, Domain (для type hints), Symfony HTTP/Routing  | `EntityManagerInterface`, конкретные Doctrine repositories, бизнес-правила | роуты, DTO, тесты functional                  |
 | Application / use cases | оркестрация сценариев                                         | Domain, repository interfaces, Validator constraints, PSR    | `Request/Response`, Twig, Doctrine `EntityManager`, конкретные repositories | DTO, validators, юнит-тесты                   |
-| Domain                  | бизнес-инварианты, правила, агрегаты                          | PHP stdlib, `Symfony\Component\Uid`, Doctrine attributes     | Symfony HTTP, Doctrine ORM (вызовы), Twig, Redis, FS, Mailer               | юнит-тесты domain                             |
-| Infrastructure          | реализация интерфейсов (Doctrine, Redis, Mailer, Storage)     | Application + Domain + любые внешние библиотеки              | определение бизнес-правил                                                  | integration tests                             |
+| Domain                  | бизнес-инварианты, правила, агрегаты                          | PHP stdlib, `Symfony\Component\Uid`, Doctrine attributes     | Symfony HTTP, Doctrine ORM (вызовы), Twig, FS, Mailer                      | юнит-тесты domain                             |
+| Infrastructure          | реализация интерфейсов (Doctrine, Cache, Mailer, Storage)     | Application + Domain + любые внешние библиотеки              | определение бизнес-правил                                                  | integration tests                             |
 | Persistence / Doctrine  | репозитории, маппинг, миграции                                 | Doctrine ORM/DBAL                                            | бизнес-сценарии                                                            | миграции, integration tests                   |
 | Presentation / Twig     | рендеринг view model                                          | Twig, view models                                            | `EntityManager`, Repositories, Doctrine queries, бизнес-логика             | view models, snapshot/functional tests        |
 | Admin                   | админка (Symfony controllers + Vue SPA)                       | Application, voters                                          | прямые SQL, Doctrine repositories напрямую                                 | RBAC docs, voters tests                       |
 | API                     | публичные/admin REST endpoints                                | Application, normalizers, DTO                                | отдача Doctrine entities напрямую                                          | API contract tests                            |
 | Console                 | CLI команды                                                   | Application, Symfony Console                                 | бизнес-логика inline                                                       | юнит-тесты команд                             |
 | Workers / Messenger     | асинхронные сценарии                                          | Application, Messenger                                       | бизнес-логика inline, длинные транзакции                                   | handler tests, runbooks                       |
-| Frontend assets         | Vite/Tailwind/Vue                                             | браузерные API                                                | прямой доступ к БД/Redis                                                   | `docs/22`                                     |
+| Frontend assets         | Vite/Tailwind/Vue                                             | браузерные API                                                | прямой доступ к БД/кэшу                                                   | `docs/22`                                     |
 | Deploy / scripts        | bash, systemd                                                 | OS, systemd, php-fpm                                         | прямой доступ к Domain/Application code                                    | `docs/34`, `docs/37`                          |
 | Tests                   | unit/integration/functional                                   | соответствующий слой + test fixtures                          | глобальное состояние                                                       | сами тесты + `docs/31`                        |
 | Docs                    | source of truth для архитектуры                               | актуальные ссылки                                             | расхождения с кодом                                                        | при каждом значимом изменении                 |
@@ -508,7 +508,7 @@ AI-агент **обязан** читать документацию по пра
 
 ### 9.1 Когда нужна миграция
 
-Любое изменение схемы PostgreSQL: новая таблица, новое поле, индекс, тип, ограничение, default,
+Любое изменение схемы MySQL: новая таблица, новое поле, индекс, тип, ограничение, default,
 переименование, удаление. Никаких изменений «на лету» через `EntityManager` или ручной SQL на проде.
 
 ### 9.2 Как писать миграцию
@@ -567,10 +567,10 @@ AI-агент **обязан** читать документацию по пра
 ### 9.8 Индексы, nullable, default, enum
 
 - FK всегда сопровождается индексом.
-- Поле, по которому фильтруется список, требует индекс (B-tree/GIN/JSONB index по контексту).
+- Поле, по которому фильтруется список, требует индекс (B-tree; для JSON — generated column + индекс; для текста — FULLTEXT по контексту).
 - `NOT NULL` без default = риск сломать insert. Всегда объяснять явно.
 - Enum-подобные поля — в нашем проекте обычно `VARCHAR + CHECK` или `smallint + map`. Не использовать
-  PostgreSQL `ENUM` (миграция типа болезненна).
+  MySQL `ENUM` (`ALTER` списка значений болезненен).
 
 ### 9.9 Workers/jobs, завязанные на схему
 
@@ -763,7 +763,7 @@ AI-агент **обязан** читать документацию по пра
 
 ---
 
-## 13. Rules for cache/Redis changes
+## 13. Rules for cache changes
 
 ### 13.1 Когда можно добавлять cache
 
@@ -866,7 +866,7 @@ AI-агент **обязан** читать документацию по пра
 | Что меняется                | Когда менять                                                                          |
 |-----------------------------|---------------------------------------------------------------------------------------|
 | Dockerfile (`docker/php/`)  | новая PHP extension, новый системный пакет для local dev                              |
-| docker-compose              | новый сервис для local dev (Redis, MailHog, MinIO)                                    |
+| docker-compose              | новый сервис для local dev (MailHog, MinIO)                                    |
 | Nginx                       | новый location, security header, rate limit, изменение upstream                       |
 | PHP-FPM                     | смена pm-параметров, opcache, memory_limit, slowlog                                   |
 | systemd                     | новый worker, изменение Restart/RestartSec, EnvironmentFile                            |
@@ -941,7 +941,7 @@ AI-агент **обязан** читать документацию по пра
 | SEO behavior                                | `docs/26-seo-architecture.md`                                                                |
 | Admin behavior / редактор                   | `docs/12-admin-area.md`, `docs/ADMIN_GUIDE.md`, `docs/CONTENT_EDITOR_GUIDE.md`               |
 | Security / RBAC                             | `docs/20-security-and-access-control.md`, `docs/ROLES.md`                                    |
-| Cache / Redis                               | `docs/23-cache-and-redis.md`                                                                 |
+| Cache                                       | `docs/23-cache.md`                                                                 |
 | Messenger / queues                          | `docs/24-messenger-and-queues.md`, `docs/37-runbooks.md`                                     |
 | Files / uploads                             | `docs/25-files-and-uploads.md`, `docs/UPLOAD_SECURITY.md`                                    |
 | Env / config                                | `docs/27-config-and-env.md`, `.env.example`, `docs/DEPLOY_VARIABLES.md`                      |
@@ -970,7 +970,7 @@ ADR создаются в `docs/adr/000X-...md` с шаблоном (Context, De
 
 AI-агентам запрещено запускать PHPUnit, Doctrine schema validation,
 migrations status или functional tests на SQLite. Локальные проверки выполняются
-только внутри Docker Compose против PostgreSQL service `postgres` и отдельной
+только внутри Docker Compose против MySQL service `mysql` и отдельной
 БД `zaborprofil_test`.
 
 Канонический путь:
@@ -981,15 +981,15 @@ make test-db
 make test
 ```
 
-Для точечных тестов использовать тот же PostgreSQL `DATABASE_URL` внутри
+Для точечных тестов использовать тот же MySQL `DATABASE_URL` внутри
 контейнера `app`; `sqlite://` в командах агента запрещён.
 
 ### 17.0.1 Hard safety rails (mandatory)
 
 - Запрещён запуск `phpunit` в контейнере `app` только с `APP_ENV=test` без явного `DATABASE_URL`:
   это может подключить dev-БД `zaborprofil`.
-- Для точечных запусков агент обязан передать полный test-env (`APP_ENV=test`, `DATABASE_URL=...zaborprofil_test...`, `REDIS_URL`, `MESSENGER_TRANSPORT_DSN`, `MAILER_DSN`, `SITE_URL`, `DEFAULT_URI`) либо использовать `make test`.
-- `SchemaTestHelper` имеет право делать `DROP TABLE ... CASCADE` только на БД с суффиксом `_test`.
+- Для точечных запусков агент обязан передать полный test-env (`APP_ENV=test`, `DATABASE_URL=...zaborprofil_test...`, `MESSENGER_TRANSPORT_DSN`, `MAILER_DSN`, `SITE_URL`, `DEFAULT_URI`) либо использовать `make test`.
+- `SchemaTestHelper` имеет право делать `DROP TABLE` только на БД с суффиксом `_test`.
   Если helper сообщает `got "zaborprofil"` — это не баг helper, а неверный запуск тестов.
 - Любые команды `reset-db`, `doctrine:database:drop`, `SchemaTool::drop*` на dev/prod без явного запроса пользователя запрещены.
 
@@ -1089,7 +1089,7 @@ make test
 - **No unsafe shell execution** — никаких `shell_exec`, `exec`, `system` без airtight reasoning.
 - **No path traversal** — все пути через `Path::isAbsolute`, allow-list директорий, нормализация.
 - **Safe file uploads** — MIME sniffing, allow-list расширений, ограничение размера, изолированное хранение.
-- **No exposure of Redis/Postgres** — bind на 127.0.0.1, firewall.
+- **No exposure of MySQL** — bind на 127.0.0.1 (`bind-address`), firewall.
 - **Secret handling** — в `.env.local` или systemd EnvironmentFile, не в git.
 - **Safe file lifecycle** — тmp → final move, cleanup на failure.
 - **Safe admin actions** — confirmation для destructive, audit log.
@@ -1115,7 +1115,7 @@ make test
 ### Запрещено
 
 - Бизнес-логика в контроллерах.
-- Infrastructure (Doctrine, Redis, Symfony bundles) импортируется в Domain.
+- Infrastructure (Doctrine, Cache, Symfony bundles) импортируется в Domain.
 - Doctrine entities возвращаются из API напрямую.
 - SQL пишется хаотично в контроллерах/сервисах.
 - Большой рефакторинг ради маленькой фичи.
