@@ -539,7 +539,7 @@ yes/no — новые шаги в release script, рестарт worker'ов
 
 - **Признак правильного:** меняется CSS/JS/Tailwind конфиг, Vite chunk.
 - **Признак неправильного:** меняется только asset, но не Twig — и наоборот.
-- **Anti-pattern:** Tailwind-классы без `npm run build` после правки `tailwind.config.js`.
+- **Anti-pattern:** Tailwind-классы без `npm run build` после правки классов или `assets/shared/styles/app.css`.
 
 #### When to change forms / DTO / validators
 

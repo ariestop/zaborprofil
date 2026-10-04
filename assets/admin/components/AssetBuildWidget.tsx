@@ -315,7 +315,7 @@ export default function AssetBuildWidget() {
               </div>
               <pre
                 ref={logContainer}
-                className="max-h-56 overflow-auto whitespace-pre-wrap break-words p-3 text-xs leading-5 text-slate-100"
+                className="max-h-56 overflow-auto whitespace-pre-wrap wrap-break-word p-3 text-xs leading-5 text-slate-100"
               >{hasLogs ? status.logs : 'Лог появится после запуска сборки.'}</pre>
             </div>
           </div>

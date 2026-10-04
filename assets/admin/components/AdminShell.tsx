@@ -108,7 +108,7 @@ export default function AdminShell() {
       </header>
 
       <div className="mx-auto grid max-w-7xl grid-cols-[240px_1fr] gap-6 px-6 py-8">
-        <aside className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+        <aside className="rounded-2xl border border-slate-200 bg-white p-3 shadow-xs">
           <nav className="space-y-1">
             {routes.map((route) => (
               <button

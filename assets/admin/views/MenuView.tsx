@@ -78,7 +78,7 @@ export default function MenuView() {
 
   return (
     <section className="space-y-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
         <h2 className="text-lg font-semibold text-slate-950">Меню сайта</h2>
         <p className="mt-1 text-sm text-slate-600">Header, footer и service navigation кэшируются и доступны в Twig через `menu_items(position)`.</p>
 
@@ -102,7 +102,7 @@ export default function MenuView() {
         {error && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
         {items.map((item) => (
           <article key={item.id} className="grid grid-cols-[140px_1fr_1fr_100px_90px_auto] items-center gap-3 border-b border-slate-100 py-3 last:border-0">
             <select value={item.position} className="rounded-lg border border-slate-300 px-3 py-2 text-sm" onChange={(event) => setItems((prev) => prev.map((current) => (current.id === item.id ? { ...current, position: event.target.value } : current)))}>
@@ -114,7 +114,7 @@ export default function MenuView() {
             <input value={item.url} className="rounded-lg border border-slate-300 px-3 py-2 text-sm" onChange={(event) => setItems((prev) => prev.map((current) => (current.id === item.id ? { ...current, url: event.target.value } : current)))} />
             <input value={item.sortOrder} type="number" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" onChange={(event) => setItems((prev) => prev.map((current) => (current.id === item.id ? { ...current, sortOrder: Number(event.target.value) } : current)))} />
             <label className="inline-flex items-center gap-2 text-sm text-slate-600">
-              <input checked={item.isActive} type="checkbox" className="rounded border-slate-300" onChange={(event) => setItems((prev) => prev.map((current) => (current.id === item.id ? { ...current, isActive: event.target.checked } : current)))} />
+              <input checked={item.isActive} type="checkbox" className="rounded-sm border-slate-300" onChange={(event) => setItems((prev) => prev.map((current) => (current.id === item.id ? { ...current, isActive: event.target.checked } : current)))} />
               active
             </label>
             <div className="flex justify-end gap-2">

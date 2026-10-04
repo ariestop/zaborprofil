@@ -89,7 +89,7 @@ export default function MigrationsView() {
   }, [])
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700">Settings</p>

@@ -126,11 +126,8 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
-      # Only runtime dependencies are audited: they end up in the browser bundle.
-      # Build-time tools (tailwindcss 3 -> chokidar -> braces) have advisories
-      # without a patched 3.x release and are fixed only by a Tailwind 4 migration.
       - name: NPM audit
-        run: npm audit --omit=dev --audit-level=high
+        run: npm audit --audit-level=high
 
       - name: Build frontend
         run: npm run build

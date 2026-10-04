@@ -4,9 +4,9 @@
 
 - **Vite 7** — bundler.
 - **React 19 + TypeScript** — admin SPA.
-- **Tailwind CSS 3** + `@tailwindcss/typography`.
+- **Tailwind CSS 4** + `@tailwindcss/typography` (конфигурация в CSS, без `tailwind.config.ts`).
 - **TypeScript 5.8**, `tsc --noEmit` для типов.
-- **PostCSS**, `autoprefixer`.
+- **PostCSS** с плагином `@tailwindcss/postcss` (префиксы добавляет сам Tailwind 4).
 - **Node.js >= 25.9.0**, npm >= 11.12.1.
 
 См. [ADMIN_FRONTEND.md](ADMIN_FRONTEND.md) для деталей admin shell.
@@ -68,11 +68,14 @@ make npm-dev        # vite dev на :5173, HMR
 
 ## Tailwind
 
-`tailwind.config.ts`:
+Вся конфигурация живёт в `assets/shared/styles/app.css`:
 
-- `content`: `templates/**/*.html.twig`, `assets/**/*.{vue,ts,js}`.
-- `plugins`: `@tailwindcss/typography`.
-- Кастомные цвета/шрифты — в config, не inline.
+- `@import 'tailwindcss' source(none)` и `@source` для `templates/` и `assets/`: Tailwind 4 по умолчанию сканирует весь проект, поэтому источники ограничены явно.
+- `@plugin '@tailwindcss/typography'`.
+- `@theme`: кастомные цвета (`brand-*`) и шрифт `--font-sans` (оставлен стек из Tailwind 3). Кастомные значения добавляются сюда, не inline.
+- `@layer base`: совместимость с v3 (цвет границы по умолчанию `gray-200`, курсор `pointer` у кнопок).
+
+Файла `tailwind.config.ts` больше нет. Поддерживаемые браузеры Tailwind 4: Safari 16.4+, Chrome 111+, Firefox 128+.
 
 Запрещено: hand-rolled CSS, конфликтующий с Tailwind классами без причины.
 
