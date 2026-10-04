@@ -33,6 +33,7 @@ final readonly class PageOutput
         public ?string $ogImage = null,
         public ?string $ogType = null,
         public ?array $jsonLd = null,
+        public ?string $metaTitle = null,
     ) {
     }
 
@@ -60,6 +61,7 @@ final readonly class PageOutput
             $page->ogImage(),
             $page->ogType(),
             $page->jsonLd(),
+            $page->metaTitle(),
         );
     }
 
@@ -84,6 +86,7 @@ final readonly class PageOutput
             'scheduledPublishAt' => $this->scheduledPublishAt,
             'scheduledUnpublishAt' => $this->scheduledUnpublishAt,
             'seo' => [
+                'metaTitle' => $this->metaTitle,
                 'metaDescription' => $this->metaDescription,
                 'canonicalUrl' => $this->canonicalUrl,
                 'ogTitle' => $this->ogTitle,

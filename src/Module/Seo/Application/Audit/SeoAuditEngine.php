@@ -7,6 +7,7 @@ namespace App\Module\Seo\Application\Audit;
 use App\Module\Content\Domain\Entity\Page;
 use App\Module\Content\Domain\Entity\PageBlock;
 use App\Module\Content\Domain\Enum\BlockType;
+use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 
 final readonly class SeoAuditEngine
 {
@@ -24,6 +25,13 @@ final readonly class SeoAuditEngine
         '/uploads',
         '/health',
     ];
+
+    public const int TITLE_MIN_LENGTH = 10;
+    public const int TITLE_MAX_LENGTH = 60;
+
+    public function __construct(private ?PageRepositoryInterface $pages = null)
+    {
+    }
 
     public function auditPage(Page $page): SeoAuditReport
     {
@@ -63,9 +71,7 @@ final readonly class SeoAuditEngine
     {
         $issues = [];
 
-        if (mb_strlen($page->title()) < 10) {
-            $issues[] = new SeoAuditIssue(SeoAuditSeverity::P2, 'seo.title.too_short', 'Page title should be at least 10 characters.', 'title');
-        }
+        $issues = [...$issues, ...$this->titleIssues($page)];
 
         if ($page->metaDescription() === null) {
             $issues[] = new SeoAuditIssue(SeoAuditSeverity::P2, 'seo.meta_description.missing', 'Meta description is recommended before publication.', 'metaDescription');
@@ -83,6 +89,50 @@ final readonly class SeoAuditEngine
 
         if ($page->ogImage() === null) {
             $issues[] = new SeoAuditIssue(SeoAuditSeverity::P2, 'seo.og_image.missing', 'OpenGraph image is recommended for social previews.', 'ogImage');
+        }
+
+        return $issues;
+    }
+
+    /**
+     * Checks the effective SEO title: explicit `metaTitle`, otherwise the page title.
+     *
+     * @return list<SeoAuditIssue>
+     */
+    private function titleIssues(Page $page): array
+    {
+        $metaTitle = $page->metaTitle();
+        $effective = $metaTitle ?? $page->title();
+        $field = $metaTitle !== null ? 'metaTitle' : 'title';
+        $length = mb_strlen($effective);
+        $issues = [];
+
+        if ($length < self::TITLE_MIN_LENGTH) {
+            $issues[] = new SeoAuditIssue(
+                SeoAuditSeverity::P2,
+                'seo.title.too_short',
+                \sprintf('SEO title should be at least %d characters.', self::TITLE_MIN_LENGTH),
+                $field,
+            );
+        }
+
+        if ($length > self::TITLE_MAX_LENGTH) {
+            $issues[] = new SeoAuditIssue(
+                SeoAuditSeverity::P2,
+                'seo.title.too_long',
+                \sprintf('SEO title is %d characters; search engines usually truncate after %d.', $length, self::TITLE_MAX_LENGTH),
+                $field,
+            );
+        }
+
+        $duplicates = $this->pages?->findPublishedPathsBySeoTitle($effective, (string) $page->id()) ?? [];
+        if ($duplicates !== []) {
+            $issues[] = new SeoAuditIssue(
+                SeoAuditSeverity::P2,
+                'seo.title.duplicate',
+                \sprintf('SEO title duplicates other published pages: %s.', implode(', ', $duplicates)),
+                $field,
+            );
         }
 
         return $issues;

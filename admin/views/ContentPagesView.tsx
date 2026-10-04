@@ -3,6 +3,10 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import { useEffect, useMemo, useState } from 'react'
 import { apiRequest } from '../api/client'
+import { LengthCounter } from '../features/seo/LengthCounter'
+import { useSeoTitleSettings } from '../features/seo/seoSettings'
+import { SnippetPreview } from '../features/seo/SnippetPreview'
+import { descriptionLimits, titleLimits } from '../features/seo/snippet'
 import TiptapRichTextEditor from '../components/TiptapRichTextEditor'
 import { catalogPreset, heroPreset, seoContentPreset } from '../modules/page-builder/blocks/slider/presets'
 import type { BlockSchemaItem, ContentBlockItem, ContentPageDetail, ContentPageItem, MediaAssetItem, PageRevisionItem, PageTemplateItem } from '../types/api'
@@ -264,6 +268,7 @@ function SortableBlockCard({
 }
 
 export default function ContentPagesView() {
+  const seoTitleSettings = useSeoTitleSettings()
   const [pages, setPages] = useState<ContentPageItem[]>([])
   const [templates, setTemplates] = useState<PageTemplateItem[]>([])
   const [blockSchemas, setBlockSchemas] = useState<BlockSchemaItem[]>([])
@@ -293,6 +298,7 @@ export default function ContentPagesView() {
     sortOrder: 0,
     isIndexable: true,
     visibility: 'public',
+    metaTitle: '',
     metaDescription: '',
     canonicalUrl: '',
     ogTitle: '',
@@ -434,6 +440,7 @@ export default function ContentPagesView() {
   })
 
   const seoPayload = (): Record<string, unknown> => ({
+    metaTitle: form.metaTitle.trim() || null,
     metaDescription: form.metaDescription || null,
     canonicalUrl: form.canonicalUrl || null,
     ogTitle: form.ogTitle || null,
@@ -506,6 +513,7 @@ export default function ContentPagesView() {
       sortOrder: page.sortOrder,
       isIndexable: page.isIndexable,
       visibility: page.visibility,
+      metaTitle: page.seo.metaTitle ?? '',
       metaDescription: page.seo.metaDescription ?? '',
       canonicalUrl: page.seo.canonicalUrl ?? '',
       ogTitle: page.seo.ogTitle ?? '',
@@ -575,7 +583,8 @@ export default function ContentPagesView() {
       sortOrder: 0,
       isIndexable: true,
       visibility: 'public',
-      metaDescription: '',
+      metaTitle: '',
+    metaDescription: '',
       canonicalUrl: '',
       ogTitle: '',
       ogDescription: '',
@@ -978,10 +987,26 @@ export default function ContentPagesView() {
             </div>
 
             <div className="mt-6 grid gap-4">
+              <label className="text-sm font-medium text-slate-700">SEO-title
+                <input value={form.metaTitle} placeholder={form.title} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" onChange={(event) => setForm((current) => ({ ...current, metaTitle: event.target.value }))} />
+                <LengthCounter value={form.metaTitle} limits={titleLimits} emptyHint="Если пусто, в title попадёт шаблон по умолчанию или название страницы." testId="meta-title-counter" />
+                <span className="mt-1 block text-xs font-normal text-slate-500">Заголовок для поисковой выдачи и вкладки браузера, ориентир до 60 символов. H1 при этом не меняется. Пример: «Заборы из профнастила под ключ в Москве | ЗаборПрофиль».</span>
+              </label>
               <label className="text-sm font-medium text-slate-700">SEO-описание
                 <textarea value={form.metaDescription} rows={3} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" onChange={(event) => setForm((current) => ({ ...current, metaDescription: event.target.value }))} />
-                <span className="mt-1 block text-xs font-normal text-slate-500">Описание для поискового сниппета, желательно 80-320 символов. Пример: «Производим и устанавливаем заборы из профнастила под ключ в Москве и области: замер, материалы, монтаж и гарантия.»</span>
+                <LengthCounter value={form.metaDescription} limits={descriptionLimits} emptyHint="Без описания поисковик подставит фрагмент текста страницы." testId="meta-description-counter" />
+                <span className="mt-1 block text-xs font-normal text-slate-500">Описание для поискового сниппета, ориентир 80-155 символов (предел сохранения — 320). Пример: «Производим и устанавливаем заборы из профнастила под ключ в Москве и области: замер, материалы, монтаж и гарантия.»</span>
               </label>
+              <SnippetPreview
+                metaTitle={form.metaTitle}
+                title={form.title}
+                h1={form.h1}
+                path={form.path}
+                canonicalUrl={form.canonicalUrl}
+                metaDescription={form.metaDescription}
+                titleTemplate={seoTitleSettings.titleTemplate}
+                siteName={seoTitleSettings.siteName}
+              />
               <label className="text-sm font-medium text-slate-700">Канонический URL
                 <input value={form.canonicalUrl} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" onChange={(event) => setForm((current) => ({ ...current, canonicalUrl: event.target.value }))} />
                 <span className="mt-1 block text-xs font-normal text-slate-500">Заполняйте только если канонический адрес отличается. Пример: «https://zaborprofil.ru/zabory-iz-profnastila/».</span>

@@ -28,6 +28,14 @@ interface PageRepositoryInterface
     public function existsByPath(string $path, ?string $excludeId = null): bool;
 
     /**
+     * Paths of other published pages whose effective SEO title
+     * (`metaTitle`, falling back to `title`) equals the given one.
+     *
+     * @return list<string>
+     */
+    public function findPublishedPathsBySeoTitle(string $seoTitle, string $excludeId, int $limit = 5): array;
+
+    /**
      * @return list<Page>
      */
     public function findAllForAdmin(): array;

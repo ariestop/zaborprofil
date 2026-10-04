@@ -26,7 +26,7 @@
 - статус;
 - шаблон;
 - признак индексации;
-- SEO-поля: meta description, canonical URL, OpenGraph и JSON-LD.
+- SEO-поля: SEO-title (отдельный заголовок для поиска и вкладки браузера; если пуст — используется шаблон по умолчанию из «Настройки → Шаблон SEO-title» или название страницы), meta description, canonical URL, OpenGraph и JSON-LD. Под полями показываются счётчики длины и превью сниппета; H1 от SEO-title не зависит.
 
 `PageBlock` хранит:
 

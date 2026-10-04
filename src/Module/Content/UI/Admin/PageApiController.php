@@ -149,6 +149,8 @@ final readonly class PageApiController
                 $this->jsonRequest->nullableString($payload, 'ogImage'),
                 $this->jsonRequest->nullableString($payload, 'ogType'),
                 $this->jsonRequest->nullableObjectList($payload, 'jsonLd'),
+                $this->jsonRequest->nullableString($payload, 'metaTitle'),
+                \array_key_exists('metaTitle', $payload),
             ));
 
             return new JsonResponse($page->toArray());

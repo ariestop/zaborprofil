@@ -44,6 +44,7 @@ final readonly class PageRevisionSnapshotBuilder
             'title' => $page->title(),
             'h1' => $page->h1(),
             'isIndexable' => $page->isIndexable(),
+            'metaTitle' => $page->metaTitle(),
             'metaDescription' => $page->metaDescription(),
             'canonicalUrl' => $page->canonicalUrl(),
             'ogTitle' => $page->ogTitle(),

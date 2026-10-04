@@ -29,6 +29,7 @@ final readonly class PublicPageView
         public ?string $ogType,
         public ?array $jsonLd,
         public array $blocks,
+        public ?string $metaTitle = null,
     ) {
     }
 
@@ -49,6 +50,7 @@ final readonly class PublicPageView
             $page->ogType(),
             $page->jsonLd(),
             array_map(PageBlockView::fromBlock(...), $page->enabledBlocks()),
+            $page->metaTitle(),
         );
     }
 
@@ -77,6 +79,7 @@ final readonly class PublicPageView
                 $revision->blocksSnapshot(),
                 static fn (array $block): bool => (bool) ($block['isEnabled'] ?? true),
             ))),
+            \is_string($seo['metaTitle'] ?? null) ? $seo['metaTitle'] : null,
         );
     }
 
@@ -116,6 +119,7 @@ final readonly class PublicPageView
             \is_string($seo['ogType'] ?? null) ? $seo['ogType'] : null,
             $jsonLd,
             $blocks,
+            \is_string($seo['metaTitle'] ?? null) ? $seo['metaTitle'] : null,
         );
     }
 }
