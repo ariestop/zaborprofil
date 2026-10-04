@@ -220,6 +220,30 @@ run_deploy "$APP" "$SHA2"
 assert_contains "Basic Auth не включён" "$LAST_OUT" "STAGING_AUTH_ENABLED=1 обязателен"
 
 new_app "$APP"
+sed -i 's/^STAGING_AUTH_ENABLED=.*/STAGING_AUTH_ENABLED=0/' "$APP/.env.local"
+run_deploy "$APP" "$SHA2"
+assert_contains "STAGING_AUTH_ENABLED=0 без STAGING_ALLOW_PUBLIC отклонён" "$LAST_OUT" "STAGING_AUTH_ENABLED=1 обязателен"
+assert_eq "код не менялся при отклонённом открытом staging" "$(git -C "$APP" rev-parse HEAD)" "$SHA1"
+
+new_app "$APP"
+sed -i 's/^STAGING_AUTH_ENABLED=.*/STAGING_AUTH_ENABLED=0/' "$APP/.env.local"
+echo 'STAGING_ALLOW_PUBLIC=0' >>"$APP/.env.local"
+run_deploy "$APP" "$SHA2"
+assert_contains "STAGING_ALLOW_PUBLIC=0 не разрешает открытый staging" "$LAST_OUT" "STAGING_AUTH_ENABLED=1 обязателен"
+
+new_app "$APP"
+sed -i '/^STAGING_AUTH_ENABLED=/d' "$APP/.env.local"
+echo 'STAGING_ALLOW_PUBLIC=1' >>"$APP/.env.local"
+run_deploy "$APP" "$SHA2"
+assert_contains "STAGING_ALLOW_PUBLIC=1 без явного STAGING_AUTH_ENABLED=0 отклонён" "$LAST_OUT" "STAGING_AUTH_ENABLED=1 обязателен"
+
+new_app "$APP"
+sed -i 's/^STAGING_AUTH_ENABLED=.*/STAGING_AUTH_ENABLED=maybe/' "$APP/.env.local"
+echo 'STAGING_ALLOW_PUBLIC=1' >>"$APP/.env.local"
+run_deploy "$APP" "$SHA2"
+assert_contains "нестрогое значение STAGING_AUTH_ENABLED отклонено" "$LAST_OUT" "STAGING_AUTH_ENABLED=1 обязателен"
+
+new_app "$APP"
 sed -i 's/^APP_SECRET=.*/APP_SECRET=change-me-in-env-local/' "$APP/.env.local"
 run_deploy "$APP" "$SHA2"
 assert_contains "шаблонный APP_SECRET" "$LAST_OUT" "APP_SECRET"
@@ -228,6 +252,30 @@ new_app "$APP"
 rm "$APP/.env.local"
 run_deploy "$APP" "$SHA2"
 assert_contains "нет .env.local" "$LAST_OUT" "Нет $APP/.env.local"
+
+echo "# открытый staging (STAGING_AUTH_ENABLED=0 + STAGING_ALLOW_PUBLIC=1)"
+new_app "$APP"
+make_env "$APP" staging zp_staging $'STAGING_AUTH_ENABLED=0\nSTAGING_ALLOW_PUBLIC=1'
+sed -i '0,/^STAGING_AUTH_ENABLED=1$/{//d}' "$APP/.env.local"
+sed -i '/^STAGING_AUTH_USER=/d;/^STAGING_AUTH_HASH=/d' "$APP/.env.local"
+: >"$WORK/php.log"
+run_deploy "$APP" "$SHA2"
+assert_eq "деплой открытого staging успешен" "$LAST_STATUS" "0"
+assert_eq "HEAD = целевой коммит (открытый staging)" "$(git -C "$APP" rev-parse HEAD)" "$SHA2"
+assert_contains "предупреждение об отключённом Basic Auth в выводе" "$LAST_OUT" "Basic Auth ВЫКЛЮЧЕН"
+assert_file_contains "предупреждение записано в deploy.log" "$APP/var/log/deploy.log" "Basic Auth ВЫКЛЮЧЕН"
+assert_file_contains "миграции применены (открытый staging)" "$WORK/php.log" "doctrine:migrations:migrate --env=staging"
+
+new_app "$APP"
+make_env "$APP" staging zp_staging $'STAGING_ALLOW_PUBLIC=1'
+run_deploy "$APP" "$SHA2"
+assert_eq "STAGING_ALLOW_PUBLIC=1 при включённом Basic Auth: деплой успешен" "$LAST_STATUS" "0"
+if grep -qF "Basic Auth ВЫКЛЮЧЕН" <<<"$LAST_OUT"; then ko "нет предупреждения при включённом Basic Auth"; else ok "нет предупреждения при включённом Basic Auth"; fi
+
+new_app "$APP"
+make_env "$APP" staging zp_staging
+run_deploy "$APP" "$SHA2"
+if grep -qF "Basic Auth ВЫКЛЮЧЕН" <<<"$LAST_OUT"; then ko "обычный деплой без предупреждения об открытом staging"; else ok "обычный деплой без предупреждения об открытом staging"; fi
 
 echo "# preflight: каталог прода"
 git -C "$WORK/prod" init -q -b main

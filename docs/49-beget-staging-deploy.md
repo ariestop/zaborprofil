@@ -29,13 +29,14 @@ git push origin dev
         ├─ npm ci && npm run build  -> frontend-build.tar.gz (build/ + BUILD_COMMIT)
         ├─ ssh: cat > ~/.deploy-tmp/frontend-build-<sha>.tar.gz
         └─ ssh: bash -s -- <sha> < tools/deploy/deploy-beget.sh      (в ~/dev.zaborprofil.ru)
-             ├─ preflight (APP_ENV=staging, отдельная БД, Basic Auth настроен)
+             ├─ preflight (APP_ENV=staging, отдельная БД, Basic Auth настроен или явно разрешён открытый staging)
              ├─ var/cache и var/sessions -> симлинки в shared/ (сессии переживают деплой)
              ├─ git checkout --force -B staging-deployed <sha>, composer install --no-dev
              ├─ установка prebuilt frontend (проверка BUILD_COMMIT == sha)
              ├─ doctrine:migrations:migrate, очистка shared/cache, cache:warmup, app:smoke:test
              └─ при ошибке: автооткат кода и frontend на предыдущий коммит
-        └─ smoke-check: без пароля 401, с паролем /health/live = 200 + noindex, /admin/login = 200;
+        └─ smoke-check: без пароля 401, с паролем /health/live = 200 + noindex, /admin/login = 200
+           (для открытого staging: без пароля /health/live = 200 + noindex, robots.txt Disallow: /, /admin требует вход);
            затем прогрев публичных страниц (/, /sitemap.xml, /robots.txt)
 ```
 
@@ -113,7 +114,7 @@ chmod 600 .env.local
 Правила:
 
 - Хеш bcrypt обязательно в **одинарных кавычках**: Symfony Dotenv раскрывает `$...` в значениях без кавычек и портит хеш. Скрипт проверяет формат и отказывается деплоить.
-- `APP_ENV=staging`, `STAGING_AUTH_ENABLED=1`, `MAILER_DSN=null://null` (письма со стенда не уходят). `REDIS_URL` не нужен.
+- `APP_ENV=staging`, `STAGING_AUTH_ENABLED=1` (отключение — только по разделу «Временно открытый staging»), `MAILER_DSN=null://null` (письма со стенда не уходят). `REDIS_URL` не нужен.
 - `DATABASE_URL`: только `mysql://...?serverVersion=8.4&charset=utf8mb4`, спецсимволы пароля кодируются (`rawurlencode`). База должна отличаться от боевой.
 - `APP_SECRET`: случайная строка (`openssl rand -hex 32`), не шаблонное значение.
 - Смена пароля: повторить блок с хешем, деплой не нужен.
@@ -191,6 +192,41 @@ curl -sI -u 'dev:ПАРОЛЬ' https://dev.zaborprofil.ru/health/live     # 200 
 
 Пароль в команды, остающиеся в общей истории, не вставлять.
 
+## Временно открытый staging (без Basic Auth)
+
+Бывает нужно показать стенд без пароля (например, для проверки внешним сервисом или заказчиком). Режим временный и включается только явно, обратимо и без изменений кода.
+
+Что **не** зависит от Basic Auth и действует всегда при `APP_ENV=staging`:
+
+- заголовок `X-Robots-Tag: noindex, nofollow` на всех ответах приложения (`StagingAccessSubscriber`);
+- `<meta name="robots" content="noindex, nofollow">` на всех страницах, даже если у страницы включена индексация (`templates/base.html.twig`);
+- `/robots.txt` с `User-agent: *` / `Disallow: /` (`RobotsTxtManager`: любое окружение, кроме `prod`, закрыто; `Sitemap` не публикуется);
+- админка `/admin` не открывается: у неё собственная форма входа (`/admin/login`), права и `X-Robots-Tag: noindex, nofollow, noarchive`.
+
+Статику, которую веб-сервер отдаёт мимо PHP (`/build/*`, `/uploads/*`), приложение не обслуживает: пароль её не закрывал и раньше, `X-Robots-Tag` для неё мог бы задать только веб-сервер.
+
+### Как включить
+
+В `~/dev.zaborprofil.ru/.env.local` на сервере:
+
+```dotenv
+STAGING_AUTH_ENABLED=0
+STAGING_ALLOW_PUBLIC=1
+```
+
+Обе строки обязательны: `STAGING_AUTH_ENABLED=0` без явного `STAGING_ALLOW_PUBLIC=1` (или `STAGING_ALLOW_PUBLIC=1` без `STAGING_AUTH_ENABLED=0`, пустое или любое другое значение) preflight деплоя отклоняет с прежней ошибкой `STAGING_AUTH_ENABLED=1 обязателен`. `STAGING_AUTH_USER` и `STAGING_AUTH_HASH` в этом режиме не проверяются, их можно оставить в файле. Приложение читает `.env.local` на каждый запрос (`.env.local.php` не используется), поэтому правка вступает в силу сразу, очищать кэш не нужно. Само приложение флаг `STAGING_ALLOW_PUBLIC` не читает: это предохранитель только для preflight деплоя (приложение смотрит на `STAGING_AUTH_ENABLED`).
+
+При каждом деплое в открытом режиме в `var/log/deploy.log` и в выводе workflow печатается предупреждение `Basic Auth ВЫКЛЮЧЕН (STAGING_AUTH_ENABLED=0, STAGING_ALLOW_PUBLIC=1)`. Smoke-check workflow в этом режиме вместо `401` проверяет, что анонимный `/health/live` отвечает `200` с `X-Robots-Tag: noindex`, `/robots.txt` содержит `Disallow: /`, а `/admin/dashboard` без входа не открывается; результат помечается предупреждением.
+
+### Как вернуть Basic Auth
+
+1. В `.env.local` поставить `STAGING_AUTH_ENABLED=1` и удалить строку `STAGING_ALLOW_PUBLIC` (достаточно любой из двух правок, но делаем обе, чтобы режим не включился случайно).
+2. Убедиться, что `STAGING_AUTH_USER` и `STAGING_AUTH_HASH` на месте; при необходимости сгенерировать хеш заново (раздел 4).
+3. Правка действует сразу, без деплоя и очистки кэша; следующий деплой снова требует Basic Auth.
+4. Проверить: `curl -sI https://dev.zaborprofil.ru/` -> `401` и `WWW-Authenticate: Basic`.
+
+Без `STAGING_ALLOW_PUBLIC=1` деплой при `STAGING_AUTH_ENABLED` не равном `1` не стартует, поэтому случайно забытый открытый режим невозможен без явной строки в `.env.local`.
+
 ## Автооткат
 
 Если после смены кода любой шаг упал (composer, frontend, миграции, smoke-тест), скрипт:
@@ -207,8 +243,8 @@ curl -sI -u 'dev:ПАРОЛЬ' https://dev.zaborprofil.ru/health/live     # 200 
 2. `/usr/local/bin/php8.5 -v` — PHP 8.5, `php8.5 -m | grep pdo_mysql`; `php8.5 ~/composer.phar --version` — Composer 2; `git fetch origin` без пароля.
 3. `.env.local` содержит `APP_ENV=staging`, `mysql://` `DATABASE_URL` с отдельной БД, `STAGING_AUTH_ENABLED=1`, хеш в одинарных кавычках.
 4. В GitHub заданы `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY` (желательно `DEPLOY_KNOWN_HOSTS`, `STAGING_BASIC_AUTH`).
-5. `curl -sI https://dev.zaborprofil.ru/` -> `401` и `WWW-Authenticate: Basic`; с верным паролем `/health/live` -> `200` и `X-Robots-Tag: noindex, nofollow`.
-6. `https://dev.zaborprofil.ru/robots.txt` (с паролем) содержит `Disallow: /` (для окружения не `prod` это поведение приложения).
+5. `curl -sI https://dev.zaborprofil.ru/` -> `401` и `WWW-Authenticate: Basic`; с верным паролем `/health/live` -> `200` и `X-Robots-Tag: noindex, nofollow`. В открытом режиме (см. выше) анонимный `/health/live` -> `200` с тем же заголовком.
+6. `https://dev.zaborprofil.ru/robots.txt` (с паролем или в открытом режиме) содержит `Disallow: /` (для окружения не `prod` это поведение приложения).
 7. Пуш в `dev` запускает workflow, все шаги зелёные, в `deploy.log` есть `=== staging завершён: <sha> ===`.
 8. Повторный деплой того же коммита проходит; деплой другой ветки через Run workflow переключает код.
 9. Негативная проверка: запуск скрипта в каталоге прода или с `APP_ENV` не `staging` падает на preflight (покрыто `tests/shell/deploy-beget.sh`).
@@ -220,6 +256,7 @@ curl -sI -u 'dev:ПАРОЛЬ' https://dev.zaborprofil.ru/health/live     # 200 
 | 500 на любом `.php` после добавления Basic Auth | `Auth*`-директивы в `.htaccess` ломают PHP на Beget (CGI) | убрать их; пароль проверяет приложение |
 | Пароль не принимается, хотя верный | PHP как CGI не получает `Authorization` | проверить правило `E=HTTP_AUTHORIZATION` в `public_html/.htaccess` до `index.php` |
 | Поддомен не открывается по http | на основном домене HSTS с `includeSubDomains`, на поддомене нет SSL | включить Let's Encrypt для `dev.zaborprofil.ru` |
+| `STAGING_AUTH_ENABLED=1 обязателен: ...` | Basic Auth выключен или не задан без `STAGING_ALLOW_PUBLIC=1` | включить Basic Auth или осознанно включить открытый режим (раздел «Временно открытый staging») |
 | `STAGING_AUTH_HASH должен быть bcrypt-хешем в ОДИНАРНЫХ кавычках` | Dotenv раскрывает `$...` | взять хеш в `'...'`, сгенерировать заново |
 | `не PHP 8.5+` / `Не найден PHP` | неверный путь или версия | `ls /usr/local/bin/php*`, задать `PHP_BIN` |
 | `В ... нет расширений: pdo_mysql ...` | расширение не включено для PHP 8.5 | включить в панели Beget |

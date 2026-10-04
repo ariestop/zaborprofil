@@ -74,7 +74,7 @@
 
 - Триггеры: push в ветку `dev` и `workflow_dispatch` (вход `ref`).
 - `concurrency: deploy-staging-beget` (`cancel-in-progress: false`), environment `staging`.
-- Шаги: проверка наличия секретов (`DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`; без них деплой пропускается с предупреждением), быстрые проверки (`php -l`, `bash -n`), сборка frontend (Node 25.9.0) в `frontend-build.tar.gz`, загрузка архива и запуск `tools/deploy/deploy-beget.sh` через SSH stdin, smoke-check (без пароля 401, с `STAGING_BASIC_AUTH` — 200 и `X-Robots-Tag: noindex`) и прогрев публичных страниц. На сервере: MySQL 8.4 (`pdo_mysql`), файловый кэш в `shared/cache`, сессии в `shared/sessions`, Redis не нужен.
+- Шаги: проверка наличия секретов (`DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`; без них деплой пропускается с предупреждением), быстрые проверки (`php -l`, `bash -n`), сборка frontend (Node 25.9.0) в `frontend-build.tar.gz`, загрузка архива и запуск `tools/deploy/deploy-beget.sh` через SSH stdin, smoke-check (без пароля 401, с `STAGING_BASIC_AUTH` — 200 и `X-Robots-Tag: noindex`; для временно открытого staging — анонимный 200 с `noindex`, `robots.txt` `Disallow: /` и закрытый `/admin`, с предупреждением) и прогрев публичных страниц. На сервере: MySQL 8.4 (`pdo_mysql`), файловый кэш в `shared/cache`, сессии в `shared/sessions`, Redis не нужен.
 - Полный CI не ждёт: он запускается отдельным workflow `CI` (push в `dev` и PR в `dev` включены).
 - Production этим workflow не деплоится.
 

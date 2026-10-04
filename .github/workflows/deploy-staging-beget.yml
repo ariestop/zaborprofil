@@ -188,8 +188,30 @@ jobs:
           curl_opts=(-sS --retry 5 --retry-delay 5 --retry-all-errors --max-time 30)
 
           status="$(curl "${curl_opts[@]}" -o /dev/null -D /tmp/anon.headers -w '%{http_code}' "$url/")"
-          if [[ "$status" != "401" ]] || ! grep -qi '^www-authenticate: *basic' /tmp/anon.headers; then
-            echo "::error::Без пароля staging ответил $status, ожидался 401 с WWW-Authenticate: Basic. Стенд может быть открыт."
+          if [[ "$status" == "401" ]] && grep -qi '^www-authenticate: *basic' /tmp/anon.headers; then
+            echo "Basic Auth включён: без пароля staging отвечает 401."
+          elif [[ "$(curl "${curl_opts[@]}" -o /dev/null -D /tmp/anon.headers -w '%{http_code}' "$url/health/live")" == "200" ]]; then
+            # Открытый staging допустим только как временный режим (STAGING_AUTH_ENABLED=0 + STAGING_ALLOW_PUBLIC=1
+            # в .env.local, который деплой-скрипт проверяет на сервере). Индексация при этом должна быть закрыта.
+            echo "::warning::Staging открыт без пароля (Basic Auth выключен). Вернуть пароль: docs/49-beget-staging-deploy.md."
+            if ! grep -qi '^x-robots-tag:.*noindex' /tmp/anon.headers; then
+              echo "::error::Открытый staging без X-Robots-Tag: noindex."
+              exit 1
+            fi
+            robots="$(curl "${curl_opts[@]}" "$url/robots.txt")"
+            if ! grep -qix 'Disallow: /' <<<"$robots"; then
+              echo "::error::Открытый staging: /robots.txt не содержит 'Disallow: /'."
+              exit 1
+            fi
+            admin_status="$(curl "${curl_opts[@]}" -o /dev/null -w '%{http_code}' "$url/admin/dashboard")"
+            if [[ "$admin_status" != "302" && "$admin_status" != "401" && "$admin_status" != "403" ]]; then
+              echo "::error::Открытый staging: /admin/dashboard без входа ответил $admin_status, ожидался редирект на форму входа."
+              exit 1
+            fi
+            echo "Открытый staging: noindex, robots.txt Disallow: / и защита /admin подтверждены."
+            exit 0
+          else
+            echo "::error::Без пароля staging ответил $status на /, ожидался 401 с WWW-Authenticate: Basic (или 200 на /health/live для временно открытого staging). Стенд может быть настроен неверно."
             exit 1
           fi
 
