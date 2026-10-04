@@ -51,16 +51,18 @@ function createItem(file: File): UploadItem {
   }
 }
 
-export function useMediaUploads(onUploaded?: (asset: MediaAssetItem) => void) {
+export function useMediaUploads(onUploaded?: (asset: MediaAssetItem) => void, folder?: string) {
   const [items, dispatch] = useReducer(reducer, [])
   const invalidate = useInvalidateMediaAssets()
   const started = useRef(new Set<string>())
   const controllers = useRef(new Map<string, AbortController>())
   const onUploadedRef = useRef(onUploaded)
+  const folderRef = useRef(folder)
 
   useEffect(() => {
     onUploadedRef.current = onUploaded
-  }, [onUploaded])
+    folderRef.current = folder
+  }, [onUploaded, folder])
 
   useEffect(() => {
     const running = items.filter((item) => item.status === 'uploading').length
@@ -78,6 +80,7 @@ export function useMediaUploads(onUploaded?: (asset: MediaAssetItem) => void) {
 
       uploadMediaAsset(item.file, {
         signal: controller.signal,
+        folder: folderRef.current,
         onProgress: (fraction) => dispatch({ type: 'patch', id: item.id, patch: { progress: fraction } }),
       })
         .then((asset) => {

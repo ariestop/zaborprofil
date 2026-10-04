@@ -1,18 +1,26 @@
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react'
 import {
   DEFAULT_MEDIA_LIST_PARAMS,
+  MEDIA_FOLDER_NONE,
   useDeleteMediaAssetMutation,
   useMediaAssetsQuery,
+  useMediaFoldersQuery,
+  useMediaUsagesQuery,
   useUpdateMediaAssetMutation,
+  type MediaFormatFilter,
   type MediaListParams,
   type MediaSort,
   type MediaTypeFilter,
+  type MediaUsageFilter,
 } from '../../entities/media/api'
 import { useToast } from '../../app/providers/toast-provider'
-import { Badge, Button, ConfirmDialog, EmptyState, ErrorState, Input, Skeleton } from '../../shared/ui'
+import { Badge, Button, EmptyState, ErrorState, Input, Skeleton, Textarea } from '../../shared/ui'
 import { cn } from '../../shared/lib/cn'
-import type { MediaAssetItem } from '../../types/api'
-import { describeMediaError, formatFileSize, isImageAsset, MEDIA_ACCEPT, thumbnailPath, validateUploadFile } from './utils'
+import { ApiError } from '../../shared/api/client'
+import type { MediaAssetItem, MediaFolderItem } from '../../types/api'
+import { DeleteMediaDialog } from './DeleteMediaDialog'
+import { MediaUsageList } from './MediaUsageList'
+import { assetExtension, describeDuplicate, describeMediaError, formatFileSize, formatUsageCount, isImageAsset, MEDIA_ACCEPT, thumbnailPath, validateUploadFile } from './utils'
 import { useMediaUploads, type UploadItem } from './useMediaUploads'
 
 type ViewMode = 'grid' | 'list'
@@ -29,8 +37,28 @@ const SORT_OPTIONS: Array<{ value: MediaSort; label: string }> = [
   { value: 'newest', label: 'Сначала новые' },
   { value: 'oldest', label: 'Сначала старые' },
   { value: 'name', label: 'По имени' },
-  { value: 'size', label: 'По размеру' },
+  { value: 'size', label: 'Сначала крупные' },
+  { value: 'size_asc', label: 'Сначала мелкие' },
 ]
+
+const FORMAT_OPTIONS: Array<{ value: MediaFormatFilter; label: string }> = [
+  { value: '', label: 'Все форматы' },
+  { value: 'jpeg', label: 'JPEG' },
+  { value: 'png', label: 'PNG' },
+  { value: 'webp', label: 'WebP' },
+  { value: 'avif', label: 'AVIF' },
+  { value: 'pdf', label: 'PDF' },
+]
+
+const USAGE_OPTIONS: Array<{ value: MediaUsageFilter; label: string }> = [
+  { value: '', label: 'Любое использование' },
+  { value: 'used', label: 'Используются' },
+  { value: 'unused', label: 'Не используются' },
+]
+
+const PER_PAGE_OPTIONS = [24, 48, 96]
+
+const SELECT_CLASS = 'h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-900'
 
 const TYPE_OPTIONS: Array<{ value: MediaTypeFilter; label: string }> = [
   { value: '', label: 'Все файлы' },
@@ -63,6 +91,18 @@ function AssetThumb({ asset, className }: { asset: MediaAssetItem; className?: s
   return <img src={source} alt={asset.alt ?? asset.originalName} loading="lazy" className={cn('bg-slate-100 object-cover dark:bg-slate-800', className)} />
 }
 
+function UsageBadge({ asset }: { asset: MediaAssetItem }) {
+  if (asset.usageCount === undefined) {
+    return null
+  }
+
+  return asset.usageCount > 0 ? (
+    <span title={`Используется в ${formatUsageCount(asset.usageCount)}`}><Badge tone="success">Используется · {asset.usageCount}</Badge></span>
+  ) : (
+    <Badge>Не используется</Badge>
+  )
+}
+
 function UploadRow({ item, onCancel, onRetry }: { item: UploadItem; onCancel: () => void; onRetry: () => void }) {
   const percent = Math.round(item.progress * 100)
 
@@ -73,7 +113,7 @@ function UploadRow({ item, onCancel, onRetry }: { item: UploadItem; onCancel: ()
         <span className="shrink-0 text-xs text-slate-500">
           {item.status === 'queued' ? 'В очереди' : null}
           {item.status === 'uploading' ? `${percent}%` : null}
-          {item.status === 'done' ? 'Загружен' : null}
+          {item.status === 'done' ? (item.asset?.duplicate === true ? 'Уже в медиатеке' : 'Загружен') : null}
           {item.status === 'error' ? 'Ошибка' : null}
         </span>
       </div>
@@ -90,6 +130,9 @@ function UploadRow({ item, onCancel, onRetry }: { item: UploadItem; onCancel: ()
         </div>
       ) : null}
       {item.status === 'error' ? <p className="mt-1 text-xs text-red-700 dark:text-red-400" role="alert">{item.error}</p> : null}
+      {item.status === 'done' && item.asset !== null && describeDuplicate(item.asset) !== null ? (
+        <p className="mt-1 text-xs text-amber-700 dark:text-amber-300" data-testid="duplicate-note">{describeDuplicate(item.asset)}</p>
+      ) : null}
       {item.status === 'uploading' || item.status === 'queued' || item.status === 'error' ? (
         <div className="mt-1 flex gap-2">
           {item.status === 'error' && validateUploadFile(item.file) === null ? (
@@ -108,12 +151,14 @@ function AssetDetails({
   asset,
   mode,
   onSelect,
+  folders,
   onUpdated,
   onDelete,
 }: {
   asset: MediaAssetItem
   mode: 'manage' | 'select'
   onSelect?: (asset: MediaAssetItem) => void
+  folders: MediaFolderItem[]
   onUpdated: (asset: MediaAssetItem) => void
   onDelete: () => void
 }) {
@@ -121,13 +166,17 @@ function AssetDetails({
   const updateMutation = useUpdateMediaAssetMutation()
   const [alt, setAlt] = useState(asset.alt ?? '')
   const [title, setTitle] = useState(asset.title ?? '')
+  const [description, setDescription] = useState(asset.description ?? '')
+  const [folder, setFolder] = useState(asset.folder ?? '')
   const [saveError, setSaveError] = useState<string | null>(null)
-  const dirty = alt !== (asset.alt ?? '') || title !== (asset.title ?? '')
+  const usagesQuery = useMediaUsagesQuery(asset.id)
+  const dirty =
+    alt !== (asset.alt ?? '') || title !== (asset.title ?? '') || description !== (asset.description ?? '') || folder.trim() !== (asset.folder ?? '')
 
   const save = async (): Promise<MediaAssetItem | null> => {
     setSaveError(null)
     try {
-      const updated = await updateMutation.mutateAsync({ id: asset.id, alt, title })
+      const updated = await updateMutation.mutateAsync({ id: asset.id, alt, title, description, folder: folder.trim() })
       push({ title: 'Описание файла сохранено' })
       onUpdated(updated)
       return updated
@@ -170,10 +219,25 @@ function AssetDetails({
 
       <div className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
         <p className="break-all text-sm font-semibold text-slate-900 dark:text-slate-100">{asset.originalName}</p>
-        <p>{asset.mimeType} · {formatFileSize(asset.size)}{asset.width !== null && asset.height !== null ? ` · ${asset.width}×${asset.height}` : ''}</p>
+        <p>{assetExtension(asset)} · {asset.mimeType} · {formatFileSize(asset.size)}{asset.width !== null && asset.height !== null ? ` · ${asset.width}×${asset.height}` : ''}</p>
         <p className="break-all">{asset.publicPath}</p>
         <p>Загружен: {new Date(asset.createdAt).toLocaleString('ru-RU')}</p>
+        {asset.variants.length > 0 ? <p>Вариантов: {asset.variants.length}</p> : null}
+        {asset.fileHash !== null && asset.fileHash !== undefined ? <p className="break-all" title={asset.fileHash}>SHA-256: {asset.fileHash.slice(0, 16)}…</p> : null}
       </div>
+
+      <section aria-label="Где используется" className="space-y-1.5" data-testid="asset-usages">
+        <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-200">Где используется</h3>
+        {usagesQuery.isLoading ? <p className="text-xs text-slate-500">Проверяем…</p> : null}
+        {usagesQuery.isError ? <p className="text-xs text-red-700 dark:text-red-400" role="alert">Не удалось получить список: {describeMediaError(usagesQuery.error)}</p> : null}
+        {usagesQuery.isSuccess && usagesQuery.data.total === 0 ? <p className="text-xs text-slate-500">Нигде не используется.</p> : null}
+        {usagesQuery.isSuccess && usagesQuery.data.total > 0 ? (
+          <>
+            <p className="text-xs text-slate-500">Мест: {usagesQuery.data.total}</p>
+            <MediaUsageList usages={usagesQuery.data.usages} className="max-h-40 space-y-1.5 overflow-y-auto" />
+          </>
+        ) : null}
+      </section>
 
       <label className="block text-xs font-medium text-slate-700 dark:text-slate-200">
         Alt (описание для SEO и доступности)
@@ -182,6 +246,17 @@ function AssetDetails({
       <label className="block text-xs font-medium text-slate-700 dark:text-slate-200">
         Title (всплывающая подсказка)
         <Input className="mt-1" value={title} maxLength={255} onChange={(event) => setTitle(event.target.value)} />
+      </label>
+      <label className="block text-xs font-medium text-slate-700 dark:text-slate-200">
+        Описание (для редакторов)
+        <Textarea className="mt-1 min-h-16" value={description} maxLength={2000} onChange={(event) => setDescription(event.target.value)} />
+      </label>
+      <label className="block text-xs font-medium text-slate-700 dark:text-slate-200">
+        Папка
+        <Input className="mt-1" value={folder} maxLength={120} list="media-folder-options" onChange={(event) => setFolder(event.target.value)} placeholder="Например, Заборы" />
+        <datalist id="media-folder-options">
+          {folders.map((item) => <option key={item.name} value={item.name} />)}
+        </datalist>
       </label>
       {saveError !== null ? <p className="text-xs text-red-700 dark:text-red-400" role="alert">{saveError}</p> : null}
 
@@ -206,6 +281,12 @@ export function MediaLibrary({ mode, onSelect, imagesOnly = false, perPage = DEF
   const [page, setPage] = useState(1)
   const [typeFilter, setTypeFilter] = useState<MediaTypeFilter>(imagesOnly ? 'image' : '')
   const [sort, setSort] = useState<MediaSort>('newest')
+  const [formatFilter, setFormatFilter] = useState<MediaFormatFilter>('')
+  const [usageFilter, setUsageFilter] = useState<MediaUsageFilter>('')
+  const [folderFilter, setFolderFilter] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [pageSize, setPageSize] = useState(perPage)
   const [view, setView] = useState<ViewMode>('grid')
   const [selectedAsset, setSelectedAsset] = useState<MediaAssetItem | null>(null)
   const [pendingDelete, setPendingDelete] = useState<MediaAssetItem | null>(null)
@@ -213,10 +294,26 @@ export function MediaLibrary({ mode, onSelect, imagesOnly = false, perPage = DEF
   const fileInput = useRef<HTMLInputElement>(null)
   const dragDepth = useRef(0)
 
-  const params: MediaListParams = { page, perPage, q: search.trim(), type: typeFilter, sort }
+  const invalidRange = dateFrom !== '' && dateTo !== '' && dateFrom > dateTo
+  const params: MediaListParams = {
+    page,
+    perPage: pageSize,
+    q: search.trim(),
+    type: typeFilter,
+    sort,
+    folder: folderFilter,
+    format: formatFilter,
+    usage: usageFilter,
+    from: invalidRange ? '' : dateFrom,
+    to: invalidRange ? '' : dateTo,
+  }
   const query = useMediaAssetsQuery(params)
+  const foldersQuery = useMediaFoldersQuery()
+  const folders = foldersQuery.data ?? []
   const deleteMutation = useDeleteMediaAssetMutation()
-  const uploads = useMediaUploads(setSelectedAsset)
+  const uploadFolder = folderFilter !== '' && folderFilter !== MEDIA_FOLDER_NONE ? folderFilter : undefined
+  const uploads = useMediaUploads(setSelectedAsset, uploadFolder)
+  const filtersActive = search.trim() !== '' || (!imagesOnly && typeFilter !== '') || formatFilter !== '' || usageFilter !== '' || folderFilter !== '' || dateFrom !== '' || dateTo !== ''
 
   const assets = query.data?.assets ?? []
   const pagination = query.data?.pagination
@@ -261,11 +358,22 @@ export function MediaLibrary({ mode, onSelect, imagesOnly = false, perPage = DEF
     uploads.addFiles(Array.from(event.dataTransfer.files))
   }
 
-  const confirmDelete = async (): Promise<void> => {
+  const resetFilters = (): void => {
+    setSearchInput('')
+    setTypeFilter(imagesOnly ? 'image' : '')
+    setFormatFilter('')
+    setUsageFilter('')
+    setFolderFilter('')
+    setDateFrom('')
+    setDateTo('')
+    setPage(1)
+  }
+
+  const confirmDelete = async (force: boolean): Promise<void> => {
     if (pendingDelete === null) return
     const target = pendingDelete
     try {
-      await deleteMutation.mutateAsync(target.id)
+      await deleteMutation.mutateAsync(force ? { id: target.id, force: true } : target.id)
       push({ title: 'Файл удалён', description: target.originalName })
       if (selectedId === target.id) {
         setSelectedAsset(null)
@@ -274,7 +382,8 @@ export function MediaLibrary({ mode, onSelect, imagesOnly = false, perPage = DEF
         setPage(page - 1)
       }
     } catch (error) {
-      push({ title: 'Не удалось удалить файл', description: describeMediaError(error) })
+      const inUse = error instanceof ApiError && error.status === 409
+      push({ title: inUse ? 'Файл используется на сайте' : 'Не удалось удалить файл', description: describeMediaError(error) })
     } finally {
       setPendingDelete(null)
     }
@@ -311,19 +420,14 @@ export function MediaLibrary({ mode, onSelect, imagesOnly = false, perPage = DEF
         {imagesOnly ? null : (
           <select
             aria-label="Тип файлов"
-            className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-900"
+            className={SELECT_CLASS}
             value={typeFilter}
             onChange={(event) => resetPage(setTypeFilter)(event.target.value as MediaTypeFilter)}
           >
             {TYPE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
         )}
-        <select
-          aria-label="Сортировка"
-          className="h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-900"
-          value={sort}
-          onChange={(event) => resetPage(setSort)(event.target.value as MediaSort)}
-        >
+        <select aria-label="Сортировка" className={SELECT_CLASS} value={sort} onChange={(event) => resetPage(setSort)(event.target.value as MediaSort)}>
           {SORT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
         </select>
         <div className="flex overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700" role="group" aria-label="Вид">
@@ -343,6 +447,30 @@ export function MediaLibrary({ mode, onSelect, imagesOnly = false, perPage = DEF
           />
         </div>
       </div>
+
+      <div className="flex flex-wrap items-center gap-2" aria-label="Фильтры медиатеки" role="group">
+        <select aria-label="Формат" className={SELECT_CLASS} value={formatFilter} onChange={(event) => resetPage(setFormatFilter)(event.target.value as MediaFormatFilter)}>
+          {FORMAT_OPTIONS.filter((option) => !imagesOnly || option.value !== 'pdf').map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+        </select>
+        <select aria-label="Использование" className={SELECT_CLASS} value={usageFilter} onChange={(event) => resetPage(setUsageFilter)(event.target.value as MediaUsageFilter)}>
+          {USAGE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+        </select>
+        <select aria-label="Папка" className={SELECT_CLASS} value={folderFilter} onChange={(event) => resetPage(setFolderFilter)(event.target.value)}>
+          <option value="">Все папки</option>
+          <option value={MEDIA_FOLDER_NONE}>Без папки</option>
+          {folders.map((folder) => <option key={folder.name} value={folder.name}>{`${folder.name} (${folder.count})`}</option>)}
+        </select>
+        <label className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
+          Загружены с
+          <Input type="date" aria-label="Загружены с" className="h-10 w-40" value={dateFrom} max={dateTo || undefined} onChange={(event) => resetPage(setDateFrom)(event.target.value)} />
+        </label>
+        <label className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
+          по
+          <Input type="date" aria-label="Загружены по" className="h-10 w-40" value={dateTo} min={dateFrom || undefined} onChange={(event) => resetPage(setDateTo)(event.target.value)} />
+        </label>
+        {filtersActive ? <Button type="button" size="sm" variant="ghost" onClick={resetFilters}>Сбросить фильтры</Button> : null}
+      </div>
+      {invalidRange ? <p className="text-xs text-red-700 dark:text-red-400" role="alert">Дата «с» не может быть позже даты «по».</p> : null}
 
       {uploads.items.length === 0 ? (
         <p className="rounded-xl border border-dashed border-slate-300 px-4 py-3 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
@@ -377,8 +505,8 @@ export function MediaLibrary({ mode, onSelect, imagesOnly = false, perPage = DEF
 
           {query.isSuccess && assets.length === 0 && (pagination === undefined || pagination.total === 0) ? (
             <EmptyState
-              title={search.trim() !== '' || typeFilter !== '' ? 'Ничего не найдено' : 'Медиатека пуста'}
-              description={search.trim() !== '' || typeFilter !== '' ? 'Измените поисковый запрос или фильтры.' : 'Загрузите первые изображения — они появятся здесь.'}
+              title={filtersActive ? 'Ничего не найдено' : 'Медиатека пуста'}
+              description={filtersActive ? 'Измените поисковый запрос или фильтры.' : 'Загрузите первые изображения — они появятся здесь.'}
             />
           ) : null}
 
@@ -398,7 +526,10 @@ export function MediaLibrary({ mode, onSelect, imagesOnly = false, perPage = DEF
                   >
                     <AssetThumb asset={asset} className="h-28 w-full" />
                     <span className="block truncate px-2 pt-1.5 text-xs font-medium">{asset.originalName}</span>
-                    <span className="block px-2 pb-1.5 text-[11px] text-slate-500">{formatFileSize(asset.size)}</span>
+                    <span className="flex items-center justify-between gap-1 px-2 pb-1.5 text-[11px] text-slate-500">
+                      <span>{formatFileSize(asset.size)}</span>
+                      <UsageBadge asset={asset} />
+                    </span>
                   </button>
                 </li>
               ))}
@@ -421,7 +552,10 @@ export function MediaLibrary({ mode, onSelect, imagesOnly = false, perPage = DEF
                       <span className="block truncate font-medium">{asset.originalName}</span>
                       <span className="block truncate text-xs text-slate-500">{asset.alt ?? 'alt не задан'}</span>
                     </span>
-                    <Badge>{isImageAsset(asset) ? 'Изображение' : 'Документ'}</Badge>
+                    <UsageBadge asset={asset} />
+                    <Badge>{assetExtension(asset)}</Badge>
+                    <span className="hidden w-24 shrink-0 text-right text-xs text-slate-500 sm:block">{asset.width !== null && asset.height !== null ? `${asset.width}×${asset.height}` : '—'}</span>
+                    <span className="hidden w-24 shrink-0 text-right text-xs text-slate-500 md:block">{new Date(asset.createdAt).toLocaleDateString('ru-RU')}</span>
                     <span className="w-20 shrink-0 text-right text-xs text-slate-500">{formatFileSize(asset.size)}</span>
                   </button>
                 </li>
@@ -429,17 +563,31 @@ export function MediaLibrary({ mode, onSelect, imagesOnly = false, perPage = DEF
             </ul>
           ) : null}
 
-          {pagination !== undefined && pagination.totalPages > 1 ? (
-            <nav className="flex items-center justify-between gap-3" aria-label="Страницы медиатеки">
-              <span className="text-xs text-slate-500">Файлов: {pagination.total}</span>
-              <div className="flex items-center gap-2">
-                <Button type="button" size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage(page - 1)}>Назад</Button>
-                <span className="text-sm" data-testid="media-page-indicator">Страница {pagination.page} из {pagination.totalPages}</span>
-                <Button type="button" size="sm" variant="outline" disabled={page >= pagination.totalPages} onClick={() => setPage(page + 1)}>Вперёд</Button>
+          {pagination !== undefined && pagination.total > 0 ? (
+            <nav className="flex flex-wrap items-center justify-between gap-3" aria-label="Страницы медиатеки">
+              <span className="text-xs text-slate-500" data-testid="media-range">
+                Показано {(pagination.page - 1) * pagination.perPage + 1}–{Math.min(pagination.page * pagination.perPage, pagination.total)} из {pagination.total}
+              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  aria-label="Файлов на странице"
+                  className={cn(SELECT_CLASS, 'h-8 px-2 text-xs')}
+                  value={pageSize}
+                  onChange={(event) => resetPage(setPageSize)(Number(event.target.value))}
+                >
+                  {Array.from(new Set([...PER_PAGE_OPTIONS, perPage])).sort((left, right) => left - right).map((option) => <option key={option} value={option}>{option} на странице</option>)}
+                </select>
+                {pagination.totalPages > 1 ? (
+                  <>
+                    <Button type="button" size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage(1)}>В начало</Button>
+                    <Button type="button" size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage(page - 1)}>Назад</Button>
+                    <span className="text-sm" data-testid="media-page-indicator">Страница {pagination.page} из {pagination.totalPages}</span>
+                    <Button type="button" size="sm" variant="outline" disabled={page >= pagination.totalPages} onClick={() => setPage(page + 1)}>Вперёд</Button>
+                    <Button type="button" size="sm" variant="outline" disabled={page >= pagination.totalPages} onClick={() => setPage(pagination.totalPages)}>В конец</Button>
+                  </>
+                ) : null}
               </div>
             </nav>
-          ) : pagination !== undefined && pagination.total > 0 ? (
-            <p className="text-xs text-slate-500">Файлов: {pagination.total}</p>
           ) : null}
         </div>
 
@@ -449,19 +597,18 @@ export function MediaLibrary({ mode, onSelect, imagesOnly = false, perPage = DEF
             asset={selected}
             mode={mode}
             onSelect={onSelect}
+            folders={folders}
             onUpdated={setSelectedAsset}
             onDelete={() => setPendingDelete(selected)}
           />
         ) : null}
       </div>
 
-      <ConfirmDialog
-        open={pendingDelete !== null}
-        title="Удалить файл?"
-        description={pendingDelete === null ? undefined : `«${pendingDelete.originalName}» будет удалён вместе с вариантами. Страницы, где файл используется, потеряют изображение.`}
-        confirmLabel="Удалить"
+      <DeleteMediaDialog
+        asset={pendingDelete}
+        pending={deleteMutation.isPending}
         onCancel={() => setPendingDelete(null)}
-        onConfirm={() => { void confirmDelete() }}
+        onConfirm={(force) => { void confirmDelete(force) }}
       />
     </div>
   )
