@@ -61,9 +61,19 @@ Concurrency: `deploy-${{ github.ref }}; cancel-in-progress: false`.
 
 Гейт: на текущем SHA должен быть успешный run workflow’а `CI`. Если нет — deploy отказывается.
 
+#### Job `build-frontend`
+
+- Зависит от `verify-ci`.
+- Setup Node 25.9.0, `npm ci`, `npm run build` (включает `tsc --noEmit`).
+- Упаковывает `public_html/build/` и файл `BUILD_COMMIT` (SHA сборки) в `frontend-build.tar.gz` и сохраняет как artifact `frontend-build`.
+- Один и тот же архив уходит и на staging, и на production: собирается один раз, на VPS Node.js не нужен.
+
+Deploy-скрипты получают архив через `FRONTEND_BUILD_ARCHIVE` и точный коммит через `DEPLOY_COMMIT`. Скрипт проверяет наличие `build/.vite/manifest.json` и совпадение `BUILD_COMMIT` с коммитом релиза; при несовпадении deploy останавливается до переключения `current`. Если `FRONTEND_BUILD_ARCHIVE` не задан (ручной deploy), скрипт собирает frontend на сервере через `npm ci && npm run build`, как раньше.
+
 #### Job `deploy-staging`
 
 - Environment: `staging`.
+- Зависит от `verify-ci` и `build-frontend`; перед запуском скрипта по SCP загружается `frontend-build.tar.gz`.
 - Срабатывает при push в `develop`/`staging`, а также как первый шаг tag-based production pipeline.
 - SCP заливает `tools/deploy/*` на staging-сервер в `/tmp/zaborprofil-deploy`.
 - SSH запускает `deploy-staging.sh` с переменными окружения из `secrets.STAGING_*`.

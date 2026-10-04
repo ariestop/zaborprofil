@@ -9,6 +9,12 @@ KEEP_RELEASES="${KEEP_RELEASES:-5}"
 PHP_BIN="${PHP_BIN:-php}"
 COMPOSER_BIN="${COMPOSER_BIN:-composer}"
 NPM_BIN="${NPM_BIN:-npm}"
+# Prebuilt frontend (tar.gz made in GitHub Actions, see .github/workflows/deploy.yml).
+# When set, the server does not need Node.js: no `npm ci` / `npm run build`.
+# When empty, deploy falls back to building on the server (manual deploys).
+FRONTEND_BUILD_ARCHIVE="${FRONTEND_BUILD_ARCHIVE:-}"
+# Exact commit to deploy. Keeps the code in sync with the prebuilt frontend.
+DEPLOY_COMMIT="${DEPLOY_COMMIT:-}"
 PHP_FPM_SERVICE="${PHP_FPM_SERVICE:-php8.5-fpm}"
 NGINX_SERVICE="${NGINX_SERVICE:-nginx}"
 WORKER_SERVICE="${WORKER_SERVICE:-zaborprofil-messenger}"
@@ -143,6 +149,17 @@ clone_release() {
   local release_dir="$2"
 
   git clone --depth=1 --branch "$branch" "$REPOSITORY" "$release_dir"
+
+  if [[ -n "$DEPLOY_COMMIT" ]]; then
+    local head_commit
+    head_commit="$(git -C "$release_dir" rev-parse HEAD)"
+
+    if [[ "$head_commit" != "$DEPLOY_COMMIT" ]]; then
+      log "Branch $branch moved to $head_commit, checkout requested commit $DEPLOY_COMMIT"
+      git -C "$release_dir" fetch --depth=1 origin "$DEPLOY_COMMIT"
+      git -C "$release_dir" checkout --detach FETCH_HEAD
+    fi
+  fi
 }
 
 link_shared_paths() {
@@ -155,12 +172,53 @@ link_shared_paths() {
   ln -sfn "$SHARED_DIR/var/log" "$release_dir/var/log"
 }
 
-install_release_dependencies() {
+install_prebuilt_frontend() {
+  local release_dir="$1"
+  local commit="$2"
+  local extract_dir="$release_dir/.frontend-extract"
+
+  [[ -f "$FRONTEND_BUILD_ARCHIVE" ]] || fail "Frontend build archive not found: $FRONTEND_BUILD_ARCHIVE"
+
+  log "Install prebuilt frontend from $FRONTEND_BUILD_ARCHIVE"
+  rm -rf "$extract_dir"
+  mkdir -p "$extract_dir"
+  tar -xzf "$FRONTEND_BUILD_ARCHIVE" --no-same-owner -C "$extract_dir"
+
+  [[ -f "$extract_dir/build/.vite/manifest.json" ]] || fail "Prebuilt frontend has no Vite manifest (build/.vite/manifest.json)"
+
+  # The archive must be built from the same commit that is being deployed,
+  # otherwise templates and asset hashes could disagree.
+  local built_commit
+  built_commit="$(tr -d '[:space:]' <"$extract_dir/BUILD_COMMIT" 2>/dev/null || true)"
+  if [[ -n "$commit" && "$built_commit" != "$commit" ]]; then
+    fail "Prebuilt frontend commit (${built_commit:-unknown}) does not match release commit ($commit)"
+  fi
+
+  rm -rf "$release_dir/public_html/build"
+  mkdir -p "$release_dir/public_html"
+  mv "$extract_dir/build" "$release_dir/public_html/build"
+  rm -rf "$extract_dir"
+}
+
+build_frontend_on_server() {
   local release_dir="$1"
 
-  (cd "$release_dir" && "$COMPOSER_BIN" install --no-dev --prefer-dist --no-interaction --optimize-autoloader)
+  log "No prebuilt frontend provided, build on server with $NPM_BIN"
   (cd "$release_dir" && "$NPM_BIN" ci)
   (cd "$release_dir" && "$NPM_BIN" run build)
+}
+
+install_release_dependencies() {
+  local release_dir="$1"
+  local commit="${2:-}"
+
+  (cd "$release_dir" && "$COMPOSER_BIN" install --no-dev --prefer-dist --no-interaction --optimize-autoloader)
+
+  if [[ -n "$FRONTEND_BUILD_ARCHIVE" ]]; then
+    install_prebuilt_frontend "$release_dir" "$commit"
+  else
+    build_frontend_on_server "$release_dir"
+  fi
 }
 
 run_release_console_tasks() {
@@ -358,7 +416,10 @@ deploy_release() {
   require_command git
   require_command "$PHP_BIN"
   require_command "$COMPOSER_BIN"
-  require_command "$NPM_BIN"
+  if [[ -z "$FRONTEND_BUILD_ARCHIVE" ]]; then
+    require_command "$NPM_BIN"
+  fi
+  require_command tar
   require_command curl
 
   prepare_shared_layout
@@ -375,7 +436,7 @@ deploy_release() {
   local commit
   commit="$(git -C "$release_dir" rev-parse HEAD 2>/dev/null || true)"
   link_shared_paths "$release_dir"
-  install_release_dependencies "$release_dir"
+  install_release_dependencies "$release_dir" "$commit"
 
   if [[ "$with_backup" == "yes" ]]; then
     backup_database "$release_name"
