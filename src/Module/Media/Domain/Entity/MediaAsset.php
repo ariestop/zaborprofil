@@ -15,6 +15,8 @@ use Symfony\Component\Uid\Ulid;
 #[ORM\Index(name: 'idx_media_assets_mime_type', columns: ['mime_type'])]
 final class MediaAsset
 {
+    public const int METADATA_MAX_LENGTH = 255;
+
     #[ORM\Id]
     #[ORM\Column(type: 'ulid', unique: true)]
     private Ulid $id;
@@ -45,6 +47,12 @@ final class MediaAsset
      */
     #[ORM\Column(type: 'json')]
     private array $variants;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $alt = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $title = null;
 
     #[ORM\Column]
     private DateTimeImmutable $createdAt;
@@ -88,6 +96,12 @@ final class MediaAsset
         return $this->publicPath;
     }
 
+    public function updateMetadata(?string $alt, ?string $title): void
+    {
+        $this->alt = self::optionalText($alt, 'alt');
+        $this->title = self::optionalText($title, 'title');
+    }
+
     /**
      * @return list<array{type: string, publicPath: string, width: int|null, height: int|null, mimeType: string, size: int}>
      */
@@ -111,6 +125,8 @@ final class MediaAsset
             'width' => $this->width,
             'height' => $this->height,
             'variants' => $this->variants,
+            'alt' => $this->alt,
+            'title' => $this->title,
             'createdAt' => $this->createdAt->format(DATE_ATOM),
         ];
     }
@@ -136,6 +152,24 @@ final class MediaAsset
                 'mimeType' => self::variantString($variant, 'mimeType'),
                 'size' => self::variantPositiveInt($variant, 'size'),
             ];
+        }
+
+        return $normalized;
+    }
+
+    private static function optionalText(?string $value, string $field): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $normalized = trim($value);
+        if ($normalized === '') {
+            return null;
+        }
+
+        if (mb_strlen($normalized) > self::METADATA_MAX_LENGTH) {
+            throw new InvalidArgumentException(\sprintf('Media asset %s cannot be longer than %d characters.', $field, self::METADATA_MAX_LENGTH));
         }
 
         return $normalized;

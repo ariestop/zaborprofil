@@ -13,6 +13,10 @@
 - `credentials: same-origin`
 - CSRF header для mutating запросов (из meta-тегов shell layout)
 
+## Загрузка файлов
+
+`apiUpload` (`shared/api/client.ts`) отправляет `FormData` через `XMLHttpRequest`, чтобы получать прогресс загрузки; заголовки и CSRF те же, что у `apiRequest`, ошибки приходят как `ApiError`. Используется медиатекой и TipTap.
+
 ## Ошибки
 
 `ApiError` содержит:
@@ -36,7 +40,7 @@
 - `entities/page/api.ts` — pages list/detail/update, preview, revisions, block upsert/reorder;
 - `entities/lead/api.ts` — CRM leads list и статусные мутации;
 - `entities/user/api.ts` — список админ-пользователей и обновление ролей;
-- `entities/media/api.ts` и `entities/seo/api.ts` — базовые query hooks.
+- `entities/media/api.ts` — список с пагинацией/поиском, загрузка (`uploadMediaAsset`), `alt`/`title`, удаление; `entities/seo/api.ts` — базовые query hooks.
 
 ## Validation mapping
 

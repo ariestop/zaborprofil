@@ -37,6 +37,7 @@ import "@/components/tiptap-node/paragraph-node/paragraph-node.scss"
 // --- Tiptap UI ---
 import { HeadingDropdownMenu } from "@/components/tiptap-ui/heading-dropdown-menu"
 import { ImageUploadButton } from "@/components/tiptap-ui/image-upload-button"
+import { MediaLibraryButton } from "@/components/tiptap-ui/media-library-button"
 import { ListDropdownMenu } from "@/components/tiptap-ui/list-dropdown-menu"
 import { BlockquoteButton } from "@/components/tiptap-ui/blockquote-button"
 import { CodeBlockButton } from "@/components/tiptap-ui/code-block-button"
@@ -66,6 +67,7 @@ import { useCursorVisibility } from "@/hooks/use-cursor-visibility"
 
 // --- Lib ---
 import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"
+import { useToast } from "../../../../app/providers/toast-provider"
 
 // --- Styles ---
 import "@/components/tiptap-templates/simple/simple-editor.scss"
@@ -134,7 +136,8 @@ const MainToolbarContent = ({
       <ToolbarSeparator />
 
       <ToolbarGroup>
-        <ImageUploadButton text="Add" />
+        <ImageUploadButton text="Загрузить" />
+        <MediaLibraryButton text="Медиатека" />
       </ToolbarGroup>
 
       <Spacer />
@@ -182,6 +185,7 @@ interface SimpleEditorProps {
 const EMPTY_CONTENT = "<p></p>"
 
 export function SimpleEditor({ content, onChange }: SimpleEditorProps) {
+  const { push } = useToast()
   const isMobile = useIsBreakpoint()
   const { height } = useWindowSize()
   const [mobileView, setMobileView] = useState<"main" | "highlighter" | "link">(
@@ -223,7 +227,8 @@ export function SimpleEditor({ content, onChange }: SimpleEditorProps) {
         maxSize: MAX_FILE_SIZE,
         limit: 3,
         upload: handleImageUpload,
-        onError: (error) => console.error("Upload failed:", error),
+        onError: (error) =>
+          push({ title: "Не удалось загрузить изображение", description: error.message }),
       }),
     ],
     content: content.trim() === "" ? EMPTY_CONTENT : content,

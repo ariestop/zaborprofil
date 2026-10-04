@@ -10,6 +10,8 @@ use App\Module\Media\Domain\Entity\MediaAsset;
 use App\Module\Media\Domain\Repository\MediaAssetRepositoryInterface;
 use App\Shared\Infrastructure\Upload\UploadValidator;
 use App\Shared\UI\Http\AdminApiErrorResponder;
+use InvalidArgumentException;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -31,14 +33,26 @@ final readonly class MediaApiController
     }
 
     #[Route('/assets', name: 'admin_api_media_assets_index', methods: ['GET'])]
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::MEDIA_UPLOAD)) {
             return $this->accessDenied();
         }
 
+        try {
+            $page = $this->assets->search(MediaListRequest::criteriaFrom($request));
+        } catch (Throwable $exception) {
+            return $this->errors->fromThrowable($exception, 'Admin Media API');
+        }
+
         return new JsonResponse([
-            'assets' => array_map(static fn (MediaAsset $asset): array => $asset->toArray(), $this->assets->findLatest()),
+            'assets' => array_map(static fn (MediaAsset $asset): array => $asset->toArray(), $page->items),
+            'pagination' => [
+                'page' => $page->page,
+                'perPage' => $page->perPage,
+                'total' => $page->total,
+                'totalPages' => $page->totalPages(),
+            ],
         ]);
     }
 
@@ -52,12 +66,16 @@ final readonly class MediaApiController
         try {
             $file = $request->files->get('file');
             if (!$file instanceof UploadedFile) {
-                return new JsonResponse(['error' => 'Field "file" must contain an uploaded file.'], 400);
+                return $this->errors->badRequest('Field "file" must contain an uploaded file.');
+            }
+
+            if (\in_array($file->getError(), [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) {
+                return $this->errors->validation('Uploaded file exceeds the allowed size.', 'FILE_TOO_LARGE');
             }
 
             $validated = $this->uploadValidator->validate($file);
             if (!is_dir($this->mediaUploadDir) && !mkdir($this->mediaUploadDir, 0775, true) && !is_dir($this->mediaUploadDir)) {
-                return new JsonResponse(['error' => 'Media upload directory cannot be created.'], 500);
+                throw new RuntimeException('Media upload directory cannot be created.');
             }
             $storedFile = $file->move($this->mediaUploadDir, $validated->safeFilename);
             $publicPath = '/uploads/media/'.$validated->safeFilename;
@@ -87,6 +105,28 @@ final readonly class MediaApiController
         }
     }
 
+    #[Route('/assets/{id}', name: 'admin_api_media_assets_update', methods: ['PATCH'])]
+    public function update(string $id, Request $request): JsonResponse
+    {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::MEDIA_UPLOAD)) {
+            return $this->accessDenied();
+        }
+
+        try {
+            $payload = $request->toArray();
+            $asset = $this->assets->get($id);
+            $asset->updateMetadata(
+                $this->optionalString($payload, 'alt'),
+                $this->optionalString($payload, 'title'),
+            );
+            $this->assets->save($asset);
+
+            return new JsonResponse($asset->toArray());
+        } catch (Throwable $exception) {
+            return $this->errors->fromThrowable($exception, 'Admin Media API');
+        }
+    }
+
     #[Route('/assets/{id}', name: 'admin_api_media_assets_delete', methods: ['DELETE'])]
     public function delete(string $id): JsonResponse
     {
@@ -103,6 +143,23 @@ final readonly class MediaApiController
         } catch (Throwable $exception) {
             return $this->errors->fromThrowable($exception, 'Admin Media API');
         }
+    }
+
+    /**
+     * @param array<mixed> $payload
+     */
+    private function optionalString(array $payload, string $key): ?string
+    {
+        $value = $payload[$key] ?? null;
+        if ($value === null) {
+            return null;
+        }
+
+        if (!\is_string($value)) {
+            throw new InvalidArgumentException(\sprintf('Field "%s" must be a string.', $key));
+        }
+
+        return $value;
     }
 
     private function accessDenied(): JsonResponse

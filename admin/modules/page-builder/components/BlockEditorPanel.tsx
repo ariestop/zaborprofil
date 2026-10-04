@@ -7,6 +7,7 @@ import { Button } from '../../../shared/ui'
 import { blockModules } from '../blocks'
 import { blockRegistryByType } from '../registry/blockRegistry'
 import type { BuilderBlock } from '../types'
+import { BlockMediaFields } from './BlockMediaFields'
 import { BlockToolbar } from './BlockToolbar'
 
 const editorSchema = z.object({
@@ -89,6 +90,8 @@ export function BlockEditorPanel({ block, onUpdate, onDelete, onDuplicate }: Blo
           />
         </div>
       ) : null}
+
+      <BlockMediaFields block={block} onUpdate={onUpdate} />
 
       {ModuleEditor !== undefined ? <ModuleEditor block={block} onChange={onUpdate} /> : null}
 
