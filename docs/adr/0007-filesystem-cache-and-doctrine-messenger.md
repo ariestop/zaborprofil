@@ -64,6 +64,6 @@ Redis — почти стандарт для cache и очень хорош дл
 
 ## Связанные документы
 
-- [23-cache-and-redis](../23-cache-and-redis.md)
+- [23-cache](../23-cache.md)
 - [24-messenger-and-queues](../24-messenger-and-queues.md)
 - [11-infrastructure-layer](../11-infrastructure-layer.md)

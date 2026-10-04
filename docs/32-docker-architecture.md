@@ -11,7 +11,7 @@
 | `app` | build `docker/php/Dockerfile` (`php:8.5-fpm-bookworm`) | PHP-FPM + Composer + Symfony | через nginx |
 | `nginx` | `nginx:1.30.0-alpine` | Web server | `80` (`HTTP_PORT`) |
 | `postgres` | `postgres:18` | БД | `15432` (`POSTGRES_PORT`) |
-| `redis` | `redis:8-alpine` | Cache (Symfony Cache pools). Messenger использует Doctrine transport — см. [ADR-0007](adr/0007-redis-cache-and-messenger.md). | `16379` (`REDIS_PORT`) |
+| `redis` | `redis:8-alpine` | Cache (Symfony Cache pools). Messenger использует Doctrine transport — см. [ADR-0007](adr/0007-filesystem-cache-and-doctrine-messenger.md). | `16379` (`REDIS_PORT`) |
 | `node` | build `docker/node/Dockerfile` (`node:25.9.0-bookworm`) | Vite/npm | dev server `5173` (`VITE_PORT`) |
 | `mailpit` | `axllent/mailpit:latest` | SMTP test inbox | `8025` (`MAILPIT_PORT`) |
 | `adminer` | `adminer:latest` | UI для Postgres | `8080` (`ADMINER_PORT`) |

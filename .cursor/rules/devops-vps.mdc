@@ -7,7 +7,7 @@ alwaysApply: false
 # DevOps Rules
 
 - Docker is intentionally not used.
-- Target deployment is a regular VPS with Nginx, PHP-FPM, PostgreSQL, Redis, systemd, SSL, and Git-based releases.
+- Target deployment is a regular VPS with Nginx, PHP-FPM, MySQL, systemd (no Redis; filesystem cache), SSL, and Git-based releases.
 - `public_html/` is the only web root.
 - Runtime secrets belong in `.env.local` on the server, not in committed files.
 - Keep `var/`, `vendor/`, `node_modules/`, generated assets, logs, and uploads out of Git.

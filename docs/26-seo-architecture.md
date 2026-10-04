@@ -520,7 +520,7 @@ flowchart LR
 
 ### 13.2 Что делает CMS для CWV
 
-- **TTFB ≤ 200 мс на warm cache.** Symfony cache (`cache.system`, `cache.app`), Doctrine result cache, public_page cache pool (см. [23-cache-and-redis](23-cache-and-redis.md)).
+- **TTFB ≤ 200 мс на warm cache.** Symfony cache (`cache.system`, `cache.app`), Doctrine result cache, public_page cache pool (см. [23-cache](23-cache.md)).
 - **Critical CSS inline (целевое).** Минимальный CSS для above-the-fold inline в `<head>`.
 - **Lazy-loading для картинок ниже fold.** `loading="lazy"`, `decoding="async"`.
 - **Vite + code-splitting.** Bundle разбит по точкам входа, hashed assets с immutable cache (`Cache-Control: public, immutable, max-age=31536000`).
@@ -735,7 +735,7 @@ flowchart LR
 - [16-routing](16-routing.md)
 - [21-templates-and-twig](21-templates-and-twig.md)
 - [22-frontend-assets](22-frontend-assets.md)
-- [23-cache-and-redis](23-cache-and-redis.md)
+- [23-cache](23-cache.md)
 - [25-files-and-uploads](25-files-and-uploads.md)
 - [34-deployment](34-deployment.md)
 - [37-runbooks](37-runbooks.md) (инциденты 33–36 — SEO статусы, sitemap, robots, redirects)

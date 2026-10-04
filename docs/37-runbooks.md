@@ -1167,7 +1167,7 @@ tail -n 50 /var/www/<project>/current/var/log/prod.log
 #### Профилактика
 
 - `Restart=on-failure`.
-- `maxmemory` + `maxmemory-policy allkeys-lru` (см. [23-cache-and-redis](23-cache-and-redis.md)).
+- `maxmemory` + `maxmemory-policy allkeys-lru` (см. [23-cache](23-cache.md)).
 - Алерт на Redis down.
 
 ---
@@ -1710,7 +1710,7 @@ curl -I https://<domain>/admin/login
 4. CSRF-токен (см. инцидент 29).
 5. Изменился `password_hashers` алгоритм или migrate-on-login завершился ошибкой.
 6. `login_throttling` заблокировал IP/identifier (5 попыток / 15 минут).
-7. Сессии планово вынесены в Redis (целевое, см. [ADR-0007](../adr/0007-redis-cache-and-messenger.md) и [20-security-and-access-control](../20-security-and-access-control.md#session)) и Redis недоступен — на текущем стеке **не применимо**, фактически сессии хранятся в файлах.
+7. Сессии планово вынесены в Redis (целевое, см. [ADR-0007](../adr/0007-filesystem-cache-and-doctrine-messenger.md) и [20-security-and-access-control](../20-security-and-access-control.md#session)) и Redis недоступен — на текущем стеке **не применимо**, фактически сессии хранятся в файлах.
 
 #### Быстрая диагностика
 

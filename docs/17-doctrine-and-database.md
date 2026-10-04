@@ -4,7 +4,7 @@
 >
 > **Аудитория.** Backend-разработчики, AI-агенты, DBA, тимлиды.
 >
-> **Связанные документы.** [18-migrations](18-migrations.md), [05-domain-model](05-domain-model.md), [10-domain-layer](10-domain-layer.md), [11-infrastructure-layer](11-infrastructure-layer.md), [04-layer-rules](04-layer-rules.md), [ADR-0002](adr/0002-postgresql-as-main-database.md), [ADR-0004](adr/0004-doctrine-orm-usage.md).
+> **Связанные документы.** [18-migrations](18-migrations.md), [05-domain-model](05-domain-model.md), [10-domain-layer](10-domain-layer.md), [11-infrastructure-layer](11-infrastructure-layer.md), [04-layer-rules](04-layer-rules.md), [ADR-0002](adr/0002-mysql-as-main-database.md), [ADR-0004](adr/0004-doctrine-orm-usage.md).
 
 ---
 
@@ -452,7 +452,7 @@ sudo -u postgres psql -d zaborprofil -c "EXPLAIN (ANALYZE, BUFFERS) SELECT * FRO
 | CI | `zaborprofil_test` / `zaborprofil_test` | full на тестовую БД |
 | Staging/Prod | отдельный пользователь | минимально достаточный (CRUD на свои таблицы, без `SUPERUSER`) |
 
-PostgreSQL не должен слушать публичный интерфейс (`listen_addresses = 'localhost'`), см. [34-deployment](34-deployment.md) и [adr/0002-postgresql-as-main-database](adr/0002-postgresql-as-main-database.md).
+PostgreSQL не должен слушать публичный интерфейс (`listen_addresses = 'localhost'`), см. [34-deployment](34-deployment.md) и [adr/0002-mysql-as-main-database](adr/0002-mysql-as-main-database.md).
 
 ---
 
@@ -511,7 +511,7 @@ PostgreSQL не должен слушать публичный интерфей�
 - [ ] План запроса — Index Scan / Index Only Scan, не Seq Scan на больших таблицах.
 - [ ] Нет N+1 в Twig (проверить количество queries в Symfony Profiler на ключевой странице).
 - [ ] Если запрос > 100 мс на dev-данных — оптимизировать или добавить индекс.
-- [ ] Кэширование рассмотрено (см. [23-cache-and-redis](23-cache-and-redis.md)).
+- [ ] Кэширование рассмотрено (см. [23-cache](23-cache.md)).
 - [ ] Pagination для всех листингов.
 - [ ] Eager fetch для связей, читаемых в шаблоне.
 
@@ -557,7 +557,7 @@ PostgreSQL не должен слушать публичный интерфей�
 - [11-infrastructure-layer](11-infrastructure-layer.md) — Doctrine Repository, listeners.
 - [04-layer-rules](04-layer-rules.md) — что Domain не знает про Doctrine.
 - [18-migrations](18-migrations.md) — как менять схему.
-- [23-cache-and-redis](23-cache-and-redis.md) — кэш над запросами.
+- [23-cache](23-cache.md) — кэш над запросами.
 - [37-runbooks](37-runbooks.md) — инциденты PostgreSQL (11–15, 50).
-- [adr/0002-postgresql-as-main-database](adr/0002-postgresql-as-main-database.md)
+- [adr/0002-mysql-as-main-database](adr/0002-mysql-as-main-database.md)
 - [adr/0004-doctrine-orm-usage](adr/0004-doctrine-orm-usage.md)

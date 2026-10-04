@@ -129,5 +129,5 @@ final class Page
 - [05-domain-model](../05-domain-model.md)
 - [10-domain-layer](../10-domain-layer.md)
 - [17-doctrine-and-database](../17-doctrine-and-database.md) §4 — Identifiers
-- [adr/0002-postgresql-as-main-database](0002-postgresql-as-main-database.md)
+- [adr/0002-mysql-as-main-database](0002-mysql-as-main-database.md)
 - [adr/0004-doctrine-orm-usage](0004-doctrine-orm-usage.md)

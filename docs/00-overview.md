@@ -33,12 +33,12 @@ WordPress-импортёр **не строится**. Контент перен�
 ## Ключевые архитектурные решения
 
 - Symfony 8.1+ как основной фреймворк ([ADR-0001](adr/0001-symfony-as-main-framework.md)).
-- PostgreSQL 18+ как основная БД ([ADR-0002](adr/0002-postgresql-as-main-database.md)).
+- PostgreSQL 18+ как основная БД ([ADR-0002](adr/0002-mysql-as-main-database.md)).
 - Clean Architecture + Modular Monolith ([ADR-0003](adr/0003-clean-architecture.md)).
 - Doctrine ORM 3 / DBAL 4 / Migrations 4 ([ADR-0004](adr/0004-doctrine-orm-usage.md)).
 - DTO + Symfony Validator вместо тяжёлых FormType по умолчанию ([ADR-0005](adr/0005-dto-validator-over-heavy-formtype.md)).
 - Разделение зон Front / Admin / API / Dev ([ADR-0006](adr/0006-separate-front-admin-api-dev-areas.md)).
-- Redis 8 для cache, Doctrine для Messenger transport ([ADR-0007](adr/0007-redis-cache-and-messenger.md)).
+- Redis 8 для cache, Doctrine для Messenger transport ([ADR-0007](adr/0007-filesystem-cache-and-doctrine-messenger.md)).
 - Docker только для local development ([ADR-0008](adr/0008-docker-for-local-development.md)).
 - VPS-деплой без Docker для staging/production ([ADR-0009](adr/0009-vps-deployment-strategy.md)).
 - SEO-first CMS-архитектура ([ADR-0010](adr/0010-seo-first-cms-architecture.md)).

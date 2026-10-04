@@ -29,7 +29,7 @@ SEO, админки, публичной части, API, миграций, де�
 - архитектурные правила слоёв ([04-layer-rules](04-layer-rules.md)),
 - стабильность URL и канонических ссылок ([26-seo-architecture](26-seo-architecture.md)),
 - админ-разрешения ([20-security-and-access-control](20-security-and-access-control.md)),
-- стратегию кэша ([23-cache-and-redis](23-cache-and-redis.md)),
+- стратегию кэша ([23-cache](23-cache.md)),
 - безопасность миграций ([18-migrations](18-migrations.md)),
 - процесс деплоя ([34-deployment](34-deployment.md), [35-cicd](35-cicd.md)).
 
@@ -109,7 +109,7 @@ SEO, админки, публичной части, API, миграций, де�
 - [20-security-and-access-control](20-security-and-access-control.md) — Symfony Security, RBAC, voters, CSRF.
 - [21-templates-and-twig](21-templates-and-twig.md) — Twig структура, partial’ы, view models.
 - [22-frontend-assets](22-frontend-assets.md) — Vite, Vue 3, Tailwind, admin SPA.
-- [23-cache-and-redis](23-cache-and-redis.md) — пулы Symfony Cache, инвалидация.
+- [23-cache](23-cache.md) — пулы Symfony Cache, инвалидация.
 - [24-messenger-and-queues](24-messenger-and-queues.md) — Doctrine transport, worker.
 - [25-files-and-uploads](25-files-and-uploads.md) — uploads, безопасность, хранение.
 - [26-seo-architecture](26-seo-architecture.md) — URL, sitemap, robots, redirects, JSON-LD.
@@ -154,7 +154,7 @@ SEO, админки, публичной части, API, миграций, де�
 | Нужно добавить API endpoint | [14-api-area](14-api-area.md), [20-security-and-access-control](20-security-and-access-control.md), [30-error-handling](30-error-handling.md) |
 | Нужно изменить БД | [17-doctrine-and-database](17-doctrine-and-database.md), [18-migrations](18-migrations.md) |
 | Нужно добавить форму | [19-forms-dto-validation](19-forms-dto-validation.md), [20-security-and-access-control](20-security-and-access-control.md) |
-| Нужно добавить кэширование | [23-cache-and-redis](23-cache-and-redis.md) |
+| Нужно добавить кэширование | [23-cache](23-cache.md) |
 | Нужно добавить async job | [24-messenger-and-queues](24-messenger-and-queues.md) |
 | Нужно добавить загрузку файлов | [25-files-and-uploads](25-files-and-uploads.md) |
 | Нужно изменить SEO-поведение | [26-seo-architecture](26-seo-architecture.md) |
@@ -198,7 +198,7 @@ SEO, админки, публичной части, API, миграций, де�
 | **Observability** | Важные операции пишут логи и метрики. | Без логов баги невидимы в prod. | См. [28-logging-observability](28-logging-observability.md). |
 | **Config discipline** | Любая настройка — через `.env` + `.env.example`. | Воспроизводимость окружений. | Diff `.env.example` совпадает с design note. |
 | **Migration discipline** | Ровно одна миграция на фичу, обратимая. | Откат на prod. | См. [18-migrations](18-migrations.md). |
-| **Cache awareness** | Понимаем, что/где/как инвалидируется. | Иначе stale контент в SEO. | См. [23-cache-and-redis](23-cache-and-redis.md). |
+| **Cache awareness** | Понимаем, что/где/как инвалидируется. | Иначе stale контент в SEO. | См. [23-cache](23-cache.md). |
 | **Deployment awareness** | Знаем, что нужно сделать на VPS. | Иначе фича «работает у меня локально». | Раздел deploy impact в design note. |
 | **Documentation completeness** | docs обновлены вместе с кодом. | Через 3 месяца никто не вспомнит. | См. [§24](#24-documentation-requirements-for-new-features). |
 | **Rollback thinking** | Знаем, как откатить фичу. | Без отката нельзя релизить. | Раздел rollback в design note. |
@@ -277,8 +277,8 @@ SEO, админки, публичной части, API, миграций, де�
 | Partner cabinet feature | Partner module, Security | Изоляция данных | Voter + functional | [20](20-security-and-access-control.md) | RBAC |
 | Auth/security feature | Security, Voters, Firewall | Доступы | Security tests | [20](20-security-and-access-control.md) | Сначала dry-run |
 | Role/permission feature | Security, Voters | Эскалация прав | Voter unit + functional | [20](20-security-and-access-control.md) | Аудит изменений ролей |
-| Cache/performance feature | Cache, Front, Application | Stale content | Cache invalidation tests | [23](23-cache-and-redis.md) | Прогрев и инвалидация |
-| Search feature | Search module, Persistence, Cache | Релевантность | Functional | [17](17-doctrine-and-database.md), [23](23-cache-and-redis.md) | Индексы БД |
+| Cache/performance feature | Cache, Front, Application | Stale content | Cache invalidation tests | [23](23-cache.md) | Прогрев и инвалидация |
+| Search feature | Search module, Persistence, Cache | Релевантность | Functional | [17](17-doctrine-and-database.md), [23](23-cache.md) | Индексы БД |
 | Integration feature | Integration module, HttpClient, Messenger | Внешние сбои | Mock tests | [11](11-infrastructure-layer.md), [24](24-messenger-and-queues.md) | Timeouts, retries |
 | Console command feature | Console area, Application | Долгие задачи на prod | Command unit + integration | [15](15-dev-area.md), [37](37-runbooks.md) | Запуск через systemd, logs |
 | Messenger/async feature | Messenger handler, Application | Дубли, потери | Handler tests + idempotency | [24](24-messenger-and-queues.md) | Рестарт воркеров |
@@ -795,7 +795,7 @@ src/Module/Page/
 7. Twig template с готовой view-model. Никакой бизнес-логики в шаблоне.
 8. Breadcrumbs — через Menu/Page module, не вручную в template.
 9. Canonical URL и meta — через единую SEO-services-точку ([26-seo-architecture](26-seo-architecture.md)).
-10. Cache strategy — выбрать пул и ключи ([23-cache-and-redis](23-cache-and-redis.md)).
+10. Cache strategy — выбрать пул и ключи ([23-cache](23-cache.md)).
 11. Тесты: functional (`WebTestCase`) + SEO regression (snapshot `<head>`).
 12. Обновить docs: [13-front-area](13-front-area.md), [16-routing](16-routing.md), [26-seo-architecture](26-seo-architecture.md).
 
@@ -936,7 +936,7 @@ src/Module/Page/
 
 ## 16. Developing a cache/performance feature
 
-Подробно см. [23-cache-and-redis](23-cache-and-redis.md).
+Подробно см. [23-cache](23-cache.md).
 
 **Когда кэшировать:**
 
@@ -1197,7 +1197,7 @@ SEO-критичный раздел. Любая ошибка стоит траф
 | Security | [20](20-security-and-access-control.md) |
 | Templates | [21](21-templates-and-twig.md) |
 | Frontend assets | [22](22-frontend-assets.md) |
-| Cache | [23](23-cache-and-redis.md) |
+| Cache | [23](23-cache.md) |
 | Messenger | [24](24-messenger-and-queues.md) |
 | Uploads | [25](25-files-and-uploads.md) |
 | SEO | [26](26-seo-architecture.md) |

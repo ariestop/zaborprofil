@@ -70,7 +70,7 @@ templates/
 
 ## Производительность
 
-- Пул `cache.public_page` сконфигурирован (TTL 3600 сек), но **сейчас не используется**: `PublicPageController` всегда читает из БД. Целевое — обернуть рендер в этот пул (`#[Target('public_page')] CacheInterface`) с инвалидацией в Page/PageBlock-хендлерах. См. [23-cache-and-redis](23-cache-and-redis.md).
+- Пул `cache.public_page` сконфигурирован (TTL 3600 сек), но **сейчас не используется**: `PublicPageController` всегда читает из БД. Целевое — обернуть рендер в этот пул (`#[Target('public_page')] CacheInterface`) с инвалидацией в Page/PageBlock-хендлерах. См. [23-cache](23-cache.md).
 - Vite-build с manifest — отдаём предсобранные ассеты.
 - HTTP cache (целевое): `Cache-Control` headers + `ETag` для статики и публичных страниц.
 
@@ -96,4 +96,4 @@ templates/
 - [16-routing](16-routing.md)
 - [21-templates-and-twig](21-templates-and-twig.md)
 - [26-seo-architecture](26-seo-architecture.md)
-- [23-cache-and-redis](23-cache-and-redis.md)
+- [23-cache](23-cache.md)

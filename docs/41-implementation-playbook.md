@@ -201,7 +201,7 @@ CMS Engine — это **product** для редактора и **service** дл�
 
 - **Что значит:** при добавлении кэша сразу проектируется invalidation strategy.
 - **Почему:** stale data в SEO-кэшах = битые sitemap, неправильные canonical у тысяч страниц.
-- **Как:** см. [23-cache-and-redis](23-cache-and-redis.md). Каждый cache pool имеет владельца и правила инвалидации.
+- **Как:** см. [23-cache](23-cache.md). Каждый cache pool имеет владельца и правила инвалидации.
 - **Anti-pattern:** `$cache->get('foo', ...)` без TTL и без события на инвалидацию.
 
 ### 2.13 Observability by default
@@ -304,7 +304,7 @@ CMS Engine — это **product** для редактора и **service** дл�
 | **SEO / meta / sitemap change** | Front + Application + Twig | Индексация, ranking | URL, canonical, sitemap, robots, JSON-LD | Functional SEO | [26](26-seo-architecture.md) |
 | **Route / URL change** | Front/API + Application + redirects | 301/410, sitemap | Конфликт маршрутов, sitemap, redirects | Functional + redirect test | [16](16-routing.md), [26](26-seo-architecture.md) |
 | **Files / uploads change** | Application + Infrastructure (Storage) | Path traversal, RCE, leak | MIME/ext/size, permissions, public/private | Integration + functional | [25](25-files-and-uploads.md) |
-| **Cache / Redis change** | Infrastructure | Stale data, hot keys | TTL, invalidation, key naming | Integration (cache hit/miss) | [23](23-cache-and-redis.md) |
+| **Cache / Redis change** | Infrastructure | Stale data, hot keys | TTL, invalidation, key naming | Integration (cache hit/miss) | [23](23-cache.md) |
 | **Messenger / worker change** | Application + Infrastructure + ops | Дубли, бесконечные ретраи | Idempotency, retry policy, graceful shutdown | Functional in-memory transport | [24](24-messenger-and-queues.md), [37](37-runbooks.md) |
 | **Deploy / config change** | DevOps | Сломанный релиз | Idempotency, dry-run, staging | Manual on staging | [34](34-deployment.md) |
 | **Docker / local-dev change** | DevOps (local) | Сломанный onboarding | `make build && make up` чистый | Manual | [32](32-docker-architecture.md), [33](33-local-development.md) |
@@ -1435,11 +1435,11 @@ Mutating-изменения **разбиваются** на серию additive-
 ### 19.9 Документирование TTL/invalidation
 
 - В коде: PHPDoc на сервис, описание ключей и TTL.
-- В docs: [23-cache-and-redis](23-cache-and-redis.md) — таблица pools / keys / TTL / invalidation.
+- В docs: [23-cache](23-cache.md) — таблица pools / keys / TTL / invalidation.
 
 ### 19.10 Связанные документы
 
-- [23-cache-and-redis](23-cache-and-redis.md)
+- [23-cache](23-cache.md)
 - [28-logging-observability](28-logging-observability.md)
 
 ---
@@ -2000,7 +2000,7 @@ client → Nginx :443 → static? yes → отдать; нет → fastcgi_pass 
 | Doctrine entity | Migration, fixtures, repositories, tests, [17-doctrine-and-database](17-doctrine-and-database.md), [18-migrations](18-migrations.md) |
 | DB schema | Migration, entities, repositories, services, tests, deploy notes, [13. Раздел](#13-playbook-database-schema-change) |
 | Env vars | `config/services.yaml` validation, `.env`, `.env.example`, `.env.test`, deploy templates, README, install scripts, CI secrets, [27-config-and-env](27-config-and-env.md) |
-| Redis / cache key | Invalidation hooks, tests, docs, [23-cache-and-redis](23-cache-and-redis.md), [44-troubleshooting](44-troubleshooting.md) |
+| Redis / cache key | Invalidation hooks, tests, docs, [23-cache](23-cache.md), [44-troubleshooting](44-troubleshooting.md) |
 | Messenger message | Handler, retry policy, transport routing, tests, logs, worker config, [24-messenger-and-queues](24-messenger-and-queues.md) |
 | Uploads logic | Validators, security checks, backup/restore docs, cleanup, tests, [25-files-and-uploads](25-files-and-uploads.md), [36-backup-restore](36-backup-restore.md) |
 | docker-compose | Local docs, install scripts, healthchecks, [32-docker-architecture](32-docker-architecture.md), [33-local-development](33-local-development.md) |
@@ -2472,7 +2472,7 @@ final class SeoAuditCommand extends Command
 
 ### 32.12 P12. Новый cache pool
 
-См. [23-cache-and-redis](23-cache-and-redis.md), [Раздел 19](#19-playbook-cacheredis-change).
+См. [23-cache](23-cache.md), [Раздел 19](#19-playbook-cacheredis-change).
 
 В `config/packages/cache.yaml`:
 

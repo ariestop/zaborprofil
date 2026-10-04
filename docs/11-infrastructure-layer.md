@@ -108,7 +108,7 @@ App\Module\Content\Domain\Repository\PageRepositoryInterface:
 
 ## Cache (Redis)
 
-См. [23-cache-and-redis](23-cache-and-redis.md).
+См. [23-cache](23-cache.md).
 
 - Symfony Cache pools `cache.public_page`, `cache.settings`, `cache.menu`, `cache.seo`.
 - Тип-хинт: `CacheInterface` (через DI с `#[Target('public_page')]`).
@@ -179,5 +179,5 @@ App\Module\Content\Domain\Repository\PageRepositoryInterface:
 - [10-domain-layer](10-domain-layer.md)
 - [09-application-layer](09-application-layer.md)
 - [17-doctrine-and-database](17-doctrine-and-database.md)
-- [23-cache-and-redis](23-cache-and-redis.md)
+- [23-cache](23-cache.md)
 - [24-messenger-and-queues](24-messenger-and-queues.md)

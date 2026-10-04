@@ -127,7 +127,7 @@ src/Module/<Name>/UI/Console/
 | `try { ... } catch (\Throwable $e) { return new Response($e->getMessage(), 500); }` | Утечка деталей | Централизованный responder + log |
 | Контроллер импортирует `DoctrinePageRepository` | Обход interface | Тип-хинт интерфейса |
 | Twig template вызывает `app.user` для проверки прав | Нет — лучше через voter в helper | Использовать `is_granted(...)` |
-| Контроллер вручную инвалидирует Redis | Лучше event subscriber или handler | См. [23-cache-and-redis](23-cache-and-redis.md) |
+| Контроллер вручную инвалидирует Redis | Лучше event subscriber или handler | См. [23-cache](23-cache.md) |
 | Смешивание Admin и Front в одном контроллере | Размывание зон | Разделить файлы и неймспейсы |
 
 ## Common mistakes (при добавлении контроллера)

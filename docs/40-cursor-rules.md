@@ -56,7 +56,7 @@ Cursor существует, чтобы **помогать реализовыв�
 | Forms / DTO / Validation            | `docs/19-forms-dto-validation.md`, `docs/09-application-layer.md`                                                                          |
 | Security                            | `docs/20-security-and-access-control.md`, `docs/27-config-and-env.md`, `docs/30-error-handling.md`                                         |
 | SEO                                 | `docs/26-seo-architecture.md`, `docs/13-front-area.md`, `docs/16-routing.md`, `docs/21-templates-and-twig.md`                              |
-| Cache / Redis                       | `docs/23-cache-and-redis.md`, `docs/11-infrastructure-layer.md`                                                                            |
+| Cache / Redis                       | `docs/23-cache.md`, `docs/11-infrastructure-layer.md`                                                                            |
 | Messenger / Workers                 | `docs/24-messenger-and-queues.md`, `docs/07-request-flow.md`, `docs/09-application-layer.md`                                               |
 | Files / Uploads                     | `docs/25-files-and-uploads.md`, `docs/20-security-and-access-control.md`, `docs/36-backup-restore.md`                                      |
 | Config / Env                        | `docs/27-config-and-env.md`, `docs/33-local-development.md`, `docs/34-deployment.md`                                                       |
@@ -419,7 +419,7 @@ Cursor существует, чтобы **помогать реализовыв�
 - Invalidation спроектирована **до** добавления cache.
 - Не кэшировать секреты, токены, пароли.
 - Не кэшировать private user data в shared pool.
-- Stale data risk описан в комментарии или docs (`docs/23-cache-and-redis.md`).
+- Stale data risk описан в комментарии или docs (`docs/23-cache.md`).
 - Redis outage не должен крашить flow, который может работать без cache (graceful fallback).
 - Cache behavior упомянут в `docs/23` для нетривиальных случаев.
 - Tests на cache-sensitive логику где возможно (write → read → invalidate → read).
@@ -496,7 +496,7 @@ Cursor существует, чтобы **помогать реализовыв�
 | Admin behavior                              | `docs/12-admin-area.md`, `docs/ADMIN_GUIDE.md`                                                        |
 | API behavior                                | `docs/14-api-area.md`, `docs/30-error-handling.md`                                                    |
 | Queue/worker behavior                       | `docs/24-messenger-and-queues.md`, `docs/37-runbooks.md`                                              |
-| Cache behavior                              | `docs/23-cache-and-redis.md`                                                                          |
+| Cache behavior                              | `docs/23-cache.md`                                                                          |
 | Files / uploads                             | `docs/25-files-and-uploads.md`, `docs/UPLOAD_SECURITY.md`                                             |
 | Security / RBAC                             | `docs/20-security-and-access-control.md`, `docs/ROLES.md`                                             |
 | Logging / observability                     | `docs/28-logging-observability.md`                                                                    |

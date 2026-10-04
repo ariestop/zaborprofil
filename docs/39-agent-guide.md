@@ -71,7 +71,7 @@ production-VPS это приводит к одному из четырёх сц�
 - **Bounded modules** в `src/Module/<Name>/{Domain, Application, Infrastructure, UI}`.
 - **Web root** — `public_html/`, не Symfony default `public/`.
 - **PostgreSQL 18+** как основная БД, миграции через Doctrine Migrations.
-- **Redis 8+** только для cache (Symfony Cache pools). Sessions — нативные файлы, Messenger — Doctrine transport. См. [ADR-0007](adr/0007-redis-cache-and-messenger.md).
+- **Redis 8+** только для cache (Symfony Cache pools). Sessions — нативные файлы, Messenger — Doctrine transport. См. [ADR-0007](adr/0007-filesystem-cache-and-doctrine-messenger.md).
 - **VPS deployment** через bash + systemd, без Docker на проде.
 
 ### 2.1.1 Windows / WSL2 execution model
@@ -249,7 +249,7 @@ AI-агент **обязан** читать документацию по пра
 | Forms / DTO / Validation                | `docs/19-forms-dto-validation.md`, `docs/09-application-layer.md`                                                                       |
 | Security                                | `docs/20-security-and-access-control.md`, `docs/27-config-and-env.md`, `docs/30-error-handling.md`                                      |
 | SEO                                     | `docs/26-seo-architecture.md`, `docs/13-front-area.md`, `docs/16-routing.md`, `docs/21-templates-and-twig.md`                           |
-| Cache / Redis                           | `docs/23-cache-and-redis.md`, `docs/11-infrastructure-layer.md`                                                                         |
+| Cache / Redis                           | `docs/23-cache.md`, `docs/11-infrastructure-layer.md`                                                                         |
 | Messenger / Queues / Workers            | `docs/24-messenger-and-queues.md`, `docs/07-request-flow.md`, `docs/09-application-layer.md`                                            |
 | Files / Uploads                         | `docs/25-files-and-uploads.md`, `docs/20-security-and-access-control.md`, `docs/36-backup-restore.md`                                   |
 | Config / Env                            | `docs/27-config-and-env.md`, `docs/33-local-development.md`, `docs/34-deployment.md`                                                    |
@@ -941,7 +941,7 @@ AI-агент **обязан** читать документацию по пра
 | SEO behavior                                | `docs/26-seo-architecture.md`                                                                |
 | Admin behavior / редактор                   | `docs/12-admin-area.md`, `docs/ADMIN_GUIDE.md`, `docs/CONTENT_EDITOR_GUIDE.md`               |
 | Security / RBAC                             | `docs/20-security-and-access-control.md`, `docs/ROLES.md`                                    |
-| Cache / Redis                               | `docs/23-cache-and-redis.md`                                                                 |
+| Cache / Redis                               | `docs/23-cache.md`                                                                 |
 | Messenger / queues                          | `docs/24-messenger-and-queues.md`, `docs/37-runbooks.md`                                     |
 | Files / uploads                             | `docs/25-files-and-uploads.md`, `docs/UPLOAD_SECURITY.md`                                    |
 | Env / config                                | `docs/27-config-and-env.md`, `.env.example`, `docs/DEPLOY_VARIABLES.md`                      |
