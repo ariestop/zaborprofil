@@ -106,6 +106,13 @@ jobs:
             bash -n "$script"
           done
 
+      - name: Uptime check script
+        run: |
+          set -e
+          bash -n tools/monitoring/uptime-check.sh
+          shellcheck -x tools/monitoring/uptime-check.sh tests/shell/uptime-check.sh
+          bash tests/shell/uptime-check.sh
+
       - name: Beget deploy script checks
         run: |
           set -e

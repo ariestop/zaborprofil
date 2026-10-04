@@ -13,6 +13,7 @@ export const adminQueryKeys = {
   systemProcesses: ['admin', 'system', 'processes'] as const,
   systemLogs: (channel: string) => ['admin', 'system', 'logs', channel] as const,
   systemQueues: ['admin', 'system', 'queues'] as const,
+  systemObservability: ['admin', 'system', 'observability'] as const,
   systemCache: ['admin', 'system', 'cache'] as const,
   systemDatabase: ['admin', 'system', 'database'] as const,
   systemSecurity: ['admin', 'system', 'security'] as const,

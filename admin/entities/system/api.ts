@@ -10,6 +10,7 @@ import type {
   SystemDatabaseResponse,
   SystemDeployResponse,
   SystemLogsResponse,
+  SystemObservabilityResponse,
   SystemOverviewResponse,
   SystemProcessStatusResponse,
   SystemQueuesResponse,
@@ -54,6 +55,14 @@ export function useSystemQueuesQuery() {
   return useQuery({
     queryKey: adminQueryKeys.systemQueues,
     queryFn: () => apiRequest<SystemQueuesResponse>('/admin/api/system/queues'),
+  })
+}
+
+export function useSystemObservabilityQuery() {
+  return useQuery({
+    queryKey: adminQueryKeys.systemObservability,
+    queryFn: () => apiRequest<SystemObservabilityResponse>('/admin/api/system/observability'),
+    refetchInterval: 60_000,
   })
 }
 

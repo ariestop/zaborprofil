@@ -19,6 +19,10 @@ export interface AttentionInput {
   warnings?: SystemWarningItem[]
   /** `false` — каталог резервных копий пуст; `undefined` — данных нет (например, нет права system.view). */
   hasBackups?: boolean
+  /** Сообщения в очереди `failed`; `undefined` — данных нет (нет права system.view). */
+  failedMessages?: number
+  /** Ответы 5xx за последний час; `undefined` — данных нет. */
+  serverErrorsLastHour?: number
 }
 
 function pluralLeads(count: number): string {
@@ -38,7 +42,7 @@ function pluralLeads(count: number): string {
  * Список «Требует внимания» на сводке: сначала то, что приносит деньги (заявки),
  * затем то, что может уронить сайт (критичные предупреждения, отсутствие резервных копий).
  */
-export function buildAttentionItems({ newLeads, warnings = [], hasBackups }: AttentionInput): AttentionItem[] {
+export function buildAttentionItems({ newLeads, warnings = [], hasBackups, failedMessages, serverErrorsLastHour }: AttentionInput): AttentionItem[] {
   const items: AttentionItem[] = []
 
   if (newLeads !== undefined && newLeads > 0) {
@@ -62,6 +66,30 @@ export function buildAttentionItems({ newLeads, warnings = [], hasBackups }: Att
       actionLabel: 'Открыть',
       href: '/admin/system/backups',
       tone: 'critical',
+    })
+  }
+
+  if (failedMessages !== undefined && failedMessages > 0) {
+    items.push({
+      id: 'queue-failed',
+      marker: String(failedMessages),
+      title: 'Сообщения в очереди завершились ошибкой',
+      description: 'Уведомления или фоновые задачи не выполнены. Проверьте очередь и повторите отправку.',
+      actionLabel: 'К очередям',
+      href: '/admin/system/queues',
+      tone: 'critical',
+    })
+  }
+
+  if (serverErrorsLastHour !== undefined && serverErrorsLastHour > 0) {
+    items.push({
+      id: 'server-errors',
+      marker: String(serverErrorsLastHour),
+      title: 'Ошибки сервера за последний час',
+      description: 'Сайт или админка отвечали ошибкой 5xx. Загляните в логи.',
+      actionLabel: 'К логам',
+      href: '/admin/system/logs',
+      tone: 'warning',
     })
   }
 

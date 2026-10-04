@@ -20,6 +20,7 @@
 | `media` | uploads, delete, processing |
 | `deploy` | события деплоя (целевое — `release.deployed`) |
 | `business` | бизнес-события (lead.received, order.placed) |
+| `observability` | алерты, которые должны дойти до владельца: `lead.notification.failed`, `admin.client.error`; уровень `error+` уходит в Telegram и в Sentry |
 | `critical` | всё с уровнем `error+`, отправляется в Telegram |
 | `console` | CLI |
 
@@ -29,7 +30,40 @@
 - `page.pathChanged`
 - `setting.updated`
 - `setting.deleted`
+- `lead.created`
+
+Фактические события в канале `observability`:
+
+| Событие (message) | Уровень | Когда |
+|---|---|---|
+| `lead.notification.failed: заявка <id> не доставлена ни по одному каналу` | `error` | email и Telegram уведомление о новой заявке не доставлены (или единственный настроенный канал упал). Уходит в Telegram и Sentry |
+| `lead.notification.partial` | `warning` | один канал доставил, другой упал |
+| `lead.notification.not_configured` | `warning` | не задан ни `LEAD_NOTIFICATION_EMAIL`, ни пара `LEAD_TELEGRAM_*` |
+| `admin.client.error: <текст ошибки>` | `error` | необработанная ошибка в SPA админки (`ErrorBoundary`, `window.onerror`, `unhandledrejection`) |
+
+В контексте — только идентификаторы и коды причин (`reasons`: класс исключения, а не его текст), без телефона, email и токенов.
 - `lead.created`, `lead.status_changed`, `lead.assigned` — только идентификаторы и коды статусов; телефон попадает в лог исключительно в маскированном виде (`7*********33`: первая и две последние цифры), тексты заметок и сообщений не логируются
+
+## Error tracking (Sentry)
+
+- Пакет `sentry/sentry-symfony`, конфигурация `config/packages/sentry.yaml`, включается переменной `SENTRY_DSN` (пусто — выключено, в dev/test так и остаётся). DSN можно направить на self-hosted Sentry/GlitchTip.
+- Отправляются необработанные исключения (kernel/console/messenger) и записи канала `observability` уровня `error+`.
+- Персональные данные не уходят: `send_default_pii=false`, тело запроса не отправляется (`max_request_body_size: none`), а `SentryEventScrubber` дополнительно убирает cookies, заголовки, query-строку, IP и email пользователя, breadcrumbs, имя сервера и маскирует email/телефоны/IP в тексте (`PiiMasker`). Остаётся маршрут, метод и id пользователя.
+- Tracing выключен (`tracing.enabled: false`), чтобы не оборачивать кэш, БД и Twig.
+- Для РФ-хостинга предпочтителен self-hosted инстанс; облачный Sentry использовать только после согласования.
+
+## Клиентские ошибки админки
+
+- `POST /admin/api/client-errors` (`ClientErrorApiController`): принимает `message`, `source` (`error-boundary` / `window-error` / `unhandled-rejection`), `url`, `stack`, `componentStack`, обрезает поля, оставляет только путь URL (без query/hash) и пишет `error` в канал `observability`.
+- Защита: сессия админа, CSRF, Origin, лимит 20 отчётов за 10 минут на пользователя (`limiter.admin_client_errors`).
+- Клиент: `admin/shared/lib/client-error-reporter.ts` — не отправляет одинаковые ошибки повторно, не более 5 за загрузку страницы, игнорирует `ApiError`, отмену запросов и шум `ResizeObserver`.
+
+## Метрики на сводке админки
+
+`GET /admin/api/system/observability` (право `system.view`) отдаёт данные для карточек на «Сводке»: ответы 5xx за час и за 24 часа, длина очереди Messenger (`pending` / `failed`), свободное место на диске. Новые заявки берутся из сводки заявок (`/admin/api/leads/summary`).
+
+- Счётчик 5xx — `ServerErrorCounter`: почасовые корзины в `var/log/observability/http-5xx.json` (файловая система, без БД, общий каталог логов — не сбрасывается деплоем). Считаются главные запросы с ответом 5xx, кроме `/health*`, чтобы мониторинг не накручивал сам себя.
+- Сводка подсвечивает в «Требует внимания» сообщения в `failed` и 5xx за последний час.
 
 ## Handlers
 
@@ -176,12 +210,22 @@ Monitoring timer использует `tools/deploy/monitoring-check.sh` и мо
 алерты через `ALERT_WEBHOOK_URL` или Telegram-пару `ALERT_TELEGRAM_BOT_TOKEN` /
 `ALERT_TELEGRAM_CHAT_ID`.
 
+## Uptime-проверка `/health`
+
+Внешняя проверка работает независимо от сервера: workflow `.github/workflows/uptime.yml` каждые 15 минут запускает `tools/monitoring/uptime-check.sh`.
+
+- URL берутся из repository variable `UPTIME_URLS` (через пробел), например `https://zaborprofil.ru/health/ready`. Пусто — проверка пропускается.
+- Ожидается HTTP 200 и `"status":"ok"` в теле; три попытки с паузой. При сбое job падает (GitHub присылает письмо) и, если заданы секреты `ALERT_TELEGRAM_BOT_TOKEN` / `ALERT_TELEGRAM_CHAT_ID`, отправляет сообщение в Telegram.
+- Для закрытого Basic Auth стенда нужен секрет `UPTIME_BASIC_AUTH` (`логин:пароль`); он применяется ко всем URL списка, поэтому staging и production лучше проверять отдельными запусками/переменными.
+- GitHub отключает scheduled workflow в репозитории без активности 60 дней; для production основной контроль остаётся за `monitoring-check.sh` на сервере.
+- Скрипт покрыт тестом `tests/shell/uptime-check.sh` (запускается в CI).
+
 ## Observability roadmap
 
 - Prometheus exporter (PHP-FPM, Nginx, MySQL).
 - Loki/Grafana для logs.
 - OpenTelemetry tracing (целевое).
-- Sentry для error tracking (опционально).
+- ~~Sentry для error tracking~~ — подключён (см. раздел «Error tracking»).
 - Health endpoint `app:status` с подробной диагностикой.
 
 ## Anti-patterns

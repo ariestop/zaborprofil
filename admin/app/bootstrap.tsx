@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { installGlobalClientErrorReporting } from '../shared/lib/client-error-reporter'
 import { initializeAuthStore } from '../stores/auth'
 import { AdminApp } from './AdminApp'
 
@@ -14,6 +15,8 @@ export function bootstrapAdminApp(): void {
     logoutUrl: root.dataset.logoutUrl ?? '/admin/logout',
     logoutToken: root.dataset.logoutToken ?? '',
   })
+
+  installGlobalClientErrorReporting()
 
   createRoot(root).render(
     <StrictMode>

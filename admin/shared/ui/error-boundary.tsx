@@ -1,4 +1,5 @@
-import { Component, type ReactNode } from 'react'
+import { Component, type ErrorInfo, type ReactNode } from 'react'
+import { reportClientError } from '../lib/client-error-reporter'
 import { ErrorState } from './error-state'
 
 interface ErrorBoundaryState {
@@ -18,7 +19,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     return { hasError: true }
   }
 
-  public componentDidCatch(): void {}
+  public componentDidCatch(error: Error, info: ErrorInfo): void {
+    void reportClientError(error, 'error-boundary', { componentStack: info.componentStack })
+  }
 
   public render() {
     if (this.state.hasError) {
