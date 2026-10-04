@@ -171,7 +171,7 @@ export function PageEditor({ page, initialBlocks, tab }: PageEditorProps) {
       </div>
 
       <div role="tabpanel" aria-label={editorTabs.find((item) => item.value === tab)?.label}>
-        {tab === 'content' ? <ContentTab pageId={page.id} /> : null}
+        {tab === 'content' ? <ContentTab pageId={page.id} pageType={page.type} /> : null}
         {tab === 'seo' ? <SeoTab controller={controller} onOpenTab={openTab} /> : null}
         {tab === 'settings' ? <SettingsTab controller={controller} page={page} /> : null}
         {tab === 'revisions' ? <RevisionsTab controller={controller} status={page.status} /> : null}

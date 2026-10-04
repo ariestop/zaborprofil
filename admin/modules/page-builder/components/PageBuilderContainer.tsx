@@ -20,6 +20,7 @@ interface PageBuilderContainerProps {
   onUpdateBlock: (block: BuilderBlock) => void
   onDeleteBlock: (blockId: string) => void
   onDuplicateBlock: (blockId: string) => void
+  onSaveBlockAsTemplate?: (blockId: string) => void
   onPreview: () => void
   showJson: boolean
 }
@@ -36,6 +37,7 @@ export function PageBuilderContainer({
   onUpdateBlock,
   onDeleteBlock,
   onDuplicateBlock,
+  onSaveBlockAsTemplate,
   onPreview,
   showJson,
 }: PageBuilderContainerProps) {
@@ -68,6 +70,7 @@ export function PageBuilderContainer({
             onUpdate={onUpdateBlock}
             onDelete={onDeleteBlock}
             onDuplicate={onDuplicateBlock}
+            onSaveAsTemplate={onSaveBlockAsTemplate}
             showJson={showJson}
           />
           <BlockPreview block={selectedBlock} />
