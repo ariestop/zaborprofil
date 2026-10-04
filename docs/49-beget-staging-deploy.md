@@ -122,6 +122,12 @@ chmod 600 .env.local
 
 Структура создаётся миграциями Doctrine при первом деплое. Данные для разработки — через fixtures/seed ([47-dev-database-state](47-dev-database-state.md)). Дампы продакшена в Git не кладутся; если копия прода нужна на стенде, её делает владелец вручную, учитывая, что в ней есть персональные данные (стенд закрыт паролем и без почты).
 
+### 5a. Cron планировщика публикаций
+
+Отложенная публикация и снятие страниц выполняются командой `app:content:publish-scheduled`. В панели Beget -> «Cron» добавить задачу «каждую минуту»
+(`* * * * *`): `cd ~/dev.zaborprofil.ru && /usr/local/bin/php8.5 bin/console app:content:publish-scheduled --env=staging --no-interaction >> var/log/publish-scheduled.log 2>&1`.
+Подробности, `--dry-run` и мониторинг: [50-publishing-workflow](50-publishing-workflow.md).
+
 ### 6. SSH-ключ деплоя
 
 Отдельный ключ без пароля только для деплоя (на компьютере владельца, не на сервере):

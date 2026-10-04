@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Module\Content\Domain\Repository;
 
 use App\Module\Content\Domain\Entity\Page;
+use DateTimeImmutable;
 
 /**
  * Repository ports use string identifiers (ULID-formatted) so the Domain
@@ -54,4 +55,23 @@ interface PageRepositoryInterface
      * @return list<Page>
      */
     public function findPublishedIndexableSlice(int $limit, int $offset): array;
+
+    /**
+     * Запланированные страницы, у которых наступило время публикации. Самые ранние первыми.
+     *
+     * @return list<Page>
+     */
+    public function findDueForScheduledPublish(DateTimeImmutable $now, int $limit): array;
+
+    /**
+     * Опубликованные страницы, у которых наступило время снятия с публикации.
+     *
+     * @return list<Page>
+     */
+    public function findDueForScheduledUnpublish(DateTimeImmutable $now, int $limit): array;
+
+    /**
+     * Сколько запланированных операций просрочено на момент `$threshold` (индикатор остановленного планировщика).
+     */
+    public function countOverdueSchedules(DateTimeImmutable $threshold): int;
 }

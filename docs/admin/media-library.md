@@ -80,7 +80,7 @@
 
 - Page Builder: `BlockMediaFields` в `BlockEditorPanel` находит в `content` блока поля изображений (`image`, `src`, `imageUrl`, `poster`, `backgroundImage`, для `before-after` — `before`/`after`, в том числе внутри `items[]`) и показывает для каждого `MediaPicker`. При выборе пустой `alt`/`imageAlt` заполняется из `alt` ассета. Для `gallery`, `works-gallery`, `slider`, `portfolio`, `fence-types` есть кнопка «Добавить изображение из медиатеки». Логика — `blocks/shared/mediaFields.ts`.
 - TipTap (`SimpleEditor`): кнопка «Загрузить» отправляет файл в медиатеку (`handleImageUpload` → `POST /admin/api/media/assets`, прогресс и ошибки показываются), кнопка «Медиатека» вставляет изображение из библиотеки с `alt`/`title`.
-- Страницы (`ContentPagesView`): «Изображение для соцсетей» (`ogImage`, абсолютный URL по `window.location.origin`) и изображение блока `text_image`.
+- Редактор страницы (`admin/features/page-editor`): «Изображение для соцсетей» (`ogImage`, абсолютный URL по `window.location.origin`) и изображение блока `text_image`.
 
 ## Лимиты загрузки
 

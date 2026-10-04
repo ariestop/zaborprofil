@@ -1,9 +1,11 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useToast } from '../../app/providers/toast-provider'
 import { usePageRevisionsQuery, useRollbackPageBuilderMutation, type PageStatus } from '../../entities/page/api'
 import { Button, Card, ConfirmDialog, EmptyState, ErrorState, PageLoadingState } from '../../shared/ui'
 import type { PageRevisionItem } from '../../types/api'
 import { describeApiError } from '../seo/redirects/redirect-rules'
+import { workflowQueryKey } from '../publishing/api'
 import { PageRevisionsSlot } from './slots'
 import type { PageEditorController } from './usePageEditorController'
 
@@ -20,6 +22,7 @@ function formatRevisionDate(value: string): string {
 export function RevisionsTab({ controller, status }: RevisionsTabProps) {
   const { pageId } = controller
   const { push } = useToast()
+  const queryClient = useQueryClient()
   const revisionsQuery = usePageRevisionsQuery(pageId)
   const rollbackMutation = useRollbackPageBuilderMutation(pageId)
   const [target, setTarget] = useState<PageRevisionItem | null>(null)
@@ -29,6 +32,7 @@ export function RevisionsTab({ controller, status }: RevisionsTabProps) {
     try {
       await rollbackMutation.mutateAsync(revision.id)
       await controller.reloadFromServer()
+      await queryClient.invalidateQueries({ queryKey: workflowQueryKey(pageId) })
       push({ title: 'Версия восстановлена', description: `Версия ${revision.version} загружена в редактор.` })
     } catch (error) {
       push({ title: 'Не удалось восстановить версию', description: describeApiError(error, 'Проверьте права и повторите попытку.') })

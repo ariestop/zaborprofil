@@ -122,8 +122,15 @@ final class PagePublication
         $this->touch();
     }
 
+    public function cancelSchedule(): void
+    {
+        $this->scheduledRevision = null;
+        $this->touch();
+    }
+
     public function unpublish(): void
     {
+        $this->scheduledRevision = null;
         $this->lastUnpublishedAt = new DateTimeImmutable();
         $this->touch();
     }

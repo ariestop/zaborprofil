@@ -6,69 +6,45 @@ namespace App\Module\Content\Application\Handler;
 
 use App\Module\Content\Application\Command\PublishPageCommand;
 use App\Module\Content\Application\DTO\PageOutput;
+use App\Module\Content\Application\Journal\PageWorkflowEvent;
+use App\Module\Content\Application\Journal\PageWorkflowJournalInterface;
 use App\Module\Content\Application\Service\ContentId;
-use App\Module\Content\Application\Service\PageRevisionSnapshotBuilder;
-use App\Module\Content\Application\Service\PublicPageCacheInvalidator;
-use App\Module\Content\Domain\Repository\PageBlockRepositoryInterface;
-use App\Module\Content\Domain\Repository\PagePublicationRepositoryInterface;
+use App\Module\Content\Application\Service\CurrentAdminActor;
+use App\Module\Content\Application\Service\PagePublisher;
+use App\Module\Content\Application\Service\PageWorkflowGuard;
+use App\Module\Content\Domain\Enum\PageStatus;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
-use App\Module\Content\Domain\Repository\PageRevisionRepositoryInterface;
-use App\Module\Seo\Application\Audit\PrePublishChecklist;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
-use App\Shared\Application\Logging\BusinessEventLogger;
-use Symfony\Bundle\SecurityBundle\Security;
 
 final readonly class PublishPageHandler
 {
     public function __construct(
         private PageRepositoryInterface $pages,
-        private PageBlockRepositoryInterface $blocks,
-        private PageRevisionRepositoryInterface $revisions,
-        private PagePublicationRepositoryInterface $publications,
         private ContentId $contentId,
-        private PublicPageCacheInvalidator $publicPageCache,
-        private BusinessEventLogger $businessEvents,
-        private PrePublishChecklist $prePublishChecklist,
-        private PageRevisionSnapshotBuilder $snapshotBuilder,
-        private Security $security,
+        private PageWorkflowGuard $guard,
+        private CurrentAdminActor $actor,
+        private PagePublisher $publisher,
+        private PageWorkflowJournalInterface $journal,
     ) {
     }
 
     public function __invoke(PublishPageCommand $command): PageOutput
     {
         $page = $this->pages->get($this->contentId->fromString($command->id));
-        $this->prePublishChecklist->assertPublishable($page);
-        $actorId = $this->actorId();
-        $revision = $this->snapshotBuilder->build(
-            $page,
-            $this->revisions->nextVersionForPage((string) $page->id()),
-            $this->blocks->findByPage((string) $page->id()),
-            $actorId,
+        $from = $page->status();
+        $this->guard->assertAllowed($from, PageStatus::Published);
+
+        $revision = $this->publisher->publish($page, $this->actor->id(), $command->comment);
+
+        $this->journal->record(new PageWorkflowEvent(
+            PageWorkflowEvent::PUBLISHED,
+            (string) $page->id(),
+            $page->path(),
+            $from->value,
+            $page->status()->value,
             $command->comment,
-            ['action' => 'publish'],
-        );
-        $this->revisions->save($revision);
-
-        $page->publish($actorId);
-        $this->pages->save($page);
-
-        $publication = $this->publications->getOrCreate($page);
-        $publication->publish($revision);
-        $this->publications->save($publication);
-
-        $this->publicPageCache->invalidate($page->path());
-        $this->businessEvents->log('page.published', [
-            'page_id' => (string) $page->id(),
-            'path' => $page->path(),
-        ]);
+            ['revisionId' => (string) $revision->id(), 'version' => $revision->version()],
+        ));
 
         return PageOutput::fromPage($page);
-    }
-
-    private function actorId(): ?string
-    {
-        $user = $this->security->getUser();
-
-        return $user instanceof AdminUser ? (string) $user->id() : null;
     }
 }

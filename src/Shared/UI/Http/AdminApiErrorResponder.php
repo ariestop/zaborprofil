@@ -12,6 +12,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Exception\RequestExceptionInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Throwable;
 use ValueError;
 
@@ -25,6 +26,7 @@ final readonly class AdminApiErrorResponder
 {
     public const string CODE_VALIDATION = 'VALIDATION';
     public const string CODE_NOT_FOUND = 'NOT_FOUND';
+    public const string CODE_ACCESS_DENIED = 'ACCESS_DENIED';
     public const string CODE_BAD_REQUEST = 'BAD_REQUEST';
     public const string CODE_CONFLICT = 'CONFLICT';
     public const string CODE_INTERNAL = 'INTERNAL';
@@ -39,6 +41,10 @@ final readonly class AdminApiErrorResponder
     {
         if ($exception instanceof NotFoundExceptionInterface) {
             return $this->notFound($exception->getMessage());
+        }
+
+        if ($exception instanceof AccessDeniedException) {
+            return $this->accessDenied();
         }
 
         if (
@@ -67,6 +73,11 @@ final readonly class AdminApiErrorResponder
     public function notFound(string $message = 'Not found.'): JsonResponse
     {
         return $this->json($message, self::CODE_NOT_FOUND, 404);
+    }
+
+    public function accessDenied(): JsonResponse
+    {
+        return $this->json('Access denied.', self::CODE_ACCESS_DENIED, 403);
     }
 
     /**

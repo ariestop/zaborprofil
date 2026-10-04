@@ -9,6 +9,9 @@ final readonly class ChangePageStatusCommand
     public function __construct(
         public string $id,
         public string $status,
+        public ?string $comment = null,
+        public ?string $publishAt = null,
+        public ?string $unpublishAt = null,
     ) {
     }
 }

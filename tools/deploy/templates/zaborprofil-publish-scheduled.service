@@ -1,0 +1,13 @@
+[Unit]
+Description=Zaborprofil scheduled page publishing (app:content:publish-scheduled)
+After=network-online.target mysql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/zaborprofil/current
+Environment=APP_ENV=prod
+ExecStart=/usr/bin/php bin/console app:content:publish-scheduled --env=prod --no-interaction
+TimeoutStartSec=120
