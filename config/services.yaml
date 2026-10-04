@@ -10,6 +10,9 @@ parameters:
     app.release_info_path: '%kernel.project_dir%/var/release-info.json'
     app.media_upload_dir: '%kernel.project_dir%/public_html/uploads/media'
     app.sitemap_chunk_size: 50000
+    # Запуск Doctrine-миграций из веб-админки. По умолчанию выключен; на production миграции выполняет только CLI при деплое.
+    env(ADMIN_WEB_MIGRATIONS_ENABLED): '0'
+    app.admin.web_migrations_enabled: '%env(bool:ADMIN_WEB_MIGRATIONS_ENABLED)%'
 
 services:
     _defaults:
@@ -41,6 +44,10 @@ services:
     App\Module\Content\Domain\Repository\PageTemplateRepositoryInterface:
         alias: App\Module\Content\Infrastructure\Repository\DoctrinePageTemplateRepository
 
+    App\Module\Content\Application\Service\BlockTypeCatalog:
+        arguments:
+            $path: '%kernel.project_dir%/config/content/block-types.json'
+
     App\Module\Content\Application\Service\PagePreviewToken:
         arguments:
             $secret: '%kernel.secret%'
@@ -51,6 +58,13 @@ services:
     App\Module\Settings\Application\Service\MigrationAdminService:
         arguments:
             $dependencyFactory: '@doctrine.migrations.dependency_factory'
+
+    App\Module\Settings\Application\Service\MigrationAdminServiceInterface:
+        alias: App\Module\Settings\Application\Service\MigrationAdminService
+
+    App\Module\Settings\UI\Admin\MigrationsApiController:
+        arguments:
+            $webActionsEnabled: '%app.admin.web_migrations_enabled%'
 
     App\Module\Admin\Application\Service\AssetBuildRunner:
         arguments:
@@ -172,6 +186,13 @@ when@test:
         app.vite.manifest_path: '%env(default:app.vite.test_manifest_path:VITE_MANIFEST_PATH)%'
         app.vite.dev_server_url: ''
         app.sitemap_chunk_size: 2
+
+    services:
+        # Тесты не должны менять схему тестовой БД через веб-админку.
+        App\Tests\Support\Settings\FakeMigrationAdminService: ~
+
+        App\Module\Settings\Application\Service\MigrationAdminServiceInterface:
+            alias: App\Tests\Support\Settings\FakeMigrationAdminService
 
 # Dev-сервер Vite не должен включиться на staging/production, даже если переменная попала в окружение.
 when@prod:

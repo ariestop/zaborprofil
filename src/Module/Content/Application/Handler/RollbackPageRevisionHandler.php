@@ -65,6 +65,7 @@ final readonly class RollbackPageRevisionHandler
             \is_string($seo['ogType'] ?? null) ? $seo['ogType'] : null,
             $this->normalizer->objectListOrNull($seo['jsonLd'] ?? null),
         );
+        $page->updateMetaTitle(\is_string($seo['metaTitle'] ?? null) ? $seo['metaTitle'] : null);
 
         foreach ($this->blocks->findByPage((string) $page->id()) as $block) {
             $this->blocks->remove($block);

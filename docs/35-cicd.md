@@ -64,7 +64,7 @@
    - `VITE_MANIFEST_PATH` указывает на реальный `public_html/build/.vite/manifest.json`: в `APP_ENV=test`
      по умолчанию используется фикстурный манифест (`tests/Fixtures/vite/manifest.json`), ассеты которого не существуют.
 6. Устанавливает Chromium (`npx playwright install --with-deps chromium`).
-7. Запускает `npm run test:e2e:smoke` (login -> pages -> builder -> preview, DnD-сортировка блоков в builder, negative 422 contract check).
+7. Запускает `npm run test:e2e:smoke` (login -> pages -> builder -> preview, DnD-сортировка блоков в builder с проверкой сохранённого порядка через `GET /builder` и после перезагрузки страницы, negative 422 contract check).
 8. При падении публикует Playwright artifacts (`test-results`, `playwright-report`, app server log).
 
 ### `.github/workflows/deploy-staging-beget.yml`

@@ -110,18 +110,19 @@
 
 | Поле | Тип | Где рендерится |
 |---|---|---|
-| `title` | `string(255)`, NOT NULL | `<title>` в `base.html.twig` блок `title` |
+| `title` | `string(255)`, NOT NULL | название страницы; fallback для `<title>`, если нет `meta_title` и шаблона |
+| `meta_title` | `string(255)`, NULL | SEO-title: `<title>` в `base.html.twig` блок `title` и fallback для `og:title` (миграция `Version20261005090000`) |
 | `h1` | `string(255)`, NOT NULL | `<h1>` в `show.html.twig` |
 | `indexable` | `bool`, NOT NULL | `<meta name="robots">` в `base.html.twig` через `meta_robots` |
 | `meta_description` | `string(320)`, NULL | `<meta name="description">` |
 | `canonical_url` | `string(2048)`, NULL | `<link rel="canonical">` (если NULL — fallback на `absolute_url(page.path)`) |
-| `og_title` | `string(255)`, NULL | `<meta property="og:title">` (fallback на `title`) |
+| `og_title` | `string(255)`, NULL | `<meta property="og:title">` (fallback на эффективный `<title>`: `meta_title` → шаблон → `title`) |
 | `og_description` | `string(320)`, NULL | `<meta property="og:description">` (fallback на `meta_description`) |
 | `og_image` | `string(2048)`, NULL | `<meta property="og:image">` + автоматически twitter card |
 | `og_type` | `string(32)`, NULL | `<meta property="og:type">` (default `website`) |
 | `json_ld` | `JSON`, NULL | массив `<script type="application/ld+json">` блоков |
 
-Управление через admin API: `PUT /admin/api/content/pages/{id}/seo` (требует `AdminPermission::SEO_EDIT`). Все SEO-поля nullable; пустая строка нормализуется в NULL; canonical/og_image валидируются как абсолютные URL.
+Управление через admin API: `PUT /admin/api/content/pages/{id}/seo` (требует `AdminPermission::SEO_EDIT`). Все SEO-поля nullable; поле `metaTitle` необязательно в теле запроса — если ключ не передан, текущее значение сохраняется (обратная совместимость со старым клиентом), `null` или пустая строка очищает его; длина `metaTitle` ограничена 255 символами, превышение даёт `422 VALIDATION`; пустая строка нормализуется в NULL; canonical/og_image валидируются как абсолютные URL.
 
 **Целевое состояние** — выделение в embedded `SeoMetadata` (см. [05-domain-model](05-domain-model.md), [ADR-0010](adr/0010-seo-first-cms-architecture.md)) при появлении дополнительных контейнеров (Product, Category, Landing-вариации).
 
@@ -138,6 +139,32 @@
 | `json_ld_blocks` | базовый `SchemaOrgBuilder::webPage()` + редакторские `page.jsonLd` блоки |
 
 `templates/public/page/show.html.twig` рендерит только `<title>` (через extends `base`) и `<h1>` (явно). Все meta-теги — в `base.html.twig`.
+
+### 4.2.1 Эффективный `<title>` и шаблон по умолчанию
+
+`<title>` вычисляет [`SeoTitleResolver`](../src/Module/Seo/Application/Service/SeoTitleResolver.php), результат передаётся в Twig как `seo_title`:
+
+1. Если у страницы задан `metaTitle` — он используется как есть (шаблон не применяется).
+2. Иначе, если в настройках задан `seo.title_template` — применяется шаблон. Подстановки: `{title}` (название страницы), `{h1}`, `{site_name}` (настройка `seo.site_name`, по умолчанию «ЗаборПрофиль»). Пример: `{h1} — заборы в Москве | {site_name}`.
+3. Иначе (шаблон пуст или после подстановки получилась пустая строка) — `Page.title`. Это поведение по умолчанию, оно совпадает с прежним.
+
+Шаблон и название сайта редактируются в админке: «Настройки → Шаблон SEO-title по умолчанию» (или `PUT /admin/api/settings/seo/title_template`). Сохранение настройки сбрасывает кэш публичных страниц. `metaTitle` входит в снимок ревизии (`seoSnapshot.metaTitle`), публикуется и откатывается вместе с остальными SEO-полями; в старых ревизиях ключа нет — это трактуется как «не задан».
+
+### 4.2.2 Редактор: счётчики и превью сниппета
+
+В форме страницы (`/admin/pages`) поля SEO-title и SEO-описание имеют счётчики длины с подсказками (ориентиры: title 10–60 символов, description 80–155; жёсткие пределы сохранения — 255 и 320). Под ними выводится превью сниппета поисковой выдачи (URL-«хлебные крошки», синий заголовок, описание) с тем же правилом выбора заголовка, что и на сервере; обрезка в превью — по 60 и 155 символам. Код: `admin/features/seo/`.
+
+### 4.2.3 Правила SEO-аудита для title
+
+`SeoAuditEngine` проверяет эффективный заголовок (`metaTitle`, а если он пуст — `title`; шаблон не учитывается). Все правила — P2, публикацию не блокируют:
+
+| Код | Условие |
+|---|---|
+| `seo.title.too_short` | короче 10 символов |
+| `seo.title.too_long` | длиннее 60 символов |
+| `seo.title.duplicate` | такой же заголовок у другой опубликованной страницы (сравнение без учёта регистра, до 5 путей в сообщении) |
+
+Поле в отчёте — `metaTitle` или `title` в зависимости от источника.
 
 ### 4.3 Конвенции
 
@@ -293,7 +320,7 @@ flowchart LR
 
 - `og:site_name = ЗаборПрофиль` (статика).
 - `og:type` — `Page.ogType` или `'website'` (default).
-- `og:title` — `Page.ogTitle` или `block('title')`.
+- `og:title` — `Page.ogTitle` или `block('title')` (то есть эффективный `<title>`: `metaTitle` → шаблон → `title`).
 - `og:description` — `Page.ogDescription` или `Page.metaDescription`.
 - `og:url` — равен `canonical_url`.
 - `og:image` — `Page.ogImage`. Если задан, дополнительно рендерится `twitter:card = summary_large_image` и `twitter:image`.

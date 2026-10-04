@@ -8,6 +8,7 @@ use App\Module\Auth\Domain\Security\AdminPermission;
 use App\Module\Content\Application\Service\PublicPageCacheInvalidator;
 use App\Module\Settings\Application\Service\SettingsService;
 use App\Module\Settings\Domain\Entity\Setting;
+use App\Shared\UI\Http\AdminApiErrorResponder;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,6 +23,7 @@ final readonly class SettingsApiController
         private SettingsService $settings,
         private AuthorizationCheckerInterface $authorizationChecker,
         private PublicPageCacheInvalidator $publicPageCache,
+        private AdminApiErrorResponder $errors,
     ) {
     }
 
@@ -64,7 +66,7 @@ final readonly class SettingsApiController
 
             return new JsonResponse(self::settingToArray($setting));
         } catch (Throwable $exception) {
-            return new JsonResponse(['error' => $exception->getMessage()], 422);
+            return $this->errors->fromThrowable($exception, 'Admin Settings API');
         }
     }
 

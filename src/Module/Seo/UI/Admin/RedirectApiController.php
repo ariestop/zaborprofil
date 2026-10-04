@@ -8,6 +8,7 @@ use App\Module\Auth\Domain\Security\AdminPermission;
 use App\Module\Content\Application\Service\PublicPageCacheInvalidator;
 use App\Module\Seo\Domain\Entity\Redirect;
 use App\Module\Seo\Domain\Repository\RedirectRepositoryInterface;
+use App\Shared\UI\Http\AdminApiErrorResponder;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,6 +23,7 @@ final readonly class RedirectApiController
         private RedirectRepositoryInterface $redirects,
         private AuthorizationCheckerInterface $authorizationChecker,
         private PublicPageCacheInvalidator $publicPageCache,
+        private AdminApiErrorResponder $errors,
     ) {
     }
 
@@ -64,7 +66,7 @@ final readonly class RedirectApiController
 
             return new JsonResponse(self::redirectToArray($redirect), 201);
         } catch (Throwable $exception) {
-            return new JsonResponse(['error' => $exception->getMessage()], 422);
+            return $this->errors->fromThrowable($exception, 'Admin Redirect API');
         }
     }
 
@@ -92,7 +94,7 @@ final readonly class RedirectApiController
 
             return new JsonResponse(self::redirectToArray($redirect));
         } catch (Throwable $exception) {
-            return new JsonResponse(['error' => $exception->getMessage()], 422);
+            return $this->errors->fromThrowable($exception, 'Admin Redirect API');
         }
     }
 

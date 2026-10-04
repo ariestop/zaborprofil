@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ page.title }}{% endblock %}
+{% block title %}{{ seo_title is defined and seo_title ? seo_title : page.title }}{% endblock %}
 
 {% block body %}
     <main class="mx-auto max-w-6xl px-6 py-12">

@@ -21,9 +21,10 @@
 | `template` | `string(120)` | по умолчанию `default` |
 | `sortOrder` | `int` | для упорядочивания |
 | `indexable` | `bool` | по умолчанию `true`; рендерится в `<meta name="robots">` |
+| `metaTitle` | `?string(255)` | SEO-title для `<title>`; null = шаблон `seo.title_template` или `title`; управляется через `PUT /admin/api/content/pages/{id}/seo` |
 | `metaDescription` | `?string(320)` | управляется через `PUT /admin/api/content/pages/{id}/seo` |
 | `canonicalUrl` | `?string(2048)` | абсолютный URL; null = автогенерация из `path` |
-| `ogTitle` | `?string(255)` | OpenGraph title; null = fallback на `title` |
+| `ogTitle` | `?string(255)` | OpenGraph title; null = fallback на эффективный `<title>` (`metaTitle` → шаблон → `title`) |
 | `ogDescription` | `?string(320)` | OG description; null = fallback на `metaDescription` |
 | `ogImage` | `?string(2048)` | абсолютный URL; null = OG image не рендерится |
 | `ogType` | `?string(32)` | null = `'website'` |

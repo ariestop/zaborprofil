@@ -9,6 +9,7 @@ use App\Module\Content\UI\Admin\JsonRequest;
 use App\Module\Lead\Domain\Entity\Lead;
 use App\Module\Lead\Domain\Repository\LeadRepositoryInterface;
 use App\Module\Lead\Domain\ValueObject\LeadStatus;
+use App\Shared\UI\Http\AdminApiErrorResponder;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -22,6 +23,7 @@ final readonly class LeadApiController
         private LeadRepositoryInterface $leads,
         private JsonRequest $jsonRequest,
         private AuthorizationCheckerInterface $authorizationChecker,
+        private AdminApiErrorResponder $errors,
     ) {
     }
 
@@ -53,7 +55,7 @@ final readonly class LeadApiController
 
             return new JsonResponse($lead->toArray());
         } catch (Throwable $exception) {
-            return new JsonResponse(['error' => $exception->getMessage()], 400);
+            return $this->errors->fromThrowable($exception, 'Admin Lead API');
         }
     }
 

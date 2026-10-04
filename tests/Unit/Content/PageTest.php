@@ -48,6 +48,7 @@ final class PageTest extends TestCase
     {
         $page = new Page(PageType::Landing, 'Заборы', 'zabory', '/zabory/', 'Заборы');
 
+        self::assertNull($page->metaTitle());
         self::assertNull($page->metaDescription());
         self::assertNull($page->canonicalUrl());
         self::assertNull($page->ogTitle());
@@ -128,5 +129,35 @@ final class PageTest extends TestCase
             ogType: null,
             jsonLd: [['@type' => 'Product']],
         );
+    }
+
+    public function testUpdateMetaTitleTrimsAndClearsEmptyValue(): void
+    {
+        $page = new Page(PageType::Landing, 'Заборы', 'zabory', '/zabory/', 'Заборы');
+
+        $page->updateMetaTitle('  Заборы под ключ | ЗаборПрофиль  ');
+        self::assertSame('Заборы под ключ | ЗаборПрофиль', $page->metaTitle());
+
+        $page->updateMetaTitle('   ');
+        self::assertNull($page->metaTitle());
+    }
+
+    public function testUpdateMetaTitleRejectsValueLongerThanColumn(): void
+    {
+        $page = new Page(PageType::Landing, 'Заборы', 'zabory', '/zabory/', 'Заборы');
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $page->updateMetaTitle(str_repeat('я', 256));
+    }
+
+    public function testUpdateSeoMetadataDoesNotTouchMetaTitle(): void
+    {
+        $page = new Page(PageType::Landing, 'Заборы', 'zabory', '/zabory/', 'Заборы');
+        $page->updateMetaTitle('Заборы под ключ');
+
+        $page->updateSeoMetadata(null, null, null, null, null, null, null);
+
+        self::assertSame('Заборы под ключ', $page->metaTitle());
     }
 }

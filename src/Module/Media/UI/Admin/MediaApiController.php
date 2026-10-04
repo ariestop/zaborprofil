@@ -9,6 +9,7 @@ use App\Module\Media\Application\Service\MediaOptimizer;
 use App\Module\Media\Domain\Entity\MediaAsset;
 use App\Module\Media\Domain\Repository\MediaAssetRepositoryInterface;
 use App\Shared\Infrastructure\Upload\UploadValidator;
+use App\Shared\UI\Http\AdminApiErrorResponder;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,6 +26,7 @@ final readonly class MediaApiController
         private AuthorizationCheckerInterface $authorizationChecker,
         private string $mediaUploadDir,
         private MediaOptimizer $mediaOptimizer,
+        private AdminApiErrorResponder $errors,
     ) {
     }
 
@@ -81,7 +83,7 @@ final readonly class MediaApiController
 
             return new JsonResponse($asset->toArray(), 201);
         } catch (Throwable $exception) {
-            return new JsonResponse(['error' => $exception->getMessage()], 400);
+            return $this->errors->fromThrowable($exception, 'Admin Media API');
         }
     }
 
@@ -99,7 +101,7 @@ final readonly class MediaApiController
 
             return new JsonResponse(null, 204);
         } catch (Throwable $exception) {
-            return new JsonResponse(['error' => $exception->getMessage()], 400);
+            return $this->errors->fromThrowable($exception, 'Admin Media API');
         }
     }
 

@@ -128,6 +128,35 @@ Snapshot хранит:
 }
 ```
 
+### Единый реестр типов блоков и legacy-типы
+
+Backend (`BlockType`) поддерживает два семейства типов:
+
+- **structured** — актуальные типы визуального builder (`hero.classic`, `rich-text`, `features`, `cta`, ...);
+- **legacy** — типы первых версий content API (`hero`, `text`, `text_image`, `feature_grid`, `cta_form`, ...),
+  которые уже сохранены в БД и рендерятся Twig-шаблонами.
+
+Источник правды для обоих семейств — файл `config/content/block-types.json`
+(`structured` — список типов, `legacy` — карта «legacy-тип → канонический structured-тип или `null`»).
+Его читает backend (`BlockTypeCatalog`) и сверяет с `BlockType` unit-тест, а frontend админки держит
+синхронную копию в `admin/modules/page-builder/types.ts` (`STRUCTURED_BLOCK_TYPES`, `LEGACY_BLOCK_TYPES`,
+`LEGACY_BLOCK_TYPE_ALIASES`) и сверяет её со вторым файлом тестом vitest. Добавление нового типа без обновления
+JSON, enum и frontend-реестра приводит к падению тестов.
+
+В builder legacy-блоки открываются и сохраняются без изменения типа и данных: они не показываются в каталоге
+добавления блоков, редактируются через JSON-панель, а их схемы пропускают любые поля. Канонический аналог
+виден в `GET /admin/api/content/block-schemas` (поле `canonicalType`). Автоматической конвертации данных legacy → structured
+нет: формы `content` у типов различаются, поэтому миграция данных не выполнялась.
+
+### Контракт `content` и `settings`
+
+В API-ответах (`/blocks`, `/pages/{id}`, `/builder`, `blocksSnapshot` ревизий) `content` и `settings` всегда JSON-объекты.
+Пустой PHP-массив `[]` сериализуется как `{}` (`JsonObject::from()` в DTO). Ранее такие блоки приходили с `"settings": []`,
+и builder не мог их сохранить. Старые данные в БД (`[]` в JSON-колонках) не требуют миграции: нормализация выполняется при
+сериализации. На входе `settings`/`content` принимают `{}`, `[]` и `null` (как пустой объект), непустой список даёт `422`.
+Frontend дополнительно приводит ответы API к объектам (`blockSerialization.ts`) и при сохранении отправляет блоки
+в порядке builder с последовательными `position`.
+
 ## Admin API
 
 API защищен admin firewall и используется React + TypeScript админкой.
@@ -256,6 +285,9 @@ Preview-ссылки создаются через `GET /admin/api/content/pages
 - `tests/Unit/Content/PageTest.php`
 - `tests/Integration/Content/DoctrineContentRepositoryTest.php`
 - `tests/Functional/Content/AdminContentApiTest.php`
+- `tests/Unit/Content/BlockTypeCatalogTest.php` (реестр типов совпадает с `BlockType`)
+- `admin/modules/page-builder/registry/blockRegistry.spec.ts`, `admin/modules/page-builder/utils/blockSerialization.spec.ts` (vitest: реестр frontend и нормализация ответов API)
+- `tests/e2e/admin-smoke.spec.ts` (DnD + сохранение порядка блоков, созданных через content API)
 
 Запуск:
 

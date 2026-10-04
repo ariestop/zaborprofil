@@ -8,6 +8,7 @@ use App\Module\Content\Application\Service\PageBlockView;
 use App\Module\Content\Application\Service\PagePreviewToken;
 use App\Module\Content\Application\Service\PublicPageView;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
+use App\Module\Seo\Application\Service\SeoTitleResolver;
 use App\Shared\Application\Logging\BusinessEventLogger;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -24,6 +25,7 @@ final class PagePreviewController extends AbstractController
         PageRepositoryInterface $pages,
         TwigBlockRenderer $blockRenderer,
         UrlGeneratorInterface $urlGenerator,
+        SeoTitleResolver $seoTitle,
         BusinessEventLogger $businessEvents,
     ): Response {
         if (!$previewToken->isValid($id, $token)) {
@@ -51,6 +53,7 @@ final class PagePreviewController extends AbstractController
         $response = $this->render('public/page/show.html.twig', [
             'page' => PublicPageView::fromPage($page),
             'blocks' => $blocks,
+            'seo_title' => $seoTitle->resolve($page->title(), $page->h1(), $page->metaTitle()),
             'meta_description' => $page->metaDescription(),
             'meta_robots' => 'noindex, nofollow',
             'canonical_url' => $canonical,

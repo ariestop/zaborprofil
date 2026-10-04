@@ -11,7 +11,8 @@ namespace App\Module\Content\Application\Service;
  */
 final class PublicPageCacheKey
 {
-    public const string PREFIX = 'content.public_page.';
+    // Bump the version whenever PublicPageView changes shape: the cache holds serialized objects.
+    public const string PREFIX = 'content.public_page.v2.';
 
     public static function forPath(string $normalizedPath): string
     {

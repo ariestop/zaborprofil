@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Module\Content\Application\DTO;
 
+use App\Module\Content\Application\Service\JsonObject;
 use App\Module\Content\Domain\Entity\PageBlock;
 
 final readonly class BuilderBlockOutput
@@ -50,8 +51,8 @@ final readonly class BuilderBlockOutput
             'type' => $this->type,
             'enabled' => $this->enabled,
             'position' => $this->position,
-            'content' => $this->content,
-            'settings' => $this->settings,
+            'content' => JsonObject::from($this->content),
+            'settings' => JsonObject::from($this->settings),
             'metadata' => $this->metadata,
         ];
     }

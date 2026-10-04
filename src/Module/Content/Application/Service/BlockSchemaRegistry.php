@@ -9,6 +9,10 @@ use InvalidArgumentException;
 
 final readonly class BlockSchemaRegistry
 {
+    public function __construct(private BlockTypeCatalog $catalog)
+    {
+    }
+
     /**
      * @return list<BlockSchema>
      */
@@ -63,7 +67,10 @@ final readonly class BlockSchemaRegistry
             );
         }
 
-        return $schemas;
+        return array_map(
+            fn (BlockSchema $schema): BlockSchema => $schema->withCanonicalType($this->catalog->canonicalFor($schema->type)),
+            $schemas,
+        );
     }
 
     public function get(BlockType $type): BlockSchema

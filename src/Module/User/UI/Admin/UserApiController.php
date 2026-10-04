@@ -10,6 +10,7 @@ use App\Module\User\Domain\AdminRole;
 use App\Module\User\Domain\Exception\UserManagementException;
 use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
 use App\Module\User\Infrastructure\Repository\AdminUserRepository;
+use App\Shared\UI\Http\AdminApiErrorResponder;
 use InvalidArgumentException;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -17,6 +18,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Uid\Ulid;
+use Throwable;
 
 #[Route('/admin/api/users')]
 final readonly class UserApiController
@@ -26,6 +28,7 @@ final readonly class UserApiController
         private Security $security,
         private AdminUserRepository $users,
         private AdminUserService $service,
+        private AdminApiErrorResponder $errors,
     ) {
     }
 
@@ -79,6 +82,8 @@ final readonly class UserApiController
             $user = $this->service->create($email, $password, $roles);
         } catch (UserManagementException $exception) {
             return $this->domainError($exception);
+        } catch (Throwable $exception) {
+            return $this->errors->fromThrowable($exception, 'Admin User API');
         }
 
         return new JsonResponse(self::serializeUser($user), 201);
@@ -105,6 +110,8 @@ final readonly class UserApiController
             $this->service->changeOwnPassword($actor, $current, $password);
         } catch (UserManagementException $exception) {
             return $this->domainError($exception);
+        } catch (Throwable $exception) {
+            return $this->errors->fromThrowable($exception, 'Admin User API');
         }
 
         return new JsonResponse(['status' => 'ok']);
@@ -143,6 +150,8 @@ final readonly class UserApiController
             $this->service->updateRoles($actor, $target, $roles);
         } catch (UserManagementException $exception) {
             return $this->domainError($exception);
+        } catch (Throwable $exception) {
+            return $this->errors->fromThrowable($exception, 'Admin User API');
         }
 
         return new JsonResponse(self::serializeUser($target));
@@ -171,6 +180,8 @@ final readonly class UserApiController
             $this->service->changePassword($target, $password);
         } catch (UserManagementException $exception) {
             return $this->domainError($exception);
+        } catch (Throwable $exception) {
+            return $this->errors->fromThrowable($exception, 'Admin User API');
         }
 
         return new JsonResponse(self::serializeUser($target));
@@ -204,6 +215,8 @@ final readonly class UserApiController
             $this->service->setActive($actor, $target, $active);
         } catch (UserManagementException $exception) {
             return $this->domainError($exception);
+        } catch (Throwable $exception) {
+            return $this->errors->fromThrowable($exception, 'Admin User API');
         }
 
         return new JsonResponse(self::serializeUser($target));
@@ -230,6 +243,8 @@ final readonly class UserApiController
             $this->service->delete($actor, $target);
         } catch (UserManagementException $exception) {
             return $this->domainError($exception);
+        } catch (Throwable $exception) {
+            return $this->errors->fromThrowable($exception, 'Admin User API');
         }
 
         return new JsonResponse(null, 204);
@@ -282,7 +297,7 @@ final readonly class UserApiController
 
     private function notFound(): JsonResponse
     {
-        return new JsonResponse(['error' => 'User not found.'], 404);
+        return $this->errors->notFound('User not found.');
     }
 
     private function accessDenied(): JsonResponse
@@ -298,10 +313,7 @@ final readonly class UserApiController
      */
     private function validationError(array $details): JsonResponse
     {
-        return new JsonResponse([
-            'error' => 'Validation failed.',
-            'details' => $details,
-        ], 422);
+        return $this->errors->validation('Validation failed.', details: $details);
     }
 
     private function domainError(UserManagementException $exception): JsonResponse

@@ -15,7 +15,7 @@ use Doctrine\Migrations\Version\Version;
 use InvalidArgumentException;
 use ReflectionClass;
 
-final readonly class MigrationAdminService
+final readonly class MigrationAdminService implements MigrationAdminServiceInterface
 {
     public function __construct(
         private DependencyFactory $dependencyFactory,

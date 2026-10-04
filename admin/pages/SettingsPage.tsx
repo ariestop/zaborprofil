@@ -3,6 +3,7 @@ import { useSettingsQuery, useUpsertSettingMutation } from '../entities/settings
 import { PageHeader, Card, Button, ErrorState, PageLoadingState, Select } from '../shared/ui'
 import { useToast } from '../app/providers/toast-provider'
 import { Link } from 'react-router-dom'
+import { SeoTitleSettingsCard } from '../features/seo/SeoTitleSettingsCard'
 
 type PublicBlocksSource = 'snapshot' | 'live'
 
@@ -99,6 +100,7 @@ export default function SettingsPage() {
           </div>
         </div>
       </Card>
+      <SeoTitleSettingsCard />
       <Card className="mt-4" title="Системные инструменты">
         <div className="text-sm">
           <Link

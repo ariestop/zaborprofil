@@ -16,6 +16,7 @@ export interface MigrationItem {
   executionTime: number | null
   canApply: boolean
   canRollback: boolean
+  actionsAllowed: boolean
 }
 
 export interface RedirectItem {
@@ -96,6 +97,7 @@ export interface AuditLogEntryItem {
 }
 
 export interface PageSeoPayload {
+  metaTitle: string | null
   metaDescription: string | null
   canonicalUrl: string | null
   ogTitle: string | null
