@@ -69,6 +69,9 @@ final class Page
     #[ORM\Column(length: 32, enumType: PageVisibility::class)]
     private PageVisibility $visibility = PageVisibility::Public;
 
+    #[ORM\Column(name: 'meta_title', length: 255, nullable: true)]
+    private ?string $metaTitle = null;
+
     #[ORM\Column(name: 'meta_description', length: 320, nullable: true)]
     private ?string $metaDescription = null;
 
@@ -215,6 +218,11 @@ final class Page
         return $this->visibility;
     }
 
+    public function metaTitle(): ?string
+    {
+        return $this->metaTitle;
+    }
+
     public function metaDescription(): ?string
     {
         return $this->metaDescription;
@@ -355,6 +363,12 @@ final class Page
         $this->ogImage = self::normalizeOptionalAbsoluteUrl($ogImage, 'ogImage');
         $this->ogType = self::normalizeOptionalString($ogType, 32, 'ogType');
         $this->jsonLd = self::normalizeJsonLd($jsonLd);
+        $this->touch();
+    }
+
+    public function updateMetaTitle(?string $metaTitle): void
+    {
+        $this->metaTitle = self::normalizeOptionalString($metaTitle, 255, 'metaTitle');
         $this->touch();
     }
 

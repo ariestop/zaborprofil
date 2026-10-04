@@ -115,6 +115,29 @@ final class DoctrinePageRepository extends ServiceEntityRepository implements Pa
     }
 
     /**
+     * @return list<string>
+     */
+    public function findPublishedPathsBySeoTitle(string $seoTitle, string $excludeId, int $limit = 5): array
+    {
+        /** @var list<array{path: string}> $rows */
+        $rows = $this->createQueryBuilder('page')
+            ->select('page.path AS path')
+            ->andWhere('COALESCE(page.metaTitle, page.title) = :seoTitle')
+            ->andWhere('page.status = :status')
+            ->andWhere('page.deletedAt IS NULL')
+            ->andWhere('page.id != :excludeId')
+            ->setParameter('seoTitle', $seoTitle)
+            ->setParameter('status', PageStatus::Published)
+            ->setParameter('excludeId', $this->toUlid($excludeId), UlidType::NAME)
+            ->orderBy('page.path', 'ASC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getArrayResult();
+
+        return array_map(static fn (array $row): string => $row['path'], $rows);
+    }
+
+    /**
      * @return list<Page>
      */
     public function findAllForAdmin(): array

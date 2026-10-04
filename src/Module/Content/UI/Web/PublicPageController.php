@@ -7,6 +7,7 @@ namespace App\Module\Content\UI\Web;
 use App\Module\Content\Application\Service\PublicPageResolverInterface;
 use App\Module\Menu\Application\Service\BreadcrumbBuilder;
 use App\Module\Seo\Application\Service\SchemaOrgBuilder;
+use App\Module\Seo\Application\Service\SeoTitleResolver;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,6 +23,7 @@ final class PublicPageController extends AbstractController
         TwigBlockRenderer $blockRenderer,
         UrlGeneratorInterface $urlGenerator,
         SchemaOrgBuilder $schemaOrg,
+        SeoTitleResolver $seoTitle,
         BreadcrumbBuilder $breadcrumbBuilder,
         #[Autowire('%app.site_url%')]
         string $siteUrl,
@@ -49,6 +51,7 @@ final class PublicPageController extends AbstractController
         return $this->render('public/page/show.html.twig', [
             'page' => $page,
             'blocks' => $blocks,
+            'seo_title' => $seoTitle->resolve($page->title, $page->h1, $page->metaTitle),
             'meta_description' => $page->metaDescription,
             'meta_robots' => $page->isIndexable ? 'index, follow' : 'noindex, nofollow',
             'canonical_url' => $canonical,

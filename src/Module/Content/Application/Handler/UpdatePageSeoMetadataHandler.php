@@ -36,6 +36,10 @@ final readonly class UpdatePageSeoMetadataHandler
             $command->jsonLd,
         );
 
+        if ($command->metaTitleProvided) {
+            $page->updateMetaTitle($command->metaTitle);
+        }
+
         $this->pages->save($page);
 
         $this->publicPageCache->invalidate($page->path());
