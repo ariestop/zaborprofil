@@ -8,6 +8,8 @@ use App\Module\Content\Domain\Entity\Page;
 use App\Module\Content\Domain\Enum\PageStatus;
 use App\Module\Content\Domain\Exception\ContentNotFoundException;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
+use App\Module\Content\Domain\Repository\PageSearchCriteria;
+use App\Module\Content\Domain\Repository\PageSearchResult;
 use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
@@ -152,6 +154,43 @@ final class DoctrinePageRepository extends ServiceEntityRepository implements Pa
             ->getResult();
 
         return $result;
+    }
+
+    public function searchForAdmin(PageSearchCriteria $criteria): PageSearchResult
+    {
+        $builder = $this->createQueryBuilder('page')
+            ->andWhere('page.deletedAt IS NULL');
+
+        $query = $criteria->query === null ? '' : trim($criteria->query);
+        if ($query !== '') {
+            $builder
+                ->andWhere('page.title LIKE :query OR page.path LIKE :query')
+                ->setParameter('query', '%'.addcslashes($query, '%_\\').'%');
+        }
+
+        if ($criteria->status !== null) {
+            $builder
+                ->andWhere('page.status = :status')
+                ->setParameter('status', $criteria->status);
+        }
+
+        $total = (int) (clone $builder)
+            ->select('COUNT(page.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $perPage = $criteria->normalizedPerPage();
+
+        /** @var list<Page> $items */
+        $items = $builder
+            ->orderBy('page.updatedAt', 'DESC')
+            ->addOrderBy('page.path', 'ASC')
+            ->setFirstResult(($criteria->normalizedPage() - 1) * $perPage)
+            ->setMaxResults($perPage)
+            ->getQuery()
+            ->getResult();
+
+        return new PageSearchResult($items, $total);
     }
 
     public function findDueForScheduledPublish(DateTimeImmutable $now, int $limit): array

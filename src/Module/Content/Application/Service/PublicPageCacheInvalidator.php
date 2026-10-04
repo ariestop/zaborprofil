@@ -13,12 +13,15 @@ use Symfony\Contracts\Cache\TagAwareCacheInterface;
  *
  * Always invoke for **both** the previous and the new path on update, because
  * a path change leaves a stale entry under the previous key.
+ *
+ * Вместе с кэшем резолвера сбрасывает HTTP-кэш веб-сервера ({@see PublicHttpCachePurgerInterface}).
  */
 final readonly class PublicPageCacheInvalidator
 {
     public function __construct(
         #[Autowire(service: 'cache.public_page')]
         private TagAwareCacheInterface $cache,
+        private PublicHttpCachePurgerInterface $httpCachePurger,
     ) {
     }
 
@@ -27,6 +30,7 @@ final readonly class PublicPageCacheInvalidator
         $normalized = PublicPagePathNormalizer::normalize($path);
         $this->cache->delete(PublicPageCacheKey::forPath($normalized));
         $this->cache->invalidateTags([PublicPageCacheKey::tagForPath($normalized)]);
+        $this->httpCachePurger->purgePath($normalized);
     }
 
     /**
@@ -46,11 +50,13 @@ final readonly class PublicPageCacheInvalidator
             $seen[$normalized] = true;
             $this->cache->delete(PublicPageCacheKey::forPath($normalized));
             $this->cache->invalidateTags([PublicPageCacheKey::tagForPath($normalized)]);
+            $this->httpCachePurger->purgePath($normalized);
         }
     }
 
     public function invalidateAll(): void
     {
         $this->cache->invalidateTags([PublicPageCacheKey::globalTag()]);
+        $this->httpCachePurger->purgeAll();
     }
 }

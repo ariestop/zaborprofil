@@ -65,6 +65,7 @@ final class PagePreviewController extends AbstractController
             'is_preview' => true,
         ]);
         $response->headers->set('X-Robots-Tag', 'noindex,nofollow');
+        $response->headers->set('Cache-Control', 'no-store, private');
 
         return $response;
     }

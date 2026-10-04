@@ -41,6 +41,11 @@ interface PageRepositoryInterface
      */
     public function findAllForAdmin(): array;
 
+    /**
+     * Страница списка для админки: поиск по названию и адресу, фильтр по статусу, пагинация на стороне БД.
+     */
+    public function searchForAdmin(PageSearchCriteria $criteria): PageSearchResult;
+
     public function countPublishedIndexable(): int;
 
     /**

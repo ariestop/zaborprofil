@@ -10,6 +10,7 @@ use App\Module\Seo\Application\Service\SchemaOrgBuilder;
 use App\Module\Seo\Application\Service\SeoTitleResolver;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -19,12 +20,14 @@ final class PublicPageController extends AbstractController
     #[Route('/{path}', name: 'content_public_page', requirements: ['path' => '.*'], priority: -100, methods: ['GET'])]
     public function __invoke(
         string $path,
+        Request $request,
         PublicPageResolverInterface $resolver,
         TwigBlockRenderer $blockRenderer,
         UrlGeneratorInterface $urlGenerator,
         SchemaOrgBuilder $schemaOrg,
         SeoTitleResolver $seoTitle,
         BreadcrumbBuilder $breadcrumbBuilder,
+        PublicPageHttpCache $httpCache,
         #[Autowire('%app.site_url%')]
         string $siteUrl,
     ): Response {
@@ -48,7 +51,7 @@ final class PublicPageController extends AbstractController
             ...($page->jsonLd ?? []),
         ];
 
-        return $this->render('public/page/show.html.twig', [
+        $response = $this->render('public/page/show.html.twig', [
             'page' => $page,
             'blocks' => $blocks,
             'seo_title' => $seoTitle->resolve($page->title, $page->h1, $page->metaTitle),
@@ -62,6 +65,9 @@ final class PublicPageController extends AbstractController
             'breadcrumbs' => $breadcrumbs,
             'json_ld_blocks' => $jsonLdBlocks,
         ]);
+        $httpCache->apply($response, $request);
+
+        return $response;
     }
 
     private function notFoundResponse(): Response

@@ -26,8 +26,10 @@ use App\Module\Content\Application\Handler\UpdatePageSeoMetadataHandler;
 use App\Module\Content\Application\Service\ContentId;
 use App\Module\Content\Application\Service\PagePreviewToken;
 use App\Module\Content\Application\Service\PageWorkflowState;
+use App\Module\Content\Domain\Enum\PageStatus;
 use App\Module\Content\Domain\Repository\PageBlockRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
+use App\Module\Content\Domain\Repository\PageSearchCriteria;
 use App\Module\Content\Domain\ValueObject\PageVisibility;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -47,14 +49,40 @@ final readonly class PageApiController
     }
 
     #[Route('', name: 'admin_api_content_page_index', methods: ['GET'])]
-    public function index(PageRepositoryInterface $pages): JsonResponse
+    public function index(Request $request, PageRepositoryInterface $pages): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_VIEW)) {
             return $this->accessDenied();
         }
 
+        if ($request->query->has('page') || $request->query->has('perPage')) {
+            return $this->paginatedIndex($request, $pages);
+        }
+
         return new JsonResponse([
             'pages' => array_map(static fn ($page): array => PageOutput::fromPage($page)->toArray(), $pages->findAllForAdmin()),
+        ]);
+    }
+
+    private function paginatedIndex(Request $request, PageRepositoryInterface $pages): JsonResponse
+    {
+        $criteria = new PageSearchCriteria(
+            $request->query->getString('q') ?: null,
+            PageStatus::tryFrom($request->query->getString('status')),
+            $request->query->getInt('page', 1),
+            $request->query->getInt('perPage', 25),
+        );
+        $result = $pages->searchForAdmin($criteria);
+        $perPage = $criteria->normalizedPerPage();
+
+        return new JsonResponse([
+            'pages' => array_map(static fn ($page): array => PageOutput::fromPage($page)->toArray(), $result->items),
+            'meta' => [
+                'total' => $result->total,
+                'page' => $criteria->normalizedPage(),
+                'perPage' => $perPage,
+                'pages' => max(1, (int) ceil($result->total / $perPage)),
+            ],
         ]);
     }
 
