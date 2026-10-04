@@ -93,16 +93,16 @@ test.describe('Content to lead flow', () => {
     await page.getByLabel(CRM_SELECTORS.searchLabel).fill(visitorName)
     const row = page.getByTestId('lead-row').filter({ hasText: visitorName })
     await expect(row).toHaveCount(1)
-    await expect(row.getByText('Новая', { exact: true })).toBeVisible()
     await row.getByRole('link', { name: visitorName }).click()
 
     const detail = page.getByTestId('lead-detail')
     await expect(detail.getByRole('heading', { name: visitorName })).toBeVisible()
+    await expect(detail.getByText('Новая', { exact: true })).toBeVisible()
     await Promise.all([
       page.waitForResponse((statusResponse) => statusResponse.request().method() === 'PATCH' && /\/admin\/api\/leads\/[0-9A-Za-z]{26}\/status$/.test(statusResponse.url()) && statusResponse.ok()),
       detail.getByRole('button', { name: CRM_SELECTORS.takeIntoWorkName }).click(),
     ])
     await expect(detail.getByText('В работе', { exact: true }).first()).toBeVisible()
-    await expect(row.getByText('В работе', { exact: true })).toBeVisible()
+    await expect(page.getByRole('status').getByRole('button', { name: 'Отменить' })).toBeVisible()
   })
 })

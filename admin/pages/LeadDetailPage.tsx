@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useToast } from '../app/providers/toast-provider'
 import {
@@ -6,29 +6,63 @@ import {
   useLeadAssigneesQuery,
   useLeadNoteMutation,
   useLeadQuery,
+  useLeadReadMutation,
   useLeadStatusMutation,
 } from '../entities/lead/api'
-import { leadSourceLabel, leadStatusLabel, leadStatusTone as statusTone, nextLeadAction } from '../entities/lead/model'
+import { leadSourceLabel, leadStatusLabel, nextLeadAction } from '../entities/lead/model'
+import {
+  describeSpam,
+  formatLeadEventTime,
+  formatLeadReceived,
+  LEAD_PILL_STYLES,
+  leadInitials,
+  leadPagePath,
+  leadUtmText,
+} from '../entities/lead/presentation'
 import { describeApiError } from '../features/seo/redirects/redirect-rules'
 import { NavIcon } from '../layouts/nav-icons'
-import { formatDateTime } from '../shared/lib/format'
-import { Badge, Button, Card, ErrorState, PageLoadingState, Select, Textarea } from '../shared/ui'
-import type { LeadEvent, LeadStatus } from '../types/api'
+import { cn } from '../shared/lib/cn'
+import { ErrorState, PageLoadingState } from '../shared/ui'
+import { useCan } from '../stores/auth'
+import type { LeadDetail, LeadEvent, LeadStatus } from '../types/api'
 
 const NOTE_MAX_LENGTH = 2000
-const STATUSES: LeadStatus[] = ['new', 'in_progress', 'done', 'spam']
 const NO_ASSIGNEE = 'none'
 
-function describeEvent(event: LeadEvent): string {
+const sectionTitle = 'm-0 text-xs font-semibold uppercase tracking-[0.06em] text-[#5D6679] dark:text-slate-400'
+const card = 'rounded-[14px] border border-[#E4E7EC] bg-white dark:border-slate-800 dark:bg-slate-900'
+const outlineAction = 'inline-flex h-[42px] items-center gap-2 rounded-[11px] border border-[#D0D5DD] bg-white px-3.5 text-sm font-semibold text-[#101828] no-underline transition hover:bg-slate-50 hover:text-[#101828] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800'
+
+function phoneHref(phone: string): string {
+  return `tel:${phone.replace(/[^\d+]/g, '')}`
+}
+
+function hasConsent(snapshot: Record<string, unknown> | null | undefined): boolean {
+  return snapshot !== null && snapshot !== undefined && snapshot.consent === true
+}
+
+function statusWord(status: unknown): string {
+  return typeof status === 'string' ? leadStatusLabel(status).toLowerCase() : '—'
+}
+
+interface TimelineItem {
+  key: string
+  time: string
+  text: ReactNode
+}
+
+function describeEvent(event: LeadEvent): ReactNode {
   if (event.type === 'note') {
-    return event.body ?? ''
+    return (
+      <>
+        Заметка: {event.body ?? ''}
+        <span className="text-[#5D6679] dark:text-slate-400"> — {event.actorLabel}</span>
+      </>
+    )
   }
 
   if (event.type === 'status_changed') {
-    const from = typeof event.data.from === 'string' ? leadStatusLabel(event.data.from) : '—'
-    const to = typeof event.data.to === 'string' ? leadStatusLabel(event.data.to) : '—'
-
-    return `Статус изменён: ${from} → ${to}`
+    return `Статус: ${statusWord(event.data.to)}`
   }
 
   const target = typeof event.data.toLabel === 'string' ? event.data.toLabel : null
@@ -36,57 +70,84 @@ function describeEvent(event: LeadEvent): string {
   return target === null ? 'Ответственный снят' : `Назначен ответственный: ${target}`
 }
 
-const eventTitles: Record<LeadEvent['type'], string> = {
-  note: 'Заметка',
-  status_changed: 'Статус',
-  assigned: 'Назначение',
+function receivedText(lead: LeadDetail): string {
+  if (lead.source === 'phone_call') {
+    return 'Заявка создана вручную после звонка'
+  }
+
+  const path = leadPagePath(lead.pageUrl)
+
+  return path === '—' ? 'Заявка получена' : `Заявка получена с формы на странице ${path}`
 }
 
-function phoneHref(phone: string): string {
-  return `tel:${phone.replace(/[^\d+]/g, '')}`
+function timeline(lead: LeadDetail): TimelineItem[] {
+  return [
+    { key: 'received', time: formatLeadEventTime(lead.createdAt), text: receivedText(lead) },
+    ...lead.events.map((event) => ({ key: event.id, time: formatLeadEventTime(event.createdAt), text: describeEvent(event) })),
+  ]
 }
 
-function hasConsent(snapshot: Record<string, unknown> | null | undefined): boolean {
-  return snapshot !== null && snapshot !== undefined && Object.keys(snapshot).length > 0
+export interface LeadStatusChangeTarget {
+  id: string
+  name: string
+  status: LeadStatus
 }
 
 interface LeadDetailPageProps {
   /** Идентификатор заявки; по умолчанию берётся из адреса `/admin/crm/:leadId`. */
   leadId?: string
-  /** Куда ведёт кнопка «Закрыть» в режиме панели рядом со списком. */
+  /** Куда ведёт ссылка «К списку заявок» на телефоне. */
   closeHref?: string
+  /**
+   * Смена статуса делегируется рабочему месту «Заявки», чтобы показать плашку «Отменить».
+   * Без обработчика карточка меняет статус сама.
+   */
+  onChangeStatus?: (lead: LeadStatusChangeTarget, status: LeadStatus) => Promise<void>
 }
 
 /**
  * Карточка заявки. На широком экране показывается справа от списка в разделе «Заявки»,
  * на телефоне — отдельным экраном со ссылкой назад к списку.
  */
-export default function LeadDetailPage({ leadId: leadIdProp, closeHref }: LeadDetailPageProps = {}) {
+export default function LeadDetailPage({ leadId: leadIdProp, closeHref, onChangeStatus }: LeadDetailPageProps = {}) {
   const params = useParams()
   const leadId = leadIdProp ?? params.leadId ?? ''
   const { push } = useToast()
+  const canManage = useCan('leads.manage')
   const leadQuery = useLeadQuery(leadId)
   const assigneesQuery = useLeadAssigneesQuery()
   const statusMutation = useLeadStatusMutation()
   const assigneeMutation = useLeadAssigneeMutation()
   const noteMutation = useLeadNoteMutation()
+  const readMutation = useLeadReadMutation()
   const [note, setNote] = useState('')
+  const markedRead = useRef<string | null>(null)
   const backHref = closeHref ?? '/admin/crm'
+  const lead = leadQuery.data
+
+  // Открытая карточка считается прочитанной: в списке исчезает оранжевая точка.
+  const needsRead = lead !== undefined && lead.readAt === null
+  const { mutate: markRead } = readMutation
+  useEffect(() => {
+    if (needsRead && markedRead.current !== leadId) {
+      markedRead.current = leadId
+      markRead(leadId)
+    }
+  }, [needsRead, leadId, markRead])
 
   if (leadQuery.isPending) {
     return <PageLoadingState />
   }
 
-  if (leadQuery.isError || leadQuery.data === undefined) {
+  if (leadQuery.isError || lead === undefined) {
     return (
       <div className="grid gap-4">
-        <Link className="text-sm text-emerald-700 hover:underline dark:text-emerald-400" to={backHref}>← К списку заявок</Link>
+        <Link className="text-sm text-[#047857] hover:underline lg:hidden dark:text-emerald-400" to={backHref}>← К списку заявок</Link>
         <ErrorState title="Не удалось загрузить заявку" description="Заявка не найдена или нет права leads.view." />
       </div>
     )
   }
 
-  const lead = leadQuery.data
   const assignees = assigneesQuery.data?.items ?? []
   const assigneeOptions = [
     { value: NO_ASSIGNEE, label: 'Не назначен' },
@@ -96,10 +157,18 @@ export default function LeadDetailPage({ leadId: leadIdProp, closeHref }: LeadDe
     assigneeOptions.push({ value: lead.assignee.id, label: lead.assignee.email ?? 'Пользователь удалён' })
   }
   const nextAction = nextLeadAction(lead.status)
+  const spam = describeSpam(lead.spamScore, lead.spamReasons)
+  const consent = hasConsent(lead.consentSnapshot)
 
-  const changeStatus = async (status: string) => {
+  const changeStatus = async (status: LeadStatus) => {
+    if (onChangeStatus !== undefined) {
+      await onChangeStatus({ id: lead.id, name: lead.name, status: lead.status }, status)
+
+      return
+    }
+
     try {
-      await statusMutation.mutateAsync({ leadId: lead.id, status: status as LeadStatus })
+      await statusMutation.mutateAsync({ leadId: lead.id, status })
       push({ title: 'Статус обновлён', description: leadStatusLabel(status) })
     } catch (error) {
       push({ title: 'Не удалось изменить статус', description: describeApiError(error, 'Повторите попытку.') })
@@ -130,167 +199,188 @@ export default function LeadDetailPage({ leadId: leadIdProp, closeHref }: LeadDe
     }
   }
 
-  const secondaryAction = 'inline-flex h-10 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-800 transition hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800'
+  const items = timeline(lead)
 
   return (
-    <div className="grid gap-4" data-testid="lead-detail">
-      <Link className="text-sm text-emerald-700 hover:underline lg:hidden dark:text-emerald-400" to={backHref}>← К списку заявок</Link>
+    <div className="flex flex-col gap-[18px]" data-testid="lead-detail">
+      <Link className="text-sm text-[#047857] hover:underline lg:hidden dark:text-emerald-400" to={backHref}>← К списку заявок</Link>
 
-      <header className="flex flex-wrap items-start gap-x-4 gap-y-3">
+      <div className="flex flex-wrap items-center gap-4">
         <span
           aria-hidden="true"
-          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-100 text-base font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+          className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-full bg-[#F2F4F7] text-[17px] font-bold text-[#344054] dark:bg-slate-800 dark:text-slate-200"
         >
-          {lead.name.trim().charAt(0).toUpperCase() || '?'}
+          {leadInitials(lead.name)}
         </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-xl font-semibold">{lead.name}</h2>
-            <Badge tone={statusTone(lead.status)}>{leadStatusLabel(lead.status)}</Badge>
+        <div className="min-w-0 flex-[1_1_240px]">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="m-0 break-words text-2xl font-bold">{lead.name}</h1>
+            <span className={cn('rounded-full px-[9px] py-1 text-xs font-bold', LEAD_PILL_STYLES[lead.status])}>
+              {leadStatusLabel(lead.status)}
+            </span>
           </div>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {formatDateTime(lead.createdAt)} · {leadSourceLabel(lead.source)}
+          <p className="mt-1 text-[#475467] dark:text-slate-400">
+            {lead.phone} · {lead.email ?? 'email не указан'}
           </p>
         </div>
-        {closeHref !== undefined ? (
-          <Link
-            to={closeHref}
-            aria-label="Закрыть карточку заявки"
-            className="hidden h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 lg:inline-flex dark:hover:bg-slate-800"
-          >
-            <NavIcon name="close" />
-          </Link>
-        ) : null}
-      </header>
-
-      <div className="flex flex-wrap gap-2" aria-label="Быстрые действия">
-        <a className={secondaryAction} href={phoneHref(lead.phone)}>
-          <NavIcon name="phone" size={16} />
-          Позвонить
-        </a>
-        {lead.email !== null ? (
-          <a className={secondaryAction} href={`mailto:${lead.email}`}>
-            <NavIcon name="mail" size={16} />
-            Написать
+        <div className="flex flex-wrap gap-2" aria-label="Быстрые действия">
+          <a className={outlineAction} href={phoneHref(lead.phone)}>
+            <NavIcon name="phone" size={17} />
+            Позвонить
           </a>
-        ) : null}
-        {nextAction !== null ? (
-          <Button
-            type="button"
-            className="h-10"
-            disabled={statusMutation.isPending}
-            onClick={() => void changeStatus(nextAction.status)}
-          >
-            {nextAction.label}
-          </Button>
-        ) : null}
+          {lead.email !== null ? (
+            <a className={outlineAction} href={`mailto:${lead.email}`}>
+              <NavIcon name="send" size={17} />
+              Написать
+            </a>
+          ) : (
+            <button type="button" className={cn(outlineAction, 'cursor-not-allowed opacity-60')} disabled title="Email клиента не указан">
+              <NavIcon name="send" size={17} />
+              Написать
+            </button>
+          )}
+          <button type="button" className={outlineAction} onClick={() => push({ title: 'Смета скоро появится', description: 'Расчёт сметы прямо из заявки — в разработке.' })}>
+            <NavIcon name="calculator" size={17} />
+            Смета
+            <span className="rounded-[5px] bg-[#F2F4F7] px-[5px] py-px text-[10px] font-bold text-[#475467] dark:bg-slate-800 dark:text-slate-300">скоро</span>
+          </button>
+          {nextAction !== null && canManage ? (
+            <button
+              type="button"
+              disabled={statusMutation.isPending}
+              onClick={() => void changeStatus(nextAction.status)}
+              className="h-[42px] rounded-[11px] bg-[#047857] px-4 text-sm font-bold text-white transition hover:bg-[#065F46] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {nextAction.label}
+            </button>
+          ) : null}
+        </div>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
-        <div className="grid content-start gap-4">
-          <Card title="Запрос клиента">
-            <p className="whitespace-pre-wrap break-words text-[15px] leading-relaxed">{lead.message ?? 'Клиент не оставил сообщения.'}</p>
-            <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-              <div>
-                <dt className="text-slate-500 dark:text-slate-400">Телефон</dt>
-                <dd className="font-medium">{lead.phone}</dd>
-              </div>
-              <div>
-                <dt className="text-slate-500 dark:text-slate-400">Email</dt>
-                <dd className="font-medium break-all">{lead.email ?? '—'}</dd>
-              </div>
-              <div>
-                <dt className="text-slate-500 dark:text-slate-400">Источник</dt>
-                <dd className="font-medium">{leadSourceLabel(lead.source)}</dd>
-              </div>
-              <div>
-                <dt className="text-slate-500 dark:text-slate-400">Обновлена</dt>
-                <dd className="font-medium">{formatDateTime(lead.updatedAt)}</dd>
-              </div>
-            </dl>
-          </Card>
-
-          <Card title="История" description="Смена статуса, назначения и заметки менеджеров.">
-            {lead.events.length === 0 ? (
-              <p className="text-sm text-slate-500 dark:text-slate-400">Событий пока нет.</p>
-            ) : (
-              <ol className="grid gap-3" aria-label="История заявки">
-                {lead.events.map((event) => (
-                  <li key={event.id} data-testid="lead-event" className="rounded-lg border border-slate-200 p-3 text-sm dark:border-slate-800">
-                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
-                      <span>{eventTitles[event.type]} · {event.actorLabel}</span>
-                      <time dateTime={event.createdAt}>{formatDateTime(event.createdAt)}</time>
-                    </div>
-                    <p className="mt-1 whitespace-pre-wrap break-words">{describeEvent(event)}</p>
-                  </li>
-                ))}
-              </ol>
-            )}
-            <div className="mt-4 grid gap-2">
-              <Textarea
-                aria-label="Текст заметки"
-                maxLength={NOTE_MAX_LENGTH}
-                placeholder="Итог разговора, договорённости, следующий шаг"
-                value={note}
-                onChange={(event) => setNote(event.target.value)}
-              />
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-500 dark:text-slate-400">{note.length} / {NOTE_MAX_LENGTH}</span>
-                <Button type="button" variant="outline" disabled={note.trim() === '' || noteMutation.isPending} onClick={() => void submitNote()}>
-                  Добавить заметку
-                </Button>
-              </div>
+      <div className="flex flex-wrap items-start gap-4">
+        <section className={cn(card, 'min-w-0 flex-[2_1_420px] p-5')}>
+          <h2 className={sectionTitle}>Запрос клиента</h2>
+          <p className="mt-2.5 whitespace-pre-wrap break-words text-[17px] leading-[1.6]">{lead.message ?? 'Клиент не оставил сообщения.'}</p>
+          <dl className="mt-[18px] flex flex-wrap gap-x-6 gap-y-3.5 text-[13px]">
+            <div className="flex-[1_1_200px]">
+              <dt className="text-[#5D6679] dark:text-slate-400">Источник</dt>
+              <dd className="m-0 mt-0.5">{leadSourceLabel(lead.source)}</dd>
             </div>
-          </Card>
-        </div>
-
-        <div className="grid content-start gap-4">
-          <Card title="Работа с заявкой">
-            <div className="grid gap-4">
-              <div className="grid gap-1">
-                <span className="text-sm text-slate-500 dark:text-slate-400">Статус</span>
-                <Select
-                  value={lead.status}
-                  onValueChange={(status) => void changeStatus(status)}
-                  options={STATUSES.map((status) => ({ value: status, label: leadStatusLabel(status) }))}
-                />
-              </div>
-              <div className="grid gap-1">
-                <span className="text-sm text-slate-500 dark:text-slate-400">Ответственный</span>
-                <Select
-                  value={lead.assignee?.id ?? NO_ASSIGNEE}
-                  onValueChange={(value) => void changeAssignee(value)}
-                  options={assigneeOptions}
-                />
-              </div>
+            <div className="flex-[1_1_200px]">
+              <dt className="text-[#5D6679] dark:text-slate-400">Страница</dt>
+              <dd className="m-0 mt-0.5 break-all">{leadPagePath(lead.pageUrl)}</dd>
             </div>
-          </Card>
+            <div className="flex-[1_1_200px]">
+              <dt className="text-[#5D6679] dark:text-slate-400">Получена</dt>
+              <dd className="m-0 mt-0.5">{formatLeadReceived(lead.createdAt)}</dd>
+            </div>
+            <div className="flex-[1_1_200px]">
+              <dt className="text-[#5D6679] dark:text-slate-400">UTM-метки</dt>
+              <dd className="m-0 mt-0.5 break-all">{leadUtmText(lead.utm)}</dd>
+            </div>
+          </dl>
+        </section>
 
-          <Card title="Антиспам">
-            <p className={lead.spamScore >= 5 ? 'text-sm font-semibold text-red-700 dark:text-red-400' : 'text-sm font-semibold text-emerald-700 dark:text-emerald-400'}>
-              {lead.spamScore >= 5 ? 'Похоже на спам' : 'Подозрений нет'}
-            </p>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Спам-балл: {lead.spamScore}
-              {lead.spamReasons.length > 0 ? ` · ${lead.spamReasons.join(', ')}` : ''}
-            </p>
-          </Card>
+        <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-4">
+          <section className={cn(card, 'flex flex-col gap-2 p-[18px]')}>
+            <label htmlFor="lead-owner" className={sectionTitle}>Ответственный</label>
+            <select
+              id="lead-owner"
+              value={lead.assignee?.id ?? NO_ASSIGNEE}
+              disabled={!canManage || assigneeMutation.isPending}
+              onChange={(event) => void changeAssignee(event.target.value)}
+              className="h-[42px] rounded-[10px] border border-[#D0D5DD] bg-white px-2.5 text-sm text-[#101828] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            >
+              {assigneeOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </section>
 
-          <Card title="Согласие на обработку данных">
-            <p className={hasConsent(lead.consentSnapshot) ? 'text-sm font-semibold text-emerald-700 dark:text-emerald-400' : 'text-sm font-semibold text-amber-700 dark:text-amber-400'}>
-              {hasConsent(lead.consentSnapshot) ? 'Получено при отправке формы' : 'Нет данных о согласии'}
+          <section className={cn(card, 'p-[18px]')}>
+            <h2 className={sectionTitle}>Согласие на обработку данных</h2>
+            <p className={cn('mt-2 font-semibold', consent ? 'text-[#166534] dark:text-green-400' : 'text-[#B54708] dark:text-amber-400')}>
+              {consent ? 'Получено при отправке формы' : 'Согласие не зафиксировано'}
             </p>
-            {hasConsent(lead.consentSnapshot) ? (
-              <details className="mt-2 text-sm">
-                <summary className="cursor-pointer text-slate-500 dark:text-slate-400">Сохранённый снимок</summary>
+            <p className="mt-0.5 text-[13px] text-[#475467] dark:text-slate-400">
+              {consent ? 'Снимок политики сохранён вместе с заявкой' : 'Заявка заведена вручную — подтвердите согласие клиента при разговоре'}
+            </p>
+            {consent ? (
+              <details className="mt-2 text-[13px]">
+                <summary className="cursor-pointer text-[#5D6679] dark:text-slate-400">Сохранённый снимок</summary>
                 <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-slate-50 p-2 font-mono text-xs dark:bg-slate-950">
                   {JSON.stringify(lead.consentSnapshot, null, 2)}
                 </pre>
               </details>
             ) : null}
-          </Card>
+          </section>
+
+          <section className={cn(card, 'p-[18px]')}>
+            <h2 className={sectionTitle}>Антиспам</h2>
+            <p className={cn('mt-2 font-semibold', spam.color)}>{spam.title}</p>
+            <div className="mt-2.5 h-1.5 overflow-hidden rounded-[3px] bg-[#EAECF0] dark:bg-slate-800">
+              <div className={cn('h-1.5', spam.barColor)} style={{ width: `${spam.percent}%` }} />
+            </div>
+            <p className="mt-2 text-[13px] text-[#475467] dark:text-slate-400">{spam.text}</p>
+            {canManage && lead.status !== 'spam' ? (
+              <button
+                type="button"
+                disabled={statusMutation.isPending}
+                onClick={() => void changeStatus('spam')}
+                className="mt-3 text-[13px] font-medium text-[#B42318] hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-60 dark:text-red-400"
+              >
+                Отметить как спам
+              </button>
+            ) : null}
+          </section>
         </div>
       </div>
+
+      <section className={cn(card, 'p-5')}>
+        <h2 className={sectionTitle}>История и заметки</h2>
+        <ol className="m-0 mt-3 flex list-none flex-col gap-3 p-0" aria-label="История заявки">
+          {items.map((item) => (
+            <li key={item.key} data-testid="lead-event" className="flex items-baseline gap-3">
+              <span className="w-12 shrink-0 text-xs text-[#5D6679] dark:text-slate-400">{item.time}</span>
+              <span className="h-2 w-2 shrink-0 rounded-full bg-[#98A2B3]" aria-hidden="true" />
+              <span className="min-w-0 whitespace-pre-wrap break-words text-[#344054] dark:text-slate-200">{item.text}</span>
+            </li>
+          ))}
+        </ol>
+        {canManage ? (
+          <div className="mt-4 flex flex-col gap-2">
+            <label htmlFor="lead-note" className="text-[13px] text-[#475467] dark:text-slate-400">Заметка для команды</label>
+            <textarea
+              id="lead-note"
+              rows={2}
+              maxLength={NOTE_MAX_LENGTH}
+              placeholder="Например: перезвонить после 18:00, замер в субботу"
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              className="box-border w-full resize-y rounded-[11px] border border-[#D0D5DD] bg-white px-3 py-2.5 text-sm text-[#101828] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            />
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="flex flex-wrap gap-x-3.5 gap-y-1.5 text-xs text-[#5D6679] dark:text-slate-400">
+                <span><Kbd>J</Kbd> <Kbd>K</Kbd> навигация</span>
+                <span><Kbd>E</Kbd> следующий статус</span>
+                <span><Kbd>S</Kbd> спам</span>
+              </span>
+              <button
+                type="button"
+                disabled={note.trim() === '' || noteMutation.isPending}
+                onClick={() => void submitNote()}
+                className="h-[38px] rounded-[10px] border border-[#D0D5DD] bg-white px-3.5 text-[13px] font-semibold text-[#101828] transition hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              >
+                Добавить заметку
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </section>
     </div>
   )
+}
+
+function Kbd({ children }: { children: ReactNode }) {
+  return <kbd className="rounded-[5px] border border-[#D0D5DD] px-1.5 py-px font-[inherit] text-[#344054] dark:border-slate-600 dark:text-slate-300">{children}</kbd>
 }

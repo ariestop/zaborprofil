@@ -10,6 +10,10 @@ export interface LeadFilters {
   from: string
   to: string
   assignee: LeadAssigneeFilter
+  /** Только заявки юридических лиц и ИП. */
+  b2b: boolean
+  /** Только новые заявки без ответа дольше указанного числа часов; 0 — фильтр выключен. */
+  waitingHours: number
 }
 
 export interface LeadListParams extends LeadFilters {
@@ -63,6 +67,9 @@ export const LEAD_SOURCE_LABELS: Record<string, string> = {
   public_form: 'Форма на сайте',
   public_page_form: 'Форма на странице',
   callback: 'Обратный звонок',
+  phone_call: 'Звонок',
+  calc_form: 'Форма «Рассчитать стоимость»',
+  telegram: 'Telegram-бот',
   page_engine: 'Конструктор страниц',
 }
 

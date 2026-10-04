@@ -24,11 +24,15 @@ const detail: LeadDetail = {
   phone: '+7 900 111-22-33',
   email: null,
   message: 'Нужен забор',
-  consentSnapshot: { accepted: true },
+  consentSnapshot: { consent: true },
   status: 'new',
   assignee: null,
   spamScore: 0,
   spamReasons: [],
+  pageUrl: 'https://zaborprofil.ru/zabory/proflist?x=1',
+  utm: { source: 'yandex', medium: 'cpc', campaign: 'zabor-proflist' },
+  b2b: false,
+  readAt: '2026-10-01T10:01:00+00:00',
   createdAt: '2026-10-01T10:00:00+00:00',
   updatedAt: '2026-10-01T10:00:00+00:00',
   events: [
@@ -93,10 +97,13 @@ describe('LeadDetailPage', () => {
     renderPage()
 
     expect(await screen.findByRole('heading', { name: 'Анна Петрова' })).toBeTruthy()
-    expect(screen.getByText('+7 900 111-22-33')).toBeTruthy()
+    expect(screen.getByText(/\+7 900 111-22-33/)).toBeTruthy()
     expect(screen.getByText('Нужен забор')).toBeTruthy()
+    expect(screen.getByText('/zabory/proflist')).toBeTruthy()
+    expect(screen.getByText('yandex / cpc / zabor-proflist')).toBeTruthy()
     const events = screen.getAllByTestId('lead-event')
-    expect(within(events[0]!).getByText('Статус изменён: Новая → В работе')).toBeTruthy()
+    expect(within(events[0]!).getByText('Заявка получена с формы на странице /zabory/proflist')).toBeTruthy()
+    expect(within(events[1]!).getByText('Статус: в работе')).toBeTruthy()
   })
 
   it('adds a manager note and clears the form', async () => {
@@ -106,12 +113,12 @@ describe('LeadDetailPage', () => {
     const submit = screen.getByRole('button', { name: 'Добавить заметку' })
     expect((submit as HTMLButtonElement).disabled).toBe(true)
 
-    fireEvent.change(screen.getByLabelText('Текст заметки'), { target: { value: 'Перезвонить завтра' } })
+    fireEvent.change(screen.getByLabelText('Заметка для команды'), { target: { value: 'Перезвонить завтра' } })
     fireEvent.click(submit)
 
-    await waitFor(() => expect(screen.getAllByTestId('lead-event')).toHaveLength(2))
-    expect(screen.getByText('Перезвонить завтра')).toBeTruthy()
-    expect((screen.getByLabelText('Текст заметки') as HTMLTextAreaElement).value).toBe('')
+    await waitFor(() => expect(screen.getAllByTestId('lead-event')).toHaveLength(3))
+    expect(screen.getByText(/Заметка: Перезвонить завтра/)).toBeTruthy()
+    expect((screen.getByLabelText('Заметка для команды') as HTMLTextAreaElement).value).toBe('')
     const noteCall = apiRequest.mock.calls.find((call) => String(call[0]).endsWith('/notes'))
     expect(noteCall?.[1]).toMatchObject({ method: 'POST', body: { text: 'Перезвонить завтра' } })
   })
@@ -140,7 +147,23 @@ describe('LeadDetailPage', () => {
     await screen.findByRole('heading', { name: 'Анна Петрова' })
 
     expect(screen.getByText('Получено при отправке формы')).toBeTruthy()
-    expect(screen.getByText('Подозрений нет')).toBeTruthy()
+    expect(screen.getByText('Чисто')).toBeTruthy()
+    expect(screen.getByText('Спам-балл 0 из 10')).toBeTruthy()
     expect(screen.queryByRole('link', { name: 'Написать' })).toBeNull()
+  })
+
+  it('marks an unread lead as read once and says when consent was not collected', async () => {
+    current = { ...detail, readAt: null, source: 'phone_call', consentSnapshot: { consent: false, origin: 'manual' }, pageUrl: null, utm: {}, spamScore: 120, spamReasons: ['honeypot_filled'] }
+    renderPage()
+    await screen.findByRole('heading', { name: 'Анна Петрова' })
+
+    await waitFor(() => {
+      const reads = apiRequest.mock.calls.filter((call) => String(call[0]).endsWith('/read'))
+      expect(reads).toHaveLength(1)
+    })
+    expect(screen.getByText('Согласие не зафиксировано')).toBeTruthy()
+    expect(screen.getByText('Высокий риск спама')).toBeTruthy()
+    expect(screen.getByText('Спам-балл 10 из 10: honeypot_filled')).toBeTruthy()
+    expect(screen.getByText('Заявка создана вручную после звонка')).toBeTruthy()
   })
 })

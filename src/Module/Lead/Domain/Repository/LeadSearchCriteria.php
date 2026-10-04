@@ -25,6 +25,8 @@ final readonly class LeadSearchCriteria
      * @param ?string $assignee идентификатор пользователя или {@see self::ASSIGNEE_NONE} для заявок без ответственного
      * @param ?DateTimeImmutable $createdFrom включительно
      * @param ?DateTimeImmutable $createdBefore исключительно
+     * @param bool $excludeSpam все статусы, кроме спама; действует, только если конкретный статус не выбран
+     * @param ?int $waitingHours только новые заявки, на которые не ответили дольше указанного числа часов
      */
     public function __construct(
         public ?string $query = null,
@@ -37,6 +39,9 @@ final readonly class LeadSearchCriteria
         public bool $descending = true,
         public int $page = 1,
         public int $perPage = 25,
+        public bool $b2bOnly = false,
+        public ?int $waitingHours = null,
+        public bool $excludeSpam = false,
     ) {
     }
 
@@ -53,6 +58,9 @@ final readonly class LeadSearchCriteria
             $this->descending,
             $this->page,
             $this->perPage,
+            $this->b2bOnly,
+            $this->waitingHours,
+            false,
         );
     }
 }

@@ -65,7 +65,7 @@ export const MEDIA_SELECTORS = {
 } as const
 
 export const CRM_SELECTORS = {
-  searchLabel: 'Поиск заявок',
+  searchLabel: 'Поиск по заявкам',
   takeIntoWorkName: 'Взять в работу',
 } as const
 

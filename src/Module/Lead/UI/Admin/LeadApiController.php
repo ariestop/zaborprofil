@@ -76,6 +76,29 @@ final readonly class LeadApiController
         }
     }
 
+    #[Route('', name: 'admin_api_leads_create', methods: ['POST'])]
+    public function create(Request $request): JsonResponse
+    {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::LEADS_MANAGE)) {
+            return $this->accessDenied();
+        }
+
+        try {
+            $payload = $this->jsonRequest->payload($request);
+            $lead = $this->workflow->createManual(
+                $this->jsonRequest->string($payload, 'name'),
+                $this->jsonRequest->string($payload, 'phone'),
+                $this->jsonRequest->nullableString($payload, 'email'),
+                $this->jsonRequest->nullableString($payload, 'message'),
+                $this->actors->current(),
+            );
+
+            return new JsonResponse($this->presenter->detail($lead, $this->events->findByLead($lead)), 201);
+        } catch (Throwable $exception) {
+            return $this->errors->fromThrowable($exception, 'Admin Lead API');
+        }
+    }
+
     #[Route('/summary', name: 'admin_api_leads_summary', methods: ['GET'])]
     public function summary(): JsonResponse
     {
@@ -163,6 +186,22 @@ final readonly class LeadApiController
             $this->audit->log('lead.viewed', 'lead', (string) $lead->id());
 
             return new JsonResponse($this->presenter->detail($lead, $this->events->findByLead($lead)));
+        } catch (Throwable $exception) {
+            return $this->errors->fromThrowable($exception, 'Admin Lead API');
+        }
+    }
+
+    #[Route('/{id}/read', name: 'admin_api_leads_read', requirements: ['id' => self::ID_PATTERN], methods: ['PATCH'])]
+    public function read(string $id): JsonResponse
+    {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::LEADS_VIEW)) {
+            return $this->accessDenied();
+        }
+
+        try {
+            $lead = $this->workflow->markRead($this->leads->get($id));
+
+            return new JsonResponse(['id' => $id, 'readAt' => $lead->toArray()['readAt']]);
         } catch (Throwable $exception) {
             return $this->errors->fromThrowable($exception, 'Admin Lead API');
         }

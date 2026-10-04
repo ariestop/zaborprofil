@@ -1,3 +1,4 @@
+import type { Ref } from 'react'
 import { useTheme } from '../app/providers/theme-provider'
 import { useCommandPalette } from '../app/providers/command-palette-provider'
 import { useSystemOverviewQuery } from '../entities/system/api'
@@ -7,7 +8,7 @@ import { NavIcon } from './nav-icons'
 const ENVIRONMENT_LABELS: Record<string, string> = {
   dev: 'Локальная разработка',
   test: 'Тестовое окружение',
-  staging: 'Тестовый стенд',
+  staging: 'DEV-стенд',
 }
 
 /** Подпись окружения для плашки в шапке; для боевого сайта плашки нет. */
@@ -23,9 +24,11 @@ const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigat
 
 interface TopbarProps {
   onOpenNav: () => void
+  /** Ссылка на контейнер, в который страницы выводят свои действия. */
+  actionsRef?: Ref<HTMLDivElement>
 }
 
-export function Topbar({ onOpenNav }: TopbarProps) {
+export function Topbar({ onOpenNav, actionsRef }: TopbarProps) {
   const { theme, toggleTheme } = useTheme()
   const { open: openCommandPalette } = useCommandPalette()
   const overview = useSystemOverviewQuery()
@@ -47,7 +50,7 @@ export function Topbar({ onOpenNav }: TopbarProps) {
           className="order-last flex h-10 w-full items-center gap-2 rounded-lg border border-slate-300 bg-slate-50 px-3 text-left text-sm text-slate-500 transition hover:bg-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 sm:order-none sm:ml-6 sm:w-auto sm:min-w-72 sm:max-w-md sm:flex-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
         >
           <NavIcon name="search" />
-          <span className="flex-1 truncate">Найти раздел или команду…</span>
+          <span className="flex-1 truncate">Найти страницу, заявку или команду…</span>
           <kbd className="rounded-md border border-slate-300 bg-white px-1.5 py-0.5 font-sans text-xs text-slate-600 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300">
             {isMac ? '⌘K' : 'Ctrl K'}
           </kbd>
@@ -55,10 +58,11 @@ export function Topbar({ onOpenNav }: TopbarProps) {
 
         <div className="ml-auto flex items-center gap-2">
           {envLabel !== null ? (
-            <span className="hidden rounded-md bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-900 md:inline dark:bg-amber-900/40 dark:text-amber-200">
+            <span className="hidden rounded-md bg-[#FEF0C7] px-2 py-1 text-xs font-bold text-[#7A4A00] md:inline dark:bg-amber-900/40 dark:text-amber-200">
               {envLabel}
             </span>
           ) : null}
+          <div ref={actionsRef} className="flex items-center gap-2 empty:hidden" />
           <a href="/" target="_blank" rel="noreferrer" className={iconButton} aria-label="Открыть сайт в новой вкладке" title="Открыть сайт">
             <NavIcon name="external" />
           </a>

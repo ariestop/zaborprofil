@@ -20,9 +20,8 @@ function filtersToSearch(filters: LeadFilters): URLSearchParams {
   if (filters.q.trim() !== '') {
     search.set('q', filters.q.trim())
   }
-  if (filters.status !== 'all') {
-    search.set('status', filters.status)
-  }
+  // «Все» в рабочем месте — это все заявки, кроме спама.
+  search.set('status', filters.status === 'all' ? 'active' : filters.status)
   if (filters.source !== '') {
     search.set('source', filters.source)
   }
@@ -34,6 +33,12 @@ function filtersToSearch(filters: LeadFilters): URLSearchParams {
   }
   if (filters.assignee !== 'all') {
     search.set('assignee', filters.assignee)
+  }
+  if (filters.b2b) {
+    search.set('b2b', '1')
+  }
+  if (filters.waitingHours > 0) {
+    search.set('waiting', String(filters.waitingHours))
   }
 
   return search
@@ -116,6 +121,36 @@ export function useLeadAssigneeMutation() {
   return useLeadMutation(({ leadId, assigneeId }: { leadId: string, assigneeId: string | null }) =>
     apiRequest<LeadDetail>(`/admin/api/leads/${encodeURIComponent(leadId)}/assignee`, { method: 'PATCH', body: { assigneeId } }),
   )
+}
+
+export interface NewLeadInput {
+  name: string
+  phone: string
+  email: string
+  message: string
+}
+
+export function useLeadCreateMutation() {
+  return useLeadMutation((input: NewLeadInput) =>
+    apiRequest<LeadDetail>('/admin/api/leads', {
+      method: 'POST',
+      body: { name: input.name, phone: input.phone, email: input.email.trim() === '' ? null : input.email, message: input.message.trim() === '' ? null : input.message },
+    }),
+  )
+}
+
+/** Отметка «прочитана»: убирает маркер новой заявки в списке. Не меняет статус и не пишется в историю. */
+export function useLeadReadMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (leadId: string) =>
+      apiRequest<{ id: string, readAt: string | null }>(`/admin/api/leads/${encodeURIComponent(leadId)}/read`, { method: 'PATCH', body: {} }),
+    onSuccess: async (result) => {
+      queryClient.setQueryData<LeadDetail>(leadQueryKeys.detail(result.id), (lead) => (lead === undefined ? lead : { ...lead, readAt: result.readAt }))
+      await queryClient.invalidateQueries({ queryKey: [...leadsKey, 'list'] })
+    },
+  })
 }
 
 export function useLeadNoteMutation() {

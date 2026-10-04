@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
-import { Link, Outlet } from 'react-router-dom'
+import { Link, matchPath, Outlet, useLocation } from 'react-router-dom'
 import { useAuthStore, useCan } from '../stores/auth'
 import { CommandPaletteDialog } from '../widgets/CommandPaletteDialog'
 import AssetBuildWidget from '../components/AssetBuildWidget'
+import { adminRoutes } from '../routes/route-config'
 import { cn } from '../shared/lib/cn'
 import { NavIcon } from './nav-icons'
 import { SidebarNav } from './SidebarNav'
 import { Topbar } from './Topbar'
+import { TopbarSlotContext } from './topbar-slot'
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'admin.sidebar.collapsed'
 
@@ -105,8 +107,15 @@ function SidebarContent({ collapsed, onToggleCollapsed, onClose }: SidebarConten
   )
 }
 
+function isFullBleedPath(pathname: string): boolean {
+  return adminRoutes.some((route) => route.fullBleed === true && matchPath({ path: route.path, end: true }, pathname) !== null)
+}
+
 export function AdminShellLayout() {
   const canViewSystem = useCan('system.view')
+  const { pathname } = useLocation()
+  const fullBleed = isFullBleedPath(pathname)
+  const [topbarSlot, setTopbarSlot] = useState<HTMLDivElement | null>(null)
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
@@ -133,7 +142,7 @@ export function AdminShellLayout() {
   }, [mobileNavOpen])
 
   return (
-    <div className="flex min-h-screen bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <div className="flex min-h-screen bg-[#F6F7F9] font-[Onest,system-ui,sans-serif] text-[14px] leading-[1.45] text-[#101828] dark:bg-slate-950 dark:text-slate-100">
       <aside
         aria-label="Боковое меню"
         className={cn(
@@ -159,12 +168,20 @@ export function AdminShellLayout() {
       ) : null}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar onOpenNav={() => setMobileNavOpen(true)} />
-        <main className="flex-1 px-4 py-6 lg:px-8">
-          <section className="mx-auto max-w-[1440px] rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-            <Outlet />
-          </section>
-        </main>
+        <Topbar onOpenNav={() => setMobileNavOpen(true)} actionsRef={setTopbarSlot} />
+        <TopbarSlotContext.Provider value={topbarSlot}>
+          {fullBleed ? (
+            <main className="flex min-w-0 flex-1 flex-col">
+              <Outlet />
+            </main>
+          ) : (
+            <main className="flex-1 px-4 py-6 lg:px-8">
+              <section className="mx-auto max-w-[1440px] rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                <Outlet />
+              </section>
+            </main>
+          )}
+        </TopbarSlotContext.Provider>
       </div>
 
       <CommandPaletteDialog />

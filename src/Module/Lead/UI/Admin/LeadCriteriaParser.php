@@ -14,6 +14,10 @@ use Symfony\Component\HttpFoundation\Request;
 final readonly class LeadCriteriaParser
 {
     public const int MAX_PER_PAGE = 100;
+    public const int MAX_WAITING_HOURS = 720;
+
+    /** Псевдостатус фильтра: все заявки, кроме спама. */
+    public const string STATUS_ACTIVE = 'active';
 
     public function parse(Request $request, LeadActor $actor): LeadSearchCriteria
     {
@@ -24,7 +28,7 @@ final readonly class LeadCriteriaParser
 
         return new LeadSearchCriteria(
             self::nullIfEmpty($query->getString('q')),
-            $status === '' || $status === 'all' ? null : LeadStatus::normalize($status),
+            $status === '' || $status === 'all' || $status === self::STATUS_ACTIVE ? null : LeadStatus::normalize($status),
             self::nullIfEmpty($query->getString('source')),
             self::date($query->getString('from'), 'from'),
             self::date($query->getString('to'), 'to')?->modify('+1 day'),
@@ -38,6 +42,9 @@ final readonly class LeadCriteriaParser
             $query->getString('direction', 'desc') !== 'asc',
             max(1, $query->getInt('page', 1)),
             min(self::MAX_PER_PAGE, max(1, $query->getInt('perPage', 25))),
+            $query->getString('b2b') === '1',
+            $query->getInt('waiting') > 0 ? min(self::MAX_WAITING_HOURS, $query->getInt('waiting')) : null,
+            $status === self::STATUS_ACTIVE,
         );
     }
 
