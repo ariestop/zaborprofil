@@ -3,6 +3,7 @@ export const ADMIN_ROUTES = {
   dashboard: '/admin/dashboard',
   pages: '/admin/pages',
   seo: '/admin/seo',
+  media: '/admin/media',
 } as const
 
 export const ADMIN_LOGIN_SELECTORS = {
@@ -39,4 +40,11 @@ export const SEO_SELECTORS = {
   notFoundSearchLabel: 'Поиск по журналу 404',
   createRedirectButtonName: 'Создать редирект',
   collapseAssetWidgetName: 'Свернуть настройки сборки',
+} as const
+
+const ONE_PIXEL_PNG_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC'
+
+export const MEDIA_SELECTORS = {
+  headingName: 'Медиатека',
+  pngBuffer: Buffer.from(ONE_PIXEL_PNG_BASE64, 'base64'),
 } as const

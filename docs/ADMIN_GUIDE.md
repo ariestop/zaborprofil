@@ -6,7 +6,7 @@
 - защищенный dashboard `/admin/dashboard`;
 - страницы и блоки `/admin/pages`;
 - структурированный builder страницы `/admin/pages/{id}/builder`;
-- Media Library `/admin/media` с variants для изображений;
+- Media Library `/admin/media`: загрузка drag&drop с прогрессом, поиск, пагинация, alt/title, удаление с подтверждением, variants для изображений (см. [admin/media-library](admin/media-library.md));
 - управляемые меню `/admin/menu` для `header`, `footer`, `service`;
 - заявки `/admin/leads` со статусами `new`, `in_progress`, `done`, `spam` и spam score/reasons;
 - SEO-панель `/admin/seo`: редиректы, robots.txt, журнал 404 и SEO-аудит;
@@ -23,7 +23,8 @@
 
 - поле заголовка;
 - rich-text поле TipTap для текста (жирный, курсив, H2/H3, маркированный и нумерованный списки, цитата, ссылка);
-- для `text_image` — выбор изображения из Media Library и заполнение `alt`.
+- для `text_image` — выбор изображения из Media Library (`MediaPicker`, с загрузкой нового файла прямо из окна выбора) и заполнение `alt`;
+- в TipTap кнопка «Загрузить» сохраняет файл в медиатеку, кнопка «Медиатека» вставляет изображение из библиотеки.
 - набор в rich-text поле выполняется в стандартном режиме слева-направо (LTR);
 - при наборе в rich-text каретка смещается вправо, без «залипания» в начале строки;
 - сохранённый текст блока подгружается сразу при первом открытии модального редактора.
@@ -75,7 +76,7 @@ API пока предназначен для будущего Vue-интерфе
 
 Новые launch-ready разделы используют текущую admin-сессию и CSRF-защиту:
 
-- `GET|POST /admin/api/media/assets`, `DELETE /admin/api/media/assets/{id}`;
+- `GET|POST /admin/api/media/assets` (список с `page`, `perPage`, `q`, `type`, `sort` и `pagination` в ответе), `PATCH|DELETE /admin/api/media/assets/{id}`;
 - `GET|POST /admin/api/menu/items`, `PUT|DELETE /admin/api/menu/items/{id}`;
 - `GET /admin/api/leads`, `PATCH /admin/api/leads/{id}/status`.
 

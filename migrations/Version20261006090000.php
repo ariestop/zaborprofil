@@ -11,16 +11,16 @@ final class Version20261006090000 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return 'Add seo_not_found_log: aggregated public 404 journal for the SEO panel.';
+        return 'Add nullable media_assets.alt and media_assets.title for Media Library metadata.';
     }
 
     public function up(Schema $schema): void
     {
-        $this->addSql('CREATE TABLE seo_not_found_log (id BINARY(16) NOT NULL, path VARCHAR(512) NOT NULL, path_hash VARCHAR(40) NOT NULL, hit_count INT NOT NULL, first_seen_at DATETIME NOT NULL, last_seen_at DATETIME NOT NULL, referrer VARCHAR(512) DEFAULT NULL, INDEX idx_seo_not_found_last_seen (last_seen_at), INDEX idx_seo_not_found_hits (hit_count), UNIQUE INDEX uniq_seo_not_found_path_hash (path_hash), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_0900_ai_ci` ENGINE = InnoDB');
+        $this->addSql('ALTER TABLE media_assets ADD alt VARCHAR(255) DEFAULT NULL, ADD title VARCHAR(255) DEFAULT NULL');
     }
 
     public function down(Schema $schema): void
     {
-        $this->addSql('DROP TABLE seo_not_found_log');
+        $this->addSql('ALTER TABLE media_assets DROP alt, DROP title');
     }
 }

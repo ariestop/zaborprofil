@@ -1,13 +1,14 @@
-import { PageHeader, EmptyState } from '../shared/ui'
+import { MediaLibrary } from '../features/media/MediaLibrary'
+import { PageHeader } from '../shared/ui'
 
 export default function MediaPage() {
   return (
     <div>
-      <PageHeader title="Media Library" description="Foundation для Media module и будущего drag-and-drop upload workflow." />
-      <EmptyState
-        title="Media module foundation"
-        description="Следующий этап: интеграция каталога ассетов, upload pipeline и трансформаций."
+      <PageHeader
+        title="Медиатека"
+        description="Загружайте изображения и PDF, добавляйте alt и title, выбирайте файлы в блоках страниц и SEO-полях."
       />
+      <MediaLibrary mode="manage" />
     </div>
   )
 }
