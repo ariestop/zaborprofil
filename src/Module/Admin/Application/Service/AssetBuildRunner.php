@@ -22,12 +22,7 @@ final readonly class AssetBuildRunner
 
     public function __construct(Kernel $kernel, string $command = self::DEFAULT_COMMAND)
     {
-        $projectDirResolver = [$kernel, 'getProjectDir'];
-        if (!is_callable($projectDirResolver)) {
-            throw new RuntimeException('Kernel should provide project directory.');
-        }
-
-        $this->projectDir = (string) $projectDirResolver();
+        $this->projectDir = $kernel->getProjectDir();
         $this->command = trim($command) !== '' ? trim($command) : self::DEFAULT_COMMAND;
         $this->stateDir = $this->projectDir . '/var/admin-build';
         $this->statusPath = $this->stateDir . '/status.json';

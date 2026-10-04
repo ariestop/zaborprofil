@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Support\Database;
 
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Mapping\ClassMetadata;
+use Doctrine\ORM\Tools\SchemaTool;
 use LogicException;
 
 /**
@@ -14,11 +17,10 @@ use LogicException;
  */
 final class SchemaTestHelper
 {
-    public static function recreateSchema(object $entityManager): void
+    public static function recreateSchema(EntityManagerInterface $entityManager): void
     {
         self::guardTestDatabase($entityManager);
 
-        /** @var list<object> $metadata */
         $metadata = $entityManager->getMetadataFactory()->getAllMetadata();
 
         if ([] === $metadata) {
@@ -31,7 +33,7 @@ final class SchemaTestHelper
         $entityManager->clear();
     }
 
-    private static function guardTestDatabase(object $entityManager): void
+    private static function guardTestDatabase(EntityManagerInterface $entityManager): void
     {
         $databaseName = (string) $entityManager->getConnection()->getDatabase();
 
@@ -39,13 +41,13 @@ final class SchemaTestHelper
             return;
         }
 
-        throw new LogicException(sprintf(
+        throw new LogicException(\sprintf(
             'SchemaTestHelper can only run on test databases (expected suffix "_test"), got "%s".',
             $databaseName,
         ));
     }
 
-    private static function dropAllTables(object $entityManager): void
+    private static function dropAllTables(EntityManagerInterface $entityManager): void
     {
         $connection = $entityManager->getConnection();
         $tables = $connection->createSchemaManager()->listTableNames();
@@ -63,22 +65,11 @@ final class SchemaTestHelper
     }
 
     /**
-     * @param list<object> $metadata
+     * @param list<ClassMetadata<object>> $metadata
      */
-    private static function createSchema(object $entityManager, array $metadata): void
+    private static function createSchema(EntityManagerInterface $entityManager, array $metadata): void
     {
-        /** @var class-string $schemaToolClass */
-        $schemaToolClass = 'Doctrine\\ORM\\Tools\\SchemaTool';
-
-        if (!class_exists($schemaToolClass)) {
-            throw new LogicException('Doctrine ORM SchemaTool is not available. Run composer install to restore dependencies.');
-        }
-
-        $tool = new $schemaToolClass($entityManager);
-
-        if (!method_exists($tool, 'createSchema')) {
-            throw new LogicException('Doctrine ORM SchemaTool does not support createSchema().');
-        }
+        $tool = new SchemaTool($entityManager);
 
         $tool->createSchema($metadata);
     }
