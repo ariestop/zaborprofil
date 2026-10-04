@@ -32,8 +32,10 @@ final class PageRevisionDifferTest extends TestCase
         $diff = $this->differ()->diff($from, $to);
 
         self::assertTrue($diff['hasChanges']);
-        self::assertSame('title', $diff['fields'][0]['field']);
-        self::assertSame('delete', $diff['fields'][0]['textDiff'][1]['op']);
+        $titleChange = $diff['fields'][0];
+        self::assertSame('title', $titleChange['field']);
+        self::assertArrayHasKey('textDiff', $titleChange);
+        self::assertSame('delete', $titleChange['textDiff'][1]['op']);
         self::assertSame(['metaDescription', 'isIndexable'], array_column($diff['seo'], 'field'));
         self::assertArrayNotHasKey('textDiff', $diff['seo'][1]);
         self::assertSame(2, $diff['summary']['seo']);
