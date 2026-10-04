@@ -223,6 +223,11 @@ API защищен admin firewall и используется React + TypeScript
 `PUT /builder` принимает массив блоков structured-контракта и синхронизирует
 состав/порядок/включенность блоков страницы атомарно.
 
+Ответы `GET`/`PUT /builder` содержат `version` — хэш содержимого блоков. `PUT /builder` принимает необязательное
+поле `baseVersion`: при расхождении с текущей версией возвращается `409` с `code: "EDIT_CONFLICT"` и актуальными
+`version`/`updatedAt` (подробности и мягкая блокировка `POST|DELETE /{id}/edit-lock` — в
+[admin/page-editor](admin/page-editor.md)).
+
 Для block type `text` и `text_image` в админке предусмотрен визуальный режим редактирования на базе Vue TipTap.
 Он работает поверх тех же полей `content/settings` и сохраняет HTML в `content.text` (JSON) без изменения API-контракта.
 Для сложных кейсов доступен fallback-режим ручного JSON.
