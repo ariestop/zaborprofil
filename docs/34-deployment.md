@@ -54,6 +54,7 @@
 - `templates/nginx-staging.conf`, `nginx-production.conf` — nginx vhost.
 - `templates/zaborprofil-messenger.service`, `zaborprofil-messenger-staging.service` — systemd unit для worker.
 - `templates/zaborprofil-monitoring.service`, `zaborprofil-monitoring.timer` — systemd monitoring checks.
+- `templates/zaborprofil-publish-scheduled.service`, `zaborprofil-publish-scheduled.timer` — планировщик отложенной публикации страниц (`app:content:publish-scheduled`, каждую минуту), см. [50-publishing-workflow](50-publishing-workflow.md).
 - `templates/zaborprofil-logrotate.conf` — logrotate для Symfony logs.
 
 Все скрипты — bash, идемпотентны, логируют через `set -euo pipefail`.
@@ -270,7 +271,7 @@ php bin/console cache:warmup --env=prod
 - Staging deploy после переключения релиза запускает `tools/deploy/staging-smoke.sh`.
 - Проверяется `/health`, `/health/ready`, `/sitemap.xml`, `/robots.txt`, `/admin/login`, `app:smoke:test --env=staging`.
 - `restore-rehearsal.sh` должен проходить на реальном backup-файле.
-- На VPS должны быть установлены monitoring/logrotate templates из `tools/deploy/templates/`.
+- На VPS должны быть установлены monitoring/logrotate templates из `tools/deploy/templates/` и timer `zaborprofil-publish-scheduled.timer` (на Beget — cron, см. [50-publishing-workflow](50-publishing-workflow.md)).
 
 ## Связанные документы
 
@@ -278,6 +279,7 @@ php bin/console cache:warmup --env=prod
 - [29-healthchecks](29-healthchecks.md)
 - [35-cicd](35-cicd.md)
 - [49-beget-staging-deploy](49-beget-staging-deploy.md)
+- [50-publishing-workflow](50-publishing-workflow.md)
 - [36-backup-restore](36-backup-restore.md)
 - [37-runbooks](37-runbooks.md)
 - [37-runbooks](37-runbooks.md)
