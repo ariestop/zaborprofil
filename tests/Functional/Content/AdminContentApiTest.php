@@ -390,12 +390,14 @@ final class AdminContentApiTest extends WebTestCase
 
         $updatedBlockPayload = json_decode((string) $client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($updatedBlockPayload);
+        $updatedContent = $updatedBlockPayload['content'] ?? null;
+        self::assertIsArray($updatedContent);
         self::assertSame(
             '<p>Обновлённый текст с <em>форматированием</em>.</p>',
-            $updatedBlockPayload['content']['text'] ?? null,
+            $updatedContent['text'] ?? null,
         );
-        self::assertSame('/uploads/media/company-updated.webp', $updatedBlockPayload['content']['image'] ?? null);
-        self::assertSame('Обновлённое фото монтажа', $updatedBlockPayload['content']['alt'] ?? null);
+        self::assertSame('/uploads/media/company-updated.webp', $updatedContent['image'] ?? null);
+        self::assertSame('Обновлённое фото монтажа', $updatedContent['alt'] ?? null);
     }
 
     public function testAdminApiRejectsRequestWithoutCsrfToken(): void
