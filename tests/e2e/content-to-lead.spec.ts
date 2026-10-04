@@ -44,7 +44,7 @@ test.describe('Content to lead flow', () => {
       dialog.getByTestId('media-file-input').setInputFiles({ name: imageName, mimeType: 'image/png', buffer: buildUniquePng() }),
     ])
     await dialog.getByTestId('media-grid').getByRole('button', { name: new RegExp(imageName) }).click()
-    await dialog.getByTestId('asset-details').getByRole('button', { name: 'Выбрать' }).click()
+    await dialog.getByTestId('asset-details').getByRole('button', { name: 'Выбрать', exact: true }).click()
     await expect(dialog).toBeHidden()
     await expect(page.getByLabel('Изображение для соцсетей')).toHaveValue(/\/uploads\/media\/[0-9a-z]{26}\.png$/)
     const ogImage = await page.getByLabel('Изображение для соцсетей').inputValue()
