@@ -270,7 +270,6 @@ describe('CrmPage', () => {
   })
 
   it('saves the current filters as a named view and applies it later', async () => {
-    window.localStorage.removeItem('admin.crm.views')
     renderWithProviders(<CrmPage />, '/admin/crm?b2b=1&waiting=2')
     await screen.findByTestId('lead-row')
 
