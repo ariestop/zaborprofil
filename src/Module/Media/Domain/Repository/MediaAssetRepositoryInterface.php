@@ -23,6 +23,15 @@ interface MediaAssetRepositoryInterface
 
     public function search(MediaAssetCriteria $criteria): MediaAssetPage;
 
+    /**
+     * Ассеты по точному публичному пути оригинала (варианты не учитываются).
+     *
+     * @param list<string> $publicPaths
+     *
+     * @return list<MediaAsset>
+     */
+    public function findByPublicPaths(array $publicPaths): array;
+
     public function findOneByFileHash(string $fileHash): ?MediaAsset;
 
     /**

@@ -1,0 +1,68 @@
+name: Lighthouse
+
+# Ручной замер Core Web Vitals для ключевых URL публичной части (docs/23-cache.md).
+# Не блокирует PR: результаты и предупреждения смотрим в отчёте запуска.
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Базовый URL без завершающего слэша (staging или production)'
+        required: true
+        default: 'https://dev.zaborprofil.ru'
+      paths:
+        description: 'Пути через пробел (3-5 ключевых страниц)'
+        required: true
+        default: '/'
+
+jobs:
+  lighthouse:
+    name: Lighthouse
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare URL list
+        id: urls
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+          PATHS: ${{ inputs.paths }}
+        run: |
+          set -euo pipefail
+          urls=""
+          for path in $PATHS; do
+            urls="${urls}${BASE_URL%/}${path}"$'\n'
+          done
+          {
+            echo 'list<<EOF'
+            printf '%s' "$urls"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Prepare Lighthouse config
+        env:
+          STAGING_BASIC_AUTH: ${{ secrets.STAGING_BASIC_AUTH }}
+          BASE_URL: ${{ inputs.base_url }}
+        run: |
+          set -euo pipefail
+          cp lighthouserc.json "$RUNNER_TEMP/lighthouserc.json"
+          # Пароль staging отправляем только на стенд dev., а не на production.
+          if [ -n "$STAGING_BASIC_AUTH" ] && [[ "$BASE_URL" == *://dev.* ]]; then
+            token="$(printf '%s' "$STAGING_BASIC_AUTH" | base64 -w0)"
+            echo "::add-mask::$token"
+            jq --arg header "Basic $token" '.ci.collect.settings.extraHeaders = {Authorization: $header}' \
+              lighthouserc.json > "$RUNNER_TEMP/lighthouserc.json"
+          fi
+
+      - name: Run Lighthouse
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: ${{ steps.urls.outputs.list }}
+          configPath: ${{ runner.temp }}/lighthouserc.json
+          uploadArtifacts: true
+          temporaryPublicStorage: false

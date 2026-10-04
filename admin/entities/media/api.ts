@@ -120,7 +120,7 @@ export function useUpdateMediaAssetMutation() {
   const invalidate = useInvalidateMediaAssets()
 
   return useMutation({
-    mutationFn: (input: { id: string; alt: string; title: string; description?: string; folder?: string }) => {
+    mutationFn: (input: { id: string; alt: string; title: string; description?: string; folder?: string; focalX?: number | null; focalY?: number | null }) => {
       const { id, ...fields } = input
 
       return apiRequest<MediaAssetItem>(`/admin/api/media/assets/${id}`, { method: 'PATCH', body: fields })

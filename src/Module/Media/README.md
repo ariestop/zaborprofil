@@ -8,3 +8,4 @@
 - `UploadValidator` проверяет расширение, MIME, размер, dimensions и опасные двойные расширения.
 - `MediaOptimizer` переупаковывает raster images для удаления EXIF/metadata и создаёт WebP/AVIF variants при поддержке PHP runtime.
 - SVG запрещён по умолчанию; safe SVG sanitization должен добавляться отдельной политикой.
+- `Application/Responsive` и Twig-функция `responsive_image` (`UI/Twig/ResponsiveImageExtension`) выводят публичные изображения как `<picture>` с AVIF/WebP `srcset`, `width`/`height`, `loading`/`fetchpriority` и `object-position` по фокальной точке ассета (`focalX`/`focalY`); URL из блоков сопоставляется с ассетом по `publicPath`. Подробности — `docs/admin/media-library.md`.

@@ -1,10 +1,12 @@
 import { useMemo, useState, type KeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCommandPalette } from '../app/providers/command-palette-provider'
+import type { AdminPermission } from '../entities/user/permissions'
 import { adminRoutes, navGroups } from '../routes/route-config'
 import { Dialog } from '../shared/ui/dialog'
 import { Input } from '../shared/ui/input'
 import { cn } from '../shared/lib/cn'
+import { useAuthStore } from '../stores/auth'
 
 export interface PaletteItem {
   id: string
@@ -12,19 +14,20 @@ export interface PaletteItem {
   hint: string
   path: string
   keywords: string[]
+  permission?: AdminPermission
 }
 
 const ACTIONS: PaletteItem[] = [
-  { id: 'action-page-new', title: 'Создать страницу', hint: 'Действие', path: '/admin/pages/new', keywords: ['новая страница', 'добавить страницу'] },
-  { id: 'action-media-upload', title: 'Загрузить файлы в медиатеку', hint: 'Действие', path: '/admin/media', keywords: ['фото', 'изображение', 'загрузка'] },
-  { id: 'action-redirect', title: 'Добавить редирект', hint: 'Действие', path: '/admin/seo', keywords: ['301', 'старый адрес'] },
-  { id: 'action-leads-new', title: 'Новые заявки', hint: 'Действие', path: '/admin/crm?status=new', keywords: ['необработанные', 'лиды'] },
+  { id: 'action-page-new', title: 'Создать страницу', hint: 'Действие', path: '/admin/pages/new', keywords: ['новая страница', 'добавить страницу'], permission: 'pages.create' },
+  { id: 'action-media-upload', title: 'Загрузить файлы в медиатеку', hint: 'Действие', path: '/admin/media', keywords: ['фото', 'изображение', 'загрузка'], permission: 'media.upload' },
+  { id: 'action-redirect', title: 'Добавить редирект', hint: 'Действие', path: '/admin/seo', keywords: ['301', 'старый адрес'], permission: 'seo.edit' },
+  { id: 'action-leads-new', title: 'Новые заявки', hint: 'Действие', path: '/admin/crm?status=new', keywords: ['необработанные', 'лиды'], permission: 'leads.view' },
 ]
 
 const groupTitles = new Map(navGroups.map((group) => [group.key, group.title ?? 'Разделы']))
 
 /** Пункты палитры: быстрые действия и все разделы, у которых нет параметров в адресе. */
-export function buildPaletteItems(): PaletteItem[] {
+export function buildPaletteItems(permissions?: readonly AdminPermission[]): PaletteItem[] {
   const sections = adminRoutes
     .filter((route) => !route.path.includes('/:') && route.hideInNav !== true)
     .map((route) => ({
@@ -33,12 +36,14 @@ export function buildPaletteItems(): PaletteItem[] {
       hint: route.navGroup === undefined ? 'Раздел' : (groupTitles.get(route.navGroup) ?? 'Раздел'),
       path: route.path,
       keywords: [route.title, ...(route.keywords ?? [])],
+      permission: route.permission,
     }))
+  const items = [...ACTIONS, ...sections]
 
-  return [...ACTIONS, ...sections]
+  return permissions === undefined
+    ? items
+    : items.filter((item) => item.permission === undefined || permissions.includes(item.permission))
 }
-
-const PALETTE_ITEMS = buildPaletteItems()
 
 export function filterPaletteItems(items: PaletteItem[], query: string): PaletteItem[] {
   const needle = query.trim().toLowerCase()
@@ -54,7 +59,8 @@ export function CommandPaletteDialog() {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)
-  const results = useMemo(() => filterPaletteItems(PALETTE_ITEMS, query), [query])
+  const permissions = useAuthStore((state) => state.permissions)
+  const results = useMemo(() => filterPaletteItems(buildPaletteItems(permissions), query), [permissions, query])
   const safeIndex = Math.min(activeIndex, Math.max(results.length - 1, 0))
 
   const reset = () => {

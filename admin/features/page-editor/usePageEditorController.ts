@@ -31,6 +31,8 @@ import {
   type EditorTab,
   type PageEditorFormValues,
 } from './form'
+import { clearDraft, draftDiffersFromServer, readDraft, writeDraft, type PageDraft } from './draft-storage'
+import { EDIT_CONFLICT_MESSAGE, parseEditConflict, type EditConflict } from './edit-conflict'
 import { resolveSaveState, type SaveState } from './save-state'
 
 function seoSignatureOf(values: PageEditorFormValues): string {
@@ -38,12 +40,21 @@ function seoSignatureOf(values: PageEditorFormValues): string {
 }
 
 export const AUTOSAVE_DELAY_MS = 20_000
+export const DRAFT_WRITE_DELAY_MS = 500
 
 export type SaveMode = 'manual' | 'auto'
 
 interface UsePageEditorControllerOptions {
   page: ContentPageDetail
+  /** Версия блоков, полученная вместе с документом Builder; без неё проверка конфликтов при сохранении отключена. */
+  builderVersion?: string | null
   onInvalidTab?: (tab: EditorTab) => void
+}
+
+export interface PendingDraftInfo {
+  savedAt: string
+  /** Блоки на сервере изменились после создания черновика: при сохранении будет предложено разрешить конфликт. */
+  serverChanged: boolean
 }
 
 export interface PageEditorController {
@@ -60,6 +71,12 @@ export interface PageEditorController {
   autosaveEnabled: boolean
   isPublishing: boolean
   isGuardDisabled: () => boolean
+  conflict: EditConflict | null
+  pendingDraft: PendingDraftInfo | null
+  overwriteConflict: () => Promise<boolean>
+  dismissConflict: () => void
+  restoreDraft: () => void
+  discardDraft: () => void
   saveAll: () => Promise<boolean>
   publish: () => Promise<boolean>
   openPreview: () => Promise<void>
@@ -75,7 +92,7 @@ function openPreviewWindow(): Window | null {
   }
 }
 
-export function usePageEditorController({ page, onInvalidTab }: UsePageEditorControllerOptions): PageEditorController {
+export function usePageEditorController({ page, builderVersion = null, onInvalidTab }: UsePageEditorControllerOptions): PageEditorController {
   const pageId = page.id
   const queryClient = useQueryClient()
   const { push } = useToast()
@@ -98,6 +115,16 @@ export function usePageEditorController({ page, onInvalidTab }: UsePageEditorCon
   const [hasSavedOnce, setHasSavedOnce] = useState(false)
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
   const guardDisabledRef = useRef(false)
+  const versionRef = useRef<string | null>(builderVersion)
+  const [conflict, setConflict] = useState<EditConflict | null>(null)
+  const [draft, setDraft] = useState<PageDraft | null>(() => {
+    const stored = readDraft(page.id)
+    if (stored === null) {
+      return null
+    }
+
+    return draftDiffersFromServer(stored, { blocks: useBuilderStore.getState().blocks, values: initialValues }) ? stored : null
+  })
   const inflightRef = useRef<Promise<boolean> | null>(null)
 
   const values = useWatch({ control: form.control }) as PageEditorFormValues
@@ -107,7 +134,7 @@ export function usePageEditorController({ page, onInvalidTab }: UsePageEditorCon
   const settingsDirty = hasFieldChanges(values, savedValues, PAGE_SETTINGS_FIELDS)
   const seoDirty = hasFieldChanges(values, savedValues, PAGE_SEO_FIELDS)
   const hasUnsavedChanges = settingsDirty || seoDirty || blocksDirty
-  const autosaveEnabled = page.status !== 'published'
+  const autosaveEnabled = page.status !== 'published' && conflict === null
 
   const seoSignature = useMemo(() => seoSignatureOf(values), [values])
   const failed = failure !== null && failure.seo === seoSignature && failure.blocks === blocks
@@ -192,7 +219,10 @@ export function usePageEditorController({ page, onInvalidTab }: UsePageEditorCon
       }
 
       if (blocksChanged) {
-        await saveBuilder.mutateAsync(normalizedBlocks)
+        const saved = await saveBuilder.mutateAsync({ blocks: normalizedBlocks, baseVersion: versionRef.current })
+        if (typeof saved.version === 'string') {
+          versionRef.current = saved.version
+        }
         if (useBuilderStore.getState().blocks === sentBlocks) {
           useBuilderStore.getState().setDirty(false)
         }
@@ -212,6 +242,14 @@ export function usePageEditorController({ page, onInvalidTab }: UsePageEditorCon
 
       return true
     } catch (error) {
+      const editConflict = parseEditConflict(error)
+      if (editConflict !== null) {
+        setConflict(editConflict)
+        markFailed()
+        setErrorMessage(EDIT_CONFLICT_MESSAGE)
+        return false
+      }
+
       applyServerValidationErrors(error, form.setError)
       const invalidField = Object.keys(form.formState.errors)[0]
       if (invalidField !== undefined) {
@@ -303,6 +341,10 @@ export function usePageEditorController({ page, onInvalidTab }: UsePageEditorCon
   const reloadFromServer = useCallback(async (): Promise<void> => {
     const [freshPage, freshBuilder] = await Promise.all([fetchPageDetail(pageId), fetchPageBuilder(pageId)])
     const freshValues = pageToFormValues(freshPage)
+    versionRef.current = freshBuilder.version
+    setConflict(null)
+    setDraft(null)
+    clearDraft(pageId)
     savedRef.current = freshValues
     setSavedValues(freshValues)
     form.reset(freshValues)
@@ -318,6 +360,87 @@ export function usePageEditorController({ page, onInvalidTab }: UsePageEditorCon
   }, [])
 
   const isGuardDisabled = useCallback(() => guardDisabledRef.current, [])
+
+  const overwriteConflict = useCallback(async (): Promise<boolean> => {
+    if (conflict === null) {
+      return false
+    }
+
+    versionRef.current = conflict.serverVersion
+    setConflict(null)
+
+    return save('manual')
+  }, [conflict, save])
+
+  const dismissConflict = useCallback(() => setConflict(null), [])
+
+  const blocksRef = useRef(blocks)
+  const persistDraftRef = useRef(false)
+  const shouldPersistDraft = hasUnsavedChanges && draft === null
+  useEffect(() => {
+    blocksRef.current = blocks
+    persistDraftRef.current = shouldPersistDraft
+  }, [blocks, shouldPersistDraft])
+
+  const persistDraft = useCallback(() => {
+    writeDraft(pageId, { baseVersion: versionRef.current, blocks: blocksRef.current, values: form.getValues() })
+  }, [form, pageId])
+
+  useEffect(() => {
+    if (draft !== null) {
+      return
+    }
+
+    if (!hasUnsavedChanges) {
+      clearDraft(pageId)
+      return
+    }
+
+    const timer = window.setTimeout(persistDraft, DRAFT_WRITE_DELAY_MS)
+    return () => window.clearTimeout(timer)
+  }, [blocks, draft, hasUnsavedChanges, pageId, persistDraft, values])
+
+  useEffect(() => {
+    const flush = () => {
+      if (persistDraftRef.current) {
+        persistDraft()
+      }
+    }
+
+    window.addEventListener('pagehide', flush)
+    return () => {
+      window.removeEventListener('pagehide', flush)
+      flush()
+    }
+  }, [persistDraft])
+
+  const restoreDraft = useCallback(() => {
+    if (draft === null) {
+      return
+    }
+
+    for (const field of [...PAGE_SETTINGS_FIELDS, ...PAGE_SEO_FIELDS]) {
+      if (field in draft.values) {
+        form.setValue(field, draft.values[field] as never, { shouldDirty: true })
+      }
+    }
+
+    useBuilderStore.getState().setBlocks(normalizePageBlocks(draft.blocks), true)
+    versionRef.current = draft.baseVersion ?? versionRef.current
+    setDraft(null)
+  }, [draft, form])
+
+  const discardDraft = useCallback(() => {
+    clearDraft(pageId)
+    setDraft(null)
+  }, [pageId])
+
+  const pendingDraft: PendingDraftInfo | null = draft === null
+    ? null
+    : {
+        savedAt: draft.savedAt,
+        serverChanged: draft.baseVersion !== null && builderVersion !== null && draft.baseVersion !== builderVersion,
+      }
 
   const saveState = resolveSaveState({ dirty: hasUnsavedChanges, saving, failed, hasSavedOnce })
 
@@ -335,6 +458,12 @@ export function usePageEditorController({ page, onInvalidTab }: UsePageEditorCon
     autosaveEnabled,
     isPublishing: publishPage.isPending,
     isGuardDisabled,
+    conflict,
+    pendingDraft,
+    overwriteConflict,
+    dismissConflict,
+    restoreDraft,
+    discardDraft,
     saveAll,
     publish,
     openPreview,

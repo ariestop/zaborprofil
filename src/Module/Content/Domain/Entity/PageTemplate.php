@@ -16,6 +16,9 @@ use Symfony\Component\Uid\Ulid;
 #[ORM\Index(name: 'idx_content_page_templates_page_type_active', columns: ['page_type', 'is_active'])]
 final class PageTemplate
 {
+    public const string KIND_PAGE = 'page';
+    public const string KIND_SECTION = 'section';
+
     #[ORM\Id]
     #[ORM\Column(type: 'ulid', unique: true)]
     private Ulid $id;
@@ -56,6 +59,9 @@ final class PageTemplate
     #[ORM\Column(name: 'is_active')]
     private bool $active;
 
+    #[ORM\Column(length: 16, options: ['default' => 'page'])]
+    private string $kind;
+
     #[ORM\Column]
     private DateTimeImmutable $createdAt;
 
@@ -77,10 +83,18 @@ final class PageTemplate
         array $defaultSettings = [],
         bool $system = false,
         bool $active = true,
+        string $kind = self::KIND_PAGE,
     ) {
+        if (!\in_array($kind, [self::KIND_PAGE, self::KIND_SECTION], true)) {
+            throw new InvalidArgumentException('Page template kind must be "page" or "section".');
+        }
+
         $this->id = new Ulid();
         $this->code = self::normalizeCode($code);
         $this->name = self::required($name, 'Page template name cannot be empty.');
+        if (mb_strlen($this->name) > 180) {
+            throw new InvalidArgumentException('Page template name cannot be longer than 180 characters.');
+        }
         $this->description = self::optional($description);
         $this->pageType = $pageType;
         $this->blocksSchema = $blocksSchema;
@@ -88,6 +102,7 @@ final class PageTemplate
         $this->defaultSettings = $defaultSettings;
         $this->system = $system;
         $this->active = $active;
+        $this->kind = $kind;
         $this->createdAt = new DateTimeImmutable();
         $this->updatedAt = new DateTimeImmutable();
     }
@@ -149,6 +164,11 @@ final class PageTemplate
     public function isActive(): bool
     {
         return $this->active;
+    }
+
+    public function kind(): string
+    {
+        return $this->kind;
     }
 
     public function createdAt(): DateTimeImmutable

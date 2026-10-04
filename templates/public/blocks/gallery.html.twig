@@ -4,7 +4,13 @@
         {% for item in block.content.items|default([]) %}
             {% if item.image is defined %}
                 <figure>
-                    <img class="aspect-4/3 w-full rounded-xl object-cover" src="{{ item.image }}" alt="{{ item.alt|default(item.caption|default(block.name)) }}" loading="lazy" decoding="async">
+                    {{ responsive_image(item.image, {
+                        alt: item.alt ?? null,
+                        fallback_alt: item.caption ?? block.name,
+                        class: 'aspect-4/3 w-full rounded-xl object-cover',
+                        sizes: '(min-width: 1152px) 350px, (min-width: 768px) 33vw, 100vw',
+                        eager: above_fold|default(false) and loop.index <= 3
+                    }) }}
                     {% if item.caption is defined %}
                         <figcaption class="mt-2 text-sm text-slate-500">{{ item.caption }}</figcaption>
                     {% endif %}

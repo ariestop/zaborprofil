@@ -21,7 +21,7 @@
 `access_control`:
 
 - `^/admin/login$` — `PUBLIC_ACCESS`;
-- `^/admin` — `ROLE_ADMIN`.
+- `^/admin` — любая админская роль (`ROLE_EDITOR`, `ROLE_SEO`, `ROLE_MANAGER`; `ROLE_ADMIN` и `ROLE_SUPER_ADMIN` — через `role_hierarchy`). Права на разделы проверяет `AdminPermissionVoter`, меню и маршруты SPA строятся по `GET /admin/api/me`.
 
 ## RBAC
 
@@ -88,6 +88,7 @@ Admin API использует **double-submit CSRF**:
 
 | Метод | URL | Действие |
 |---|---|---|
+| `GET` | `/admin/api/content/pages` | Список страниц целиком; с `page`/`perPage` (до 100) и фильтрами `q` (название или адрес), `status` — страница списка и `meta` (`total`, `page`, `perPage`, `pages`) |
 | `POST` | `/admin/api/content/pages` | Создать страницу |
 | `PUT` | `/admin/api/content/pages/{id}` | Обновить страницу |
 | `POST` | `/admin/api/content/pages/{id}/publish` | Опубликовать |

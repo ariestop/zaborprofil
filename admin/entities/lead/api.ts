@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiRequest } from '../../shared/api/client'
 import { adminQueryKeys } from '../../shared/api/query'
+import { useCan } from '../../stores/auth'
 import type { LeadDetail, LeadStatus } from '../../types/api'
 import type { LeadAssigneeOption, LeadFilters, LeadListParams, LeadListResponse, LeadSummary } from './model'
 
@@ -65,7 +66,10 @@ export function useLeadsQuery(params: LeadListParams) {
 }
 
 export function useLeadSummaryQuery() {
+  const enabled = useCan('leads.view')
+
   return useQuery({
+    enabled,
     queryKey: leadQueryKeys.summary,
     queryFn: () => apiRequest<LeadSummary>('/admin/api/leads/summary'),
   })

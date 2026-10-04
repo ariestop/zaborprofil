@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import type { AdminPermission } from '../../entities/user/permissions'
+import ForbiddenPage from '../../pages/ForbiddenPage'
 import { Badge, Button, Switch } from '../../shared/ui'
+import { useAuthStore } from '../../stores/auth'
 import { useBuilderStore } from '../../modules/page-builder/state/builderStore'
 import type { BuilderBlock } from '../../modules/page-builder/types'
 import { normalizePageBlocks } from '../../modules/page-builder/utils/pageBlocks'
 import type { ContentPageDetail } from '../../types/api'
 import { useAdvancedMode } from './advanced-mode'
 import { ContentTab } from './ContentTab'
+import { DraftRestoreBanner, EditConflictDialog, EditLockBanner } from './EditSafetyPanels'
 import type { EditorTab } from './form'
 import { LeaveGuard } from './LeaveGuard'
 import { canPublishFrom, pageStatusLabels, statusTone } from './page-status'
@@ -15,19 +19,21 @@ import { SaveIndicator } from './SaveIndicator'
 import { SeoTab } from './SeoTab'
 import { SettingsTab } from './SettingsTab'
 import { PagePublishingSlot } from './slots'
+import { usePageEditLock } from './usePageEditLock'
 import { usePageEditorController } from './usePageEditorController'
 
 interface PageEditorProps {
   page: ContentPageDetail
   initialBlocks: BuilderBlock[]
+  initialBuilderVersion?: string | null
   tab: EditorTab
 }
 
-export const editorTabs: Array<{ value: EditorTab, label: string }> = [
+export const editorTabs: Array<{ value: EditorTab, label: string, permission?: AdminPermission }> = [
   { value: 'content', label: 'Контент и блоки' },
-  { value: 'seo', label: 'SEO' },
-  { value: 'settings', label: 'Настройки' },
-  { value: 'revisions', label: 'Ревизии' },
+  { value: 'seo', label: 'SEO', permission: 'seo.edit' },
+  { value: 'settings', label: 'Настройки', permission: 'pages.edit' },
+  { value: 'revisions', label: 'Ревизии', permission: 'pages.view_revisions' },
 ]
 
 export function pageEditorTabPath(pageId: string, tab: EditorTab): string {
@@ -45,7 +51,7 @@ function initBuilderStore(initialBlocks: BuilderBlock[]): void {
   store.setValidationIssues([])
 }
 
-export function PageEditor({ page, initialBlocks, tab }: PageEditorProps) {
+export function PageEditor({ page, initialBlocks, initialBuilderVersion = null, tab }: PageEditorProps) {
   const navigate = useNavigate()
   const advanced = useAdvancedMode((state) => state.enabled)
   const setAdvanced = useAdvancedMode((state) => state.setEnabled)
@@ -70,7 +76,8 @@ export function PageEditor({ page, initialBlocks, tab }: PageEditorProps) {
     void navigate(pageEditorTabPath(page.id, target))
   }, [navigate, page.id])
 
-  const controller = usePageEditorController({ page, onInvalidTab: openTab })
+  const controller = usePageEditorController({ page, builderVersion: initialBuilderVersion, onInvalidTab: openTab })
+  const editLock = usePageEditLock(page.id)
   const { saveAll } = controller
 
   useEffect(() => {
@@ -91,7 +98,10 @@ export function PageEditor({ page, initialBlocks, tab }: PageEditorProps) {
     [isGuardDisabled, page.id],
   )
 
-  const publishVisible = canPublishFrom(page.status)
+  const permissions = useAuthStore((state) => state.permissions)
+  const visibleTabs = editorTabs.filter((item) => item.permission === undefined || permissions.includes(item.permission))
+  const tabAllowed = visibleTabs.some((item) => item.value === tab)
+  const publishVisible = canPublishFrom(page.status) && permissions.includes('pages.publish')
 
   return (
     <div data-testid="page-editor">
@@ -145,8 +155,17 @@ export function PageEditor({ page, initialBlocks, tab }: PageEditorProps) {
         </div>
       </header>
 
+      <EditLockBanner lock={editLock} />
+      <DraftRestoreBanner draft={controller.pendingDraft} onRestore={controller.restoreDraft} onDiscard={controller.discardDraft} />
+      <EditConflictDialog
+        conflict={controller.conflict}
+        onOverwrite={() => void controller.overwriteConflict()}
+        onReload={() => void controller.reloadFromServer()}
+        onDismiss={controller.dismissConflict}
+      />
+
       <div role="tablist" aria-label="Разделы страницы" className="mb-4 flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-800">
-        {editorTabs.map((item) => {
+        {visibleTabs.map((item) => {
           const active = item.value === tab
           return (
             <Link
@@ -171,10 +190,11 @@ export function PageEditor({ page, initialBlocks, tab }: PageEditorProps) {
       </div>
 
       <div role="tabpanel" aria-label={editorTabs.find((item) => item.value === tab)?.label}>
-        {tab === 'content' ? <ContentTab pageId={page.id} /> : null}
-        {tab === 'seo' ? <SeoTab controller={controller} onOpenTab={openTab} /> : null}
-        {tab === 'settings' ? <SettingsTab controller={controller} page={page} /> : null}
-        {tab === 'revisions' ? <RevisionsTab controller={controller} status={page.status} /> : null}
+        {!tabAllowed ? <ForbiddenPage /> : null}
+        {tabAllowed && tab === 'content' ? <ContentTab pageId={page.id} pageType={page.type} /> : null}
+        {tabAllowed && tab === 'seo' ? <SeoTab controller={controller} onOpenTab={openTab} /> : null}
+        {tabAllowed && tab === 'settings' ? <SettingsTab controller={controller} page={page} /> : null}
+        {tabAllowed && tab === 'revisions' ? <RevisionsTab controller={controller} status={page.status} /> : null}
       </div>
     </div>
   )

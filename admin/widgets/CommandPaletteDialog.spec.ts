@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { ROLE_PERMISSIONS } from '../shared/testing/roles'
 import { buildPaletteItems, filterPaletteItems } from './CommandPaletteDialog'
 
 describe('command palette items', () => {
@@ -22,5 +23,24 @@ describe('command palette items', () => {
   it('returns everything for an empty query and nothing for nonsense', () => {
     expect(filterPaletteItems(items, '  ')).toHaveLength(items.length)
     expect(filterPaletteItems(items, 'qwertyuiop')).toHaveLength(0)
+  })
+
+  it('offers a manager only the sections and actions they can open', () => {
+    const paths = buildPaletteItems(ROLE_PERMISSIONS.ROLE_MANAGER).map((item) => item.path)
+
+    expect(paths).toContain('/admin/crm')
+    expect(paths).toContain('/admin/crm?status=new')
+    expect(paths).not.toContain('/admin/pages/new')
+    expect(paths).not.toContain('/admin/seo')
+    expect(paths).not.toContain('/admin/system/backups')
+  })
+
+  it('offers an editor page creation and uploads but not redirects', () => {
+    const paths = buildPaletteItems(ROLE_PERMISSIONS.ROLE_EDITOR).map((item) => item.path)
+
+    expect(paths).toContain('/admin/pages/new')
+    expect(paths).toContain('/admin/media')
+    expect(paths).not.toContain('/admin/seo')
+    expect(paths).not.toContain('/admin/users')
   })
 })

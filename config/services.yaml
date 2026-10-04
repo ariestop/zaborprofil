@@ -14,6 +14,16 @@ parameters:
     # Запуск Doctrine-миграций из веб-админки. По умолчанию выключен; на production миграции выполняет только CLI при деплое.
     env(ADMIN_WEB_MIGRATIONS_ENABLED): '0'
     app.admin.web_migrations_enabled: '%env(bool:ADMIN_WEB_MIGRATIONS_ENABLED)%'
+    # HTTP-кэш публичных страниц (Cache-Control/ETag). Включается по умолчанию только в prod.
+    env(PUBLIC_HTTP_CACHE_ENABLED): '0'
+    # Браузер каждый раз сверяет ETag (после публикации редактор сразу видит новую версию),
+    # общие кэши (nginx, CDN) держат копию S_MAXAGE секунд или до сброса при публикации.
+    env(PUBLIC_HTTP_CACHE_MAX_AGE): '0'
+    env(PUBLIC_HTTP_CACHE_S_MAXAGE): '300'
+    env(PUBLIC_HTTP_CACHE_STALE_WHILE_REVALIDATE): '60'
+    # Каталог nginx fastcgi_cache_path для сброса кэша при публикации; пусто — сброс отключён.
+    env(NGINX_FASTCGI_CACHE_DIR): ''
+    env(NGINX_FASTCGI_CACHE_LEVELS): '1:2'
 
 services:
     _defaults:
@@ -29,6 +39,23 @@ services:
 
     App\Module\Content\Application\Service\PublicPageResolverInterface:
         alias: App\Module\Content\Application\Service\PublicPageResolver
+
+    App\Module\Content\UI\Web\PublicPageHttpCache:
+        arguments:
+            $enabled: '%env(bool:PUBLIC_HTTP_CACHE_ENABLED)%'
+            $maxAge: '%env(int:PUBLIC_HTTP_CACHE_MAX_AGE)%'
+            $sharedMaxAge: '%env(int:PUBLIC_HTTP_CACHE_S_MAXAGE)%'
+            $staleWhileRevalidate: '%env(int:PUBLIC_HTTP_CACHE_STALE_WHILE_REVALIDATE)%'
+            $environment: '%kernel.environment%'
+
+    App\Module\Content\Infrastructure\Http\NginxFastcgiCachePurger:
+        arguments:
+            $cacheDir: '%env(NGINX_FASTCGI_CACHE_DIR)%'
+            $levels: '%env(NGINX_FASTCGI_CACHE_LEVELS)%'
+            $siteUrl: '%app.site_url%'
+
+    App\Module\Content\Application\Service\PublicHttpCachePurgerInterface:
+        alias: App\Module\Content\Infrastructure\Http\NginxFastcgiCachePurger
 
     App\Module\Content\Domain\Repository\PageRepositoryInterface:
         alias: App\Module\Content\Infrastructure\Repository\DoctrinePageRepository
@@ -205,6 +232,7 @@ when@test:
         app.vite.dev_server_url: ''
         app.sitemap_chunk_size: 2
         app.observability_dir: '%kernel.cache_dir%/observability'
+        env(PUBLIC_HTTP_CACHE_ENABLED): '1'
 
     services:
         test.rate_limiter.storage:
@@ -220,3 +248,4 @@ when@test:
 when@prod:
     parameters:
         app.vite.dev_server_url: ''
+        env(PUBLIC_HTTP_CACHE_ENABLED): '1'

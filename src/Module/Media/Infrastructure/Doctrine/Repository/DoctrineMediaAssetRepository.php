@@ -79,6 +79,22 @@ final class DoctrineMediaAssetRepository extends ServiceEntityRepository impleme
         return new MediaAssetPage($items, $total, $criteria->page, $criteria->perPage);
     }
 
+    public function findByPublicPaths(array $publicPaths): array
+    {
+        if ($publicPaths === []) {
+            return [];
+        }
+
+        /** @var list<MediaAsset> $result */
+        $result = $this->createQueryBuilder('asset')
+            ->where('asset.publicPath IN (:paths)')
+            ->setParameter('paths', array_values(array_unique($publicPaths)), ArrayParameterType::STRING)
+            ->getQuery()
+            ->getResult();
+
+        return $result;
+    }
+
     public function findOneByFileHash(string $fileHash): ?MediaAsset
     {
         return $this->findOneBy(['fileHash' => strtolower($fileHash)], ['createdAt' => 'ASC']);
