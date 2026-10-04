@@ -481,6 +481,142 @@ final class AdminContentApiTest extends WebTestCase
         self::assertSame('hero.classic', $firstBlock['type'] ?? null);
     }
 
+    public function testBuilderSerializesEmptyContentAndSettingsAsObjectsForBlocksCreatedViaContentApi(): void
+    {
+        $client = self::createClient();
+        $this->prepareDatabase();
+        $client->loginUser($this->createAdminUser('builder-legacy@example.test'));
+
+        $pageId = $this->createLandingPage($client, 'builder-legacy');
+
+        foreach ([['hero', 0], ['text', 1]] as [$type, $position]) {
+            $this->jsonRequestWithCsrf($client, 'POST', \sprintf('/admin/api/content/pages/%s/blocks', $pageId), [
+                'type' => $type,
+                'name' => ucfirst($type).' block',
+                'position' => $position,
+                'content' => [],
+                'settings' => [],
+                'isEnabled' => true,
+            ]);
+            self::assertResponseStatusCodeSame(201);
+            $created = $this->decodeObject((string) $client->getResponse()->getContent());
+            self::assertInstanceOf(\stdClass::class, $created->content);
+            self::assertInstanceOf(\stdClass::class, $created->settings);
+        }
+
+        $this->jsonRequestWithCsrf($client, 'GET', \sprintf('/admin/api/content/pages/%s/builder', $pageId));
+        self::assertResponseIsSuccessful();
+        $rawBody = (string) $client->getResponse()->getContent();
+        $blocks = $this->decodeBlocks($rawBody);
+        self::assertCount(2, $blocks);
+        self::assertSame(['hero', 'text'], array_map(static fn (\stdClass $block): mixed => $block->type, $blocks));
+        foreach ($blocks as $block) {
+            self::assertInstanceOf(\stdClass::class, $block->content, 'content must be a JSON object, not [].');
+            self::assertInstanceOf(\stdClass::class, $block->settings, 'settings must be a JSON object, not [].');
+        }
+        self::assertStringNotContainsString('"settings":[]', $rawBody);
+        self::assertStringNotContainsString('"content":[]', $rawBody);
+
+        $this->jsonRequestWithCsrf($client, 'GET', \sprintf('/admin/api/content/pages/%s', $pageId));
+        self::assertResponseIsSuccessful();
+        foreach ($this->decodeBlocks((string) $client->getResponse()->getContent()) as $block) {
+            self::assertInstanceOf(\stdClass::class, $block->settings);
+        }
+    }
+
+    public function testBuilderSavesLegacyBlocksReturnedByBuilderAndPersistsOrder(): void
+    {
+        $client = self::createClient();
+        $this->prepareDatabase();
+        $client->loginUser($this->createAdminUser('builder-order@example.test'));
+
+        $pageId = $this->createLandingPage($client, 'builder-order');
+        foreach ([['hero', 0, ['title' => 'Hero']], ['text', 1, ['richText' => '<p>Initial text</p>']]] as [$type, $position, $content]) {
+            $this->jsonRequestWithCsrf($client, 'POST', \sprintf('/admin/api/content/pages/%s/blocks', $pageId), [
+                'type' => $type,
+                'name' => ucfirst($type).' block',
+                'position' => $position,
+                'content' => $content,
+                'settings' => [],
+                'isEnabled' => true,
+            ]);
+            self::assertResponseStatusCodeSame(201);
+        }
+
+        $this->jsonRequestWithCsrf($client, 'GET', \sprintf('/admin/api/content/pages/%s/builder', $pageId));
+        self::assertResponseIsSuccessful();
+        $document = json_decode((string) $client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($document);
+        $blocks = $document['blocks'];
+        self::assertIsArray($blocks);
+
+        $this->jsonRequestWithCsrf($client, 'PUT', \sprintf('/admin/api/content/pages/%s/builder', $pageId), [
+            'blocks' => array_reverse($blocks),
+        ]);
+        self::assertResponseIsSuccessful();
+
+        $this->jsonRequestWithCsrf($client, 'GET', \sprintf('/admin/api/content/pages/%s/builder', $pageId));
+        self::assertResponseIsSuccessful();
+        $savedBlocks = $this->decodeBlocks((string) $client->getResponse()->getContent());
+        self::assertSame(['text', 'hero'], array_map(static fn (\stdClass $block): mixed => $block->type, $savedBlocks));
+        self::assertSame([0, 1], array_map(static fn (\stdClass $block): mixed => $block->position, $savedBlocks));
+        self::assertEquals((object) ['richText' => '<p>Initial text</p>'], $savedBlocks[0]->content);
+    }
+
+    public function testBuilderAcceptsEmptyListAndNullAsEmptySettingsAndRejectsNonEmptyList(): void
+    {
+        $client = self::createClient();
+        $this->prepareDatabase();
+        $client->loginUser($this->createAdminUser('builder-settings@example.test'));
+
+        $pageId = $this->createLandingPage($client, 'builder-settings');
+        $uri = \sprintf('/admin/api/content/pages/%s/builder', $pageId);
+
+        $this->jsonRequestWithCsrf($client, 'PUT', $uri, [
+            'blocks' => [
+                ['id' => '01JQY3Y5SFSVCE00H9GQWQY590', 'type' => 'rich-text', 'enabled' => true, 'content' => ['html' => '<p>A</p>'], 'settings' => []],
+                ['id' => '01JQY3Y5SFSVCE00H9GQWQY591', 'type' => 'rich-text', 'enabled' => true, 'content' => ['html' => '<p>B</p>'], 'settings' => null],
+                ['id' => '01JQY3Y5SFSVCE00H9GQWQY592', 'type' => 'hero', 'enabled' => true, 'content' => [], 'settings' => new \stdClass()],
+            ],
+        ]);
+        self::assertResponseIsSuccessful();
+        foreach ($this->decodeBlocks((string) $client->getResponse()->getContent()) as $block) {
+            self::assertInstanceOf(\stdClass::class, $block->settings);
+            self::assertInstanceOf(\stdClass::class, $block->content);
+        }
+
+        $this->jsonRequestWithCsrf($client, 'PUT', $uri, [
+            'blocks' => [
+                ['id' => '01JQY3Y5SFSVCE00H9GQWQY593', 'type' => 'rich-text', 'enabled' => true, 'content' => ['html' => '<p>C</p>'], 'settings' => ['a', 'b']],
+            ],
+        ]);
+        self::assertResponseStatusCodeSame(422);
+    }
+
+    public function testBlockSchemasEndpointExposesLegacyAliases(): void
+    {
+        $client = self::createClient();
+        $this->prepareDatabase();
+        $client->loginUser($this->createAdminUser('block-schemas@example.test'));
+
+        $this->jsonRequestWithCsrf($client, 'GET', '/admin/api/content/block-schemas');
+        self::assertResponseIsSuccessful();
+        $payload = $this->decodeObject((string) $client->getResponse()->getContent());
+        self::assertIsArray($payload->blockSchemas);
+
+        $canonicalByType = [];
+        foreach ($payload->blockSchemas as $schema) {
+            self::assertInstanceOf(\stdClass::class, $schema);
+            self::assertIsString($schema->type);
+            $canonicalByType[$schema->type] = $schema->canonicalType;
+        }
+
+        self::assertSame('hero.classic', $canonicalByType['hero']);
+        self::assertSame('rich-text', $canonicalByType['text']);
+        self::assertArrayHasKey('hero.classic', $canonicalByType);
+        self::assertNull($canonicalByType['hero.classic']);
+    }
+
     public function testBuilderEndpointRejectsUnknownBlockType(): void
     {
         $client = self::createClient();
@@ -669,6 +805,51 @@ final class AdminContentApiTest extends WebTestCase
             }
         }
         self::assertTrue($hasPageBlockEntry);
+    }
+
+    private function decodeObject(string $json): \stdClass
+    {
+        $decoded = json_decode($json, false, flags: JSON_THROW_ON_ERROR);
+        if (!$decoded instanceof \stdClass) {
+            throw new LogicException('Response must be a JSON object.');
+        }
+
+        return $decoded;
+    }
+
+    /**
+     * @return list<\stdClass>
+     */
+    private function decodeBlocks(string $json): array
+    {
+        $document = $this->decodeObject($json);
+        if (!isset($document->blocks) || !\is_array($document->blocks)) {
+            throw new LogicException('Response must contain "blocks".');
+        }
+
+        $blocks = [];
+        foreach ($document->blocks as $block) {
+            if (!$block instanceof \stdClass) {
+                throw new LogicException('Each block must be a JSON object.');
+            }
+            $blocks[] = $block;
+        }
+
+        return $blocks;
+    }
+
+    private function createLandingPage(KernelBrowser $client, string $slug): string
+    {
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/content/pages', [
+            'type' => 'landing',
+            'title' => $slug,
+            'slug' => $slug,
+            'path' => \sprintf('/%s/', $slug),
+            'h1' => $slug,
+        ]);
+        self::assertResponseStatusCodeSame(201);
+
+        return $this->stringFromResponse((string) $client->getResponse()->getContent(), 'id');
     }
 
     private function prepareDatabase(): void

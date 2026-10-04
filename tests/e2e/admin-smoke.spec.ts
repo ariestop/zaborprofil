@@ -16,6 +16,7 @@ import {
   createPageExpectValidationError,
   createPageViaAdminApi,
   dragWithRetries,
+  fetchBuilderBlocks,
   loginToAdmin,
   waitForBuilderResponse,
 } from './helpers/admin'
@@ -53,7 +54,7 @@ test.describe('Admin smoke flow', () => {
     await expect(page.getByText(BUILDER_SELECTORS.previewPlaceholderText)).toBeHidden()
   })
 
-  test('builder dnd reorders blocks', async ({ page }) => {
+  test('builder dnd reorders blocks and persists order after save', async ({ page }) => {
     await loginToAdmin(page)
 
     const createdPage = await createPageViaAdminApi(page, buildDndPagePayload())
@@ -75,6 +76,20 @@ test.describe('Admin smoke flow', () => {
       heroFirst,
       async () => page.getByRole('button', { name: 'text position: 0' }).isVisible(),
     )
+    await expect(page.getByRole('button', { name: 'hero position: 1' })).toBeVisible()
+
+    await Promise.all([
+      waitForBuilderResponse(page, createdPage.id, 'PUT'),
+      page.getByRole('button', { name: BUILDER_SELECTORS.saveNowButtonName }).click(),
+    ])
+
+    const savedBlocks = await fetchBuilderBlocks(page, createdPage.id)
+    expect(savedBlocks.map((block) => block.type)).toEqual(['text', 'hero'])
+    expect(savedBlocks.map((block) => block.position)).toEqual([0, 1])
+    expect(savedBlocks.every((block) => block.contentIsObject && block.settingsIsObject)).toBe(true)
+
+    await page.reload()
+    await expect(page.getByRole('button', { name: 'text position: 0' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'hero position: 1' })).toBeVisible()
   })
 

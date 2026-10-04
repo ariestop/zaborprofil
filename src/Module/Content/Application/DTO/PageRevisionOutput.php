@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Module\Content\Application\DTO;
 
+use App\Module\Content\Application\Service\JsonObject;
 use App\Module\Content\Domain\Entity\PageRevision;
 
 final readonly class PageRevisionOutput
@@ -33,12 +34,32 @@ final readonly class PageRevisionOutput
             'type' => $this->revision->type(),
             'template' => $this->revision->template(),
             'seoSnapshot' => $this->revision->seoSnapshot(),
-            'blocksSnapshot' => $this->revision->blocksSnapshot(),
+            'blocksSnapshot' => $this->blocksSnapshot(),
             'settingsSnapshot' => $this->revision->settingsSnapshot(),
             'createdBy' => $this->revision->createdBy(),
             'createdAt' => $this->revision->createdAt()->format(DATE_ATOM),
             'comment' => $this->revision->comment(),
             'changeSummary' => $this->revision->changeSummary(),
         ];
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function blocksSnapshot(): array
+    {
+        $blocks = [];
+        foreach ($this->revision->blocksSnapshot() as $block) {
+            foreach (['content', 'settings'] as $field) {
+                $value = $block[$field] ?? [];
+                if (\is_array($value) && ($value === [] || !array_is_list($value))) {
+                    /** @var array<string, mixed> $value */
+                    $block[$field] = JsonObject::from($value);
+                }
+            }
+            $blocks[] = $block;
+        }
+
+        return $blocks;
     }
 }

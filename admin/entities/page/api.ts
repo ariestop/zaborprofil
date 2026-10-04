@@ -3,6 +3,7 @@ import { apiRequest } from '../../shared/api/client'
 import { adminQueryKeys, queryOptions } from '../../shared/api/query'
 import type { ContentPageDetail, ContentPageItem, PageRevisionItem } from '../../types/api'
 import type { BuilderBlock } from '../../modules/page-builder/types'
+import { deserializeBuilderBlocks, serializeBuilderBlocks } from '../../modules/page-builder/utils/blockSerialization'
 
 export interface PageListResponse {
   pages: ContentPageItem[]
@@ -142,10 +143,19 @@ export interface BuilderPreviewResponse {
   html: string
 }
 
+function deserializeBuilderDocument(document: BuilderDocumentResponse): BuilderDocumentResponse {
+  return {
+    ...document,
+    blocks: deserializeBuilderBlocks(document.blocks),
+  }
+}
+
 export function usePageBuilderQuery(pageId: string) {
   return useQuery(queryOptions(
     ['admin', 'pages', pageId, 'builder'],
-    () => apiRequest<BuilderDocumentResponse>(`/admin/api/content/pages/${pageId}/builder`),
+    async () => deserializeBuilderDocument(
+      await apiRequest<BuilderDocumentResponse>(`/admin/api/content/pages/${pageId}/builder`),
+    ),
   ))
 }
 
@@ -153,10 +163,12 @@ export function useSavePageBuilderMutation(pageId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (blocks: BuilderBlock[]) => apiRequest<BuilderDocumentResponse>(`/admin/api/content/pages/${pageId}/builder`, {
-      method: 'PUT',
-      body: { blocks },
-    }),
+    mutationFn: async (blocks: BuilderBlock[]) => deserializeBuilderDocument(
+      await apiRequest<BuilderDocumentResponse>(`/admin/api/content/pages/${pageId}/builder`, {
+        method: 'PUT',
+        body: { blocks: serializeBuilderBlocks(blocks) },
+      }),
+    ),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['admin', 'pages', pageId, 'builder'] }),
@@ -169,7 +181,7 @@ export function useSavePageBuilderMutation(pageId: string) {
 export async function previewPageBuilder(pageId: string, blocks: BuilderBlock[]): Promise<BuilderPreviewResponse> {
   return apiRequest<BuilderPreviewResponse>(`/admin/api/content/pages/${pageId}/builder/preview`, {
     method: 'POST',
-    body: { blocks },
+    body: { blocks: serializeBuilderBlocks(blocks) },
   })
 }
 

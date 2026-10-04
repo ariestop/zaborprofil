@@ -105,6 +105,37 @@ export async function dragWithRetries(
   throw new Error('DnD reorder did not change block order after retries.')
 }
 
+export interface BuilderBlockSnapshot {
+  type: string
+  position: number
+  contentIsObject: boolean
+  settingsIsObject: boolean
+}
+
+export async function fetchBuilderBlocks(page: Page, pageId: string): Promise<BuilderBlockSnapshot[]> {
+  const response = await page.evaluate(async (id) => {
+    const request = await fetch(`/admin/api/content/pages/${id}/builder`, {
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    })
+
+    return { status: request.status, payload: await request.json() as { blocks?: Array<Record<string, unknown>> } }
+  }, pageId)
+
+  if (response.status !== 200 || !Array.isArray(response.payload.blocks)) {
+    throw new Error(`Could not load builder document. Status: ${response.status}`)
+  }
+
+  const isObject = (value: unknown): boolean => typeof value === 'object' && value !== null && !Array.isArray(value)
+
+  return response.payload.blocks.map((block) => ({
+    type: String(block.type),
+    position: Number(block.position),
+    contentIsObject: isObject(block.content),
+    settingsIsObject: isObject(block.settings),
+  }))
+}
+
 export function waitForBuilderResponse(page: Page, pageId: string, method: 'PUT' | 'POST', suffix = ''): Promise<unknown> {
   return page.waitForResponse((response) => {
     return response.request().method() === method

@@ -41,6 +41,10 @@ services:
     App\Module\Content\Domain\Repository\PageTemplateRepositoryInterface:
         alias: App\Module\Content\Infrastructure\Repository\DoctrinePageTemplateRepository
 
+    App\Module\Content\Application\Service\BlockTypeCatalog:
+        arguments:
+            $path: '%kernel.project_dir%/config/content/block-types.json'
+
     App\Module\Content\Application\Service\PagePreviewToken:
         arguments:
             $secret: '%kernel.secret%'
