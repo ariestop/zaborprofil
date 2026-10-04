@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Unit\Content;
 
 use App\Module\Content\Application\Service\BlockSchemaRegistry;
+use App\Module\Content\Application\Service\BlockTypeCatalog;
 use App\Module\Content\Domain\Enum\BlockType;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
@@ -13,7 +14,7 @@ final class BlockSchemaRegistryTest extends TestCase
 {
     public function testReturnsSchemaForKnownBlockType(): void
     {
-        $schema = (new BlockSchemaRegistry())->get(BlockType::Hero);
+        $schema = $this->registry()->get(BlockType::Hero);
 
         self::assertSame('hero', $schema->type->value);
         self::assertSame('high', $schema->seoImpact);
@@ -23,12 +24,12 @@ final class BlockSchemaRegistryTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        (new BlockSchemaRegistry())->validate(BlockType::HtmlEmbed, ['html' => '<script>alert(1)</script>']);
+        $this->registry()->validate(BlockType::HtmlEmbed, ['html' => '<script>alert(1)</script>']);
     }
 
     public function testSliderStructuredDefaultsContainExtendedFields(): void
     {
-        $schema = (new BlockSchemaRegistry())->get(BlockType::Slider);
+        $schema = $this->registry()->get(BlockType::Slider);
 
         self::assertArrayHasKey('items', $schema->defaultContent);
         $items = $schema->defaultContent['items'];
@@ -52,5 +53,20 @@ final class BlockSchemaRegistryTest extends TestCase
         $coverflowEffect = $schema->defaultSettings['coverflowEffect'] ?? null;
         self::assertIsArray($coverflowEffect);
         self::assertSame(18, $coverflowEffect['rotate'] ?? null);
+    }
+
+    public function testSchemasExposeCanonicalTypeForLegacyBlocks(): void
+    {
+        $registry = $this->registry();
+
+        self::assertSame('hero.classic', $registry->get(BlockType::Hero)->canonicalType);
+        self::assertSame('rich-text', $registry->get(BlockType::Text)->toArray()['canonicalType']);
+        self::assertNull($registry->get(BlockType::HtmlEmbed)->canonicalType);
+        self::assertNull($registry->get(BlockType::HeroClassic)->canonicalType);
+    }
+
+    private function registry(): BlockSchemaRegistry
+    {
+        return new BlockSchemaRegistry(new BlockTypeCatalog(\dirname(__DIR__, 3).'/config/content/block-types.json'));
     }
 }

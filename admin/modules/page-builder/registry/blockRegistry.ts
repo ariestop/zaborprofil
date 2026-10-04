@@ -1,5 +1,6 @@
 import { z } from 'zod'
-import type { BlockDefinition, BuilderBlockType } from '../types'
+import { LEGACY_BLOCK_TYPES, LEGACY_BLOCK_TYPE_ALIASES } from '../types'
+import type { BlockDefinition, BuilderBlockType, LegacyBlockType } from '../types'
 
 const textSchema = z.object({
   title: z.string().default(''),
@@ -109,7 +110,7 @@ function def(
   }
 }
 
-export const blockRegistry: BlockDefinition[] = [
+const structuredBlockRegistry: BlockDefinition[] = [
   def('section', 'Секция', 'layout', 10, 'Базовая секция страницы.', z.object({ title: z.string().default('Section') })),
   def('container', 'Контейнер', 'layout', 20, 'Контейнер с ограничением ширины.', z.object({ title: z.string().default('Container') })),
   def('grid', 'Сетка', 'layout', 30, 'Сетка элементов.', z.object({ columns: z.number().int().min(1).max(6).default(3) })),
@@ -188,5 +189,56 @@ export const blockRegistry: BlockDefinition[] = [
   def('schema-faq', 'Schema FAQ', 'seo_system', 50, 'Schema FAQ.', z.object({ items: z.array(z.object({ question: z.string(), answer: z.string() })).default([]) })),
   def('schema-local-business', 'Schema LocalBusiness', 'seo_system', 60, 'Schema LocalBusiness.', z.object({ name: z.string().default(''), address: z.string().default(''), phone: z.string().default('') })),
 ]
+
+const LEGACY_BLOCK_TITLES: Record<LegacyBlockType, string> = {
+  hero: 'Первый экран',
+  text: 'Текст',
+  text_image: 'Текст + изображение',
+  feature_grid: 'Преимущества',
+  price_cards: 'Карточки цен',
+  cta_form: 'Форма заявки',
+  telegram_cta: 'Telegram CTA',
+  contacts: 'Контакты',
+  map: 'Карта',
+  portfolio_grid: 'Сетка работ',
+  seo_text: 'SEO-текст',
+  html_embed: 'HTML-вставка',
+  table: 'Таблица',
+  before_after: 'До/после',
+  calculator_placeholder: 'Калькулятор',
+  review_cards: 'Отзывы',
+  documents: 'Документы',
+}
+
+// Legacy-блоки хранятся в БД и создаются через content API; их структура не навязывается:
+// схемы пропускают любые поля, чтобы сохранение в builder не теряло данные.
+const legacyContentSchema = z.looseObject({}) as BlockDefinition['contentSchema']
+const legacySettingsSchema = z.looseObject({}) as BlockDefinition['settingsSchema']
+
+function legacyDef(type: LegacyBlockType, sortOrder: number): BlockDefinition {
+  const canonicalType = LEGACY_BLOCK_TYPE_ALIASES[type]
+
+  return {
+    type,
+    title: `${LEGACY_BLOCK_TITLES[type]} (legacy)`,
+    category: 'legacy',
+    sortOrder,
+    description: canonicalType === null
+      ? 'Устаревший тип блока без прямого аналога. Редактируется через JSON-панель.'
+      : `Устаревший тип блока, актуальный аналог: ${canonicalType}. Редактируется через JSON-панель.`,
+    legacy: true,
+    ...(canonicalType === null ? {} : { canonicalType }),
+    defaults: { content: {}, settings: {} },
+    contentSchema: legacyContentSchema,
+    settingsSchema: legacySettingsSchema,
+  }
+}
+
+export const legacyBlockRegistry: BlockDefinition[] = LEGACY_BLOCK_TYPES.map((type, index) => legacyDef(type, (index + 1) * 10))
+
+export const blockRegistry: BlockDefinition[] = [...structuredBlockRegistry, ...legacyBlockRegistry]
+
+/** Блоки, которые можно добавить на страницу из каталога (legacy только редактируются). */
+export const selectableBlockRegistry: BlockDefinition[] = blockRegistry.filter((definition) => definition.legacy !== true)
 
 export const blockRegistryByType = new Map(blockRegistry.map((definition) => [definition.type, definition]))

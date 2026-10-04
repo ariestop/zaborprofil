@@ -8,11 +8,12 @@ export const BLOCK_CATEGORIES = [
   'conversion',
   'business',
   'seo_system',
+  'legacy',
 ] as const
 
 export type BlockCategory = (typeof BLOCK_CATEGORIES)[number]
 
-export const BLOCK_TYPES = [
+export const STRUCTURED_BLOCK_TYPES = [
   'section',
   'container',
   'grid',
@@ -67,7 +68,55 @@ export const BLOCK_TYPES = [
   'schema-local-business',
 ] as const
 
+export const LEGACY_BLOCK_TYPES = [
+  'hero',
+  'text',
+  'text_image',
+  'feature_grid',
+  'price_cards',
+  'cta_form',
+  'telegram_cta',
+  'contacts',
+  'map',
+  'portfolio_grid',
+  'seo_text',
+  'html_embed',
+  'table',
+  'before_after',
+  'calculator_placeholder',
+  'review_cards',
+  'documents',
+] as const
+
+export type LegacyBlockType = (typeof LEGACY_BLOCK_TYPES)[number]
+
+export const BLOCK_TYPES = [...STRUCTURED_BLOCK_TYPES, ...LEGACY_BLOCK_TYPES] as const
+
 export type BuilderBlockType = (typeof BLOCK_TYPES)[number]
+
+export const LEGACY_BLOCK_TYPE_ALIASES: Record<LegacyBlockType, (typeof STRUCTURED_BLOCK_TYPES)[number] | null> = {
+  hero: 'hero.classic',
+  text: 'rich-text',
+  text_image: 'text-with-image',
+  feature_grid: 'features',
+  price_cards: 'pricing',
+  cta_form: 'cta',
+  telegram_cta: 'cta',
+  contacts: 'contacts-map',
+  map: 'contacts-map',
+  portfolio_grid: 'portfolio',
+  seo_text: 'rich-text',
+  html_embed: null,
+  table: 'price-table',
+  before_after: 'before-after',
+  calculator_placeholder: 'calculator-placeholder',
+  review_cards: 'reviews',
+  documents: null,
+}
+
+export function isLegacyBlockType(type: string): type is LegacyBlockType {
+  return (LEGACY_BLOCK_TYPES as readonly string[]).includes(type)
+}
 
 export interface BuilderBlockMetadata {
   createdAt: string
@@ -120,6 +169,8 @@ export interface BlockDefinition {
   category: BlockCategory
   sortOrder: number
   description: string
+  legacy?: boolean
+  canonicalType?: BuilderBlockType
   defaults: {
     content: Record<string, unknown>
     settings: Record<string, unknown>

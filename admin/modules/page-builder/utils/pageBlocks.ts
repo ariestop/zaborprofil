@@ -1,6 +1,7 @@
 import type { BuilderBlock, BuilderBlockType, BuilderValidationIssue, BuilderValidationResult } from '../types'
 import { builderBlockSchema } from '../types'
 import { blockRegistryByType } from '../registry/blockRegistry'
+import { toJsonObject } from './blockSerialization'
 
 function nowIso() {
   return new Date().toISOString()
@@ -121,22 +122,28 @@ export function normalizePageBlocks(blocks: BuilderBlock[]): BuilderBlock[] {
     .slice()
     .sort((left, right) => left.position - right.position)
     .map((block, index) => {
+      const content = toJsonObject(block.content)
+      const settings = toJsonObject(block.settings)
       const definition = blockRegistryByType.get(block.type)
       if (definition === undefined) {
         return {
           ...block,
           position: index,
+          content,
+          settings,
         }
       }
 
-      const normalizedContent = definition.contentSchema.safeParse(block.content)
-      const normalizedSettings = definition.settingsSchema.safeParse(block.settings)
+      const normalizedContent = definition.contentSchema.safeParse(content)
+      const normalizedSettings = definition.settingsSchema.safeParse(settings)
 
+      // Данные, не прошедшие схему, не заменяются дефолтами: иначе автосохранение молча затёрло бы контент.
+      // Проблему покажет validatePageBlocks.
       return {
         ...block,
         position: index,
-        content: normalizedContent.success ? normalizedContent.data : structuredClone(definition.defaults.content),
-        settings: normalizedSettings.success ? normalizedSettings.data : structuredClone(definition.defaults.settings),
+        content: normalizedContent.success ? normalizedContent.data : content,
+        settings: normalizedSettings.success ? normalizedSettings.data : settings,
       }
     })
 }
