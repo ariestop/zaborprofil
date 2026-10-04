@@ -58,6 +58,10 @@
 
 ### `.github/workflows/deploy.yml`
 
+> **Статус: отключён по умолчанию (legacy, VPS).** Автозапуск по push в `main` выполняется только если задана repository variable `VPS_DEPLOY_ENABLED=true` (Settings -> Secrets and variables -> Actions -> Variables). Условие стоит на каждом job; при выключенной переменной run завершается со статусом skipped. Ручной запуск (`workflow_dispatch`) доступен всегда.
+>
+> Как включить обратно: создать переменную `VPS_DEPLOY_ENABLED` со значением `true` (или `gh variable set VPS_DEPLOY_ENABLED --body true`); для production нужны секреты `STAGING_SSH_*`/`PRODUCTION_SSH_*` (см. раздел Secrets). Как выключить: удалить переменную или задать любое значение, кроме `true`.
+
 Триггеры:
 
 - push в `develop` или `staging` для staging-потока;

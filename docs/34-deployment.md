@@ -4,7 +4,7 @@
 
 > Staging и production деплоятся **на VPS без Docker**. Docker — только для local dev.
 
-> Отдельный staging-стенд `https://dev.zaborprofil.ru` на хостинге Beget (ветка `dev`, деплой по SSH без release-структуры) описан в [49-beget-staging-deploy](49-beget-staging-deploy.md). Этот документ описывает release-схему VPS (`tools/deploy/deploy-staging.sh`, `deploy-production.sh`).
+> Отдельный staging-стенд `https://dev.zaborprofil.ru` на хостинге Beget (ветка `dev`, деплой по SSH без release-структуры) описан в [49-beget-staging-deploy](49-beget-staging-deploy.md). Этот документ описывает release-схему VPS (`tools/deploy/deploy-staging.sh`, `deploy-production.sh`). Автозапуск VPS-деплоя из `.github/workflows/deploy.yml` по умолчанию выключен: включается repository variable `VPS_DEPLOY_ENABLED=true` (см. [35-cicd](35-cicd.md)).
 
 ## Release layout
 

@@ -6,6 +6,8 @@
 > Стенд работает без Docker (native stack на сервере). Production этим процессом **не** деплоится.
 > Для production по-прежнему действует release-схема из [34-deployment](34-deployment.md) и [35-cicd](35-cicd.md).
 
+> Старый workflow `.github/workflows/deploy.yml` (деплой на VPS по push в `main`) отключён по умолчанию и не удалён. Включить автозапуск обратно: задать repository variable `VPS_DEPLOY_ENABLED=true` (Settings -> Secrets and variables -> Actions -> Variables). Ручной запуск `workflow_dispatch` работает всегда. Подробности: [35-cicd](35-cicd.md).
+
 ## Что входит
 
 | Файл | Назначение |
