@@ -61,7 +61,7 @@ export default function MediaLibraryView() {
   }, [])
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
       <h2 className="text-lg font-semibold text-slate-950">Media Library</h2>
       <p className="mt-1 text-sm text-slate-600">Безопасная загрузка изображений и PDF для контента и SEO.</p>
 

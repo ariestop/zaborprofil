@@ -25,7 +25,7 @@ export default function LeadsView() {
   }, [])
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
       <h2 className="text-lg font-semibold text-slate-950">Заявки</h2>
       <p className="mt-1 text-sm text-slate-600">Публичные формы отправляют заявки в `/api/leads` с consent snapshot.</p>
 

@@ -358,7 +358,7 @@ Cursor существует, чтобы **помогать реализовыв�
 - Не удалять базовую a11y (alt, label, focus, ARIA).
 - Frontend assets — Vite build должен оставаться рабочим.
 - Critical pages (главная, посадочные SEO, каталог, страницы услуг) — проверяются вручную после изменений.
-- Mobile / responsive — проверяется хотя бы на breakpoints из `tailwind.config.js`.
+- Mobile / responsive — проверяется хотя бы на стандартных breakpoints Tailwind (`sm`, `md`, `lg`, `xl`) и значений из `@theme` в `assets/shared/styles/app.css`.
 
 ---
 
