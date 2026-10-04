@@ -60,10 +60,22 @@ final readonly class UserApiController
                 ], 422);
             }
 
-            $roles = array_values(array_filter(
-                array_map(static fn (mixed $value): string => trim((string) $value), $payload['roles']),
-                static fn (string $value): bool => $value !== '',
-            ));
+            $roles = [];
+            foreach ($payload['roles'] as $role) {
+                if (!\is_string($role)) {
+                    return new JsonResponse([
+                        'error' => 'Validation failed.',
+                        'details' => [
+                            ['field' => 'roles', 'message' => 'Каждая роль должна быть строкой.'],
+                        ],
+                    ], 422);
+                }
+
+                $role = trim($role);
+                if ($role !== '') {
+                    $roles[] = $role;
+                }
+            }
 
             if ($roles === []) {
                 return new JsonResponse([
@@ -91,6 +103,9 @@ final readonly class UserApiController
         ], 403);
     }
 
+    /**
+     * @return array{id: string, email: string, roles: list<string>, active: bool, createdAt: string, updatedAt: string}
+     */
     private static function serializeUser(AdminUser $user): array
     {
         return [

@@ -7,7 +7,9 @@ namespace App\Module\Admin\Application\Service;
 use DateInterval;
 use DateTimeImmutable;
 use InvalidArgumentException;
+use Symfony\Component\HttpFoundation\Exception\SessionNotFoundException;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Uid\Ulid;
 
 final readonly class DangerousActionConfirmationService
@@ -31,10 +33,7 @@ final readonly class DangerousActionConfirmationService
             'action' => $action,
             'expiresAt' => $expiresAt->format(DATE_ATOM),
         ];
-        $session = $this->requestStack->getSession();
-        if ($session === null) {
-            throw new InvalidArgumentException('Session is not available for confirmation token.');
-        }
+        $session = $this->session();
 
         $tokens = $session->get('system_dangerous_tokens', []);
         if (!\is_array($tokens)) {
@@ -55,10 +54,7 @@ final readonly class DangerousActionConfirmationService
             throw new InvalidArgumentException('Missing confirmation token.');
         }
 
-        $session = $this->requestStack->getSession();
-        if ($session === null) {
-            throw new InvalidArgumentException('Session is not available for confirmation token.');
-        }
+        $session = $this->session();
 
         $tokens = $session->get('system_dangerous_tokens', []);
         if (!\is_array($tokens) || !isset($tokens[$confirmToken]) || !\is_array($tokens[$confirmToken])) {
@@ -78,4 +74,12 @@ final readonly class DangerousActionConfirmationService
         }
     }
 
+    private function session(): SessionInterface
+    {
+        try {
+            return $this->requestStack->getSession();
+        } catch (SessionNotFoundException $exception) {
+            throw new InvalidArgumentException('Session is not available for confirmation token.', previous: $exception);
+        }
+    }
 }

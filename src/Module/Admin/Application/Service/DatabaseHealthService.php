@@ -23,8 +23,8 @@ final readonly class DatabaseHealthService
         $databaseName = 'unknown';
 
         try {
-            $serverVersion = (string) $this->connection->fetchOne('SELECT version()');
-            $databaseName = (string) $this->connection->fetchOne('SELECT current_database()');
+            $serverVersion = $this->fetchString('SELECT VERSION()', $serverVersion);
+            $databaseName = $this->fetchString('SELECT DATABASE()', $databaseName);
         } catch (\Throwable) {
             // Keep graceful response for foundation endpoints.
         }
@@ -36,5 +36,12 @@ final readonly class DatabaseHealthService
             'connected' => $this->connection->isConnected(),
             'checkedAt' => (new DateTimeImmutable())->format(DATE_ATOM),
         ];
+    }
+
+    private function fetchString(string $sql, string $fallback): string
+    {
+        $value = $this->connection->fetchOne($sql);
+
+        return \is_string($value) && $value !== '' ? $value : $fallback;
     }
 }

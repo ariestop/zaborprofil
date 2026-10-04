@@ -80,7 +80,7 @@ final readonly class WhitelistCommandRunner
         // Intentionally executes only commands from fixed whitelist.
         exec($this->buildCommandString($command).' 2>&1', $output, $exitCode);
 
-        if (\is_string($cwd) && $cwd !== '') {
+        if ($cwd !== false) {
             chdir($cwd);
         }
 
@@ -99,7 +99,7 @@ final readonly class WhitelistCommandRunner
      */
     public function supportedActions(): array
     {
-        return array_values(array_keys(self::ALLOWED_ACTIONS));
+        return array_keys(self::ALLOWED_ACTIONS);
     }
 
     /**

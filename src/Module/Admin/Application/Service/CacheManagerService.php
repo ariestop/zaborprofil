@@ -20,9 +20,11 @@ final readonly class CacheManagerService
      */
     public function status(): array
     {
+        $namespace = method_exists($this->appCache, 'getNamespace') ? $this->appCache->getNamespace() : '';
+
         return [
             'adapter' => $this->appCache::class,
-            'namespace' => method_exists($this->appCache, 'getNamespace') ? (string) $this->appCache->getNamespace() : '',
+            'namespace' => \is_string($namespace) ? $namespace : '',
             'checkedAt' => (new DateTimeImmutable())->format(DATE_ATOM),
         ];
     }

@@ -92,7 +92,7 @@ final class AdminSettingsApiTest extends WebTestCase
 
         $renderMode = array_values(array_filter(
             $payload,
-            static fn (array $setting): bool => ($setting['key'] ?? null) === 'public_page_blocks_source',
+            static fn (mixed $setting): bool => \is_array($setting) && ($setting['key'] ?? null) === 'public_page_blocks_source',
         ));
 
         self::assertCount(1, $renderMode);

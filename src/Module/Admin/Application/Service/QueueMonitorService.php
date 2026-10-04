@@ -53,7 +53,7 @@ final readonly class QueueMonitorService
                 ['queue' => $queueName],
             );
 
-            return (int) $value;
+            return is_numeric($value) ? (int) $value : 0;
         } catch (\Throwable) {
             return 0;
         }
