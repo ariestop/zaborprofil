@@ -111,7 +111,8 @@ Functional тесты на `/health`, `/sitemap.xml`, `/robots.txt`, `/admin/log
 
 Для admin runtime дополнительно обязательны regression smoke-пути:
 
-- `/admin/pages` -> `/admin/pages/{id}` -> `/admin/pages/{id}/builder`;
+- `/admin/pages` -> `/admin/pages/new` -> `/admin/pages/{id}` (вкладки «Контент и блоки», «SEO», «Настройки», «Ревизии»); старый URL `/admin/pages/{id}/builder` остаётся рабочим;
+- сохранение SEO/настроек, предупреждение при уходе с несохранёнными правками;
 - builder save/reorder/rich-text update;
 - preview-link generation для страницы.
 - negative API contract smoke: невалидный payload возвращает `422` с validation details.

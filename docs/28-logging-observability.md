@@ -29,6 +29,7 @@
 - `page.pathChanged`
 - `setting.updated`
 - `setting.deleted`
+- `lead.created`, `lead.status_changed`, `lead.assigned` — только идентификаторы и коды статусов; телефон попадает в лог исключительно в маскированном виде (`7*********33`: первая и две последние цифры), тексты заметок и сообщений не логируются
 
 ## Handlers
 

@@ -50,6 +50,13 @@ describe('RevisionHistory', () => {
     expect(apiRequest).toHaveBeenCalledWith('/admin/api/content/pages/page-1/revisions/diff?from=rev-1&to=current')
   })
 
+  it('hides the rollback button in compare-only mode', () => {
+    renderWithProviders(<RevisionHistory pageId="page-1" revisions={[revision]} allowRollback={false} onRolledBack={vi.fn()} />)
+
+    expect(screen.getByRole('button', { name: 'Сравнить с текущей' })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Откатить' })).toBeNull()
+  })
+
   it('rolls back only after confirmation', async () => {
     apiRequest.mockResolvedValue({})
     const onRolledBack = vi.fn()

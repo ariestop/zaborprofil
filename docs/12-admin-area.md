@@ -27,7 +27,7 @@
 
 См. [20-security-and-access-control](20-security-and-access-control.md).
 
-Права (`AdminPermission`): `pages.view`, `pages.create`, `pages.edit`, `pages.publish`, `pages.delete`, `seo.edit`, `media.upload`, `media.delete`, `leads.view`, `leads.manage`, `settings.edit`, `users.manage`, `system.view`, `system.manage`.
+Права (`AdminPermission`): `pages.view`, `pages.create`, `pages.edit`, `pages.publish`, `pages.delete`, `seo.edit`, `media.upload`, `media.delete`, `leads.view`, `leads.manage`, `leads.export`, `settings.edit`, `users.manage`, `system.view`, `system.manage`.
 
 Для опасных системных операций введено отдельное разрешение `system.dangerous`:
 
@@ -112,6 +112,8 @@ Admin API использует **double-submit CSRF**:
 ## Admin SPA
 
 См. [ADMIN_FRONTEND.md](ADMIN_FRONTEND.md). React + TypeScript + Tailwind + Vite, билдится в `public_html/build/`. Manifest рендерится в Twig через `ViteAssetExtension`.
+
+Редактирование страниц — единый экран с вкладками `/admin/pages/{id}[/seo|/settings|/revisions]`, создание — `/admin/pages/new`; все пути отдаёт catch-all `/admin/{path}`. Подробности: [admin/page-editor](admin/page-editor.md). `PageOutput` (`GET/PUT /admin/api/content/pages`) возвращает `parentId`.
 
 ## System разделы (фактическое состояние)
 

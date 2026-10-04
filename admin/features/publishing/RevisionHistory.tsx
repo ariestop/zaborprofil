@@ -12,10 +12,12 @@ import { RevisionDiffView } from './RevisionDiffView'
 interface RevisionHistoryProps {
   pageId: string
   revisions: PageRevisionItem[]
+  /** `false` — только сравнение, без отката (откат доступен в другом месте экрана). */
+  allowRollback?: boolean
   onRolledBack: () => Promise<void> | void
 }
 
-export function RevisionHistory({ pageId, revisions, onRolledBack }: RevisionHistoryProps) {
+export function RevisionHistory({ pageId, revisions, allowRollback = true, onRolledBack }: RevisionHistoryProps) {
   const queryClient = useQueryClient()
   const { push } = useToast()
   const [diffRevision, setDiffRevision] = useState<PageRevisionItem | null>(null)
@@ -45,7 +47,7 @@ export function RevisionHistory({ pageId, revisions, onRolledBack }: RevisionHis
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs" aria-label="История ревизий">
-      <h3 className="text-base font-semibold text-slate-950">История публикаций</h3>
+      <h3 className="text-base font-semibold text-slate-950">{allowRollback ? 'История публикаций' : 'Сравнение с текущей версией'}</h3>
       {revisions.length === 0 && <p className="mt-2 text-sm text-slate-500">Публикаций пока нет.</p>}
       {error && <p role="alert" className="mt-2 text-sm text-red-700">{error}</p>}
       {revisions.map((revision) => (
@@ -56,7 +58,9 @@ export function RevisionHistory({ pageId, revisions, onRolledBack }: RevisionHis
           </div>
           <div className="flex gap-2">
             <Button type="button" variant="outline" size="sm" onClick={() => setDiffRevision(revision)}>Сравнить с текущей</Button>
-            <Button type="button" variant="outline" size="sm" disabled={rollbackMutation.isPending} onClick={() => setRollbackTarget(revision)}>Откатить</Button>
+            {allowRollback && (
+              <Button type="button" variant="outline" size="sm" disabled={rollbackMutation.isPending} onClick={() => setRollbackTarget(revision)}>Откатить</Button>
+            )}
           </div>
         </div>
       ))}

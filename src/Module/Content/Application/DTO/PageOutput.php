@@ -34,6 +34,7 @@ final readonly class PageOutput
         public ?string $ogType = null,
         public ?array $jsonLd = null,
         public ?string $metaTitle = null,
+        public ?string $parentId = null,
     ) {
     }
 
@@ -62,6 +63,7 @@ final readonly class PageOutput
             $page->ogType(),
             $page->jsonLd(),
             $page->metaTitle(),
+            $page->parent() === null ? null : (string) $page->parent()->id(),
         );
     }
 
@@ -80,6 +82,7 @@ final readonly class PageOutput
             'status' => $this->status,
             'template' => $this->template,
             'sortOrder' => $this->sortOrder,
+            'parentId' => $this->parentId,
             'isIndexable' => $this->isIndexable,
             'visibility' => $this->visibility,
             'publishedAt' => $this->publishedAt,

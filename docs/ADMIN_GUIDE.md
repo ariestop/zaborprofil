@@ -4,17 +4,16 @@
 
 - страница входа `/admin/login`;
 - защищенный dashboard `/admin/dashboard`;
-- страницы и блоки `/admin/pages`;
-- структурированный builder страницы `/admin/pages/{id}/builder`;
-- Media Library `/admin/media`: загрузка drag&drop с прогрессом, поиск, пагинация, alt/title, удаление с подтверждением, variants для изображений (см. [admin/media-library](admin/media-library.md));
+- страницы `/admin/pages` и единый редактор страницы `/admin/pages/{id}` с вкладками «Контент и блоки», «SEO», «Настройки», «Ревизии» (см. [admin/page-editor](admin/page-editor.md)); старый URL `/admin/pages/{id}/builder` открывает ту же страницу;
+- Media Library `/admin/media`: загрузка drag&drop с прогрессом и дедупликацией по хешу, поиск и фильтры, пагинация, alt/title/описание/папки, «где используется», удаление с подтверждением и защитой используемых файлов, variants для изображений (см. [admin/media-library](admin/media-library.md));
 - управляемые меню `/admin/menu` для `header`, `footer`, `service`;
-- заявки `/admin/leads` со статусами `new`, `in_progress`, `done`, `spam` и spam score/reasons;
+- CRM заявок `/admin/crm` (список с серверной пагинацией, поиск, фильтры, карточка `/admin/crm/{id}`, заметки, ответственный, экспорт CSV; см. [admin/crm-leads](admin/crm-leads.md));
 - SEO-панель `/admin/seo`: редиректы, robots.txt, журнал 404 и SEO-аудит;
 - настройки, health center, maintenance mode и audit log.
 
 ## Визуальный редактор блоков
 
-В разделе `/admin/pages` для блоков `text` и `text_image` доступно два режима:
+В редакторе страницы (вкладка «Контент и блоки») для блоков `text` и `text_image` доступно два режима:
 
 - `Визуально` — оператор работает с полями формы и форматированием текста, без ручного JSON;
 - `JSON` — режим для продвинутого редактирования полной структуры блока.
@@ -32,17 +31,18 @@
 
 Рекомендация для операторов: использовать `Визуально` как основной режим, а `JSON` — только если нужно добавить нестандартные поля, которых нет в форме.
 
-## Page Builder и legacy-редактор
+## Единый редактор страницы
 
-В админке сейчас существуют два интерфейса редактирования блоков:
+Контент, SEO, настройки и ревизии страницы редактируются на одном экране `/admin/pages/{id}`:
 
-- `Page Builder` (`/admin/pages/{id}/builder`) — основной интерфейс для структурированной работы с блоками;
-- legacy-редактор (`/admin/pages`, модалка `Редактор блоков`) — fallback/экспертный режим с прямым JSON.
+- вкладки переключаются без потери несохранённых правок;
+- SEO и блоки сохраняются автоматически через 20 секунд после правки (кроме опубликованных страниц), настройки — кнопкой «Сохранить» или `Ctrl/Cmd+S`;
+- индикатор в шапке показывает, сохранены ли изменения;
+- при уходе со страницы с несохранёнными правками показывается предупреждение;
+- «Предпросмотр» сначала сохраняет правки, затем открывает страницу в новой вкладке; «Опубликовать» доступна прямо в шапке;
+- JSON-редакторы блоков и JSON-LD включаются переключателем «Расширенный режим (JSON)».
 
-Для блока `Слайдер` доступны пресеты в обоих интерфейсах:
-
-- в builder: кнопки пресетов в `SliderEditor`;
-- в legacy: секция `Пресеты слайдера` внутри модалки редактирования блока.
+Для блока `Слайдер` пресеты доступны в `SliderEditor`.
 
 ## Content API
 
@@ -78,7 +78,7 @@ API пока предназначен для будущего Vue-интерфе
 
 - `GET|POST /admin/api/media/assets` (список с `page`, `perPage`, `q`, `type`, `sort` и `pagination` в ответе), `PATCH|DELETE /admin/api/media/assets/{id}`;
 - `GET|POST /admin/api/menu/items`, `PUT|DELETE /admin/api/menu/items/{id}`;
-- `GET /admin/api/leads`, `PATCH /admin/api/leads/{id}/status`.
+- Lead CRM: `GET /admin/api/leads` (пагинация, поиск, фильтры, сортировка), `/summary`, `/assignees`, `/export`, `GET /admin/api/leads/{id}`, `PATCH /{id}/status`, `PATCH /{id}/assignee`, `POST /{id}/notes` — подробности в [admin/crm-leads](admin/crm-leads.md).
 
 Публичные заявки отправляются в `POST /api/leads` с обязательным `consent=true` и honeypot-полем `website`.
 

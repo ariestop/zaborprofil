@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Module\Lead\Domain\Entity;
 
 use App\Module\Lead\Domain\ValueObject\LeadStatus;
+use App\Module\Lead\Domain\ValueObject\PhoneNumber;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use InvalidArgumentException;
@@ -13,6 +14,10 @@ use Symfony\Component\Uid\Ulid;
 #[ORM\Entity(repositoryClass: \App\Module\Lead\Infrastructure\Doctrine\Repository\DoctrineLeadRepository::class)]
 #[ORM\Table(name: 'leads')]
 #[ORM\Index(name: 'idx_leads_status_created_at', columns: ['status', 'created_at'])]
+#[ORM\Index(name: 'idx_leads_created_at', columns: ['created_at'])]
+#[ORM\Index(name: 'idx_leads_source', columns: ['source'])]
+#[ORM\Index(name: 'idx_leads_assignee', columns: ['assignee_id'])]
+#[ORM\Index(name: 'idx_leads_phone_digits', columns: ['phone_digits'])]
 final class Lead
 {
     #[ORM\Id]
@@ -27,6 +32,9 @@ final class Lead
 
     #[ORM\Column(length: 40)]
     private string $phone;
+
+    #[ORM\Column(name: 'phone_digits', length: 40)]
+    private string $phoneDigits;
 
     #[ORM\Column(length: 180, nullable: true)]
     private ?string $email;
@@ -52,6 +60,9 @@ final class Lead
     #[ORM\Column(name: 'spam_reasons', type: 'json')]
     private array $spamReasons = [];
 
+    #[ORM\Column(name: 'assignee_id', type: 'ulid', nullable: true)]
+    private ?Ulid $assigneeId = null;
+
     #[ORM\Column]
     private DateTimeImmutable $createdAt;
 
@@ -67,6 +78,7 @@ final class Lead
         $this->source = self::required($source, 'Lead source cannot be empty.');
         $this->name = self::required($name, 'Lead name cannot be empty.');
         $this->phone = self::required($phone, 'Lead phone cannot be empty.');
+        $this->phoneDigits = PhoneNumber::digits($this->phone);
         $this->email = self::optional($email);
         $this->message = self::optional($message);
         $this->consentSnapshot = $consentSnapshot;
@@ -77,6 +89,37 @@ final class Lead
     public function updateStatus(string $status): void
     {
         $this->status = LeadStatus::normalize($status);
+        $this->updatedAt = new DateTimeImmutable();
+    }
+
+    public function id(): Ulid
+    {
+        return $this->id;
+    }
+
+    public function status(): string
+    {
+        return $this->status;
+    }
+
+    public function phone(): string
+    {
+        return $this->phone;
+    }
+
+    public function phoneDigits(): string
+    {
+        return $this->phoneDigits;
+    }
+
+    public function assigneeId(): ?Ulid
+    {
+        return $this->assigneeId;
+    }
+
+    public function assignTo(?Ulid $assigneeId): void
+    {
+        $this->assigneeId = $assigneeId;
         $this->updatedAt = new DateTimeImmutable();
     }
 
@@ -108,6 +151,7 @@ final class Lead
             'message' => $this->message,
             'consentSnapshot' => $this->consentSnapshot,
             'status' => $this->status,
+            'assigneeId' => $this->assigneeId === null ? null : (string) $this->assigneeId,
             'spamScore' => $this->spamScore,
             'spamReasons' => $this->spamReasons,
             'createdAt' => $this->createdAt->format(DATE_ATOM),

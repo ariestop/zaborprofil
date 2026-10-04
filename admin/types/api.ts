@@ -117,6 +117,7 @@ export interface ContentPageItem {
   status: 'draft' | 'review' | 'approved' | 'published' | 'scheduled' | 'unpublished' | 'archived' | 'deleted'
   template: string
   sortOrder: number
+  parentId?: string | null
   isIndexable: boolean
   visibility: 'public' | 'hidden' | 'unlisted'
   publishedAt: string | null
@@ -208,7 +209,31 @@ export interface MediaAssetItem {
   }>
   alt: string | null
   title: string | null
+  description?: string | null
+  folder?: string | null
+  fileHash?: string | null
+  usageCount?: number
+  duplicate?: boolean
   createdAt: string
+}
+
+export interface MediaUsageItem {
+  type: 'page_seo' | 'page_block' | 'product' | 'category' | 'menu_item' | 'setting'
+  sourceId: string
+  title: string
+  location: string
+  adminPath: string | null
+  status: string | null
+}
+
+export interface MediaUsageResponse {
+  total: number
+  usages: MediaUsageItem[]
+}
+
+export interface MediaFolderItem {
+  name: string
+  count: number
 }
 
 export interface MediaPagination {
@@ -228,7 +253,38 @@ export interface MenuItem {
   updatedAt: string
 }
 
+export type LeadStatus = 'new' | 'in_progress' | 'done' | 'spam'
+
+export interface LeadAssigneeRef {
+  id: string
+  email: string | null
+}
+
 export interface LeadItem {
+  id: string
+  source: string
+  name: string
+  phone: string
+  email: string | null
+  status: LeadStatus
+  assignee: LeadAssigneeRef | null
+  spamScore: number
+  messagePreview: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface LeadEvent {
+  id: string
+  type: 'status_changed' | 'note' | 'assigned'
+  actorId: string | null
+  actorLabel: string
+  body: string | null
+  data: Record<string, unknown>
+  createdAt: string
+}
+
+export interface LeadDetail {
   id: string
   source: string
   name: string
@@ -236,11 +292,13 @@ export interface LeadItem {
   email: string | null
   message: string | null
   consentSnapshot: Record<string, unknown>
-  status: 'new' | 'in_progress' | 'done' | 'spam'
+  status: LeadStatus
+  assignee: LeadAssigneeRef | null
   spamScore: number
   spamReasons: string[]
   createdAt: string
   updatedAt: string
+  events: LeadEvent[]
 }
 
 export interface SystemOverviewResponse extends SystemHealthResponse {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { ApiError } from '../../shared/api/client'
 import type { MediaAssetItem } from '../../types/api'
-import { describeMediaError, formatFileSize, thumbnailPath, validateUploadFile } from './utils'
+import { describeMediaError, formatFileSize, formatUsageCount, thumbnailPath, validateUploadFile } from './utils'
 
 function asset(overrides: Partial<MediaAssetItem> = {}): MediaAssetItem {
   return {
@@ -52,5 +52,11 @@ describe('media utils', () => {
     expect(describeMediaError(new ApiError('too big', 413, null))).toContain('лимита сервера')
     expect(describeMediaError(new ApiError('Something custom', 422, null))).toBe('Something custom')
     expect(describeMediaError(new Error('boom'))).toBe('Не удалось выполнить операцию.')
+  })
+})
+
+describe('formatUsageCount', () => {
+  it('declines "место" for the "используется в …" phrase', () => {
+    expect([1, 2, 5, 11, 21, 22].map(formatUsageCount)).toEqual(['1 месте', '2 местах', '5 местах', '11 местах', '21 месте', '22 местах'])
   })
 })
