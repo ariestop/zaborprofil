@@ -9,8 +9,8 @@
 - Symfony >= 8.1
 - Node.js >= 25.9.0
 - npm >= 11.12.1
-- Redis >= 8.0
-- PostgreSQL >= 18.3
+- MySQL >= 8.4 (InnoDB, utf8mb4)
+- кэш: Symfony Cache на файловой системе (Redis не используется)
 
 ВАЖНО:
 Не ограничивайся поиском TODO/FIXME.
@@ -182,7 +182,7 @@
 - тяжелые запросы
 - транзакции
 - locking/concurrency
-- подготовку к PostgreSQL
+- совместимость с MySQL 8.4 (InnoDB, utf8mb4, не транзакционный DDL)
 
 ЭТАП 6. Аудит CMS и landing-page архитектуры
 Особое внимание удели системе страниц и блоков.
@@ -249,7 +249,7 @@
 - кеширование страниц
 - кеширование меню
 - кеширование SEO-данных
-- Redis usage
+- Filesystem cache usage (пулы, TTL, инвалидация, права на var/cache)
 - Symfony Cache usage
 - HTTP cache readiness
 - asset build
@@ -289,8 +289,7 @@
 - nginx config
 - PHP-FPM config
 - opcache
-- Redis config
-- PostgreSQL config
+- MySQL config (my.cnf, InnoDB, utf8mb4, sql_mode)
 - logs
 - backup readiness
 - migration deployment flow

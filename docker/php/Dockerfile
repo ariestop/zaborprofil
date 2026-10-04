@@ -17,13 +17,12 @@ RUN apt-get update \
         curl \
         git \
         libicu-dev \
-        libpq-dev \
         libzip-dev \
         unzip \
         zip \
-    && docker-php-ext-install intl pdo_pgsql zip \
-    && pecl install redis xdebug \
-    && docker-php-ext-enable redis xdebug \
+    && docker-php-ext-install intl pdo_mysql zip \
+    && pecl install xdebug \
+    && docker-php-ext-enable xdebug \
     && curl -fsSL https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
     && curl -1sLf https://dl.cloudsmith.io/public/symfony/stable/setup.deb.sh | bash \
     && apt-get install -y --no-install-recommends symfony-cli \

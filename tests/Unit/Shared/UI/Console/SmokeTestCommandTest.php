@@ -23,7 +23,7 @@ final class SmokeTestCommandTest extends TestCase
         mkdir($this->temporaryDirectory.'/public_html/uploads', 0775, true);
         file_put_contents($this->temporaryDirectory.'/public_html/build/.vite/manifest.json', '{}');
         $_ENV['APP_SECRET'] = 'test-secret';
-        $_ENV['DATABASE_URL'] = 'postgresql://zaborprofil:zaborprofil@postgres:5432/zaborprofil_test?serverVersion=18&charset=utf8';
+        $_ENV['DATABASE_URL'] = 'mysql://zaborprofil:zaborprofil@mysql:3306/zaborprofil_test?serverVersion=8.4&charset=utf8mb4';
     }
 
     protected function tearDown(): void

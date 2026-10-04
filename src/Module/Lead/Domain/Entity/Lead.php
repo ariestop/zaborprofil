@@ -37,7 +37,7 @@ final class Lead
     /**
      * @var array<string, mixed>
      */
-    #[ORM\Column(type: 'json', options: ['jsonb' => true])]
+    #[ORM\Column(type: 'json')]
     private array $consentSnapshot;
 
     #[ORM\Column(length: 32)]
@@ -49,7 +49,7 @@ final class Lead
     /**
      * @var list<string>
      */
-    #[ORM\Column(name: 'spam_reasons', type: 'json', options: ['jsonb' => true])]
+    #[ORM\Column(name: 'spam_reasons', type: 'json')]
     private array $spamReasons = [];
 
     #[ORM\Column]

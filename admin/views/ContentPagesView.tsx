@@ -863,7 +863,7 @@ export default function ContentPagesView() {
 
   return (
     <section className="space-y-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold text-slate-950">Редактор страниц</h2>
@@ -878,7 +878,7 @@ export default function ContentPagesView() {
 
       <div className="grid grid-cols-[280px_1fr] gap-6">
         <aside className="space-y-4">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
             <p className="mb-3 text-sm font-semibold text-slate-700">Страницы</p>
             {loading && <p className="text-sm text-slate-500">Загрузка...</p>}
             {pages.map((page) => (
@@ -902,7 +902,7 @@ export default function ContentPagesView() {
           </div>
 
           {selected && (
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-slate-700">Блоки</p>
@@ -928,7 +928,7 @@ export default function ContentPagesView() {
         </aside>
 
         <div className="space-y-6">
-          <form className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm" onSubmit={(event) => { event.preventDefault(); void savePage() }}>
+          <form className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs" onSubmit={(event) => { event.preventDefault(); void savePage() }}>
             <div className="mb-5">
               <h3 className="text-base font-semibold text-slate-950">Основные поля страницы</h3>
               <p className="mt-1 text-sm text-slate-600">Заполните адрес, заголовки и SEO-описание. Для публикации критичны путь, заголовок, H1 и корректные включённые блоки.</p>
@@ -972,7 +972,7 @@ export default function ContentPagesView() {
                 <span className="mt-1 block text-xs font-normal text-slate-500">Короткий латинский идентификатор без слэшей. Пример: «zabory-iz-profnastila».</span>
               </label>
               <label className="flex items-end gap-2 pb-2 text-sm text-slate-700">
-                <input checked={form.isIndexable} type="checkbox" className="rounded border-slate-300" onChange={(event) => setForm((current) => ({ ...current, isIndexable: event.target.checked }))} />
+                <input checked={form.isIndexable} type="checkbox" className="rounded-sm border-slate-300" onChange={(event) => setForm((current) => ({ ...current, isIndexable: event.target.checked }))} />
                 Индексировать
               </label>
             </div>
@@ -1076,7 +1076,7 @@ export default function ContentPagesView() {
                     <span className="mt-1 block text-xs font-normal text-slate-500">Чем меньше число, тем выше блок на странице.</span>
                   </label>
                   <label className="flex items-end gap-2 pb-7 text-sm text-slate-700">
-                    <input checked={blockForm.isEnabled} type="checkbox" className="rounded border-slate-300" onChange={(event) => setBlockForm((current) => ({ ...current, isEnabled: event.target.checked }))} /> Включён на странице
+                    <input checked={blockForm.isEnabled} type="checkbox" className="rounded-sm border-slate-300" onChange={(event) => setBlockForm((current) => ({ ...current, isEnabled: event.target.checked }))} /> Включён на странице
                   </label>
                 </div>
 
@@ -1182,7 +1182,7 @@ export default function ContentPagesView() {
           )}
 
           {mediaPickerOpen && (
-            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/60 px-4" role="dialog" aria-modal="true" onClick={() => setMediaPickerOpen(false)}>
+            <div className="fixed inset-0 z-60 flex items-center justify-center bg-slate-950/60 px-4" role="dialog" aria-modal="true" onClick={() => setMediaPickerOpen(false)}>
               <section className="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -1212,7 +1212,7 @@ export default function ContentPagesView() {
           )}
 
           {selected && (
-            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
               <h3 className="text-base font-semibold text-slate-950">История публикаций</h3>
               {revisions.length === 0 && <p className="mt-2 text-sm text-slate-500">Публикаций пока нет.</p>}
               {revisions.map((revision) => (

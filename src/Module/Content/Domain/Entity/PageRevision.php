@@ -49,19 +49,19 @@ final class PageRevision
     /**
      * @var array<string, mixed>
      */
-    #[ORM\Column(name: 'seo_snapshot', type: 'json', options: ['jsonb' => true])]
+    #[ORM\Column(name: 'seo_snapshot', type: 'json')]
     private array $seoSnapshot;
 
     /**
      * @var list<array<string, mixed>>
      */
-    #[ORM\Column(name: 'blocks_snapshot', type: 'json', options: ['jsonb' => true])]
+    #[ORM\Column(name: 'blocks_snapshot', type: 'json')]
     private array $blocksSnapshot;
 
     /**
      * @var array<string, mixed>
      */
-    #[ORM\Column(name: 'settings_snapshot', type: 'json', options: ['jsonb' => true])]
+    #[ORM\Column(name: 'settings_snapshot', type: 'json')]
     private array $settingsSnapshot;
 
     #[ORM\Column(length: 26, nullable: true)]
@@ -76,7 +76,7 @@ final class PageRevision
     /**
      * @var array<string, mixed>
      */
-    #[ORM\Column(name: 'change_summary', type: 'json', options: ['jsonb' => true])]
+    #[ORM\Column(name: 'change_summary', type: 'json')]
     private array $changeSummary;
 
     /**

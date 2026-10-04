@@ -10,7 +10,7 @@ APP_ENV="${APP_ENV:-prod}"
 HEALTH_URL="${HEALTH_URL:-https://zaborprofil.ru/health}"
 READY_URL="${READY_URL:-${HEALTH_URL%/health}/health/ready}"
 DISK_USAGE_CRITICAL_PERCENT="${DISK_USAGE_CRITICAL_PERCENT:-90}"
-MONITOR_SERVICES="${MONITOR_SERVICES:-$NGINX_SERVICE $PHP_FPM_SERVICE $WORKER_SERVICE ${POSTGRES_SERVICE:-postgresql} ${REDIS_SERVICE:-redis-server}}"
+MONITOR_SERVICES="${MONITOR_SERVICES:-$NGINX_SERVICE $PHP_FPM_SERVICE $WORKER_SERVICE ${MYSQL_SERVICE:-mysql}}"
 
 failures=()
 
@@ -88,26 +88,13 @@ check_database() {
   fi
 
   load_shared_env
-  export_pg_env_from_database_url "$DATABASE_URL"
+  prepare_mysql_client_from_database_url "$DATABASE_URL"
 
-  if ! psql --tuples-only --no-align --command 'select 1;' >/dev/null 2>&1; then
-    record_failure "PostgreSQL check failed"
-  fi
-}
-
-check_redis() {
-  if [[ -z "${REDIS_URL:-}" ]]; then
-    log "REDIS_URL is not set, skip Redis ping"
-    return
+  if ! mysql_cli --batch --skip-column-names --execute 'SELECT 1;' "$MYSQL_DB_NAME" >/dev/null 2>&1; then
+    record_failure "MySQL check failed"
   fi
 
-  if command -v redis-cli >/dev/null 2>&1; then
-    if ! redis-cli -u "$REDIS_URL" ping 2>/dev/null | grep -q '^PONG$'; then
-      record_failure "Redis ping failed"
-    fi
-  else
-    log "redis-cli is not available, skip Redis ping"
-  fi
+  cleanup_mysql_client_files
 }
 
 check_console_smoke() {
@@ -123,14 +110,13 @@ check_console_smoke() {
 
 require_command curl
 require_command "$PHP_BIN"
-require_command psql
+require_command mysql
 
 check_http_json_status "health" "$HEALTH_URL"
 check_http_json_status "readiness" "$READY_URL"
 check_disk
 check_services
 check_database
-check_redis
 check_console_smoke
 
 if (( ${#failures[@]} > 0 )); then

@@ -86,7 +86,7 @@ templates/
 
 - Пул `cache.public_page` используется через `CachedPublicPageResolver`.
 - Ключ строится от нормализованного `path`, TTL по умолчанию `300` секунд.
-- Инвалидация делается в content handlers при изменениях страницы/блоков/SEO и при публикации.
+- Инвалидация делается в content handlers при изменениях страницы/блоков/SEO и при публикации. См. [23-cache](23-cache.md).
 - Vite-build с manifest — отдаём предсобранные ассеты.
 - HTTP cache (целевое): `Cache-Control` headers + `ETag` для статики и публичных страниц.
 - Для `slider` используется lazy-loading изображений (`loading=\"lazy\"`) и
@@ -114,4 +114,4 @@ templates/
 - [16-routing](16-routing.md)
 - [21-templates-and-twig](21-templates-and-twig.md)
 - [26-seo-architecture](26-seo-architecture.md)
-- [23-cache-and-redis](23-cache-and-redis.md)
+- [23-cache](23-cache.md)

@@ -20,5 +20,5 @@
       "@/lib/*": ["./admin/components/lib/*"]
     }
   },
-  "include": ["assets/**/*.ts", "assets/**/*.tsx", "admin/**/*.ts", "admin/**/*.tsx", "src/**/*.d.ts", "vite.config.ts", "vitest.config.ts", "tailwind.config.ts"]
+  "include": ["assets/**/*.ts", "assets/**/*.tsx", "admin/**/*.ts", "admin/**/*.tsx", "src/**/*.d.ts", "vite.config.ts", "vitest.config.ts"]
 }

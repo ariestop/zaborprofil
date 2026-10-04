@@ -16,16 +16,15 @@ DOCKER_GID ?= 1000
 PHP = $(COMPOSE) exec -T --user www-data app
 PHP_SHELL = $(COMPOSE) exec --user www-data app
 NODE = $(COMPOSE) exec -T --user $(DOCKER_UID):$(DOCKER_GID) node
-POSTGRES = $(COMPOSE) exec -T postgres
-REDIS = $(COMPOSE) exec -T redis
-POSTGRES_DB ?= zaborprofil
-POSTGRES_USER ?= zaborprofil
-POSTGRES_PASSWORD ?= zaborprofil
-TEST_DATABASE_NAME ?= $(POSTGRES_DB)_test
-TEST_DATABASE_URL ?= postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@postgres:5432/$(TEST_DATABASE_NAME)?serverVersion=18&charset=utf8
-TEST_ENV = env APP_ENV=test APP_SECRET=test-secret DATABASE_URL='$(TEST_DATABASE_URL)' REDIS_URL=redis://redis:6379/1 MESSENGER_TRANSPORT_DSN=in-memory:// MAILER_DSN=null://null SITE_URL=https://zaborprofil.test DEFAULT_URI=https://zaborprofil.test
+MYSQL = $(COMPOSE) exec -T mysql
+MYSQL_DATABASE ?= zaborprofil
+MYSQL_USER ?= zaborprofil
+MYSQL_PASSWORD ?= zaborprofil
+TEST_DATABASE_NAME ?= $(MYSQL_DATABASE)_test
+TEST_DATABASE_URL ?= mysql://$(MYSQL_USER):$(MYSQL_PASSWORD)@mysql:3306/$(TEST_DATABASE_NAME)?serverVersion=8.4&charset=utf8mb4
+TEST_ENV = env APP_ENV=test APP_SECRET=test-secret DATABASE_URL='$(TEST_DATABASE_URL)' MESSENGER_TRANSPORT_DSN=in-memory:// MAILER_DSN=null://null SITE_URL=https://zaborprofil.test DEFAULT_URI=https://zaborprofil.test
 
-.PHONY: init up down restart build shell composer-install npm-install npm-dev npm-build migrate migration fixtures test-db test phpstan cs cs-fix rector quality smoke cache-clear logs db redis reset-db health
+.PHONY: init up down restart build shell composer-install npm-install npm-dev npm-build migrate migration fixtures test-db test phpstan cs cs-fix rector quality smoke cache-clear logs db reset-db health
 
 init: build up composer-install npm-install migrate npm-build smoke
 
@@ -66,7 +65,7 @@ fixtures:
 	$(PHP) sh -lc 'php bin/console list doctrine:fixtures >/dev/null 2>&1 && php bin/console doctrine:fixtures:load --no-interaction || echo "Doctrine fixtures are not installed."'
 
 test-db:
-	$(POSTGRES) sh -lc 'createdb -U "$${POSTGRES_USER:-zaborprofil}" "$(TEST_DATABASE_NAME)" 2>/dev/null || true'
+	$(MYSQL) sh -lc 'mysql -uroot -p"$$MYSQL_ROOT_PASSWORD" -e "CREATE DATABASE IF NOT EXISTS \`$(TEST_DATABASE_NAME)\` CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci; GRANT ALL PRIVILEGES ON \`$(TEST_DATABASE_NAME)\`.* TO \"$$MYSQL_USER\"@\"%\"; FLUSH PRIVILEGES;"'
 
 test: test-db
 	$(PHP) $(TEST_ENV) php vendor/bin/phpunit
@@ -107,10 +106,7 @@ logs:
 	$(COMPOSE) logs -f --tail=200
 
 db:
-	$(POSTGRES) psql -U $${POSTGRES_USER:-zaborprofil} -d $${POSTGRES_DB:-zaborprofil}
-
-redis:
-	$(REDIS) redis-cli
+	$(MYSQL) sh -lc 'mysql -u"$$MYSQL_USER" -p"$$MYSQL_PASSWORD" "$$MYSQL_DATABASE"'
 
 reset-db:
 	$(PHP) php bin/console doctrine:database:drop --force --if-exists

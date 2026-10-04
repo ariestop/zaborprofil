@@ -8,12 +8,14 @@ on:
     branches:
       - main
       - develop
-      - feature/**
-      - fix/**
+      - dev
+      - 'feature/**'
+      - 'fix/**'
   pull_request:
     branches:
       - main
       - develop
+      - dev
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -25,28 +27,21 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      postgres:
-        image: postgres:18
+      mysql:
+        image: mysql:8.4
         env:
-          POSTGRES_DB: zaborprofil_test
-          POSTGRES_USER: zaborprofil_test
-          POSTGRES_PASSWORD: zaborprofil_test
+          MYSQL_DATABASE: zaborprofil_test
+          MYSQL_USER: zaborprofil_test
+          MYSQL_PASSWORD: zaborprofil_test
+          MYSQL_ROOT_PASSWORD: root
         ports:
-          - 5432:5432
+          - 3306:3306
         options: >-
-          --health-cmd "pg_isready -U zaborprofil_test -d zaborprofil_test"
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
           --health-interval 10s
           --health-timeout 5s
-          --health-retries 5
-      redis:
-        image: redis:8
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
+          --health-start-period 30s
 
     steps:
       - name: Checkout
@@ -56,7 +51,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.5'
-          extensions: ctype, iconv, intl, mbstring, opcache, pdo_pgsql, redis
+          extensions: ctype, iconv, intl, mbstring, opcache, pdo_mysql
           coverage: none
           tools: composer:v2
 
@@ -81,13 +76,13 @@ jobs:
       - name: Rector dry run
         run: composer check:rector
 
-      - name: Use PostgreSQL for test environment
+      - name: Use MySQL for test environment
         run: cp .env.test.ci .env.test.local
 
       - name: Doctrine migrations status
         run: php bin/console doctrine:migrations:status --env=test --no-interaction
 
-      - name: Run Doctrine migrations on the CI Postgres
+      - name: Run Doctrine migrations on the CI MySQL
         run: php bin/console doctrine:migrations:migrate --env=test --no-interaction --allow-no-migration
 
       - name: Doctrine schema validation
@@ -105,6 +100,12 @@ jobs:
           for script in tools/deploy/*.sh; do
             bash -n "$script"
           done
+
+      - name: Beget deploy script checks
+        run: |
+          set -e
+          shellcheck -x tools/deploy/deploy-beget.sh tests/shell/deploy-beget.sh
+          bash tests/shell/deploy-beget.sh
 
       - name: PHPUnit
         run: composer test
@@ -152,36 +153,28 @@ jobs:
       - frontend
 
     env:
-      POSTGRES_USER: zaborprofil_test
-      POSTGRES_PASSWORD: zaborprofil_test
-      POSTGRES_DB: zaborprofil_test
-      POSTGRES_HOST: 127.0.0.1
-      POSTGRES_PORT: '5432'
-      REDIS_URL: redis://127.0.0.1:6379/1
+      MYSQL_USER: zaborprofil_test
+      MYSQL_PASSWORD: zaborprofil_test
+      MYSQL_DATABASE: zaborprofil_test
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: '3306'
 
     services:
-      postgres:
-        image: postgres:18
+      mysql:
+        image: mysql:8.4
         env:
-          POSTGRES_DB: zaborprofil_test
-          POSTGRES_USER: zaborprofil_test
-          POSTGRES_PASSWORD: zaborprofil_test
+          MYSQL_DATABASE: zaborprofil_test
+          MYSQL_USER: zaborprofil_test
+          MYSQL_PASSWORD: zaborprofil_test
+          MYSQL_ROOT_PASSWORD: root
         ports:
-          - 5432:5432
+          - 3306:3306
         options: >-
-          --health-cmd "pg_isready -U zaborprofil_test -d zaborprofil_test"
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
           --health-interval 10s
           --health-timeout 5s
-          --health-retries 5
-      redis:
-        image: redis:8
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
+          --health-start-period 30s
 
     steps:
       - name: Checkout
@@ -191,7 +184,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.5'
-          extensions: ctype, iconv, intl, mbstring, opcache, pdo_pgsql, redis
+          extensions: ctype, iconv, intl, mbstring, opcache, pdo_mysql
           coverage: none
           tools: composer:v2
 
@@ -207,7 +200,7 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
-      - name: Use PostgreSQL for test environment
+      - name: Use MySQL for test environment
         run: cp .env.test.ci .env.test.local
 
       - name: Generate E2E admin password
@@ -223,7 +216,7 @@ jobs:
           E2E_ADMIN_EMAIL: e2e-admin@example.test
           E2E_ADMIN_PASSWORD: ${{ env.E2E_ADMIN_PASSWORD }}
         run: |
-          export DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?serverVersion=18&charset=utf8"
+          export DATABASE_URL="mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}?serverVersion=8.4&charset=utf8mb4"
           php tools/testing/seed-e2e-admin.php
 
       - name: Build frontend assets
@@ -239,7 +232,7 @@ jobs:
           SITE_URL: http://127.0.0.1:8000
           DEFAULT_URI: http://127.0.0.1:8000
         run: |
-          export DATABASE_URL="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?serverVersion=18&charset=utf8"
+          export DATABASE_URL="mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}?serverVersion=8.4&charset=utf8mb4"
           php -S 127.0.0.1:8000 -t public_html >/tmp/e2e-app.log 2>&1 &
 
       - name: Wait for app server

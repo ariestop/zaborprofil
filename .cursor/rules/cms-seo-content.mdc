@@ -8,7 +8,7 @@ alwaysApply: false
 
 - URL paths must be manually controllable to preserve old SEO URLs.
 - Do not store a whole page as one HTML field. Pages are composed from typed blocks.
-- PageBlock content can use JSONB, but each block type needs a DTO, validator, Twig partial, and future Vue editor component.
+- PageBlock content can use MySQL JSON columns, but each block type needs a DTO, validator, Twig partial, and future Vue editor component.
 - Public rendering is Symfony + Twig SSR with minimal JavaScript.
 - SEO is critical: title, description, h1, canonical, robots, OpenGraph, schema.org, breadcrumbs, sitemap, and redirects must be explicit.
 - Drafts and service pages must not leak into sitemap or indexable public output.

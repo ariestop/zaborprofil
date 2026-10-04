@@ -14,7 +14,7 @@ export function AdminShellLayout() {
         <SidebarNav />
         <main className="space-y-4">
           <Breadcrumbs />
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
             <Outlet />
           </section>
         </main>

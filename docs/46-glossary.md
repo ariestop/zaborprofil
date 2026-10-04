@@ -71,7 +71,7 @@
 | **Liveness/Readiness** | Готовность отвечать / готовность принимать трафик |
 | **Logrotate** | Утилита ротации логов |
 | **Mailpit** | Локальный SMTP test inbox |
-| **Adminer** | UI для PostgreSQL (только локально) |
+| **Adminer** | UI для MySQL (только локально) |
 
 ## Безопасность
 

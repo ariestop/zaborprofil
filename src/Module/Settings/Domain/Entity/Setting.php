@@ -29,7 +29,7 @@ class Setting implements TimestampedEntityInterface
     #[ORM\Column(name: 'setting_key', length: 120)]
     private string $key;
 
-    #[ORM\Column(name: 'setting_value', type: 'json', options: ['jsonb' => true])]
+    #[ORM\Column(name: 'setting_value', type: 'json')]
     private mixed $value;
 
     #[ORM\Column(length: 255, nullable: true)]

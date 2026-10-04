@@ -9,8 +9,9 @@
 | `.env.local.example` | Шаблон для local | в Git |
 | `.env.test` | Базовые значения test | в Git |
 | `.env.test.local` | Override для test | вне Git |
-| `.env.test.ci` | Postgres-вариант для CI | в Git |
+| `.env.test.ci` | MySQL-вариант для CI | в Git |
 | `.env.staging.example` | Шаблон для staging shared | в Git |
+| `.env.staging.beget.example` | Шаблон `.env.local` для staging на Beget (`dev.zaborprofil.ru`), см. [49-beget-staging-deploy](49-beget-staging-deploy.md) | в Git |
 | `.env.production.example` | Шаблон для production shared | в Git |
 | `.env.staging` / `.env.production` | Реальные значения | **вне Git**, на VPS в `shared/` |
 
@@ -23,6 +24,8 @@
 | `staging` | staging VPS | production-like, отдельный домен, robots `Disallow: /` |
 | `prod` | production VPS | оптимизированный cache, no debug, full logging |
 
+> Staging на Beget (`dev.zaborprofil.ru`) запускается с литеральным `APP_ENV=staging` и `STAGING_AUTH_*` (см. [49-beget-staging-deploy](49-beget-staging-deploy.md)); `DATABASE_URL` — только `mysql://`, `REDIS_URL` не используется.
+
 > Symfony знает только `dev`/`test`/`prod` как ключи. `staging` — это `APP_ENV=prod` + отдельная инфраструктура и `.env.staging` в shared.
 
 ## Обязательные переменные
@@ -32,8 +35,7 @@
 | `APP_ENV` | `dev` / `test` / `prod` | везде |
 | `APP_DEBUG` | `0` или `1` | везде |
 | `APP_SECRET` | случайная строка ≥ 32 символа | везде, **уникальная per-env** |
-| `DATABASE_URL` | `postgresql://user:pass@host:5432/db?serverVersion=18&charset=utf8` | везде |
-| `REDIS_URL` | `redis://host:6379` или `redis://:pass@host:6379/0` | везде |
+| `DATABASE_URL` | `mysql://user:pass@host:3306/db?serverVersion=8.4&charset=utf8mb4` | везде |
 | `MESSENGER_TRANSPORT_DSN` | `doctrine://default?auto_setup=0` (prod) | везде |
 | `MAILER_DSN` | `smtp://...` или `null://null` для dev без почты | везде |
 | `SITE_URL` | `https://zaborprofil.ru` или `http://localhost` | везде |
@@ -46,8 +48,10 @@
 | `APP_SHARE_DIR` | `/var/www/zaborprofil/shared` (prod) или `var/share` (dev) | целевое: `FileStorage` |
 | `TRUSTED_PROXIES` | список IP nginx/proxy | Symfony framework |
 | `TRUSTED_HOSTS` | regex hostname | Symfony framework |
+| `STAGING_AUTH_ENABLED` | `1` включает Basic Auth на `APP_ENV=staging` (по умолчанию выключено) | `StagingAccessSubscriber` |
+| `STAGING_AUTH_USER` / `STAGING_AUTH_HASH` | логин и bcrypt-хеш пароля; хеш в `.env.local` в **одинарных кавычках**. При `STAGING_AUTH_ENABLED=1` и неверных значениях доступ закрыт для всех | `StagingAccessSubscriber` |
 | `XDEBUG_MODE` | `off` / `develop,debug` | Docker PHP-FPM |
-| `POSTGRES_DB`/`USER`/`PASSWORD` | для Docker Compose | Compose |
+| `MYSQL_DATABASE`/`MYSQL_USER`/`MYSQL_PASSWORD`/`MYSQL_ROOT_PASSWORD`/`MYSQL_PORT` | для Docker Compose | Compose |
 | `HTTP_PORT` | хост-порт nginx для проброса `host:container` (Compose). Можно задать привязку к интерфейсу: `8081` (все интерфейсы) или `127.0.0.1:8081` (только loopback хоста; удобно на сервере, для доступа с ноутбука — SSH `-L` / Remote Ports) | Compose |
 | `MAILPIT_PORT`/`ADMINER_PORT`/`VITE_PORT` | хост-порты | Compose, dev only |
 | `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | для critical alerts | `TelegramErrorHandler` |
@@ -74,7 +78,7 @@
 
 ## Fail-fast
 
-При отсутствии `APP_SECRET`, `DATABASE_URL`, `REDIS_URL` приложение должно отказаться стартовать.
+При отсутствии `APP_SECRET`, `DATABASE_URL` приложение должно отказаться стартовать.
 
 ## Symfony Secrets (целевое)
 

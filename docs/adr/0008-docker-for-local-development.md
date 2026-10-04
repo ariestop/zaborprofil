@@ -8,7 +8,7 @@ Accepted, 2026.
 
 Команды разработки имеют разное окружение (macOS, Windows + WSL2, Linux). Без воспроизводимого setup’а легко получить:
 
-- разные версии PHP/Postgres/Redis;
+- разные версии PHP/MySQL;
 - conflicts с system packages;
 - "работает у меня" сценарии;
 - сложности при онбординге новичков.
@@ -22,8 +22,7 @@ Accepted, 2026.
 - Версии образов жёстко зафиксированы и совпадают с production:
   - `php:8.5-fpm-bookworm`,
   - `nginx:1.30.0-alpine`,
-  - `postgres:18`,
-  - `redis:8-alpine`,
+  - `mysql:8.4`,
   - `node:25.9.0-bookworm`.
 
 ## Причины
@@ -31,16 +30,16 @@ Accepted, 2026.
 ### Docker для local
 
 - **Один command setup.** `make build && make up`.
-- **Версии runtime соответствуют prod.** Локально Postgres 18 — на prod Postgres 18.
-- **Изоляция.** Не ломает system PHP/Postgres.
+- **Версии runtime соответствуют prod.** Локально MySQL 8.4 — на prod MySQL 8.4+ (на staging — MySQL хостинга Beget).
+- **Изоляция.** Не ломает system PHP/MySQL.
 - **Mailpit/Adminer как dev-инструменты** не разворачиваются на prod, не загрязняют систему.
 
 ### Не Docker для prod
 
 - **Простота VPS.** systemd + nginx + php-fpm — минимум слоёв, проще диагностика.
 - **Производительность.** Без overhead Docker network на FastCGI.
-- **Тонкая настройка.** PostgreSQL/Redis лучше управляются на голом VPS.
-- **Backup проще.** `pg_dump` напрямую.
+- **Тонкая настройка.** MySQL лучше управляется на голом VPS (или используется managed MySQL провайдера).
+- **Backup проще.** `mysqldump` напрямую.
 - **Меньше cost.** Малые VPS лучше переносят native стек.
 
 ## Последствия

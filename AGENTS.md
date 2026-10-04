@@ -15,8 +15,8 @@
 - Node.js `>=25.9.0`
 - npm `>=11.12.1` (поставляется с Node.js 25.9.0)
 - nginx `>=1.30.0`
-- PostgreSQL `>=18`
-- Redis `>=8`
+- MySQL `>=8.4` (InnoDB, utf8mb4)
+- Redis не используется: кэш приложения — файловый (Symfony `cache.adapter.filesystem`)
 
 Прочее:
 
@@ -28,7 +28,7 @@
 - React + TypeScript для админ-панели
 - PHPUnit, PHPStan, PHP-CS-Fixer, Rector
 
-Docker используется только для local development. Staging и production должны оставаться native VPS stack: Nginx, PHP-FPM, PostgreSQL, Redis, systemd и Git-based release deploy.
+Docker используется только для local development. Staging и production должны оставаться native VPS stack: Nginx, PHP-FPM, MySQL, systemd и Git-based release deploy.
 
 ## Windows / WSL2 для агентов
 
@@ -66,7 +66,17 @@ make health
 - Публичный сайт должен оставаться SSR на Symfony + Twig, не SPA.
 - Все PHP-файлы должны использовать `declare(strict_types=1)`.
 - Документация пишется на русском языке.
-- Единое dev-состояние БД должно воспроизводиться из Doctrine migrations + fixtures/seed data. Не коммитить Docker images, Docker volumes, реальные PostgreSQL backups, production/staging dumps, uploads или секреты; в Git допустим только маленький обезличенный dev snapshot после ручной проверки.
+- Единое dev-состояние БД должно воспроизводиться из Doctrine migrations + fixtures/seed data. Не коммитить Docker images, Docker volumes, реальные MySQL backups/dumps, production/staging dumps, uploads или секреты; в Git допустим только маленький обезличенный dev snapshot после ручной проверки.
+
+## Staging на Beget (dev.zaborprofil.ru)
+
+- Push в ветку `dev` запускает workflow `Deploy staging (Beget)` (`.github/workflows/deploy-staging-beget.yml`, скрипт `tools/deploy/deploy-beget.sh`). Описание, секреты и настройка сервера: `docs/49-beget-staging-deploy.md`.
+- На staging MySQL 8.4 (`DATABASE_URL=mysql://...`, `pdo_mysql`), Redis не используется; `var/cache` и `var/sessions` — симлинки в `shared/` на сервере, кэш прогревается после каждого деплоя.
+- Стенд один: перед push в `dev` убедиться, что он не занят чужой работой. Не использовать `git push --force` в `dev` без явной просьбы пользователя.
+- Workflow `.github/workflows/deploy.yml` (VPS) выключен по умолчанию и включается только repository variable `VPS_DEPLOY_ENABLED=true`; агенты эту переменную не меняют.
+- Агенты не деплоят production, не запускают `deploy-beget.sh` против production, не применяют миграции и не трогают БД production.
+- Стенд закрыт Basic Auth (`StagingAccessSubscriber`, `STAGING_AUTH_*`). Для просмотра в браузере облачному агенту нужен секрет `STAGING_BASIC_AUTH` (`логин:пароль`) в Cursor Dashboard -> Cloud Agents -> Secrets; значение не печатать в общий вывод.
+- Секреты деплоя (`DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `STAGING_BASIC_AUTH`) хранятся только в GitHub Secrets; не коммитить `.env.local` и значения секретов.
 
 ## Проверки
 
@@ -96,8 +106,8 @@ make npm-build
 ```
 
 AI-агентам запрещено запускать PHPUnit/Doctrine проверки на SQLite. Локальные
-тесты всегда выполняются внутри Docker Compose против PostgreSQL service
-`postgres` и отдельной БД `zaborprofil_test`:
+тесты всегда выполняются внутри Docker Compose против MySQL service
+`mysql` (mysql:8.4) и отдельной БД `zaborprofil_test`:
 
 ```bash
 make test-db
@@ -106,7 +116,7 @@ make test
 
 Если нужен точечный PHPUnit, сначала поднять Docker (`make up`), создать test DB
 (`make test-db`) и запускать команду через `docker compose exec app` с
-PostgreSQL `DATABASE_URL`, а не через `sqlite://`.
+MySQL `DATABASE_URL` (`mysql://...&serverVersion=8.4&charset=utf8mb4`), а не через `sqlite://`.
 
 Перед завершением backend/frontend изменений по возможности запускать:
 
@@ -120,7 +130,7 @@ vendor/bin/phpunit
 npm run build
 ```
 
-Локально для Doctrine/PostgreSQL требуется включенное расширение PHP `pdo_pgsql`;
+Локально для Doctrine/MySQL требуется включенное расширение PHP `pdo_mysql`;
 в Docker оно уже входит в PHP runtime.
 
 Для пересоздания локальной dev-БД использовать `make reset-db`: команда применяет migrations и запускает `make fixtures`. Если fixtures ещё не подключены, fixture-шаг является безопасным no-op.

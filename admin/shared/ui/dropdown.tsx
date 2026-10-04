@@ -22,7 +22,7 @@ export function Dropdown({ trigger, items }: DropdownProps) {
             <DropdownMenu.Item
               key={item.key}
               onSelect={item.onSelect}
-              className="cursor-pointer rounded px-2 py-1.5 text-sm text-slate-700 outline-none hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-800"
+              className="cursor-pointer rounded-sm px-2 py-1.5 text-sm text-slate-700 outline-hidden hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-800"
             >
               {item.label}
             </DropdownMenu.Item>
