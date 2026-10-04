@@ -8,8 +8,11 @@ use App\Module\Auth\Domain\Security\AdminPermission;
 use App\Module\Content\Application\Command\RollbackPageRevisionCommand;
 use App\Module\Content\Application\DTO\PageRevisionOutput;
 use App\Module\Content\Application\Handler\RollbackPageRevisionHandler;
+use App\Module\Content\Application\Service\PageRevisionComparison;
 use App\Module\Content\Domain\Repository\PageRevisionRepositoryInterface;
+use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Throwable;
@@ -34,6 +37,25 @@ final readonly class PageRevisionApiController
             return new JsonResponse([
                 'revisions' => array_map(static fn ($revision): array => PageRevisionOutput::fromRevision($revision)->toArray(), $revisions->findByPage($pageId)),
             ]);
+        } catch (Throwable $exception) {
+            return $this->responder->error($exception);
+        }
+    }
+
+    #[Route('/diff', name: 'admin_api_content_page_revisions_diff', methods: ['GET'])]
+    public function diff(string $pageId, Request $request, PageRevisionComparison $comparison): JsonResponse
+    {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_VIEW_REVISIONS)) {
+            return $this->accessDenied();
+        }
+
+        try {
+            $from = $request->query->getString('from');
+            if ($from === '') {
+                throw new InvalidArgumentException('Query parameter "from" is required.');
+            }
+
+            return new JsonResponse($comparison->compare($pageId, $from, $request->query->getString('to', PageRevisionComparison::CURRENT)));
         } catch (Throwable $exception) {
             return $this->responder->error($exception);
         }

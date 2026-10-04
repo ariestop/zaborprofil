@@ -4,14 +4,11 @@ declare(strict_types=1);
 
 namespace App\Module\Content\Application\Command;
 
-final readonly class ChangePageStatusCommand
+final readonly class CancelPageScheduleCommand
 {
     public function __construct(
         public string $id,
-        public string $status,
         public ?string $comment = null,
-        public ?string $publishAt = null,
-        public ?string $unpublishAt = null,
     ) {
     }
 }

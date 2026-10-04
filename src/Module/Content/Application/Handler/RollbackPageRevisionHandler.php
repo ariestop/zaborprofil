@@ -6,7 +6,10 @@ namespace App\Module\Content\Application\Handler;
 
 use App\Module\Content\Application\Command\RollbackPageRevisionCommand;
 use App\Module\Content\Application\DTO\PageOutput;
+use App\Module\Content\Application\Journal\PageWorkflowEvent;
+use App\Module\Content\Application\Journal\PageWorkflowJournalInterface;
 use App\Module\Content\Application\Service\ContentId;
+use App\Module\Content\Application\Service\CurrentAdminActor;
 use App\Module\Content\Application\Service\PageRevisionSnapshotBuilder;
 use App\Module\Content\Application\Service\PublicPageCacheInvalidator;
 use App\Module\Content\Application\Service\SnapshotValueNormalizer;
@@ -31,6 +34,8 @@ final readonly class RollbackPageRevisionHandler
         private PageRevisionSnapshotBuilder $snapshotBuilder,
         private SnapshotValueNormalizer $normalizer,
         private PublicPageCacheInvalidator $publicPageCache,
+        private CurrentAdminActor $actor,
+        private PageWorkflowJournalInterface $journal,
     ) {
     }
 
@@ -90,7 +95,7 @@ final readonly class RollbackPageRevisionHandler
             $page,
             $this->revisions->nextVersionForPage((string) $page->id()),
             $this->blocks->findByPage((string) $page->id()),
-            null,
+            $this->actor->id(),
             'Rollback to revision '.$revision->version(),
             ['action' => 'rollback', 'sourceRevisionId' => (string) $revision->id()],
         );
@@ -99,6 +104,19 @@ final readonly class RollbackPageRevisionHandler
         $publication->markDraft($draftRevision);
         $this->publications->save($publication);
         $this->publicPageCache->invalidate($page->path());
+        $this->journal->record(new PageWorkflowEvent(
+            PageWorkflowEvent::ROLLED_BACK,
+            (string) $page->id(),
+            $page->path(),
+            $page->status()->value,
+            $page->status()->value,
+            null,
+            [
+                'sourceRevisionId' => (string) $revision->id(),
+                'sourceVersion' => $revision->version(),
+                'draftVersion' => $draftRevision->version(),
+            ],
+        ));
 
         return PageOutput::fromPage($page);
     }

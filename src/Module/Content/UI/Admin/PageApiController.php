@@ -6,21 +6,26 @@ namespace App\Module\Content\UI\Admin;
 
 use App\Module\Auth\Domain\Security\AdminPermission;
 use App\Module\Content\Application\Command\ArchivePageCommand;
+use App\Module\Content\Application\Command\CancelPageScheduleCommand;
 use App\Module\Content\Application\Command\ChangePageStatusCommand;
 use App\Module\Content\Application\Command\CreatePageCommand;
 use App\Module\Content\Application\Command\PublishPageCommand;
+use App\Module\Content\Application\Command\SchedulePageCommand;
 use App\Module\Content\Application\Command\UpdatePageCommand;
 use App\Module\Content\Application\Command\UpdatePageSeoMetadataCommand;
 use App\Module\Content\Application\DTO\PageBlockOutput;
 use App\Module\Content\Application\DTO\PageOutput;
 use App\Module\Content\Application\Handler\ArchivePageHandler;
+use App\Module\Content\Application\Handler\CancelPageScheduleHandler;
 use App\Module\Content\Application\Handler\ChangePageStatusHandler;
 use App\Module\Content\Application\Handler\CreatePageHandler;
 use App\Module\Content\Application\Handler\PublishPageHandler;
+use App\Module\Content\Application\Handler\SchedulePageHandler;
 use App\Module\Content\Application\Handler\UpdatePageHandler;
 use App\Module\Content\Application\Handler\UpdatePageSeoMetadataHandler;
 use App\Module\Content\Application\Service\ContentId;
 use App\Module\Content\Application\Service\PagePreviewToken;
+use App\Module\Content\Application\Service\PageWorkflowState;
 use App\Module\Content\Domain\Repository\PageBlockRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use App\Module\Content\Domain\ValueObject\PageVisibility;
@@ -182,7 +187,8 @@ final readonly class PageApiController
             $payload = $this->jsonRequest->payload($request);
             $status = $this->jsonRequest->string($payload, 'status');
             $permission = match ($status) {
-                'review' => AdminPermission::PAGES_SUBMIT_REVIEW,
+                'draft', 'review' => AdminPermission::PAGES_SUBMIT_REVIEW,
+                'published' => AdminPermission::PAGES_PUBLISH,
                 'approved' => AdminPermission::PAGES_APPROVE,
                 'unpublished' => AdminPermission::PAGES_UNPUBLISH,
                 'scheduled' => AdminPermission::PAGES_SCHEDULE,
@@ -195,7 +201,64 @@ final readonly class PageApiController
                 return $this->accessDenied();
             }
 
-            return new JsonResponse($handler(new ChangePageStatusCommand($id, $status))->toArray());
+            return new JsonResponse($handler(new ChangePageStatusCommand(
+                $id,
+                $status,
+                $this->jsonRequest->nullableString($payload, 'comment'),
+                $this->jsonRequest->nullableString($payload, 'publishAt'),
+                $this->jsonRequest->nullableString($payload, 'unpublishAt'),
+            ))->toArray());
+        } catch (Throwable $exception) {
+            return $this->responder->error($exception);
+        }
+    }
+
+    #[Route('/{id}/schedule', name: 'admin_api_content_page_schedule', methods: ['POST'])]
+    public function schedule(string $id, Request $request, SchedulePageHandler $handler): JsonResponse
+    {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_SCHEDULE)) {
+            return $this->accessDenied();
+        }
+
+        try {
+            $payload = $this->jsonRequest->payload($request);
+
+            return new JsonResponse($handler(new SchedulePageCommand(
+                $id,
+                $this->jsonRequest->nullableString($payload, 'publishAt'),
+                $this->jsonRequest->nullableString($payload, 'unpublishAt'),
+                $this->jsonRequest->nullableString($payload, 'comment'),
+            ))->toArray());
+        } catch (Throwable $exception) {
+            return $this->responder->error($exception);
+        }
+    }
+
+    #[Route('/{id}/schedule', name: 'admin_api_content_page_schedule_cancel', methods: ['DELETE'])]
+    public function cancelSchedule(string $id, Request $request, CancelPageScheduleHandler $handler): JsonResponse
+    {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_SCHEDULE)) {
+            return $this->accessDenied();
+        }
+
+        try {
+            $payload = $request->getContent() === '' ? [] : $this->jsonRequest->payload($request);
+
+            return new JsonResponse($handler(new CancelPageScheduleCommand($id, $this->jsonRequest->nullableString($payload, 'comment')))->toArray());
+        } catch (Throwable $exception) {
+            return $this->responder->error($exception);
+        }
+    }
+
+    #[Route('/{id}/workflow', name: 'admin_api_content_page_workflow', methods: ['GET'])]
+    public function workflow(string $id, PageWorkflowState $state): JsonResponse
+    {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_VIEW)) {
+            return $this->accessDenied();
+        }
+
+        try {
+            return new JsonResponse($state->describe($id));
         } catch (Throwable $exception) {
             return $this->responder->error($exception);
         }

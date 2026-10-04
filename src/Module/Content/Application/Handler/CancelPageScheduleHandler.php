@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Module\Content\Application\Handler;
 
-use App\Module\Content\Application\Command\PublishPageCommand;
+use App\Module\Content\Application\Command\CancelPageScheduleCommand;
 use App\Module\Content\Application\DTO\PageOutput;
 use App\Module\Content\Application\Journal\PageWorkflowEvent;
 use App\Module\Content\Application\Journal\PageWorkflowJournalInterface;
@@ -15,34 +15,45 @@ use App\Module\Content\Application\Service\PageWorkflowGuard;
 use App\Module\Content\Domain\Enum\PageStatus;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 
-final readonly class PublishPageHandler
+/**
+ * Отменяет запланированную публикацию (scheduled -> approved) или запланированное снятие опубликованной страницы.
+ */
+final readonly class CancelPageScheduleHandler
 {
     public function __construct(
         private PageRepositoryInterface $pages,
+        private PagePublisher $publisher,
         private ContentId $contentId,
         private PageWorkflowGuard $guard,
         private CurrentAdminActor $actor,
-        private PagePublisher $publisher,
         private PageWorkflowJournalInterface $journal,
     ) {
     }
 
-    public function __invoke(PublishPageCommand $command): PageOutput
+    public function __invoke(CancelPageScheduleCommand $command): PageOutput
     {
         $page = $this->pages->get($this->contentId->fromString($command->id));
         $from = $page->status();
-        $this->guard->assertAllowed($from, PageStatus::Published);
+        $this->guard->assertAllowed($from, $from === PageStatus::Scheduled ? PageStatus::Approved : PageStatus::Scheduled);
 
-        $revision = $this->publisher->publish($page, $this->actor->id(), $command->comment);
+        $details = array_filter([
+            'publishAt' => $page->scheduledPublishAt()?->format(DATE_ATOM),
+            'unpublishAt' => $page->scheduledUnpublishAt()?->format(DATE_ATOM),
+        ]);
+
+        $page->cancelSchedule($this->actor->id());
+        $this->pages->save($page);
+
+        $this->publisher->discardScheduledRevision($page);
 
         $this->journal->record(new PageWorkflowEvent(
-            PageWorkflowEvent::PUBLISHED,
+            PageWorkflowEvent::SCHEDULE_CANCELLED,
             (string) $page->id(),
             $page->path(),
             $from->value,
             $page->status()->value,
             $command->comment,
-            ['revisionId' => (string) $revision->id(), 'version' => $revision->version()],
+            $details,
         ));
 
         return PageOutput::fromPage($page);

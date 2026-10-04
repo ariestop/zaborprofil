@@ -36,4 +36,23 @@ final class DoctrineAuditLogRepository extends ServiceEntityRepository implement
 
         return $result;
     }
+
+    public function findByEntity(string $entityType, string $entityId, string $actionPrefix, int $limit = 50): array
+    {
+        /** @var list<AuditLogEntry> $result */
+        $result = $this->createQueryBuilder('entry')
+            ->andWhere('entry.entityType = :entityType')
+            ->andWhere('entry.entityId = :entityId')
+            ->andWhere('entry.action LIKE :prefix')
+            ->setParameter('entityType', $entityType)
+            ->setParameter('entityId', $entityId)
+            ->setParameter('prefix', addcslashes($actionPrefix, '%_\\').'%')
+            ->orderBy('entry.occurredAt', 'DESC')
+            ->addOrderBy('entry.id', 'DESC')
+            ->setMaxResults(max(1, min($limit, 200)))
+            ->getQuery()
+            ->getResult();
+
+        return $result;
+    }
 }
