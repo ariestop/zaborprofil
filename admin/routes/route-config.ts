@@ -15,6 +15,7 @@ export const adminRoutes: AdminRouteDefinition[] = [
   { key: 'media', path: '/admin/media', title: 'Медиа', section: 'content' },
   { key: 'seo', path: '/admin/seo', title: 'SEO', section: 'content' },
   { key: 'crm', path: '/admin/crm', title: 'CRM', section: 'system' },
+  { key: 'leadDetail', path: '/admin/crm/:leadId', title: 'Заявка', parentKey: 'crm', section: 'system' },
   { key: 'settings', path: '/admin/settings', title: 'Настройки', section: 'system' },
   { key: 'settingsMigrations', path: '/admin/settings/migrations', title: 'Миграции', parentKey: 'settings', section: 'system' },
   { key: 'users', path: '/admin/users', title: 'Пользователи', section: 'system' },

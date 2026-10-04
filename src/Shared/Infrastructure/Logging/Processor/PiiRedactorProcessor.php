@@ -46,13 +46,14 @@ final readonly class PiiRedactorProcessor
             return false;
         }
 
-        return preg_match('/(password|passwd|secret|token|authorization|cookie|phone|email)/i', $key) === 1;
+        return preg_match('/(password|passwd|secret|token|authorization|cookie|phone|email|note_?text)/i', $key) === 1;
     }
 
     private function redactString(string $value): string
     {
         $value = preg_replace('/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/i', '[email]', $value) ?? $value;
         $value = preg_replace('/(?:\+7|8)\s?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}/', '[phone]', $value) ?? $value;
+        $value = preg_replace('/\+\d[\d\s\-()]{8,}\d/', '[phone]', $value) ?? $value;
 
         return preg_replace('/\b(?:\d{1,3}\.){3}\d{1,3}\b/', '[ip]', $value) ?? $value;
     }

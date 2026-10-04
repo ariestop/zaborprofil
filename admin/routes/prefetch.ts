@@ -1,6 +1,7 @@
 import {
   loadBuilderRuntime,
   loadCrmPage,
+  loadLeadDetailPage,
   loadDashboardCharts,
   loadMediaPage,
   loadPageBuilderPage,
@@ -187,6 +188,7 @@ const routePrefetchers: Array<{ match: RegExp, tasks: PrefetchTask[] }> = [
   {
     match: /^\/admin\/crm$/,
     tasks: [
+      { key: 'route-lead-detail', run: loadLeadDetailPage },
       { key: 'widget-dashboard-charts', run: loadDashboardCharts },
       { key: 'route-users', run: loadUsersPage },
       { key: 'route-pages', run: loadPagesPage },

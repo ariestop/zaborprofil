@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom'
 import { apiRequest } from '../shared/api/client'
 import { adminQueryKeys, queryOptions } from '../shared/api/query'
 import { PageHeader, Card, Badge, ErrorState, Skeleton } from '../shared/ui'
-import { useLeadsQuery } from '../entities/lead/api'
+import { useLeadSummaryQuery } from '../entities/lead/api'
 
 interface HealthPayload {
   status: string
@@ -18,7 +18,7 @@ export default function DashboardPage() {
     adminQueryKeys.dashboard,
     () => apiRequest<HealthPayload>('/admin/api/system/health'),
   ))
-  const leadsQuery = useLeadsQuery()
+  const leadsQuery = useLeadSummaryQuery()
   const location = useLocation()
   const csrfEnabled = useMemo(() => {
     const csrfHeader = document.querySelector<HTMLMetaElement>('meta[name="admin-csrf-header"]')?.content
@@ -84,10 +84,10 @@ export default function DashboardPage() {
           {leadsQuery.isError ? (
             <ErrorState
               title="Не удалось загрузить данные по лидам"
-              description="Проверьте endpoint /admin/api/leads и права leads.view."
+              description="Проверьте endpoint /admin/api/leads/summary и права leads.view."
             />
           ) : null}
-          {leadsQuery.isSuccess ? <LeadsStatusChart leads={leadsQuery.data.leads} statuses={leadsQuery.data.statuses} /> : null}
+          {leadsQuery.isSuccess ? <LeadsStatusChart byStatus={leadsQuery.data.byStatus} statuses={leadsQuery.data.statuses} /> : null}
         </Suspense>
       </Card>
     </div>

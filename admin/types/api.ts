@@ -252,7 +252,38 @@ export interface MenuItem {
   updatedAt: string
 }
 
+export type LeadStatus = 'new' | 'in_progress' | 'done' | 'spam'
+
+export interface LeadAssigneeRef {
+  id: string
+  email: string | null
+}
+
 export interface LeadItem {
+  id: string
+  source: string
+  name: string
+  phone: string
+  email: string | null
+  status: LeadStatus
+  assignee: LeadAssigneeRef | null
+  spamScore: number
+  messagePreview: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface LeadEvent {
+  id: string
+  type: 'status_changed' | 'note' | 'assigned'
+  actorId: string | null
+  actorLabel: string
+  body: string | null
+  data: Record<string, unknown>
+  createdAt: string
+}
+
+export interface LeadDetail {
   id: string
   source: string
   name: string
@@ -260,11 +291,13 @@ export interface LeadItem {
   email: string | null
   message: string | null
   consentSnapshot: Record<string, unknown>
-  status: 'new' | 'in_progress' | 'done' | 'spam'
+  status: LeadStatus
+  assignee: LeadAssigneeRef | null
   spamScore: number
   spamReasons: string[]
   createdAt: string
   updatedAt: string
+  events: LeadEvent[]
 }
 
 export interface SystemOverviewResponse extends SystemHealthResponse {
