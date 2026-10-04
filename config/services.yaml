@@ -126,6 +126,13 @@ services:
         arguments:
             $environment: '%kernel.environment%'
 
+    App\Shared\Infrastructure\Http\StagingAccessSubscriber:
+        arguments:
+            $environment: '%kernel.environment%'
+            $authEnabled: '%env(bool:default:empty_string:STAGING_AUTH_ENABLED)%'
+            $user: '%env(default:empty_string:STAGING_AUTH_USER)%'
+            $passwordHash: '%env(default:empty_string:STAGING_AUTH_HASH)%'
+
     App\Shared\Infrastructure\Logging\Processor\RequestProcessor:
         tags:
             - { name: monolog.processor }

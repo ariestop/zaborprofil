@@ -4,6 +4,8 @@
 
 > Staging и production деплоятся **на VPS без Docker**. Docker — только для local dev.
 
+> Отдельный staging-стенд `https://dev.zaborprofil.ru` на хостинге Beget (ветка `dev`, деплой по SSH без release-структуры) описан в [49-beget-staging-deploy](49-beget-staging-deploy.md). Этот документ описывает release-схему VPS (`tools/deploy/deploy-staging.sh`, `deploy-production.sh`).
+
 ## Release layout
 
 ```text
@@ -40,7 +42,8 @@
 `tools/deploy/`:
 
 - `common.sh` — общие функции, переменные.
-- `deploy-staging.sh` — деплой staging.
+- `deploy-staging.sh` — деплой staging (VPS, release-схема).
+- `deploy-beget.sh` — деплой staging `dev.zaborprofil.ru` на Beget (git-клон на месте, см. [49-beget-staging-deploy](49-beget-staging-deploy.md)).
 - `deploy-production.sh` — деплой production (требует `CONFIRM_STAGING_DEPLOYED=yes` и `CONFIRM_DEPLOY_SAFETY_CHECKLIST=yes`).
 - `rollback.sh` — переключение `current` на предыдущий релиз или выбранный релиз.
 - `health-check.sh` — curl healthcheck с retry.
@@ -273,6 +276,7 @@ php bin/console cache:warmup --env=prod
 - [27-config-and-env](27-config-and-env.md)
 - [29-healthchecks](29-healthchecks.md)
 - [35-cicd](35-cicd.md)
+- [49-beget-staging-deploy](49-beget-staging-deploy.md)
 - [36-backup-restore](36-backup-restore.md)
 - [37-runbooks](37-runbooks.md)
 - [37-runbooks](37-runbooks.md)
