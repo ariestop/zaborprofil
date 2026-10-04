@@ -17,15 +17,14 @@ PHP = $(COMPOSE) exec -T --user www-data app
 PHP_SHELL = $(COMPOSE) exec --user www-data app
 NODE = $(COMPOSE) exec -T --user $(DOCKER_UID):$(DOCKER_GID) node
 MYSQL = $(COMPOSE) exec -T mysql
-REDIS = $(COMPOSE) exec -T redis
 MYSQL_DATABASE ?= zaborprofil
 MYSQL_USER ?= zaborprofil
 MYSQL_PASSWORD ?= zaborprofil
 TEST_DATABASE_NAME ?= $(MYSQL_DATABASE)_test
 TEST_DATABASE_URL ?= mysql://$(MYSQL_USER):$(MYSQL_PASSWORD)@mysql:3306/$(TEST_DATABASE_NAME)?serverVersion=8.4&charset=utf8mb4
-TEST_ENV = env APP_ENV=test APP_SECRET=test-secret DATABASE_URL='$(TEST_DATABASE_URL)' REDIS_URL=redis://redis:6379/1 MESSENGER_TRANSPORT_DSN=in-memory:// MAILER_DSN=null://null SITE_URL=https://zaborprofil.test DEFAULT_URI=https://zaborprofil.test
+TEST_ENV = env APP_ENV=test APP_SECRET=test-secret DATABASE_URL='$(TEST_DATABASE_URL)' MESSENGER_TRANSPORT_DSN=in-memory:// MAILER_DSN=null://null SITE_URL=https://zaborprofil.test DEFAULT_URI=https://zaborprofil.test
 
-.PHONY: init up down restart build shell composer-install npm-install npm-dev npm-build migrate migration fixtures test-db test phpstan cs cs-fix rector quality smoke cache-clear logs db redis reset-db health
+.PHONY: init up down restart build shell composer-install npm-install npm-dev npm-build migrate migration fixtures test-db test phpstan cs cs-fix rector quality smoke cache-clear logs db reset-db health
 
 init: build up composer-install npm-install migrate npm-build smoke
 
@@ -108,9 +107,6 @@ logs:
 
 db:
 	$(MYSQL) sh -lc 'mysql -u"$$MYSQL_USER" -p"$$MYSQL_PASSWORD" "$$MYSQL_DATABASE"'
-
-redis:
-	$(REDIS) redis-cli
 
 reset-db:
 	$(PHP) php bin/console doctrine:database:drop --force --if-exists

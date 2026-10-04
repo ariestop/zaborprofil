@@ -9,7 +9,7 @@ use App\Shared\Infrastructure\Health\HealthCheckResult;
 use Symfony\Contracts\Cache\CacheInterface;
 use Throwable;
 
-final readonly class RedisCheck implements HealthCheckInterface
+final readonly class CacheCheck implements HealthCheckInterface
 {
     public function __construct(private CacheInterface $cache)
     {
@@ -17,12 +17,12 @@ final readonly class RedisCheck implements HealthCheckInterface
 
     public function name(): string
     {
-        return 'redis';
+        return 'cache';
     }
 
     public function label(): string
     {
-        return 'Redis-backed cache';
+        return 'Filesystem cache';
     }
 
     public function isRequiredForReadiness(): bool

@@ -19,11 +19,11 @@ final class HealthCheckTest extends WebTestCase
         $payload = json_decode($client->getResponse()->getContent() ?: '{}', true, 512, JSON_THROW_ON_ERROR);
         self::assertIsArray($payload);
 
-        /** @var array{status: string, app: string, database: string, redis: string, storage: string, checks: list<array<string, mixed>>} $payload */
+        /** @var array{status: string, app: string, database: string, cache: string, storage: string, checks: list<array<string, mixed>>} $payload */
         self::assertSame('ok', $payload['status']);
         self::assertSame('ok', $payload['app']);
         self::assertSame('ok', $payload['database']);
-        self::assertSame('ok', $payload['redis']);
+        self::assertSame('ok', $payload['cache']);
         self::assertSame('ok', $payload['storage']);
         self::assertNotEmpty($payload['checks']);
     }

@@ -42,7 +42,7 @@ export default function SystemHealthView() {
             <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700">System</p>
             <h2 className="mt-2 text-2xl font-bold text-slate-950">Health Center</h2>
             <p className="mt-2 text-sm text-slate-600">
-              Проверка приложения, БД, Redis/cache, storage, миграций и диска.
+              Проверка приложения, БД, файлового кэша, storage, миграций и диска.
             </p>
           </div>
           <button
