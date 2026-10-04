@@ -17,11 +17,10 @@ RUN apt-get update \
         curl \
         git \
         libicu-dev \
-        libpq-dev \
         libzip-dev \
         unzip \
         zip \
-    && docker-php-ext-install intl pdo_pgsql zip \
+    && docker-php-ext-install intl pdo_mysql zip \
     && pecl install redis xdebug \
     && docker-php-ext-enable redis xdebug \
     && curl -fsSL https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \

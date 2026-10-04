@@ -12,7 +12,7 @@ use LogicException;
 /**
  * Builds the test database schema directly from Doctrine metadata, instead of
  * hand-maintained CREATE TABLE statements. Tests must run against the
- * PostgreSQL service from Docker Compose/CI so functional and integration
+ * MySQL service from Docker Compose/CI so functional and integration
  * tests do not drift from the production database engine.
  */
 final class SchemaTestHelper

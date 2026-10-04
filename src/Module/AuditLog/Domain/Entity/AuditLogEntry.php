@@ -50,13 +50,13 @@ final class AuditLogEntry
     /**
      * @var array<string, mixed>
      */
-    #[ORM\Column(type: 'json', options: ['jsonb' => true])]
+    #[ORM\Column(type: 'json')]
     private array $oldValues;
 
     /**
      * @var array<string, mixed>
      */
-    #[ORM\Column(type: 'json', options: ['jsonb' => true])]
+    #[ORM\Column(type: 'json')]
     private array $newValues;
 
     /**

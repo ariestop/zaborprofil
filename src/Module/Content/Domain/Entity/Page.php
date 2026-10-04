@@ -89,7 +89,7 @@ final class Page
     /**
      * @var list<array<string, mixed>>|null
      */
-    #[ORM\Column(name: 'json_ld', type: 'json', nullable: true, options: ['jsonb' => true])]
+    #[ORM\Column(name: 'json_ld', type: 'json', nullable: true)]
     private ?array $jsonLd = null;
 
     #[ORM\Column(nullable: true)]

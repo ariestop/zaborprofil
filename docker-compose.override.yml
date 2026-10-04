@@ -22,9 +22,9 @@ services:
     volumes:
       - node_modules:/var/www/html/node_modules
 
-  postgres:
+  mysql:
     ports:
-      - ${POSTGRES_PORT:-15432}:5432
+      - ${MYSQL_PORT:-13306}:3306
 
   redis:
     ports:
