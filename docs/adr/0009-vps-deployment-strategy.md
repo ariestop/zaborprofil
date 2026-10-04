@@ -27,8 +27,8 @@ Accepted, 2026.
 
 - **nginx** (>= 1.30.0) — TLS, reverse proxy.
 - **php-fpm 8.5+** — Symfony app.
-- **PostgreSQL 18** — БД.
-- **Redis 8** — cache.
+- **MySQL 8.4+** — БД (на staging/хостинге Beget — MySQL провайдера).
+- **Файловый кэш** (`cache.adapter.filesystem`, `var/cache/<env>/pools`) — вместо Redis; см. [ADR-0007](0007-filesystem-cache-and-doctrine-messenger.md).
 - **systemd** — управление сервисами и Messenger worker.
 - **Git-based release deploy** — структура `releases/<ts>` + symlink `current`.
 - **GitHub Actions** делает SSH деплой через `tools/deploy/*.sh`.
@@ -36,10 +36,10 @@ Accepted, 2026.
 ## Причины
 
 - **Простота.** Меньше слоёв = проще диагностика.
-- **Производительность.** Native FPM + Postgres на VPS с разумным размером уверенно держат текущую нагрузку.
+- **Производительность.** Native FPM + MySQL на VPS с разумным размером уверенно держат текущую нагрузку.
 - **Низкая стоимость.** Не нужны k8s-кластеры.
 - **Fast rollback.** `ln -sfn previous current` — мгновенно.
-- **Предсказуемые backup’ы.** `pg_dump` + rsync uploads.
+- **Предсказуемые backup’ы.** `mysqldump` + rsync uploads.
 - **Хорошая совместимость с CI.** GitHub Actions через SSH/SCP.
 
 ## Структура
@@ -64,6 +64,7 @@ Accepted, 2026.
 - `current` — atomic symlink switch.
 - Старые release’ы накапливаются — нужен периодический cleanup.
 - Расхождение с Docker dev есть, но контролируется фиксацией версий.
+- Файловый кэш и сессии локальны для сервера (и для релиза): после deploy кэш прогревается заново; для нескольких серверов потребуется общий FS либо возврат к Redis.
 - Невозможен (легко) horizontal scaling без архитектурных изменений; на текущей нагрузке это и не нужно.
 
 ## Workflow

@@ -44,7 +44,7 @@
 ## Infrastructure exceptions
 
 - `Doctrine\DBAL\Exception\*` — БД.
-- `Predis\PredisException` / `Symfony\Component\Cache\Exception\*` — Redis.
+- `Symfony\Component\Cache\Exception\*` — файловый кэш.
 - `Symfony\Component\Mailer\Exception\TransportException` — SMTP.
 
 В Application/Domain эти типы видеть **нельзя** — только в Infrastructure, где они ловятся и:
@@ -99,7 +99,7 @@ try {
 
 | Тип | Retryable | Пример |
 |---|---|---|
-| Network timeout (HTTP, Redis) | да (с backoff) | `Symfony HttpClient timeout` |
+| Network timeout (HTTP, SMTP) | да (с backoff) | `Symfony HttpClient timeout` |
 | DB deadlock | да (1–2 ретрая) | `RetryableException` Doctrine |
 | Доменная валидация | нет | `PagePathDuplicateException` |
 | Validation input | нет | `ValidationFailedException` |
@@ -118,7 +118,7 @@ try {
 
 - Stack trace.
 - Имена внутренних классов.
-- Доступы к БД, ключи Redis.
+- Доступы к БД, пути/ключи кэша.
 - Содержимое `.env`.
 - Текст SQL.
 - Имена файлов с absolute path.

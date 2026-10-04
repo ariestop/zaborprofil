@@ -30,7 +30,7 @@
 16. [Playbook: Twig/frontend asset change](#16-playbook-twigfrontend-asset-change)
 17. [Playbook: files/uploads change](#17-playbook-filesuploads-change)
 18. [Playbook: configuration/environment change](#18-playbook-configurationenvironment-change)
-19. [Playbook: cache/Redis change](#19-playbook-cacheredis-change)
+19. [Playbook: cache change](#19-playbook-cache-change)
 20. [Playbook: Messenger/worker change](#20-playbook-messengerworker-change)
 21. [Playbook: logging/observability change](#21-playbook-loggingobservability-change)
 22. [Playbook: healthcheck change](#22-playbook-healthcheck-change)
@@ -164,9 +164,9 @@ CMS Engine — это **product** для редактора и **service** дл�
 
 ### 2.7 Production mindset
 
-- **Что значит:** каждое изменение оценивается через призму прода: что сломается на 1k req/min, при холодном старте, при потере Redis, при ошибке в миграции.
+- **Что значит:** каждое изменение оценивается через призму прода: что сломается на 1k req/min, при холодном старте, при потере/сбросе кэша, при ошибке в миграции.
 - **Почему:** dev-окружение прощает ошибки, прод — нет.
-- **Как:** до merge ответить: что произойдёт при перезапуске PHP-FPM, при таймауте PostgreSQL, при empty cache?
+- **Как:** до merge ответить: что произойдёт при перезапуске PHP-FPM, при таймауте MySQL, при empty cache?
 - **Anti-pattern:** «у меня локально работает».
 
 ### 2.8 SEO-first thinking
@@ -304,7 +304,7 @@ CMS Engine — это **product** для редактора и **service** дл�
 | **SEO / meta / sitemap change** | Front + Application + Twig | Индексация, ranking | URL, canonical, sitemap, robots, JSON-LD | Functional SEO | [26](26-seo-architecture.md) |
 | **Route / URL change** | Front/API + Application + redirects | 301/410, sitemap | Конфликт маршрутов, sitemap, redirects | Functional + redirect test | [16](16-routing.md), [26](26-seo-architecture.md) |
 | **Files / uploads change** | Application + Infrastructure (Storage) | Path traversal, RCE, leak | MIME/ext/size, permissions, public/private | Integration + functional | [25](25-files-and-uploads.md) |
-| **Cache / Redis change** | Infrastructure | Stale data, hot keys | TTL, invalidation, key naming | Integration (cache hit/miss) | [23](23-cache.md) |
+| **Cache change**         | Infrastructure | Stale data, hot keys | TTL, invalidation, key naming | Integration (cache hit/miss) | [23](23-cache.md) |
 | **Messenger / worker change** | Application + Infrastructure + ops | Дубли, бесконечные ретраи | Idempotency, retry policy, graceful shutdown | Functional in-memory transport | [24](24-messenger-and-queues.md), [37](37-runbooks.md) |
 | **Deploy / config change** | DevOps | Сломанный релиз | Idempotency, dry-run, staging | Manual on staging | [34](34-deployment.md) |
 | **Docker / local-dev change** | DevOps (local) | Сломанный onboarding | `make build && make up` чистый | Manual | [32](32-docker-architecture.md), [33](33-local-development.md) |
@@ -336,7 +336,7 @@ CMS Engine — это **product** для редактора и **service** дл�
 | Нужна ли миграция | yes/no + reasoning |
 | Изменения в deploy | yes/no + что |
 | Изменения в env/config | yes/no + переменные |
-| Изменения в Redis/cache | yes/no + ключи и TTL |
+| Изменения в cache       | yes/no + ключи и TTL |
 | Изменения в frontend assets | yes/no + Vite chunk |
 | Изменения в uploads/files | yes/no + path |
 | Изменения в Nginx/PHP-FPM | yes/no + какой блок |
@@ -370,7 +370,7 @@ CMS Engine — это **product** для редактора и **service** дл�
 - [ ] Persistence (Doctrine/DB)
 - [ ] Presentation (Twig/Vue/Tailwind)
 - [ ] Files/Uploads
-- [ ] Cache/Redis
+- [ ] Cache
 - [ ] Queue/Worker
 - [ ] Deploy
 - [ ] Docs
@@ -468,7 +468,7 @@ yes/no — новые шаги в release script, рестарт worker'ов
                 ├── Да → Domain (Entity / VO / DomainService)
                 └── Нет
                     │
-                    Это техническая интеграция (DB / Redis / mailer / storage)?
+                    Это техническая интеграция (DB / cache / mailer / storage)?
                     ├── Да → Infrastructure
                     └── Нет → Shared / cross-cut (DI, Twig extension, Console)
 ```
@@ -533,7 +533,7 @@ yes/no — новые шаги в release script, рестарт worker'ов
 
 - **Признак правильного:** меняется admin SPA UX или его связка с admin API.
 - **Признак неправильного:** SPA вызывает прямые SQL-эндпоинты или dev-only routes.
-- **Anti-pattern:** SPA знает про внутренние Doctrine ID без UUID/slug, ломается при любом рефакторинге БД.
+- **Anti-pattern:** SPA знает про внутренние Doctrine ID без ULID/slug, ломается при любом рефакторинге БД.
 
 #### When to change frontend assets (`assets/site`, `assets/admin`)
 
@@ -549,7 +549,7 @@ yes/no — новые шаги в release script, рестарт worker'ов
 
 #### When to change infrastructure services
 
-- **Признак правильного:** меняется адаптер БД/Redis/mailer/storage/HTTP клиент.
+- **Признак правильного:** меняется адаптер БД/cache/mailer/storage/HTTP клиент.
 - **Признак неправильного:** инфраструктурный сервис принимает решения о business rules.
 - **Anti-pattern:** `MailerService` решает, имеет ли пользователь право получить письмо.
 
@@ -946,7 +946,8 @@ Mutating-изменения **разбиваются** на серию additive-
 
 - Запуск: `make migration` или `bin/console doctrine:migrations:diff`.
 - Файл миграции **читается глазами** перед коммитом — Doctrine может предложить лишнее.
-- Для PostgreSQL использовать ровно те типы, что в entity (`json` vs `jsonb`, `timestamp` vs `timestamptz`).
+- Для MySQL использовать ровно те типы, что в entity (`json`, `datetime` vs `datetime(6)`, `binary(16)` для ULID, `utf8mb4`).
+- DDL в MySQL не транзакционен (неявный commit): неудачная миграция может примениться частично, поэтому перед боевой миграцией обязателен `mysqldump`, а миграции делаются маленькими и идемпотентными по смыслу.
 - Не использовать `doctrine:schema:update --force`.
 
 ### 13.4 Backfill
@@ -957,7 +958,7 @@ Mutating-изменения **разбиваются** на серию additive-
 
 ### 13.5 Индексы
 
-- Создавать `CONCURRENTLY` для больших таблиц, чтобы не блокировать (PostgreSQL).
+- Для больших таблиц создавать индексы онлайн: `ALTER TABLE ... ADD INDEX ..., ALGORITHM=INPLACE, LOCK=NONE` (InnoDB online DDL), чтобы не блокировать запись.
 - Уникальные ограничения проверять на дубли **до** применения (отдельная query в проверке pre-deploy).
 
 ### 13.6 Foreign keys
@@ -1276,7 +1277,7 @@ Mutating-изменения **разбиваются** на серию additive-
 ### 17.3 Защита от path traversal
 
 - Никогда не использовать пользовательский `originalName` как имя файла на диске.
-- Имя файла на диске — детерминированный hash (`sha256(content)`) или UUID.
+- Имя файла на диске — детерминированный hash (`sha256(content)`) или ULID.
 - `realpath` проверяется на принадлежность storage root.
 
 ### 17.4 Public vs private storage
@@ -1368,7 +1369,7 @@ Mutating-изменения **разбиваются** на серию additive-
 ### 18.8 dev / test / prod
 
 - Каждое окружение имеет явный профиль env.
-- Test env (`.env.test`) — отдельная БД, отдельный Redis db / namespace.
+- Test env (`.env.test`) — отдельная БД (`zaborprofil_test`), кэш — array adapter.
 - Prod env — только через secrets management (см. [27-config-and-env](27-config-and-env.md)).
 
 ### 18.9 Связанные документы
@@ -1381,18 +1382,19 @@ Mutating-изменения **разбиваются** на серию additive-
 
 ---
 
-## 19. Playbook: cache/Redis change
+## 19. Playbook: cache change
 
 ### 19.1 Когда использовать Symfony Cache
 
 - HTTP fragment caching, view-model caching, computed-data caching.
 - TTL-based, ключи под управлением приложения.
 
-### 19.2 Когда использовать Redis напрямую
+### 19.2 Когда выходить за рамки файлового кэша
 
-- Когда нужны продвинутые структуры (sorted set, stream).
-- Очереди Messenger (Doctrine transport — основной, Redis — опционально).
-- Rate limiter, lock, session.
+- Кэш — filesystem (`cache.adapter.filesystem`), Redis в проекте нет; он остаётся только возможным будущим вариантом ([ADR-0007](adr/0007-filesystem-cache-and-doctrine-messenger.md)).
+- Очереди Messenger — Doctrine transport (таблица `messenger_messages`).
+- Lock — `symfony/lock` с `FlockStore` (файловый) или `PdoStore` (MySQL); rate limiter — на `cache.app` либо Doctrine; сессии — нативные файлы.
+- Файловый кэш не разделяется между серверами и релизами и не даёт pub/sub или атомарных счётчиков — не строить на нём логику, требующую этого.
 
 ### 19.3 Cache pools
 
@@ -1424,8 +1426,8 @@ Mutating-изменения **разбиваются** на серию additive-
 ### 19.7 User-specific / private data
 
 - Private data **не** кэшируется в shared pool без user id в ключе.
-- Лучше: per-request memoization, не Redis.
-- Никогда не кэшировать sensitive (auth tokens, personal data) в Redis с длинным TTL.
+- Лучше: per-request memoization, не файловый кэш.
+- Никогда не кэшировать sensitive (auth tokens, personal data) в файловом кэше с длинным TTL: файлы лежат на диске.
 
 ### 19.8 Тестирование cache behavior
 
@@ -1451,7 +1453,7 @@ Mutating-изменения **разбиваются** на серию additive-
 `dispatch → transport → consumer → handler → ack/nack → retry/dlq`
 
 - Dispatch — из use case или event listener.
-- Transport — Doctrine (default) или Redis.
+- Transport — Doctrine (default).
 - Handler — `#[AsMessageHandler]`.
 - Retry — конфигурируется на transport.
 - DLQ (failed transport) — обязателен.
@@ -1503,7 +1505,7 @@ Mutating-изменения **разбиваются** на серию additive-
 
 ### 20.10 Impact on DB
 
-- Doctrine transport создаёт нагрузку на БД. Большие очереди — рассмотреть Redis transport.
+- Doctrine transport создаёт нагрузку на БД. Большие очереди — рассмотреть отдельный брокер (см. ADR-0007).
 - Retry storms могут переполнить БД — alerts на queue depth.
 
 ### 20.11 Impact on logs / monitoring
@@ -1566,7 +1568,7 @@ Mutating-изменения **разбиваются** на серию additive-
 
 - Domain — `info`/`warning`, обычно ожидаемые ошибки бизнес-правил.
 - Application — `warning`/`error` при сбое use case.
-- Infrastructure — `error`/`critical` при отказе адаптера (DB, Redis, HTTP).
+- Infrastructure — `error`/`critical` при отказе адаптера (DB, cache, HTTP).
 
 ### 21.6 Когда обновлять runbooks / docs
 
@@ -1591,14 +1593,14 @@ Mutating-изменения **разбиваются** на серию additive-
 
 ### 22.1 Когда менять /health
 
-- Появляется новая критичная зависимость (Redis, S3, внешний API).
+- Появляется новая критичная зависимость (S3, внешний API).
 - Меняется набор критичных проверок при старте сервиса.
 - Появляются readiness vs liveness разделения.
 
 ### 22.2 Какие runtime checks добавлять
 
 - DB connectivity (`SELECT 1`).
-- Redis ping.
+- Cache read/write (`CacheCheck`).
 - Filesystem (writable uploads dir).
 - Critical config (env присутствует).
 - Внешние зависимости — **только** в readiness (не в liveness).
@@ -1608,10 +1610,10 @@ Mutating-изменения **разбиваются** на серию additive-
 - Лёгкий `SELECT 1` без query на бизнес-таблицы.
 - Timeout — короткий (1–2s).
 
-### 22.4 Redis
+### 22.4 Cache
 
-- `PING` через injected client.
-- Не дёргать критичные ключи.
+- `CacheCheck` (имя `cache`, label «Filesystem cache») пишет и читает служебный ключ `health_check` через `CacheInterface`.
+- Не дёргать критичные ключи; ошибка проверки обычно означает нет прав/места в `var/cache`.
 
 ### 22.5 Filesystem / uploads
 
@@ -1652,7 +1654,7 @@ Mutating-изменения **разбиваются** на серию additive-
 
 - Никогда не показывать stack trace.
 - 4xx — дружелюбная страница (404, 403, 400) с сохранением layout и SEO (минимум canonical, robots noindex).
-- 5xx — статичная error page или минимальный fallback (без зависимости от БД/Redis).
+- 5xx — статичная error page или минимальный fallback (без зависимости от БД/кэша).
 - Логировать root cause.
 
 ### 23.2 Admin errors
@@ -1706,8 +1708,8 @@ Mutating-изменения **разбиваются** на серию additive-
 
 ### 24.1 Когда менять Dockerfile
 
-- Меняется PHP/Node/Nginx/Redis/Postgres версия.
-- Добавляется PHP-расширение (`pdo_pgsql`, `redis`, `intl`).
+- Меняется PHP/Node/Nginx/MySQL версия.
+- Добавляется PHP-расширение (`pdo_mysql`, `intl`).
 - Меняется системная зависимость для composer/npm.
 
 ### 24.2 Когда менять docker-compose
@@ -1719,17 +1721,17 @@ Mutating-изменения **разбиваются** на серию additive-
 ### 24.3 Volumes
 
 - `./` смонтирован в контейнер app — изменения PHP-кода применяются live.
-- БД и Redis — named volumes, не bind-mount (производительность).
+- БД (`mysql_data`) — named volume, не bind-mount (производительность).
 - Uploads — local bind-mount для удобства.
 
 ### 24.4 Networks
 
 - Все сервисы в одной compose network.
-- Имена сервисов — DNS-имена (`postgres`, `redis`, `app`, `nginx`).
+- Имена сервисов — DNS-имена (`mysql`, `app`, `nginx`).
 
 ### 24.5 Healthchecks
 
-- Postgres / Redis / Nginx — healthcheck'ом выровнены `depends_on: condition: service_healthy`.
+- MySQL / Nginx — healthcheck'ом выровнены `depends_on: condition: service_healthy`.
 
 ### 24.6 Restart policy
 
@@ -1755,7 +1757,7 @@ Mutating-изменения **разбиваются** на серию additive-
 
 ### 24.10 Не путать local Docker и production VPS
 
-- Версии в Docker = версии прода (PHP 8.5+, PG 18+, Redis 8+, Node 25.9+, Nginx 1.30+).
+- Версии в Docker = версии прода (PHP 8.5+, MySQL 8.4+, Node 25.9+, Nginx 1.30+).
 - Конфиги (Nginx, PHP-FPM) — не общие. Local — упрощённый, prod — собранный из `deploy/*`.
 
 ### 24.11 Связанные документы
@@ -1922,7 +1924,7 @@ client → Nginx :443 → static? yes → отдать; нет → fastcgi_pass 
 
 - Совпадает с прод (8.5+).
 - `setup-php` action с фиксированной версией.
-- Расширения: `pdo_pgsql`, `redis`, `intl`, `mbstring`, `gd`, `zip`.
+- Расширения: `pdo_mysql`, `intl`, `mbstring`, `gd`, `zip`.
 
 ### 27.4 Node / npm version
 
@@ -1930,9 +1932,9 @@ client → Nginx :443 → static? yes → отдать; нет → fastcgi_pass 
 - `setup-node` action с фиксированной версией.
 - `npm ci` (а не `npm install`) для воспроизводимости.
 
-### 27.5 PostgreSQL / Redis services
+### 27.5 MySQL service
 
-- Service containers с фиксированной версией (PG 18+, Redis 8+).
+- Service container с фиксированной версией (`mysql:8.4`); Redis в CI не используется.
 - Healthcheck перед запуском тестов.
 
 ### 27.6 Migrations
@@ -2000,7 +2002,7 @@ client → Nginx :443 → static? yes → отдать; нет → fastcgi_pass 
 | Doctrine entity | Migration, fixtures, repositories, tests, [17-doctrine-and-database](17-doctrine-and-database.md), [18-migrations](18-migrations.md) |
 | DB schema | Migration, entities, repositories, services, tests, deploy notes, [13. Раздел](#13-playbook-database-schema-change) |
 | Env vars | `config/services.yaml` validation, `.env`, `.env.example`, `.env.test`, deploy templates, README, install scripts, CI secrets, [27-config-and-env](27-config-and-env.md) |
-| Redis / cache key | Invalidation hooks, tests, docs, [23-cache](23-cache.md), [44-troubleshooting](44-troubleshooting.md) |
+| Cache key         | Invalidation hooks, tests, docs, [23-cache](23-cache.md), [44-troubleshooting](44-troubleshooting.md) |
 | Messenger message | Handler, retry policy, transport routing, tests, logs, worker config, [24-messenger-and-queues](24-messenger-and-queues.md) |
 | Uploads logic | Validators, security checks, backup/restore docs, cleanup, tests, [25-files-and-uploads](25-files-and-uploads.md), [36-backup-restore](36-backup-restore.md) |
 | docker-compose | Local docs, install scripts, healthchecks, [32-docker-architecture](32-docker-architecture.md), [33-local-development](33-local-development.md) |
@@ -2205,12 +2207,12 @@ client → Nginx :443 → static? yes → отдать; нет → fastcgi_pass 
 - [ ] MIME из контента (не header).
 - [ ] Size limit.
 - [ ] Image dimensions limit.
-- [ ] Filename — детерминированный hash/UUID.
+- [ ] Filename — детерминированный hash/ULID.
 - [ ] Public/private разделено.
 - [ ] Backup захватывает uploads.
 - [ ] Cleanup для orphans.
 
-### 31.13 Cache / Redis checklist
+### 31.13 Cache checklist
 
 - [ ] Pool назван и зарегистрирован.
 - [ ] Ключ содержит префикс модуля и версию.
@@ -2472,7 +2474,7 @@ final class SeoAuditCommand extends Command
 
 ### 32.12 P12. Новый cache pool
 
-См. [23-cache](23-cache.md), [Раздел 19](#19-playbook-cacheredis-change).
+См. [23-cache](23-cache.md), [Раздел 19](#19-playbook-cache-change).
 
 В `config/packages/cache.yaml`:
 
@@ -2506,7 +2508,7 @@ cache.<name>:
 
 - `docker-compose.yml` — все сервисы поднимаются после `make build && make up`.
 - Не использовать в prod.
-- Версии образов жёсткие (`postgres:18`, `redis:8-alpine`, `nginx:1.30.0-alpine`, `node:25.9.0-bookworm`, `php:8.5-fpm-bookworm`).
+- Версии образов жёсткие (`mysql:8.4`, `nginx:1.30.0-alpine`, `node:25.9.0-bookworm`, `php:8.5-fpm-bookworm`).
 
 ### 32.16 P16. Новый модуль
 

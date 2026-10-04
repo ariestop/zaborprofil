@@ -32,7 +32,7 @@
 | Контроллеры / роуты | [08-controller-architecture](08-controller-architecture.md), [16-routing](16-routing.md), [12-admin-area](12-admin-area.md), [13-front-area](13-front-area.md), [14-api-area](14-api-area.md) |
 | Шаблоны / SSR | [21-templates-and-twig](21-templates-and-twig.md), [22-frontend-assets](22-frontend-assets.md), [26-seo-architecture](26-seo-architecture.md) |
 | Безопасность | [20-security-and-access-control](20-security-and-access-control.md), [25-files-and-uploads](25-files-and-uploads.md) |
-| Кеш / Redis | [23-cache](23-cache.md) |
+| Кеш (filesystem) | [23-cache](23-cache.md) |
 | Очереди / Messenger | [24-messenger-and-queues](24-messenger-and-queues.md) |
 | Деплой / инфраструктура | [32-docker-architecture](32-docker-architecture.md), [33-local-development](33-local-development.md), [34-deployment](34-deployment.md), [35-cicd](35-cicd.md), [36-backup-restore](36-backup-restore.md), [37-runbooks](37-runbooks.md), [47-dev-database-state](47-dev-database-state.md) |
 | Новый модуль | [06-module-architecture](06-module-architecture.md), [43-module-development-guide](43-module-development-guide.md) |
@@ -56,7 +56,7 @@
 - [08-controller-architecture](08-controller-architecture.md) — Front / Admin / API / Dev контроллеры.
 - [09-application-layer](09-application-layer.md) — use cases, DTO, command/query.
 - [10-domain-layer](10-domain-layer.md) — Entity, Value Object, Domain Service.
-- [11-infrastructure-layer](11-infrastructure-layer.md) — Doctrine, Redis, Mailer, Storage.
+- [11-infrastructure-layer](11-infrastructure-layer.md) — Doctrine, Filesystem Cache, Mailer, Storage.
 - [12-admin-area](12-admin-area.md) — `/admin` зона.
 - [13-front-area](13-front-area.md) — публичный сайт.
 - [14-api-area](14-api-area.md) — публичные и admin API.
@@ -65,7 +65,7 @@
 
 ### Подсистемы
 
-- [17-doctrine-and-database](17-doctrine-and-database.md) — PostgreSQL, ORM, naming, индексы.
+- [17-doctrine-and-database](17-doctrine-and-database.md) — MySQL 8.4, ORM, naming, индексы.
 - [18-migrations](18-migrations.md) — Doctrine Migrations, правила и чек-листы.
 - [19-forms-dto-validation](19-forms-dto-validation.md) — DTO + Validator, когда FormType.
 - [20-security-and-access-control](20-security-and-access-control.md) — Symfony Security, RBAC, voters, CSRF.
@@ -90,7 +90,7 @@
 - [33-local-development](33-local-development.md) — пошаговый local guide.
 - [34-deployment](34-deployment.md) — релизы на VPS без Docker.
 - [35-cicd](35-cicd.md) — GitHub Actions, gates.
-- [36-backup-restore](36-backup-restore.md) — бэкапы PostgreSQL и uploads.
+- [36-backup-restore](36-backup-restore.md) — бэкапы MySQL (`mysqldump`) и uploads.
 - [37-runbooks](37-runbooks.md) — что делать при инцидентах.
 
 ### Стандарты и гайды

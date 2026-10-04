@@ -9,7 +9,7 @@
 | `.env.local.example` | Шаблон для local | в Git |
 | `.env.test` | Базовые значения test | в Git |
 | `.env.test.local` | Override для test | вне Git |
-| `.env.test.ci` | Postgres-вариант для CI | в Git |
+| `.env.test.ci` | MySQL-вариант для CI | в Git |
 | `.env.staging.example` | Шаблон для staging shared | в Git |
 | `.env.production.example` | Шаблон для production shared | в Git |
 | `.env.staging` / `.env.production` | Реальные значения | **вне Git**, на VPS в `shared/` |
@@ -32,8 +32,7 @@
 | `APP_ENV` | `dev` / `test` / `prod` | везде |
 | `APP_DEBUG` | `0` или `1` | везде |
 | `APP_SECRET` | случайная строка ≥ 32 символа | везде, **уникальная per-env** |
-| `DATABASE_URL` | `postgresql://user:pass@host:5432/db?serverVersion=18&charset=utf8` | везде |
-| `REDIS_URL` | `redis://host:6379` или `redis://:pass@host:6379/0` | везде |
+| `DATABASE_URL` | `mysql://user:pass@host:3306/db?serverVersion=8.4&charset=utf8mb4` | везде |
 | `MESSENGER_TRANSPORT_DSN` | `doctrine://default?auto_setup=0` (prod) | везде |
 | `MAILER_DSN` | `smtp://...` или `null://null` для dev без почты | везде |
 | `SITE_URL` | `https://zaborprofil.ru` или `http://localhost` | везде |
@@ -47,7 +46,7 @@
 | `TRUSTED_PROXIES` | список IP nginx/proxy | Symfony framework |
 | `TRUSTED_HOSTS` | regex hostname | Symfony framework |
 | `XDEBUG_MODE` | `off` / `develop,debug` | Docker PHP-FPM |
-| `POSTGRES_DB`/`USER`/`PASSWORD` | для Docker Compose | Compose |
+| `MYSQL_DATABASE`/`MYSQL_USER`/`MYSQL_PASSWORD`/`MYSQL_ROOT_PASSWORD`/`MYSQL_PORT` | для Docker Compose | Compose |
 | `HTTP_PORT` | хост-порт nginx для проброса `host:container` (Compose). Можно задать привязку к интерфейсу: `8081` (все интерфейсы) или `127.0.0.1:8081` (только loopback хоста; удобно на сервере, для доступа с ноутбука — SSH `-L` / Remote Ports) | Compose |
 | `MAILPIT_PORT`/`ADMINER_PORT`/`VITE_PORT` | хост-порты | Compose, dev only |
 | `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | для critical alerts | `TelegramErrorHandler` |
@@ -74,7 +73,7 @@
 
 ## Fail-fast
 
-При отсутствии `APP_SECRET`, `DATABASE_URL`, `REDIS_URL` приложение должно отказаться стартовать.
+При отсутствии `APP_SECRET`, `DATABASE_URL` приложение должно отказаться стартовать.
 
 ## Symfony Secrets (целевое)
 

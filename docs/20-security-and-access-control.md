@@ -114,7 +114,7 @@ password_hashers:
 
 - Cookies `Secure`, `HttpOnly`, `SameSite=Lax`.
 - В production — только HTTPS, `Set-Cookie: Secure`.
-- Storage — native PHP sessions (целевое можно перевести на Redis-backed).
+- Storage — native PHP sessions в файлах `var/sessions/<env>` (`framework.session.save_path`); каталог вне web root, права только для пользователя PHP-FPM. При горизонтальном масштабировании потребуется общий FS или перенос сессий в БД (`PdoSessionHandler`).
 
 ## Remember me
 
@@ -190,8 +190,7 @@ password_hashers:
 
 ## Firewall и сеть
 
-- PostgreSQL слушает только `localhost`.
-- Redis слушает только `localhost`, с `requirepass`.
+- MySQL слушает только `localhost` (`bind-address = 127.0.0.1`), приложение подключается отдельным пользователем с правами только на свою БД (без `FILE`, `SUPER`, глобальных привилегий).
 - SSH — только по ключам, `PermitRootLogin no`.
 - UFW: 22 (или нестандартный SSH), 80, 443. Ничего другого наружу.
 

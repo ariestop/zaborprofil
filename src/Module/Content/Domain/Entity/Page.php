@@ -20,12 +20,13 @@ use Symfony\Component\Uid\Ulid;
 #[ORM\Index(name: 'idx_content_pages_status', columns: ['status'])]
 #[ORM\Index(name: 'idx_content_pages_parent_id', columns: ['parent_id'])]
 #[ORM\Index(name: 'idx_content_pages_deleted_at', columns: ['deleted_at'])]
-// Path uniqueness is enforced by a PARTIAL unique index defined in migration
-// Version20260501000300 (`uniq_content_pages_path_active WHERE deleted_at IS
-// NULL`). Doctrine ORM attribute mapping does not support partial unique
-// indexes, so the constraint is intentionally NOT declared here. Application
-// code MUST rely on `PageRepositoryInterface::existsByPath()` to reject
-// duplicate live paths.
+// Path uniqueness among live pages is enforced by the unique index
+// `uniq_content_pages_path_active` over the generated column `path_active`
+// (`IF(deleted_at IS NULL, path, NULL)`) created in the initial migration.
+// MySQL has no partial indexes and ORM attributes cannot describe generated
+// columns, so the constraint is intentionally NOT declared here. Application
+// code MUST still rely on `PageRepositoryInterface::existsByPath()` to reject
+// duplicate live paths with a friendly error.
 final class Page
 {
     use HasSoftDelete;

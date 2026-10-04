@@ -65,7 +65,7 @@ final class SystemDiagnosticsCommand extends Command
     private function extensionChecks(): array
     {
         return [
-            'pdo_mysql' => \extension_loaded('pdo_pgsql'),
+            'pdo_mysql' => \extension_loaded('pdo_mysql'),
             'intl' => \extension_loaded('intl'),
             'mbstring' => \extension_loaded('mbstring'),
             'imagick' => \extension_loaded('imagick'),

@@ -59,11 +59,11 @@ AI-агент обязан:
 - Symfony >= 8.1
 - Node.js >= 25.9.0
 - npm >= 11.12.1
-- Redis >= 8.0
-- PostgreSQL >= 18.3
+- MySQL >= 8.4 (InnoDB, utf8mb4)
+- кэш: Symfony Cache на файловой системе (`cache.adapter.filesystem`), Redis не используется
 
 База данных:
-- основная БД: PostgreSQL;
+- основная БД: MySQL 8.4 (InnoDB, utf8mb4);
 - миграции через Doctrine Migrations;
 - ORM через Doctrine ORM.
 
@@ -94,7 +94,7 @@ Backend:
 - Policies / Voters;
 - Event Subscribers / Listeners при необходимости;
 - Messenger для долгих операций;
-- Redis для кэша, очередей или временных данных, если это оправдано.
+- Symfony Cache (filesystem) для кэша; очереди — Doctrine transport Messenger.
 
 ============================================================
 3. ОБЯЗАТЕЛЬНО ИЗУЧИ ПЕРЕД РЕАЛИЗАЦИЕЙ
@@ -140,7 +140,6 @@ Backend:
    - doctrine;
    - messenger;
    - cache;
-   - redis;
    - validation;
    - serializer.
 
@@ -380,7 +379,7 @@ src/
 
 3. Блоки должны быть расширяемыми.
 4. Нельзя жёстко зашивать все блоки в одну Entity без возможности расширения.
-5. Для контента блока можно использовать JSONB, если это оправдано.
+5. Для контента блока можно использовать JSON (тип MySQL), если это оправдано.
 6. Для часто фильтруемых данных лучше отдельные поля.
 7. В админке должна быть возможность:
    - добавлять блок;
@@ -413,8 +412,7 @@ src/
 Если фича влияет на производительность:
 
 1. Проверь, где нужен кэш:
-   - Symfony Cache;
-   - Redis;
+   - Symfony Cache (filesystem);
    - HTTP cache;
    - Doctrine result cache;
    - application-level cache.

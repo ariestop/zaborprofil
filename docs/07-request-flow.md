@@ -17,8 +17,8 @@ sequenceDiagram
     participant H as Application Handler
     participant Repo as RepositoryInterface
     participant DC as DoctrineRepository
-    participant DB as PostgreSQL
-    participant Cache as Redis Cache
+    participant DB as MySQL
+    participant Cache as Filesystem Cache
     participant T as Twig
 
     U->>N: GET /some-page
@@ -87,7 +87,7 @@ Domain exceptions не утекают как 500. Они конвертирую�
 
 ## Infrastructure error
 
-Доступы к Redis/SMTP/Telegram не должны валить запрос пользователя без оснований. Стратегия по умолчанию:
+Доступы к файловому кэшу/SMTP/Telegram не должны валить запрос пользователя без оснований. Стратегия по умолчанию:
 
 - Cache недоступен — fallback на прямое чтение из БД, лог `cache.error`.
 - SMTP недоступен — отправка через Messenger, retry с backoff.

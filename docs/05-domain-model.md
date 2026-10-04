@@ -50,7 +50,7 @@ stateDiagram-v2
 
 Ключевые правила:
 
-- Уникальность `path` среди live (`deleted_at IS NULL`) — поддерживается **partial unique index** (см. `Version20260501000300`). Doctrine attribute не умеет partial — поэтому проверка дубля делается через `PageRepositoryInterface::existsByPath()`.
+- Уникальность `path` среди live (`deleted_at IS NULL`) проверяется на уровне приложения через `PageRepositoryInterface::existsByPath()`: MySQL не поддерживает partial unique index, а Doctrine attributes не выражают условные индексы. Гарантию на уровне БД можно добавить unique-индексом по generated column `path_active = IF(deleted_at IS NULL, path, NULL)` (целевая миграция, см. [17-doctrine-and-database](17-doctrine-and-database.md) §13). Сравнение `path` в MySQL регистронезависимое (collation `utf8mb4_0900_ai_ci`).
 - Изменение `path` опубликованной страницы должно сопровождаться созданием `Redirect` (на уровне application layer / Seo listener `PagePathChangeListener`).
 - Только `Published` отображается публично. `Draft`/`Archived` -> `404`.
 
@@ -64,15 +64,15 @@ stateDiagram-v2
 | `name` | `string` |
 | `position` | `int` |
 | `isEnabled` | `bool` |
-| `content` | JSONB |
-| `settings` | JSONB |
+| `content` | JSON |
+| `settings` | JSON |
 | `createdAt`/`updatedAt` | timestamps |
 
 Жизненный цикл управляется через application handler (`Create/Update/Delete/Reorder`).
 
 ### Setting — `src/Module/Settings/Domain/Entity/Setting.php`
 
-Ключ-значение конфигурации, читаемое через `SettingsService`/`SettingsRegistry` и доступное в Twig через `SettingsTwigExtension`.
+Ключ-значение конфигурации (`scope` + `setting_key`, значение `setting_value` — JSON; пара `(scope, setting_key)` уникальна), читаемое через `SettingsService`/`SettingsRegistry` и доступное в Twig через `SettingsTwigExtension`.
 
 ### Redirect — `src/Module/Seo/Domain/Entity/Redirect.php`
 
@@ -90,6 +90,8 @@ Symfony Security user. Лежит в `Infrastructure/Doctrine/Entity/`, пото
 - `AdminPermission`: `pages.view`, `pages.create`, `pages.edit`, `pages.publish`, `pages.delete`, `seo.edit`, `media.upload`, `media.delete`, `leads.view`, `leads.manage`, `settings.edit`, `users.manage`, `system.view`, `system.manage`.
 
 ## ER-диаграмма (фактическое состояние)
+
+> Типы на диаграмме — Doctrine/логические: `ulid` хранится в MySQL как `BINARY(16)`, `json` — как нативный тип `JSON`, `datetime` — как `DATETIME` (подробнее: [17-doctrine-and-database](17-doctrine-and-database.md) §2.1). Колонки Setting называются `setting_key`/`setting_value`, чтобы не конфликтовать с зарезервированными словами MySQL (`key`).
 
 ```mermaid
 erDiagram
@@ -113,7 +115,7 @@ erDiagram
         string og_description
         string og_image
         string og_type
-        jsonb json_ld
+        json json_ld
         datetime published_at
         datetime created_at
         datetime updated_at
@@ -126,8 +128,8 @@ erDiagram
         string name
         int position
         bool is_enabled
-        jsonb content
-        jsonb settings
+        json content
+        json settings
         datetime created_at
         datetime updated_at
     }
@@ -140,8 +142,12 @@ erDiagram
         datetime created_at
     }
     SETTING {
-        string key PK
-        jsonb value
+        ulid id PK
+        string scope
+        string setting_key
+        json setting_value
+        string description
+        datetime created_at
         datetime updated_at
     }
     ADMIN_USER {

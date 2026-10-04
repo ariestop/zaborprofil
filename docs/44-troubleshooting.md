@@ -12,13 +12,13 @@ Your Composer dependencies require a PHP version >= 8.5
 
 Проверьте `php -v`. Установите PHP 8.5+ или используйте Docker (`make composer-install`).
 
-### `composer install` падает на `pdo_pgsql`
+### `composer install` падает на `pdo_mysql`
 
 ```text
-ext-pdo_pgsql * is missing from your system
+ext-pdo_mysql * is missing from your system
 ```
 
-Native macOS / Linux: `brew install postgresql@18` / `apt install php8.5-pgsql`. Затем перезапустить PHP.
+Native Linux: `apt install php8.5-mysql` (пакет содержит `pdo_mysql` и `mysqli`). На macOS (Homebrew) `pdo_mysql` входит в сборку PHP. Затем перезапустить PHP и проверить: `php -m | grep pdo_mysql`. В Docker (`make composer-install`) расширение уже установлено.
 
 ### `npm install` падает на `tailwindcss/typography`
 
@@ -69,13 +69,15 @@ ss -tln '( sport = :8081 )'
 
 Если переходите на доступ без SSH (например, через Tailscale), задайте в `.env.local` `HTTP_PORT=8081` (без `127.0.0.1:`), перезапустите стек и открывайте сайт по VPN-IP.
 
-### `make migrate` упал — `relation "..." does not exist`
+### `make migrate` упал — `Table '...' doesn't exist` / `Table '...' already exists`
+
+DDL в MySQL не транзакционен: упавшая на середине миграция оставляет схему частично применённой (повторный запуск падает на `already exists`). Для локальной БД проще всего пересоздать её:
 
 ```bash
 make reset-db
 ```
 
-(уничтожит данные). Альтернатива — точечно посмотреть `migrations:status`.
+(уничтожит данные). Альтернатива — точечно посмотреть `migrations:status` и `SHOW CREATE TABLE` через `make db`.
 
 ### Файлы созданы под root в Docker, локально не редактируются
 
@@ -119,21 +121,53 @@ php bin/console cache:clear
 php bin/console doctrine:schema:validate --skip-sync
 ```
 
-Скажет, что не сходится между attributes и БД. Часто — забытый индекс или partial index.
+Скажет, что не сходится между attributes и БД. Часто — забытый индекс, либо объект, созданный в миграции вручную и не выраженный в attributes (generated column, functional/FULLTEXT-индекс), либо расхождение charset/collation таблицы с `default_table_options` (должно быть `utf8mb4` / `utf8mb4_0900_ai_ci`).
 
 ### `Class metadata not found`
 
 Запустить `composer dump-autoload`.
 
-### Postgres jsonb vs array
+### JSON: порядок ключей и пустые значения
 
-В Doctrine используется `'json'` тип; PostgreSQL автоматически кладёт в `jsonb`.
+В Doctrine используется тип `'json'`, в MySQL это нативная колонка `JSON` (бинарный формат). MySQL нормализует JSON-объекты: порядок ключей **не сохраняется** (сортировка по длине ключа, затем по значению), дубликаты ключей схлопываются; порядок элементов массивов сохраняется. Если тест сравнивает JSON как строку — сравнивать декодированные структуры (`json_decode`), а не текст. Пустой PHP-массив сериализуется как `[]`, а не `{}` — это нормально для `content`/`settings`.
+
+### `SQLSTATE[HY000] [2002]` / `getaddrinfo for mysql failed`
+
+Контейнер `mysql` не запущен или ещё не healthy. Проверить `docker compose ps mysql`, `docker compose logs mysql`, `make up`. Внутри Docker-сети хост БД — `mysql:3306`, с хост-машины — `127.0.0.1:${MYSQL_PORT}` (по умолчанию `13306`).
+
+### `SQLSTATE[HY000] [1049] Unknown database 'zaborprofil_test'` / `1044 Access denied ... to database`
+
+Тестовая БД не создана или у пользователя нет прав на неё: `make test-db` (создаёт `zaborprofil_test` и выдаёт права). Для dev-БД — `make reset-db`.
+
+### `Incorrect string value` / «кракозябры» в кириллице
+
+Соединение или таблица не в `utf8mb4`. Проверить `charset=utf8mb4` в `DATABASE_URL` и `default_table_options` в `config/packages/doctrine.yaml`; на уровне сервера — `docker/mysql/my.cnf` (`character-set-server = utf8mb4`). Не использовать `utf8`/`utf8mb3`.
+
+### `Duplicate entry '...' for key 'uniq_...'` на «разных» значениях
+
+Collation `utf8mb4_0900_ai_ci` регистро- и акцент-нечувствительна: `/About` = `/about`, `е` = `ё`. Это ожидаемо; если для колонки нужно различать регистр — задать `utf8mb4_bin` явно (см. [17-doctrine-and-database](17-doctrine-and-database.md) §2.2).
+
+### `Specified key was too long; max key length is 3072 bytes` (1071)
+
+Индекс по длинной `VARCHAR` в utf8mb4 (до 4 байт на символ) превышает лимит 3072 байта. Использовать prefix-индекс (`INDEX (col(191))`), хэш-колонку или уменьшить длину.
+
+### `Deadlock found when trying to get lock` (1213) / `Lock wait timeout exceeded` (1205) / `MySQL server has gone away` (2006)
+
+1213 — InnoDB откатил транзакцию, её нужно повторить целиком (см. [17-doctrine-and-database](17-doctrine-and-database.md) §7.3). 1205 — долгая конкурирующая транзакция: `SELECT * FROM information_schema.INNODB_TRX`, `SHOW FULL PROCESSLIST`. 2006 — соединение закрыто сервером по `wait_timeout` (долгоживущий `messenger:consume` — перезапускать по `--time-limit`).
+
+### `Cannot add foreign key constraint` (1215) / `Referencing column and referenced column are incompatible` (3780)
+
+Тип, длина, signed/unsigned или collation FK-колонки не совпадают с родительским ключом. Для ULID обе стороны — `BINARY(16)`.
+
+### Идентификатор в консоли `mysql` выглядит как «мусор»
+
+ULID хранится как `BINARY(16)`. Для просмотра — `SELECT HEX(id) ...`, для поиска — `WHERE id = UNHEX('<hex>')` (hex получить из `Ulid::fromString(...)->toHex()`).
 
 ## Тесты
 
 ### PHPUnit не может подключиться к test database
 
-Тесты должны идти через PostgreSQL из Docker Compose:
+Тесты должны идти через MySQL из Docker Compose:
 
 ```bash
 make up
@@ -141,7 +175,7 @@ make test-db
 make test
 ```
 
-Если подключение падает, проверить `docker compose ps postgres`, `make test-db`
+Если подключение падает, проверить `docker compose ps mysql`, `make test-db`
 и `DATABASE_URL` из `.env.test`. SQLite для локальных тестов запрещён.
 
 ### Functional test падает с `403 CSRF Invalid`
@@ -150,8 +184,8 @@ make test
 
 ### Tests падают only in CI
 
-Скорее всего из-за различий env, timezone или версии PostgreSQL. Проверить
-`tests/bootstrap.php`, `phpunit.xml`, `.env.test.ci` и CI service `postgres`.
+Скорее всего из-за различий env, timezone, версии MySQL, `sql_mode` или collation. Проверить
+`tests/bootstrap.php`, `phpunit.xml`, `.env.test.ci` и CI service `mysql` (`mysql:8.4`).
 
 ## Frontend
 
@@ -232,7 +266,7 @@ make cache-clear
 
 ```bash
 make down
-docker volume rm zaborprofil_postgres_data zaborprofil_redis_data zaborprofil_uploads_data
+docker volume rm zaborprofil_mysql_data zaborprofil_uploads_data
 make build
 make up
 make composer-install
@@ -241,7 +275,7 @@ make migrate
 make npm-build
 ```
 
-Это полностью обнулит local environment.
+Это полностью обнулит local environment (включая данные MySQL и загруженные файлы). При первом старте пустого тома `mysql_data` скрипт `docker/mysql/init.sh` заново создаст БД `zaborprofil` и `zaborprofil_test`.
 
 ## Связанные документы
 

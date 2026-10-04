@@ -35,13 +35,13 @@ flowchart LR
         Application --> Domain
         Application --> RepoIface[Repository Interface]
         RepoIface -.implements.- Doctrine
-        Application --> CacheIface[Cache / Redis adapter]
+        Application --> CacheIface[Cache adapter / filesystem]
         Application --> Mailer[Mailer]
         Application --> Bus[Messenger bus]
     end
 
-    Doctrine --> Postgres[(PostgreSQL 18)]
-    CacheIface --> Redis[(Redis 8)]
+    Doctrine --> MySQL[(MySQL 8.4)]
+    CacheIface --> FileCache[(Filesystem cache<br/>var/cache/env/pools/app)]
     Bus --> DoctrineQueue[(messenger_messages)]
     Mailer --> SMTP[(SMTP)]
     Worker[Messenger Worker] --> Bus
@@ -67,7 +67,7 @@ sequenceDiagram
     participant C as Controller
     participant A as Application Handler
     participant D as Domain
-    participant I as Infrastructure (Doctrine/Redis/...)
+    participant I as Infrastructure (Doctrine/Cache/...)
     participant T as Twig
 
     U->>N: HTTP request
@@ -153,7 +153,7 @@ flowchart LR
 | Controller / UI | `src/Module/*/UI`, `src/Shared/UI` | Вход HTTP/CLI, парсинг DTO | Да, Symfony HTTP Foundation |
 | Application | `src/Module/*/Application` | Use cases, command/query, DTO, оркестрация | Только PHP/Symfony Validator/PSR; **не** Request/Response/EntityManager |
 | Domain | `src/Module/*/Domain`, `src/Shared/Domain` | Сущности, value objects, инварианты, repository interfaces | Только PHP. Допустимы Doctrine attributes на Entity, но без вызова EM |
-| Infrastructure | `src/Module/*/Infrastructure`, `src/Shared/Infrastructure` | Реализации интерфейсов: Doctrine, Redis, Mailer, FileStorage | Да |
+| Infrastructure | `src/Module/*/Infrastructure`, `src/Shared/Infrastructure` | Реализации интерфейсов: Doctrine, Filesystem Cache, Mailer, FileStorage | Да |
 | Persistence | `src/**/Infrastructure/Doctrine` | Doctrine repos / listeners | Да |
 | Integration | `src/**/Infrastructure/Integration` (целевое) | HTTP-клиенты, внешние API | Да |
 | Deployment | `tools/deploy/`, `docker/`, `.github/workflows/` | Поставка приложения | n/a |
@@ -173,8 +173,8 @@ System_Boundary(s, "zaborprofil") {
     Container(nginx, "Nginx", "1.30+", "Reverse proxy, статика, TLS")
     Container(php, "PHP-FPM", "8.5", "Symfony 8 application")
     Container(worker, "Messenger Worker", "PHP CLI", "Async jobs")
-    ContainerDb(pg, "PostgreSQL", "18", "Контент, sessions opt., messenger_messages")
-    ContainerDb(redis, "Redis", "8", "Cache pools")
+    ContainerDb(mysql, "MySQL", "8.4", "Контент, messenger_messages")
+    ContainerDb(fscache, "Filesystem cache", "var/cache/<env>/pools/app", "Cache pools, native PHP sessions в var/sessions")
     Container(node, "Vite build", "Node 25.9", "Pre-build assets, dev only")
     Container(smtp, "SMTP / Mailpit", "", "Письма")
     Container(tg, "Telegram bot", "", "Critical alerts")
@@ -183,11 +183,11 @@ System_Boundary(s, "zaborprofil") {
 Rel(visitor, nginx, "HTTPS")
 Rel(admin, nginx, "HTTPS / React SPA")
 Rel(nginx, php, "FastCGI")
-Rel(php, pg, "PDO pgsql")
-Rel(php, redis, "Predis")
+Rel(php, mysql, "PDO mysql")
+Rel(php, fscache, "Symfony Cache (filesystem)")
 Rel(php, smtp, "Mailer")
 Rel(php, tg, "TelegramErrorHandler")
-Rel(worker, pg, "Pulls messenger_messages")
+Rel(worker, mysql, "Pulls messenger_messages")
 Rel(worker, smtp, "")
 Rel(worker, tg, "")
 ```
@@ -205,7 +205,7 @@ flowchart LR
 
 - Стрелка `-->` — `requires`.
 - Стрелка `-.implements.->` — реализует контракт.
-- Domain **никогда** не импортирует Symfony, Doctrine, Twig, Predis, FS.
+- Domain **никогда** не импортирует Symfony, Doctrine, Twig, Symfony Cache, FS.
 
 ## Разделение зон Front / Admin / API / Dev
 
@@ -248,14 +248,14 @@ flowchart LR
         Nginx2[nginx]
         Php2[php-fpm 8.5]
         Worker2[systemd messenger@*]
-        Pg2[(PostgreSQL 18)]
-        Redis2[(Redis 8)]
+        MySQL2[(MySQL 8.4)]
+        FileCache2[(var/cache + var/sessions<br/>filesystem)]
     end
 
     Nginx2 --> Php2
-    Php2 --> Pg2
-    Php2 --> Redis2
-    Worker2 --> Pg2
+    Php2 --> MySQL2
+    Php2 --> FileCache2
+    Worker2 --> MySQL2
 ```
 
 ## Где живёт бизнес-логика

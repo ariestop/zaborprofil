@@ -71,7 +71,7 @@
 - Платежная интеграция.
 - Доставка / интеграции с логистикой.
 - Полноценный AuditLog с UI.
-- Search (PostgreSQL FTS или ElasticSearch).
+- Search (MySQL FULLTEXT InnoDB с ngram parser или внешний поиск: Meilisearch/OpenSearch/ElasticSearch).
 - OpenAPI для public API.
 
 ### Этап 4 (отдалённое)
@@ -125,7 +125,7 @@
 
 ## Risks (фиксация для архитектурного контроля)
 
-- Расхождение версий PHP/Postgres/Redis между Docker и VPS.
+- Расхождение версий PHP/MySQL между Docker и VPS.
 - Неконтролируемое разрастание `Application\Service`.
 - Возможность утечки бизнес-логики в `EventSubscriber`.
 - Слабая защита `/admin` от случайного открытия профайлера на prod.

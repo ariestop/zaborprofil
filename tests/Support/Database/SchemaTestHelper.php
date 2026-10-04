@@ -61,7 +61,13 @@ final class SchemaTestHelper
             $tables,
         );
 
-        $connection->executeStatement('DROP TABLE IF EXISTS '.implode(', ', $quotedTables).' CASCADE');
+        $connection->executeStatement('SET FOREIGN_KEY_CHECKS = 0');
+
+        try {
+            $connection->executeStatement('DROP TABLE IF EXISTS '.implode(', ', $quotedTables));
+        } finally {
+            $connection->executeStatement('SET FOREIGN_KEY_CHECKS = 1');
+        }
     }
 
     /**

@@ -10,18 +10,16 @@
 |---|---|---|---|
 | `app` | build `docker/php/Dockerfile` (`php:8.5-fpm-bookworm`) | PHP-FPM + Composer + Symfony | через nginx |
 | `nginx` | `nginx:1.30.0-alpine` | Web server | `80` (`HTTP_PORT`) |
-| `postgres` | `postgres:18` | БД | `15432` (`POSTGRES_PORT`) |
-| `redis` | `redis:8-alpine` | Cache (Symfony Cache pools). Messenger использует Doctrine transport — см. [ADR-0007](adr/0007-filesystem-cache-and-doctrine-messenger.md). | `16379` (`REDIS_PORT`) |
+| `mysql` | `mysql:8.4` | БД (InnoDB, utf8mb4, `utf8mb4_0900_ai_ci`; конфиг `docker/mysql/my.cnf`, init — `docker/mysql/init.sh`) | `13306` (`MYSQL_PORT`) |
 | `node` | build `docker/node/Dockerfile` (`node:25.9.0-bookworm`) | Vite/npm | dev server `5173` (`VITE_PORT`) |
 | `mailpit` | `axllent/mailpit:latest` | SMTP test inbox | `8025` (`MAILPIT_PORT`) |
-| `adminer` | `adminer:latest` | UI для Postgres | `8080` (`ADMINER_PORT`) |
+| `adminer` | `adminer:latest` | UI для MySQL (default server `mysql`) | `8080` (`ADMINER_PORT`) |
 
 ## Volumes
 
 | Volume | Куда монтируется | Что |
 |---|---|---|
-| `postgres_data` | `/var/lib/postgresql` | Данные БД |
-| `redis_data` | `/data` | Append-only Redis |
+| `mysql_data` | `/var/lib/mysql` | Данные БД |
 | `uploads_data` | `/var/www/html/public_html/uploads` | User uploads (между app и nginx) |
 | Bind mount `./` | `/var/www/html` (на app) и `/var/www/html` ro (на nginx) | Исходный код проекта |
 
@@ -29,12 +27,13 @@ Volumes являются локальным runtime-состоянием кон�
 
 ## Networks
 
-Compose использует default bridge network. Сервисы доступны по именам (`postgres`, `redis`, `mailpit`).
+Compose использует default bridge network. Сервисы доступны по именам (`mysql`, `mailpit`).
+
+Redis в стеке отсутствует: кэш приложения файловый (`var/cache/<env>/pools`), сессии — нативные файловые, Messenger — Doctrine transport (см. [ADR-0007](adr/0007-filesystem-cache-and-doctrine-messenger.md)).
 
 ## Healthchecks
 
-- `postgres`: `pg_isready -U $POSTGRES_USER -d $POSTGRES_DB`.
-- `redis`: `redis-cli ping`.
+- `mysql`: `mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD" --silent`.
 - `app`/`nginx`: целевое — добавить healthcheck через `curl -f http://localhost/health` (см. [29-healthchecks](29-healthchecks.md)).
 
 ## Restart policies
@@ -62,22 +61,21 @@ Compose использует default bridge network. Сервисы доступ
 |---|---|---|
 | Web server | `nginx:1.30.0-alpine` | nginx 1.30+ из репозиториев Debian/Ubuntu |
 | PHP | `php:8.5-fpm-bookworm` | system php8.5-fpm |
-| Postgres | `postgres:18` контейнер | system postgresql-18 |
-| Redis | `redis:8-alpine` | system redis-server 8 |
+| MySQL | `mysql:8.4` контейнер | system mysql-server 8.4 (или MySQL провайдера хостинга) |
 | Node | контейнер | используется только во время deploy для build |
 | Web root | bind-mount `./public_html` | `current/public_html` |
 | Uploads | volume `uploads_data` | shared `shared/public_html/uploads` |
 | Logs | `var/log/` (через bind) | shared `shared/var/log` |
-| Cache | `var/cache/` (через bind) | release-local `var/cache/` |
+| Cache (приложения и Symfony) | `var/cache/` (через bind), файловые пулы `var/cache/<env>/pools` | release-local `var/cache/` (файловые пулы, прогрев после deploy) |
 | Secrets | `.env.local` (gitignored) | `shared/.env.local` |
 | HTTPS | http only | TLS (Let’s Encrypt / certbot) |
 | Profiler | `dev` env | прибит к 404 |
 
-Версии PHP/Postgres/Redis должны совпадать между dev и prod (это правило).
+Версии PHP/MySQL должны совпадать между dev и prod (это правило).
 
 ## Risks Docker ↔ VPS divergence
 
-- Разные версии PHP-extensions (например, `pgsql` build flags).
+- Разные версии PHP-extensions (например, build flags `pdo_mysql`).
 - Разные конфигурации `php.ini` (`memory_limit`, `max_execution_time`).
 - Разная сетевая модель (Docker bridge vs unix-сокеты на VPS).
 - Mitigation:

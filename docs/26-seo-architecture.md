@@ -59,7 +59,7 @@
 - Регулярное выражение: `^\/[a-z0-9_\-./]*$`.
 - Никаких `//` (двойных слешей).
 - Проверяется в `Page::normalizePath()`.
-- Уникальность среди `deleted_at IS NULL` через **partial unique index** (см. [17-doctrine-and-database](17-doctrine-and-database.md)).
+- Уникальность среди `deleted_at IS NULL`: проверка `PageRepositoryInterface::existsByPath()` в приложении; на уровне БД — unique-индекс по generated column (в MySQL нет partial indexes, см. [17-doctrine-and-database](17-doctrine-and-database.md) §13). Сравнение регистронезависимое (`utf8mb4_0900_ai_ci`).
 
 ### 2.4 Запрещённые префиксы пути
 
@@ -119,7 +119,7 @@
 | `og_description` | `string(320)`, NULL | `<meta property="og:description">` (fallback на `meta_description`) |
 | `og_image` | `string(2048)`, NULL | `<meta property="og:image">` + автоматически twitter card |
 | `og_type` | `string(32)`, NULL | `<meta property="og:type">` (default `website`) |
-| `json_ld` | `JSONB`, NULL | массив `<script type="application/ld+json">` блоков |
+| `json_ld` | `JSON`, NULL | массив `<script type="application/ld+json">` блоков |
 
 Управление через admin API: `PUT /admin/api/content/pages/{id}/seo` (требует `AdminPermission::SEO_EDIT`). Все SEO-поля nullable; пустая строка нормализуется в NULL; canonical/og_image валидируются как абсолютные URL.
 
@@ -546,7 +546,7 @@ flowchart LR
 
 | Источник | Решение |
 |---|---|
-| Один path = две страницы | Partial unique index на `(path) WHERE deleted_at IS NULL` |
+| Один path = две страницы | `existsByPath()` в приложении (+ целевой unique-индекс по generated column `path_active = IF(deleted_at IS NULL, path, NULL)`; в MySQL нет partial indexes) |
 | `/about` и `/about/` (trailing slash) | nginx 301 на каноническую форму или canonical в Twig |
 | `http://` и `https://` | nginx 301 на https |
 | `www.zaborprofil.ru` и `zaborprofil.ru` | nginx 301 на основной хост |
@@ -615,7 +615,7 @@ flowchart LR
 - [ ] Сущность отдаёт `<title>`, `<meta description>`, `<h1>`, canonical, breadcrumbs, JSON-LD.
 - [ ] Новые URL добавлены в sitemap (новый sub-sitemap `sitemap-catalog-N.xml`).
 - [ ] Меняемые URL имеют staged migration с redirect.
-- [ ] Нет дублей по `slug` (partial unique index).
+- [ ] Нет дублей по `slug`/`path` среди живых страниц (`existsByPath()`; на уровне БД — unique-индекс по generated column, если он добавлен миграцией).
 - [ ] Пагинация листинга реализована корректно (см. §10).
 - [ ] Фильтры/sort генерируют canonical на «чистый» URL без параметров.
 - [ ] Карточки товаров в листинге — с `alt`, `loading="lazy"`, `<img width height>`.

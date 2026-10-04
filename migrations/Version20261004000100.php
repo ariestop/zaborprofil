@@ -11,6 +11,11 @@ use Symfony\Component\Uid\Ulid;
 
 final class Version20261004000100 extends AbstractMigration
 {
+    public function isTransactional(): bool
+    {
+        return false;
+    }
+
     public function getDescription(): string
     {
         return 'Initial MySQL 8.4 schema: CMS tables, messenger queue and system page templates.';
@@ -34,6 +39,7 @@ final class Version20261004000100 extends AbstractMigration
         $this->addSql('CREATE TABLE seo_redirects (id BINARY(16) NOT NULL, source_path VARCHAR(512) NOT NULL, target_path VARCHAR(1024) NOT NULL, status_code INT NOT NULL, is_active TINYINT NOT NULL, hit_count INT NOT NULL, last_hit_at DATETIME DEFAULT NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL, INDEX idx_seo_redirects_source_path (source_path), INDEX idx_seo_redirects_active (is_active), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_0900_ai_ci` ENGINE = InnoDB');
         $this->addSql('CREATE TABLE settings (id BINARY(16) NOT NULL, scope VARCHAR(80) NOT NULL, setting_key VARCHAR(120) NOT NULL, setting_value JSON NOT NULL, description VARCHAR(255) DEFAULT NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL, INDEX idx_settings_scope (scope), UNIQUE INDEX uniq_settings_scope_key (scope, setting_key), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_0900_ai_ci` ENGINE = InnoDB');
         $this->addSql('CREATE TABLE messenger_messages (id BIGINT AUTO_INCREMENT NOT NULL, body LONGTEXT NOT NULL, headers LONGTEXT NOT NULL, queue_name VARCHAR(190) NOT NULL, created_at DATETIME NOT NULL, available_at DATETIME NOT NULL, delivered_at DATETIME DEFAULT NULL, INDEX IDX_75EA56E0FB7336F0E3BD61CE16BA31DBBF396750 (queue_name, available_at, delivered_at, id), PRIMARY KEY (id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_0900_ai_ci` ENGINE = InnoDB');
+        $this->addSql('ALTER TABLE content_pages ADD path_active VARCHAR(512) GENERATED ALWAYS AS (IF(deleted_at IS NULL, path, NULL)) VIRTUAL, ADD UNIQUE INDEX uniq_content_pages_path_active (path_active)');
         $this->addSql('ALTER TABLE catalog_categories ADD CONSTRAINT FK_8FD9B4B3727ACA70 FOREIGN KEY (parent_id) REFERENCES catalog_categories (id) ON DELETE SET NULL');
         $this->addSql('ALTER TABLE catalog_products ADD CONSTRAINT FK_816D844412469DE2 FOREIGN KEY (category_id) REFERENCES catalog_categories (id) ON DELETE SET NULL');
         $this->addSql('ALTER TABLE catalog_variants ADD CONSTRAINT FK_814F8DFF4584665A FOREIGN KEY (product_id) REFERENCES catalog_products (id) ON DELETE CASCADE');
