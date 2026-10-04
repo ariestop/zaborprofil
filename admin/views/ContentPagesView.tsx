@@ -3,13 +3,14 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import { useEffect, useMemo, useState } from 'react'
 import { apiRequest } from '../api/client'
+import { MediaPicker } from '../features/media/MediaPicker'
 import { LengthCounter } from '../features/seo/LengthCounter'
 import { useSeoTitleSettings } from '../features/seo/seoSettings'
 import { SnippetPreview } from '../features/seo/SnippetPreview'
 import { descriptionLimits, titleLimits } from '../features/seo/snippet'
 import TiptapRichTextEditor from '../components/TiptapRichTextEditor'
 import { catalogPreset, heroPreset, seoContentPreset } from '../modules/page-builder/blocks/slider/presets'
-import type { BlockSchemaItem, ContentBlockItem, ContentPageDetail, ContentPageItem, MediaAssetItem, PageRevisionItem, PageTemplateItem } from '../types/api'
+import type { BlockSchemaItem, ContentBlockItem, ContentPageDetail, ContentPageItem, PageRevisionItem, PageTemplateItem } from '../types/api'
 import { createVisualState, supportsVisualEditor, toBlockContent, type BlockEditorMode, type VisualBlockFormState } from '../utils/blockVisualEditor'
 
 type PageStatus = ContentPageItem['status']
@@ -283,9 +284,6 @@ export default function ContentPagesView() {
   const [error, setError] = useState<string | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [seoAuditToast, setSeoAuditToast] = useState<SeoAuditResult | null>(null)
-  const [mediaAssets, setMediaAssets] = useState<MediaAssetItem[]>([])
-  const [mediaLoading, setMediaLoading] = useState(false)
-  const [mediaPickerOpen, setMediaPickerOpen] = useState(false)
   const blockSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
 
   const [form, setForm] = useState({
@@ -752,32 +750,6 @@ export default function ContentPagesView() {
     setVisualBlockForm((current) => ({ ...current, mode: 'json' }))
   }
 
-  const openMediaPicker = async (): Promise<void> => {
-    setMediaPickerOpen(true)
-    if (mediaAssets.length > 0) return
-    setMediaLoading(true)
-    try {
-      const response = await apiRequest<{ assets: MediaAssetItem[] }>('/admin/api/media/assets')
-      setMediaAssets(response.assets)
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Не удалось загрузить медиатеку')
-    } finally {
-      setMediaLoading(false)
-    }
-  }
-
-  const selectTextImageAsset = (asset: MediaAssetItem): void => {
-    setVisualBlockForm((current) => ({
-      ...current,
-      textImage: {
-        ...current.textImage,
-        image: asset.publicPath,
-        alt: current.textImage.alt.trim() === '' ? asset.originalName : current.textImage.alt,
-      },
-    }))
-    setMediaPickerOpen(false)
-  }
-
   const publishPage = async (): Promise<void> => {
     if (!selected || !canPublishSelected || statusChanging !== null) return
     setError(null)
@@ -1016,10 +988,13 @@ export default function ContentPagesView() {
                   <input value={form.ogTitle} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" onChange={(event) => setForm((current) => ({ ...current, ogTitle: event.target.value }))} />
                   <span className="mt-1 block text-xs font-normal text-slate-500">Используется в превью ссылки. Пример: «Заборы из профнастила под ключ».</span>
                 </label>
-                <label className="text-sm font-medium text-slate-700">Изображение для соцсетей
-                  <input value={form.ogImage} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" onChange={(event) => setForm((current) => ({ ...current, ogImage: event.target.value }))} />
-                  <span className="mt-1 block text-xs font-normal text-slate-500">Абсолютный URL картинки. Пример: «https://zaborprofil.ru/uploads/og/zabor.webp».</span>
-                </label>
+                <MediaPicker
+                  label="Изображение для соцсетей"
+                  description="Выберите файл из медиатеки или загрузите новый. В поле сохраняется абсолютный URL картинки."
+                  absoluteUrl
+                  value={form.ogImage}
+                  onChange={(value) => setForm((current) => ({ ...current, ogImage: value }))}
+                />
               </div>
               <label className="text-sm font-medium text-slate-700">Описание для соцсетей
                 <textarea value={form.ogDescription} rows={2} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" onChange={(event) => setForm((current) => ({ ...current, ogDescription: event.target.value }))} />
@@ -1130,14 +1105,18 @@ export default function ContentPagesView() {
                           <input value={visualBlockForm.textImage.title} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2" onChange={(event) => setVisualBlockForm((current) => ({ ...current, textImage: { ...current.textImage, title: event.target.value } }))} />
                         </label>
                         <TiptapRichTextEditor modelValue={visualBlockForm.textImage.text} onChange={(value) => setVisualBlockForm((current) => ({ ...current, textImage: { ...current.textImage, text: value } }))} />
-                        <div className="grid grid-cols-[1fr_auto] gap-3">
-                          <label className="text-sm font-medium text-slate-700">Изображение
-                            <input value={visualBlockForm.textImage.image} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2" onChange={(event) => setVisualBlockForm((current) => ({ ...current, textImage: { ...current.textImage, image: event.target.value } }))} />
-                          </label>
-                          <button type="button" className="mt-6 h-fit rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" onClick={() => { void openMediaPicker() }}>
-                            Выбрать из медиатеки
-                          </button>
-                        </div>
+                        <MediaPicker
+                          label="Изображение"
+                          value={visualBlockForm.textImage.image}
+                          onChange={(value, asset) => setVisualBlockForm((current) => ({
+                            ...current,
+                            textImage: {
+                              ...current.textImage,
+                              image: value,
+                              alt: asset !== undefined && current.textImage.alt.trim() === '' ? asset.alt ?? asset.originalName : current.textImage.alt,
+                            },
+                          }))}
+                        />
                         <label className="block text-sm font-medium text-slate-700">Alt изображения
                           <input value={visualBlockForm.textImage.alt} className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2" onChange={(event) => setVisualBlockForm((current) => ({ ...current, textImage: { ...current.textImage, alt: event.target.value } }))} />
                         </label>
@@ -1202,36 +1181,6 @@ export default function ContentPagesView() {
                   {selectedBlock && <button type="button" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" onClick={() => { void moveBlock(selectedBlock, 1) }}>Вниз</button>}
                   {selectedBlock && <button type="button" className="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700" onClick={() => { void deleteBlock(selectedBlock) }}>Удалить</button>}
                 </div>
-              </section>
-            </div>
-          )}
-
-          {mediaPickerOpen && (
-            <div className="fixed inset-0 z-60 flex items-center justify-center bg-slate-950/60 px-4" role="dialog" aria-modal="true" onClick={() => setMediaPickerOpen(false)}>
-              <section className="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl" onClick={(event) => event.stopPropagation()}>
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h4 className="text-base font-semibold text-slate-900">Выбор изображения</h4>
-                    <p className="mt-1 text-sm text-slate-600">Выберите файл из Media Library. В блок будет записан `publicPath`.</p>
-                  </div>
-                  <button type="button" className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50" onClick={() => setMediaPickerOpen(false)}>Закрыть</button>
-                </div>
-                {mediaLoading && <p className="mt-4 text-sm text-slate-500">Загрузка файлов...</p>}
-                {!mediaLoading && (
-                  <div className="mt-4 max-h-[55vh] space-y-3 overflow-y-auto">
-                    {mediaAssets.map((asset) => (
-                      <article key={asset.id} className="rounded-xl border border-slate-200 p-3">
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-slate-900">{asset.originalName}</p>
-                            <p className="truncate text-xs text-slate-500">{asset.publicPath}</p>
-                          </div>
-                          <button type="button" className="shrink-0 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800" onClick={() => selectTextImageAsset(asset)}>Выбрать</button>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                )}
               </section>
             </div>
           )}

@@ -12,8 +12,12 @@ import {
   type Editor,
   type NodeWithPos,
 } from "@tiptap/react"
+import { queryClient } from "../../app/providers/query-client"
+import { uploadMediaAsset } from "../../entities/media/api"
+import { describeMediaError, MEDIA_MAX_UPLOAD_BYTES } from "../../features/media/utils"
+import { adminQueryKeys } from "../../shared/api/query"
 
-export const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+export const MAX_FILE_SIZE = MEDIA_MAX_UPLOAD_BYTES
 
 export const MAC_SYMBOLS: Record<string, string> = {
   mod: "⌘",
@@ -363,28 +367,31 @@ export const handleImageUpload = async (
   onProgress?: (event: { progress: number }) => void,
   abortSignal?: AbortSignal
 ): Promise<string> => {
-  // Validate file
   if (!file) {
-    throw new Error("No file provided")
+    throw new Error("Файл не выбран")
   }
 
   if (file.size > MAX_FILE_SIZE) {
     throw new Error(
-      `File size exceeds maximum allowed (${MAX_FILE_SIZE / (1024 * 1024)}MB)`
+      `Файл больше допустимых ${MAX_FILE_SIZE / (1024 * 1024)} МБ`
     )
   }
 
-  // For demo/testing: Simulate upload progress. In production, replace the following code
-  // with your own upload implementation.
-  for (let progress = 0; progress <= 100; progress += 10) {
-    if (abortSignal?.aborted) {
-      throw new Error("Upload cancelled")
-    }
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    onProgress?.({ progress })
-  }
+  try {
+    const asset = await uploadMediaAsset(file, {
+      signal: abortSignal,
+      onProgress: (fraction) => onProgress?.({ progress: Math.round(fraction * 100) }),
+    })
+    void queryClient.invalidateQueries({ queryKey: adminQueryKeys.media })
 
-  return "/images/tiptap-ui-placeholder-image.jpg"
+    return asset.publicPath
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("Загрузка отменена")
+    }
+
+    throw new Error(describeMediaError(error))
+  }
 }
 
 type ProtocolOptions = {

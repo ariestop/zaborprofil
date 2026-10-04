@@ -206,7 +206,16 @@ export interface MediaAssetItem {
     mimeType: string
     size: number
   }>
+  alt: string | null
+  title: string | null
   createdAt: string
+}
+
+export interface MediaPagination {
+  page: number
+  perPage: number
+  total: number
+  totalPages: number
 }
 
 export interface MenuItem {
