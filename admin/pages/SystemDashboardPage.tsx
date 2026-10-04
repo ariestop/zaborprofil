@@ -1,5 +1,6 @@
 import { Badge, Card, ErrorState, PageHeader, PageLoadingState } from '../shared/ui'
 import { useSystemOverviewQuery } from '../entities/system/api'
+import { environmentName, warningSeverityLabel } from '../shared/lib/system-labels'
 
 export default function SystemDashboardPage() {
   const overviewQuery = useSystemOverviewQuery()
@@ -19,14 +20,14 @@ export default function SystemDashboardPage() {
 
   return (
     <div>
-      <PageHeader title="Обзор системы" description="Сводный статус платформы, health-check и среда исполнения." />
+      <PageHeader title="Обзор системы" description="Общее состояние сайта, проверки и окружение сервера." />
       <Card title="Статус платформы">
         <div className="flex items-center gap-2">
           <Badge tone={overviewQuery.data.status === 'ok' ? 'success' : 'warning'}>
-            {overviewQuery.data.status === 'ok' ? 'OK' : 'ERROR'}
+            {overviewQuery.data.status === 'ok' ? 'Работает' : 'Есть сбои'}
           </Badge>
           <span className="text-sm text-slate-600 dark:text-slate-300">
-            {overviewQuery.data.environment.appEnv} / PHP {overviewQuery.data.environment.phpVersion}
+            {environmentName(overviewQuery.data.environment.appEnv)} · PHP {overviewQuery.data.environment.phpVersion}
           </span>
         </div>
       </Card>
@@ -37,7 +38,7 @@ export default function SystemDashboardPage() {
           <ul className="space-y-2">
             {overviewQuery.data.warnings.map((warning) => (
               <li key={warning.code} className="text-sm">
-                <strong>{warning.severity.toUpperCase()}</strong>: {warning.message}
+                <strong>{warningSeverityLabel(warning.severity)}</strong>: {warning.message}
               </li>
             ))}
           </ul>

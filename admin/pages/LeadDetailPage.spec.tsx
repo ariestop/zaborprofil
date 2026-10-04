@@ -122,4 +122,25 @@ describe('LeadDetailPage', () => {
 
     expect(await screen.findByText('Не удалось загрузить заявку')).toBeTruthy()
   })
+
+  it('moves a new lead to «В работе» with one click', async () => {
+    renderPage()
+    await screen.findByRole('heading', { name: 'Анна Петрова' })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Взять в работу' }))
+
+    await waitFor(() => {
+      const statusCall = apiRequest.mock.calls.find((call) => String(call[0]).endsWith('/status'))
+      expect(statusCall?.[1]).toMatchObject({ method: 'PATCH', body: { status: 'in_progress' } })
+    })
+  })
+
+  it('shows consent and anti-spam in plain words', async () => {
+    renderPage()
+    await screen.findByRole('heading', { name: 'Анна Петрова' })
+
+    expect(screen.getByText('Получено при отправке формы')).toBeTruthy()
+    expect(screen.getByText('Подозрений нет')).toBeTruthy()
+    expect(screen.queryByRole('link', { name: 'Написать' })).toBeNull()
+  })
 })

@@ -63,6 +63,15 @@ beforeEach(() => {
     if (url.startsWith('/admin/api/leads/export')) {
       return Promise.resolve('id,name\n1,Anna\n')
     }
+    if (url === `/admin/api/leads/${lead.id}`) {
+      return Promise.resolve({
+        ...lead,
+        message: 'Нужен забор на участок 12 соток',
+        consentSnapshot: { accepted: true },
+        spamReasons: [],
+        events: [],
+      })
+    }
 
     return Promise.resolve({})
   })
@@ -155,5 +164,28 @@ describe('CrmPage', () => {
 
     expect(await screen.findByText('Ничего не найдено')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Сбросить фильтры' })).toBeTruthy()
+  })
+
+  it('opens the lead card next to the list and keeps the filters in the links', async () => {
+    renderWithProviders(<CrmPage />, `/admin/crm/${lead.id}?status=new`)
+
+    const row = await screen.findByTestId('lead-row')
+    const link = within(row).getByRole('link', { name: 'Анна Петрова' })
+    expect(link.getAttribute('href')).toBe(`/admin/crm/${lead.id}?status=new`)
+    expect(link.getAttribute('aria-current')).toBe('page')
+
+    const card = await screen.findByTestId('lead-detail')
+    expect(within(card).getByRole('heading', { name: 'Анна Петрова' })).toBeTruthy()
+    expect(within(card).getByText('Нужен забор на участок 12 соток')).toBeTruthy()
+    expect(within(card).getByRole('link', { name: 'Позвонить' }).getAttribute('href')).toBe('tel:+79001112233')
+    expect(within(card).getByRole('link', { name: 'Закрыть карточку заявки' }).getAttribute('href')).toBe('/admin/crm?status=new')
+  })
+
+  it('shows a hint instead of the card when no lead is selected', async () => {
+    renderWithProviders(<CrmPage />, '/admin/crm')
+    await screen.findByTestId('lead-row')
+
+    expect(screen.getByText('Выберите заявку в списке')).toBeTruthy()
+    expect(screen.queryByTestId('lead-detail')).toBeNull()
   })
 })

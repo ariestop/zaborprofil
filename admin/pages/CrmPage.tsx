@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useMatch, useNavigate, useSearchParams } from 'react-router-dom'
+import { useHotkeys } from 'react-hotkeys-hook'
 import { useToast } from '../app/providers/toast-provider'
 import { exportLeadsCsv, useLeadAssigneesQuery, useLeadsQuery } from '../entities/lead/api'
 import {
   LEAD_STATUS_LABELS,
   leadSourceLabel,
   leadStatusLabel,
+  leadStatusTone,
   type LeadFilters,
   type LeadListParams,
   type LeadSortField,
@@ -13,10 +15,12 @@ import {
 import { describeApiError } from '../features/seo/redirects/redirect-rules'
 import { useDebouncedValue } from '../shared/hooks/use-debounced-value'
 import { downloadTextFile } from '../shared/lib/download'
+import { cn } from '../shared/lib/cn'
 import { formatDateTime, formatNumber } from '../shared/lib/format'
-import { Badge, Button, Card, EmptyState, ErrorState, Input, PageHeader, Select, Table } from '../shared/ui'
+import { Badge, Button, EmptyState, ErrorState, Input, PageHeader, Select } from '../shared/ui'
 import { Pagination } from '../shared/ui/pagination'
 import type { LeadStatus } from '../types/api'
+import LeadDetailPage from './LeadDetailPage'
 
 const PER_PAGE = 25
 const STATUSES: LeadStatus[] = ['new', 'in_progress', 'done', 'spam']
@@ -29,14 +33,6 @@ const sortOptions: Array<{ value: LeadSortField, label: string }> = [
   { value: 'status', label: 'По статусу' },
   { value: 'source', label: 'По источнику' },
 ]
-
-export function statusTone(status: LeadStatus): 'neutral' | 'success' | 'warning' {
-  if (status === 'done') {
-    return 'success'
-  }
-
-  return status === 'new' || status === 'spam' ? 'warning' : 'neutral'
-}
 
 function readParams(search: URLSearchParams): LeadListParams {
   const status = search.get('status')
@@ -77,8 +73,21 @@ function writeParams(params: LeadListParams): URLSearchParams {
   return search
 }
 
+function withSearch(path: string, search: URLSearchParams): string {
+  const query = search.toString()
+
+  return query === '' ? path : `${path}?${query}`
+}
+
+/**
+ * Рабочее место по заявкам: слева список с фильтрами, справа карточка выбранной заявки.
+ * Фильтры живут в адресе, поэтому сохраняются при переходе между заявками и по ссылке.
+ * На телефоне список и карточка показываются по очереди.
+ */
 export default function CrmPage() {
   const { push } = useToast()
+  const navigate = useNavigate()
+  const leadId = useMatch('/admin/crm/:leadId')?.params.leadId
   const [searchParams, setSearchParams] = useSearchParams()
   const urlParams = useMemo(() => readParams(searchParams), [searchParams])
   const [searchText, setSearchText] = useState('')
@@ -114,16 +123,40 @@ export default function CrmPage() {
   }
 
   const data = leadsQuery.data
+  const items = data?.items ?? []
   const sources = data?.sources ?? []
   const assignees = assigneesQuery.data?.items ?? []
   const hasFilters = params.q !== '' || params.status !== 'all' || params.source !== ''
     || params.from !== '' || params.to !== '' || params.assignee !== 'all'
+  const hasExtraFilters = params.from !== '' || params.to !== '' || params.sort !== 'createdAt' || params.direction !== 'desc'
+
+  const leadHref = (id: string) => withSearch(`/admin/crm/${id}`, searchParams)
+  const listHref = withSearch('/admin/crm', searchParams)
+
+  // J / K — следующая и предыдущая заявка в списке, как в почтовых клиентах.
+  const moveSelection = (step: 1 | -1) => {
+    if (items.length === 0) {
+      return
+    }
+    const currentIndex = items.findIndex((item) => item.id === leadId)
+    const nextIndex = currentIndex === -1
+      ? (step === 1 ? 0 : items.length - 1)
+      : Math.min(items.length - 1, Math.max(0, currentIndex + step))
+    const next = items[nextIndex]
+    if (next !== undefined && next.id !== leadId) {
+      navigate(leadHref(next.id))
+    }
+  }
+  useHotkeys('j', () => moveSelection(1), [items, leadId, searchParams])
+  useHotkeys('k', () => moveSelection(-1), [items, leadId, searchParams])
+
+  const selected = leadId !== undefined && leadId !== ''
 
   return (
     <div className="grid gap-4">
       <PageHeader
-        title="CRM"
-        description="Заявки с сайта: поиск, фильтры, ответственные и история работы с клиентом."
+        title="Заявки"
+        description="Заявки с сайта: поиск, фильтры, ответственные и история работы с клиентом. J / K — следующая и предыдущая заявка."
         actions={(
           <Button type="button" variant="outline" disabled={exporting} onClick={() => void exportCsv()}>
             Экспорт CSV
@@ -131,9 +164,9 @@ export default function CrmPage() {
         )}
       />
 
-      <Card>
-        <div className="grid gap-3">
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Фильтр по статусу">
+      <div className="grid gap-5 lg:grid-cols-[minmax(320px,400px)_minmax(0,1fr)]">
+        <section aria-label="Список заявок" className={cn('grid content-start gap-3', selected && 'hidden lg:grid')}>
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Фильтр по статусу">
             <Button
               type="button"
               size="sm"
@@ -157,21 +190,20 @@ export default function CrmPage() {
             ))}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="w-full max-w-sm">
-              <Input
-                type="search"
-                aria-label="Поиск заявок"
-                placeholder="Имя, телефон, email или текст заявки"
-                value={searchText}
-                onChange={(event) => {
-                  setSearchText(event.target.value)
-                  if (urlParams.page !== 1) {
-                    update({})
-                  }
-                }}
-              />
-            </div>
+          <Input
+            type="search"
+            aria-label="Поиск заявок"
+            placeholder="Имя, телефон, email или текст заявки"
+            value={searchText}
+            onChange={(event) => {
+              setSearchText(event.target.value)
+              if (urlParams.page !== 1) {
+                update({})
+              }
+            }}
+          />
+
+          <div className="grid gap-2 sm:grid-cols-2">
             <Select
               value={params.source === '' ? 'all' : params.source}
               onValueChange={(value) => update({ source: value === 'all' ? '' : value })}
@@ -192,26 +224,36 @@ export default function CrmPage() {
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-              С
-              <Input type="date" aria-label="Дата от" className="w-44" value={params.from} onChange={(event) => update({ from: event.target.value })} />
-            </label>
-            <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-              По
-              <Input type="date" aria-label="Дата до" className="w-44" value={params.to} onChange={(event) => update({ to: event.target.value })} />
-            </label>
-            <Select value={params.sort} onValueChange={(value) => update({ sort: value as LeadSortField })} options={sortOptions} />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              aria-label="Направление сортировки"
-              onClick={() => update({ direction: params.direction === 'desc' ? 'asc' : 'desc' })}
-            >
-              {params.direction === 'desc' ? 'По убыванию ↓' : 'По возрастанию ↑'}
-            </Button>
-            {hasFilters ? (
+          <details className="rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-800" open={hasExtraFilters}>
+            <summary className="cursor-pointer select-none font-medium text-slate-700 dark:text-slate-300">Период и сортировка</summary>
+            <div className="mt-3 grid gap-2">
+              <div className="grid grid-cols-2 gap-2">
+                <label className="grid gap-1 text-xs text-slate-500 dark:text-slate-400">
+                  С
+                  <Input type="date" aria-label="Дата от" value={params.from} onChange={(event) => update({ from: event.target.value })} />
+                </label>
+                <label className="grid gap-1 text-xs text-slate-500 dark:text-slate-400">
+                  По
+                  <Input type="date" aria-label="Дата до" value={params.to} onChange={(event) => update({ to: event.target.value })} />
+                </label>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Select value={params.sort} onValueChange={(value) => update({ sort: value as LeadSortField })} options={sortOptions} />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  aria-label="Направление сортировки"
+                  onClick={() => update({ direction: params.direction === 'desc' ? 'asc' : 'desc' })}
+                >
+                  {params.direction === 'desc' ? 'По убыванию ↓' : 'По возрастанию ↑'}
+                </Button>
+              </div>
+            </div>
+          </details>
+
+          {hasFilters ? (
+            <div>
               <Button
                 type="button"
                 variant="ghost"
@@ -223,8 +265,8 @@ export default function CrmPage() {
               >
                 Сбросить фильтры
               </Button>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
 
           {leadsQuery.isError ? (
             <ErrorState
@@ -235,49 +277,76 @@ export default function CrmPage() {
 
           {leadsQuery.isPending ? <p className="text-sm text-slate-500">Загрузка...</p> : null}
 
-          {data !== undefined && data.items.length === 0 ? (
+          {data !== undefined && items.length === 0 ? (
             <EmptyState
               title={hasFilters ? 'Ничего не найдено' : 'Заявок пока нет'}
               description={hasFilters ? 'Измените поисковый запрос или сбросьте фильтры.' : 'Новые заявки с сайта появятся здесь.'}
             />
           ) : null}
 
-          {data !== undefined && data.items.length > 0 ? (
+          {items.length > 0 ? (
             <>
-              <Table
-                head={(
-                  <tr>
-                    {['Создана', 'Клиент', 'Контакты', 'Источник', 'Статус', 'Ответственный'].map((title) => (
-                      <th key={title} className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</th>
-                    ))}
-                  </tr>
-                )}
-                body={data.items.map((lead) => (
-                  <tr key={lead.id} data-testid="lead-row">
-                    <td className="whitespace-nowrap px-3 py-2 text-sm">{formatDateTime(lead.createdAt)}</td>
-                    <td className="px-3 py-2 text-sm">
-                      <Link className="font-medium text-emerald-700 hover:underline dark:text-emerald-400" to={`/admin/crm/${lead.id}`}>
-                        {lead.name}
-                      </Link>
+              <ul className="grid gap-1" aria-label="Заявки">
+                {items.map((lead) => {
+                  const isCurrent = lead.id === leadId
+
+                  return (
+                    <li
+                      key={lead.id}
+                      data-testid="lead-row"
+                      className={cn(
+                        'relative rounded-xl border px-3 py-3 transition',
+                        isCurrent
+                          ? 'border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20'
+                          : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/60',
+                      )}
+                    >
+                      <div className="flex items-baseline gap-2">
+                        <Link
+                          to={leadHref(lead.id)}
+                          aria-current={isCurrent ? 'page' : undefined}
+                          className={cn(
+                            'min-w-0 flex-1 truncate text-sm after:absolute after:inset-0 after:rounded-xl focus-visible:outline-hidden focus-visible:after:ring-2 focus-visible:after:ring-emerald-500',
+                            lead.status === 'new' ? 'font-semibold' : 'font-medium',
+                          )}
+                        >
+                          {lead.name}
+                        </Link>
+                        <time dateTime={lead.createdAt} className="shrink-0 text-xs text-slate-500 dark:text-slate-400">{formatDateTime(lead.createdAt)}</time>
+                      </div>
                       {lead.messagePreview !== null ? (
-                        <p className="mt-0.5 max-w-xs truncate text-xs text-slate-500 dark:text-slate-400">{lead.messagePreview}</p>
+                        <p className="mt-1 line-clamp-2 text-sm text-slate-600 dark:text-slate-300">{lead.messagePreview}</p>
                       ) : null}
-                    </td>
-                    <td className="px-3 py-2 text-sm">
-                      <div>{lead.phone}</div>
-                      {lead.email !== null ? <div className="text-xs text-slate-500 dark:text-slate-400">{lead.email}</div> : null}
-                    </td>
-                    <td className="px-3 py-2 text-sm">{leadSourceLabel(lead.source)}</td>
-                    <td className="px-3 py-2 text-sm"><Badge tone={statusTone(lead.status)}>{leadStatusLabel(lead.status)}</Badge></td>
-                    <td className="px-3 py-2 text-sm">{lead.assignee === null ? '—' : (lead.assignee.email ?? 'Пользователь удалён')}</td>
-                  </tr>
-                ))}
-              />
-              <Pagination page={data.page} pages={data.pages} total={data.total} onPageChange={(page) => update({ page })} />
+                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                        <Badge tone={leadStatusTone(lead.status)}>{leadStatusLabel(lead.status)}</Badge>
+                        <span>{lead.phone}</span>
+                        <span>{leadSourceLabel(lead.source)}</span>
+                        {lead.assignee !== null ? <span>{lead.assignee.email ?? 'Пользователь удалён'}</span> : null}
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+              {data !== undefined ? (
+                <Pagination page={data.page} pages={data.pages} total={data.total} onPageChange={(page) => update({ page })} />
+              ) : null}
             </>
           ) : null}
-        </div>
-      </Card>
+        </section>
+
+        <section aria-label="Карточка заявки" className={cn('min-w-0', !selected && 'hidden lg:block')}>
+          {selected ? (
+            <LeadDetailPage key={leadId} leadId={leadId} closeHref={listHref} />
+          ) : (
+            <div className="flex min-h-80 flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700">
+              <p className="text-base font-semibold">Выберите заявку в списке</p>
+              <p className="mt-1 max-w-sm text-sm text-slate-500 dark:text-slate-400">
+                Здесь откроется карточка: запрос клиента, звонок в один клик, статус, ответственный и история.
+              </p>
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   )
 }

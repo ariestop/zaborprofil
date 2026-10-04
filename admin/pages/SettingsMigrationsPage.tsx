@@ -63,7 +63,7 @@ export default function SettingsMigrationsPage() {
                 }
               }}
             >
-              Apply
+              Применить
             </Button>
             <Button
               type="button"
@@ -94,7 +94,7 @@ export default function SettingsMigrationsPage() {
                 }
               }}
             >
-              Rollback
+              Откатить
             </Button>
           </div>
         )
@@ -119,7 +119,7 @@ export default function SettingsMigrationsPage() {
 
   return (
     <div>
-      <PageHeader title="Миграции" description="Управление Doctrine-миграциями из админки." />
+      <PageHeader title="Миграции" description="Изменения структуры базы данных: какие применены и какие ждут применения." />
       {actionsAllowed ? null : (
         <p className="mb-4 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
           Запуск миграций из веб-интерфейса недоступен: он отключён на этом окружении или нужна роль ROLE_SUPER_ADMIN. Выполняйте миграции из CLI (doctrine:migrations:migrate).

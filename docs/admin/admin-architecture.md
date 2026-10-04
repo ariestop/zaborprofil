@@ -32,6 +32,15 @@ Shell отвечает за:
 - глобальные системные паттерны (error boundary, loading fallback, toasts, dialogs);
 - foundation для command palette, global search и dark/light mode.
 
+## Навигация и шапка
+
+- Боковое меню (`admin/layouts/SidebarNav.tsx`) строится из `admin/routes/route-config.ts`: у маршрута есть `navGroup` (`main`, `content`, `seo`, `manage`, `server`) и `icon`. Порядок групп задаёт `navGroups`.
+- Группа «Сервер» (обзор системы, процессы, логи, очереди, кэш, БД, безопасность, резервные копии, деплой, миграции) по умолчанию свёрнута и раскрывается автоматически, когда открыт один из её разделов. Состояние хранится в `localStorage` (`admin.nav.serverOpen`).
+- Меню сворачивается в узкую рейку с иконками (`admin.sidebar.collapsed`), на телефоне открывается выезжающей панелью из шапки.
+- Рядом с пунктом «Заявки» показывается число новых заявок из `GET /admin/api/leads/summary`.
+- Шапка (`admin/layouts/Topbar.tsx`): хлебные крошки, поиск по разделам и командам (`Ctrl/Cmd+K`, `admin/widgets/CommandPaletteDialog.tsx`), плашка окружения (кроме `prod`), ссылка на сайт и переключатель темы. Сочетание `Ctrl/Cmd+F` больше не перехватывается — работает обычный поиск браузера.
+- Подписи интерфейса — на русском. Технические значения сервера (имена классов в журнале действий, окружение, предупреждения) переводятся через `admin/shared/lib/system-labels.ts`.
+
 ## System Center foundation
 
 В admin-shell добавлен модуль `System Center` (`/admin/system/*`) с 10 подразделами:

@@ -11,12 +11,12 @@ const defaultBuildTargets = [
   },
   {
     id: 'site',
-    label: 'Site',
+    label: 'Публичный сайт',
     description: 'Собрать только публичный bundle.',
   },
   {
     id: 'admin',
-    label: 'Admin',
+    label: 'Админ-панель',
     description: 'Собрать только админский bundle.',
   },
 ]
@@ -345,7 +345,7 @@ export default function AssetBuildWidget() {
       <div className="w-[calc(100%-3rem)] overflow-hidden rounded-l-none rounded-r-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-950/10">
         <div className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50">
           <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setIsExpanded((value) => !value)}>
-            <span className="block text-xs font-semibold uppercase tracking-wide text-emerald-700">Assets</span>
+            <span className="block text-xs font-semibold uppercase tracking-wide text-emerald-700">Сборка интерфейса</span>
             <span
               className="mt-1 block truncate text-sm font-bold text-slate-950"
               title={status.command}

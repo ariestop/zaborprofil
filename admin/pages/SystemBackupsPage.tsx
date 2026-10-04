@@ -1,5 +1,7 @@
 import { useSystemBackupsQuery } from '../entities/system/api'
 import { Card, ErrorState, PageHeader, PageLoadingState } from '../shared/ui'
+import { formatDateTime } from '../shared/lib/format'
+import { formatBytes } from '../shared/lib/system-labels'
 
 export default function SystemBackupsPage() {
   const backupsQuery = useSystemBackupsQuery()
@@ -19,15 +21,20 @@ export default function SystemBackupsPage() {
 
   return (
     <div>
-      <PageHeader title="Бэкапы" description="Мониторинг каталога резервных копий и последнего snapshot." />
-      <Card title="Последний бэкап">
+      <PageHeader title="Резервные копии" description="Резервные копии сайта и базы данных: когда сделана последняя и где лежат файлы." />
+      <Card title="Последняя копия">
         {backupsQuery.data.latestBackup === null ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400">Файлы бэкапов не обнаружены.</p>
+          <div className="text-sm">
+            <p className="font-semibold text-red-700 dark:text-red-400">Резервных копий нет</p>
+            <p className="mt-1 text-slate-500 dark:text-slate-400">
+              В каталоге {backupsQuery.data.backupDirectory} нет файлов. При сбое восстановить сайт будет не из чего — настройте регулярное резервное копирование.
+            </p>
+          </div>
         ) : (
           <div className="text-sm">
             <p>{backupsQuery.data.latestBackup.name}</p>
             <p className="text-slate-500 dark:text-slate-400">
-              {backupsQuery.data.latestBackup.size} bytes, {backupsQuery.data.latestBackup.modifiedAt}
+              {formatBytes(backupsQuery.data.latestBackup.size)} · {formatDateTime(backupsQuery.data.latestBackup.modifiedAt)}
             </p>
           </div>
         )}

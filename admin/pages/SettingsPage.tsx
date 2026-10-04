@@ -61,7 +61,7 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <PageHeader title="Settings" description="Foundation для системных настроек, миграций и feature flags." />
+      <PageHeader title="Настройки" description="Параметры отображения страниц и SEO по умолчанию." />
       <Card title="Публичный рендер блоков">
         <div className="space-y-3">
           <p className="text-sm text-slate-600 dark:text-slate-300">
@@ -83,7 +83,7 @@ export default function SettingsPage() {
             onValueChange={(value) => setPublicBlocksSourceOverride(value as PublicBlocksSource)}
             options={[
               { value: 'snapshot', label: 'Snapshot ревизии (по умолчанию)' },
-              { value: 'live', label: 'Live блоки из builder' },
+              { value: 'live', label: 'Текущие блоки из конструктора' },
             ]}
           />
           <div className="flex items-center gap-3">
