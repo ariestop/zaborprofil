@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Tests\Functional\User;
 
 use App\Module\Admin\Infrastructure\Http\AdminApiCsrfSubscriber;
+use App\Module\AuditLog\Domain\Entity\AuditLogEntry;
 use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
 use App\Tests\Support\Database\SchemaTestHelper;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 final class AdminUserApiTest extends WebTestCase
 {
@@ -164,6 +166,284 @@ final class AdminUserApiTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(403);
         self::assertStringContainsString('Invalid request origin', (string) $client->getResponse()->getContent());
+    }
+
+    public function testCreateUserHashesPasswordAndWritesAuditWithoutHash(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+        $admin = $this->createAdminUser('admin-create@example.test', ['ROLE_ADMIN']);
+        $client->loginUser($admin);
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/users', [
+            'email' => 'New.Editor@Example.test',
+            'password' => 'long-enough-password',
+            'roles' => ['ROLE_EDITOR'],
+        ]);
+
+        self::assertResponseStatusCodeSame(201);
+        $payload = $this->decode($client);
+        self::assertSame('new.editor@example.test', $payload['email'] ?? null);
+        self::assertSame(['ROLE_EDITOR'], $payload['roles'] ?? null);
+        self::assertStringNotContainsString('long-enough-password', (string) $client->getResponse()->getContent());
+
+        $created = $this->entityManager()->getRepository(AdminUser::class)->findOneBy(['email' => 'new.editor@example.test']);
+        self::assertInstanceOf(AdminUser::class, $created);
+        self::assertNotSame('long-enough-password', $created->getPassword());
+
+        $entries = $this->entityManager()->getRepository(AuditLogEntry::class)->findBy([
+            'entityType' => AdminUser::class,
+            'entityId' => (string) $created->id(),
+        ]);
+        self::assertCount(1, $entries);
+        self::assertSame('admin-create@example.test', $entries[0]->actorEmail());
+        self::assertStringNotContainsString($created->getPassword(), json_encode($entries[0]->newValues(), JSON_THROW_ON_ERROR));
+    }
+
+    public function testCreateUserRejectsDuplicateWeakPasswordAndUnknownRole(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+        $client->loginUser($this->createAdminUser('admin-dup@example.test', ['ROLE_ADMIN']));
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/users', [
+            'email' => 'ADMIN-dup@example.test',
+            'password' => 'long-enough-password',
+            'roles' => ['ROLE_EDITOR'],
+        ]);
+        self::assertResponseStatusCodeSame(409);
+        self::assertSame('USER_ALREADY_EXISTS', $this->decode($client)['code'] ?? null);
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/users', [
+            'email' => 'weak@example.test',
+            'password' => 'short',
+            'roles' => ['ROLE_EDITOR'],
+        ]);
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('не менее 12', json_encode($this->decode($client), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE));
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/users', [
+            'email' => 'bad-role@example.test',
+            'password' => 'long-enough-password',
+            'roles' => ['ROLE_ROOT'],
+        ]);
+        self::assertResponseStatusCodeSame(422);
+        self::assertNull($this->entityManager()->getRepository(AdminUser::class)->findOneBy(['email' => 'bad-role@example.test']));
+    }
+
+    public function testAdminCannotCreateSuperAdmin(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+        $client->loginUser($this->createAdminUser('admin-no-super@example.test', ['ROLE_ADMIN']));
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/users', [
+            'email' => 'boss@example.test',
+            'password' => 'long-enough-password',
+            'roles' => ['ROLE_SUPER_ADMIN'],
+        ]);
+
+        self::assertResponseStatusCodeSame(403);
+    }
+
+    public function testUpdateRolesRejectsUnknownRoles(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+        $client->loginUser($this->createAdminUser('super-whitelist@example.test', ['ROLE_SUPER_ADMIN']));
+        $target = $this->createAdminUser('target-whitelist@example.test', ['ROLE_EDITOR']);
+
+        $this->jsonRequestWithCsrf($client, 'PATCH', '/admin/api/users/'.(string) $target->id().'/roles', [
+            'roles' => ['ROLE_EDITOR', 'ROLE_GOD'],
+        ]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('ROLE_GOD', (string) $client->getResponse()->getContent());
+        $this->entityManager()->clear();
+        $reloaded = $this->entityManager()->getRepository(AdminUser::class)->find($target->id());
+        self::assertInstanceOf(AdminUser::class, $reloaded);
+        self::assertSame(['ROLE_EDITOR'], $reloaded->storedRoles());
+    }
+
+    public function testAdminCannotRemoveOwnAdministrativeRoleOrDeactivateOrDeleteSelf(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+        $admin = $this->createAdminUser('self@example.test', ['ROLE_ADMIN']);
+        $this->createAdminUser('other-admin@example.test', ['ROLE_ADMIN']);
+        $client->loginUser($admin);
+        $id = (string) $admin->id();
+
+        $this->jsonRequestWithCsrf($client, 'PATCH', '/admin/api/users/'.$id.'/roles', ['roles' => ['ROLE_EDITOR']]);
+        self::assertResponseStatusCodeSame(409);
+        self::assertSame('SELF_LOCKOUT', $this->decode($client)['code'] ?? null);
+
+        $this->jsonRequestWithCsrf($client, 'PATCH', '/admin/api/users/'.$id.'/active', ['active' => false]);
+        self::assertResponseStatusCodeSame(409);
+        self::assertSame('SELF_LOCKOUT', $this->decode($client)['code'] ?? null);
+
+        $this->jsonRequestWithCsrf($client, 'DELETE', '/admin/api/users/'.$id);
+        self::assertResponseStatusCodeSame(409);
+
+        $this->entityManager()->clear();
+        $reloaded = $this->entityManager()->getRepository(AdminUser::class)->find($admin->id());
+        self::assertInstanceOf(AdminUser::class, $reloaded);
+        self::assertTrue($reloaded->isActive());
+        self::assertSame(['ROLE_ADMIN'], $reloaded->storedRoles());
+    }
+
+    public function testAdminCannotGrantOrRevokeSuperAdminRole(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+        $admin = $this->createAdminUser('plain-admin@example.test', ['ROLE_ADMIN']);
+        $super = $this->createAdminUser('only-super@example.test', ['ROLE_SUPER_ADMIN']);
+        $editor = $this->createAdminUser('plain-editor@example.test', ['ROLE_EDITOR']);
+        $client->loginUser($admin);
+
+        $this->jsonRequestWithCsrf($client, 'PATCH', '/admin/api/users/'.(string) $super->id().'/roles', ['roles' => ['ROLE_ADMIN']]);
+        self::assertResponseStatusCodeSame(403);
+        self::assertSame('ROLE_NOT_ALLOWED', $this->decode($client)['code'] ?? null);
+
+        $this->jsonRequestWithCsrf($client, 'PATCH', '/admin/api/users/'.(string) $editor->id().'/roles', ['roles' => ['ROLE_SUPER_ADMIN']]);
+        self::assertResponseStatusCodeSame(403);
+    }
+
+    public function testAdministratorCanDeactivateActivateAndDeleteAnotherUser(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+        $admin = $this->createAdminUser('manager-admin@example.test', ['ROLE_ADMIN']);
+        $target = $this->createAdminUser('victim@example.test', ['ROLE_EDITOR']);
+        $client->loginUser($admin);
+        $targetId = (string) $target->id();
+
+        $this->jsonRequestWithCsrf($client, 'PATCH', '/admin/api/users/'.$targetId.'/active', ['active' => false]);
+        self::assertResponseIsSuccessful();
+        self::assertFalse($this->decode($client)['active'] ?? null);
+
+        $this->jsonRequestWithCsrf($client, 'PATCH', '/admin/api/users/'.$targetId.'/active', ['active' => true]);
+        self::assertResponseIsSuccessful();
+        self::assertTrue($this->decode($client)['active'] ?? null);
+
+        $this->jsonRequestWithCsrf($client, 'DELETE', '/admin/api/users/'.$targetId);
+        self::assertResponseStatusCodeSame(204);
+        $this->entityManager()->clear();
+        self::assertNull($this->entityManager()->getRepository(AdminUser::class)->find($target->id()));
+
+        $actions = array_map(
+            static fn (AuditLogEntry $entry): string => $entry->action(),
+            $this->entityManager()->getRepository(AuditLogEntry::class)->findBy(['entityType' => AdminUser::class, 'entityId' => $targetId], ['occurredAt' => 'ASC']),
+        );
+        self::assertContains('delete', $actions);
+        self::assertContains('update', $actions);
+    }
+
+    public function testAdministratorCanResetPasswordOfAnotherUser(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+        $client->loginUser($this->createAdminUser('reset-admin@example.test', ['ROLE_ADMIN']));
+        $target = $this->createAdminUser('reset-target@example.test', ['ROLE_EDITOR']);
+        $oldHash = $target->getPassword();
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/users/'.(string) $target->id().'/password', ['password' => 'short']);
+        self::assertResponseStatusCodeSame(422);
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/users/'.(string) $target->id().'/password', ['password' => 'a-very-new-password']);
+        self::assertResponseIsSuccessful();
+        self::assertStringNotContainsString('a-very-new-password', (string) $client->getResponse()->getContent());
+
+        $this->entityManager()->clear();
+        $reloaded = $this->entityManager()->getRepository(AdminUser::class)->find($target->id());
+        self::assertInstanceOf(AdminUser::class, $reloaded);
+        self::assertNotSame($oldHash, $reloaded->getPassword());
+
+        $audit = $this->entityManager()->getRepository(AuditLogEntry::class)->findBy(['entityType' => AdminUser::class, 'entityId' => (string) $target->id(), 'action' => 'update']);
+        self::assertNotEmpty($audit);
+        self::assertStringNotContainsString($reloaded->getPassword(), json_encode($audit[0]->newValues(), JSON_THROW_ON_ERROR));
+    }
+
+    public function testUserCanChangeOwnPasswordOnlyWithCurrentPassword(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+        $user = $this->createAdminUser('own-password@example.test', ['ROLE_ADMIN']);
+        $hasher = self::getContainer()->get(UserPasswordHasherInterface::class);
+        self::assertInstanceOf(UserPasswordHasherInterface::class, $hasher);
+        $user->changePasswordHash($hasher->hashPassword($user, 'current-password-1'));
+        $this->entityManager()->flush();
+        $client->loginUser($user);
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/users/me/password', [
+            'currentPassword' => 'wrong-current-password',
+            'password' => 'brand-new-password-1',
+        ]);
+        self::assertResponseStatusCodeSame(422);
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/users/me/password', [
+            'currentPassword' => 'current-password-1',
+            'password' => 'brand-new-password-1',
+        ]);
+        self::assertResponseIsSuccessful();
+
+        $this->entityManager()->clear();
+        $reloaded = $this->entityManager()->getRepository(AdminUser::class)->find($user->id());
+        self::assertInstanceOf(AdminUser::class, $reloaded);
+        self::assertTrue($hasher->isPasswordValid($reloaded, 'brand-new-password-1'));
+    }
+
+    public function testPasswordChangeInvalidatesExistingSessions(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+        $user = $this->createAdminUser('session@example.test', ['ROLE_ADMIN']);
+        $client->loginUser($user);
+
+        $client->request('GET', '/admin/dashboard');
+        self::assertResponseIsSuccessful();
+
+        $fresh = $this->entityManager()->getRepository(AdminUser::class)->find($user->id());
+        self::assertInstanceOf(AdminUser::class, $fresh);
+        $fresh->changePasswordHash('rotated-hash');
+        $this->entityManager()->flush();
+
+        $client->request('GET', '/admin/dashboard');
+        self::assertResponseRedirects();
+    }
+
+    public function testNonAdministrativeStoredRolesAreVisibleInListWithoutImplicitAdminRole(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+        $client->loginUser($this->createAdminUser('list-admin@example.test', ['ROLE_ADMIN']));
+        $this->createAdminUser('list-editor@example.test', ['ROLE_EDITOR']);
+
+        $client->request('GET', '/admin/api/users');
+        self::assertResponseIsSuccessful();
+        $payload = $this->decode($client);
+        self::assertIsArray($payload['availableRoles'] ?? null);
+        self::assertContains('ROLE_MANAGER', $payload['availableRoles']);
+        self::assertIsArray($payload['users'] ?? null);
+
+        $roles = [];
+        foreach ($payload['users'] as $user) {
+            self::assertIsArray($user);
+            self::assertIsString($user['email'] ?? null);
+            $roles[$user['email']] = $user['roles'] ?? null;
+        }
+        self::assertSame(['ROLE_EDITOR'], $roles['list-editor@example.test'] ?? null);
+    }
+
+    /**
+     * @return array<mixed>
+     */
+    private function decode(KernelBrowser $client): array
+    {
+        $payload = json_decode((string) $client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($payload);
+
+        return $payload;
     }
 
     /**

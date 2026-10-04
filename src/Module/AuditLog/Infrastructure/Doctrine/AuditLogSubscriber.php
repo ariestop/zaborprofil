@@ -15,6 +15,7 @@ use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\ORM\Event\OnFlushEventArgs;
 use Doctrine\ORM\Events;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Uid\Ulid;
 
@@ -29,7 +30,10 @@ final readonly class AuditLogSubscriber
         PageBlock::class,
         Setting::class,
         Redirect::class,
+        AdminUser::class,
     ];
+
+    private const string REDACTED = '[redacted]';
 
     public function __construct(
         private Security $security,
@@ -51,12 +55,30 @@ final readonly class AuditLogSubscriber
             }
         }
 
+        foreach ($unitOfWork->getScheduledEntityDeletions() as $entity) {
+            if (!$entity instanceof AdminUser) {
+                continue;
+            }
+
+            $entry = $this->entryFor($entity, 'delete', $this->snapshot($entity), []);
+            if ($entry !== null) {
+                $entityManager->persist($entry);
+                $unitOfWork->computeChangeSet($metadata, $entry);
+            }
+        }
+
         foreach ($unitOfWork->getScheduledEntityUpdates() as $entity) {
             $changeSet = $unitOfWork->getEntityChangeSet($entity);
             $oldValues = [];
             $newValues = [];
 
             foreach ($changeSet as $field => $change) {
+                if ($entity instanceof AdminUser && $field === 'passwordHash') {
+                    $oldValues['password'] = self::REDACTED;
+                    $newValues['password'] = self::REDACTED;
+                    continue;
+                }
+
                 $oldValues[$field] = $this->normalizeValue($change[0]);
                 $newValues[$field] = $this->normalizeValue($change[1]);
             }
@@ -83,6 +105,9 @@ final readonly class AuditLogSubscriber
         $user = $this->security->getUser();
         $actorId = $user instanceof AdminUser ? $user->id() : null;
         $actorEmail = $user instanceof AdminUser ? $user->email() : null;
+        if (!$user instanceof AdminUser && !$request instanceof Request) {
+            $actorEmail = 'console';
+        }
 
         return new AuditLogEntry(
             $action,
@@ -103,6 +128,15 @@ final readonly class AuditLogSubscriber
      */
     private function snapshot(object $entity): array
     {
+        if ($entity instanceof AdminUser) {
+            return [
+                'id' => (string) $entity->id(),
+                'email' => $entity->email(),
+                'roles' => $entity->storedRoles(),
+                'active' => $entity->isActive(),
+            ];
+        }
+
         $values = [];
         foreach (['id', 'title', 'path', 'scope', 'key', 'sourcePath', 'targetPath', 'statusCode'] as $method) {
             if (method_exists($entity, $method)) {
