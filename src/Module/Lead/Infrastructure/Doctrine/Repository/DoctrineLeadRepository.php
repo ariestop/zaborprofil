@@ -15,6 +15,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
+use InvalidArgumentException;
 use Symfony\Component\Uid\Ulid;
 
 /**
@@ -36,7 +37,7 @@ final class DoctrineLeadRepository extends ServiceEntityRepository implements Le
     public function get(string $id): Lead
     {
         if (!Ulid::isValid($id)) {
-            throw new ContentNotFoundException('Lead not found.');
+            throw new InvalidArgumentException('Lead id is not valid.');
         }
 
         return $this->find(Ulid::fromString($id)) ?? throw new ContentNotFoundException('Lead not found.');

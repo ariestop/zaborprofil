@@ -168,7 +168,7 @@ final readonly class LeadApiController
         }
     }
 
-    #[Route('/{id}/status', name: 'admin_api_leads_status', requirements: ['id' => self::ID_PATTERN], methods: ['PATCH'])]
+    #[Route('/{id}/status', name: 'admin_api_leads_status', methods: ['PATCH'])]
     public function status(string $id, Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::LEADS_MANAGE)) {
@@ -189,7 +189,7 @@ final readonly class LeadApiController
         }
     }
 
-    #[Route('/{id}/assignee', name: 'admin_api_leads_assignee', requirements: ['id' => self::ID_PATTERN], methods: ['PATCH'])]
+    #[Route('/{id}/assignee', name: 'admin_api_leads_assignee', methods: ['PATCH'])]
     public function assignee(string $id, Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::LEADS_MANAGE)) {
@@ -210,7 +210,7 @@ final readonly class LeadApiController
         }
     }
 
-    #[Route('/{id}/notes', name: 'admin_api_leads_notes', requirements: ['id' => self::ID_PATTERN], methods: ['POST'])]
+    #[Route('/{id}/notes', name: 'admin_api_leads_notes', methods: ['POST'])]
     public function note(string $id, Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::LEADS_MANAGE)) {
