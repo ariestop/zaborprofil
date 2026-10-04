@@ -15,5 +15,6 @@ export default defineConfig({
       reportsDirectory: 'coverage',
       thresholds: { statements: 30, lines: 30, functions: 50, branches: 70 },
     },
+    setupFiles: ['admin/shared/testing/setup.ts'],
   },
 })

@@ -21,9 +21,9 @@ use Symfony\Component\Routing\RouterInterface;
  * Ожидаемые права записаны в тесте независимо от AdminPermissionVoter: изменение
  * прав роли должно быть осознанным и сопровождаться правкой этой таблицы.
  *
- * Если роль не пускают в админку на уровне firewall (access_control), её запросы
- * ожидаемо отклоняются везде. Когда вход для EDITOR/SEO/MANAGER появится (пункт A2),
- * матрица автоматически начнёт проверять для них права на уровне эндпоинтов.
+ * EDITOR/SEO/MANAGER входят в админку (пункт A2), поэтому матрица проверяет для них
+ * права на уровне эндпоинтов наравне с ADMIN и SUPER_ADMIN. Если роль всё же не пустят
+ * в оболочку админки, её запросы будут ожидаемо отклоняться везде и тест это покажет.
  */
 final class AdminRoleMatrixTest extends WebTestCase
 {
@@ -134,6 +134,7 @@ final class AdminRoleMatrixTest extends WebTestCase
             ['POST', '/admin/api/system/assets/build/run', [], 'admin.only', false],
             ['POST', '/admin/api/settings/migrations/Version20250101000000/apply', [], 'super.only', false],
             ['POST', '/admin/api/users/me/password', [], 'any.admitted', true],
+            ['GET', '/admin/api/me', [], 'any.admitted', true],
         ];
     }
 
@@ -163,8 +164,6 @@ final class AdminRoleMatrixTest extends WebTestCase
         $client = self::createClient();
         $users = $this->seedUsers();
         $token = $this->csrfToken($client, $users['ROLE_SUPER_ADMIN']);
-
-        $this->skipWhileStaffRoleIsEscalated($users[$role]);
 
         $client->loginUser($users[$role]);
         $admitted = $this->isAdmittedToAdminShell($client);
@@ -212,7 +211,6 @@ final class AdminRoleMatrixTest extends WebTestCase
         $users = $this->seedUsers();
 
         foreach (self::STAFF_ROLES as $role) {
-            $this->skipWhileStaffRoleIsEscalated($users[$role]);
             self::assertNotContains('ROLE_ADMIN', $users[$role]->getRoles(), $role.' не должна получать ROLE_ADMIN.');
         }
     }
@@ -224,24 +222,13 @@ final class AdminRoleMatrixTest extends WebTestCase
 
         $notAdmitted = [];
         foreach (self::STAFF_ROLES as $role) {
-            $this->skipWhileStaffRoleIsEscalated($users[$role]);
-        }
-
-        foreach (self::STAFF_ROLES as $role) {
             $client->loginUser($users[$role]);
             if (!$this->isAdmittedToAdminShell($client)) {
                 $notAdmitted[] = $role;
             }
         }
 
-        if ([] !== $notAdmitted) {
-            self::markTestSkipped(\sprintf(
-                'Роли %s пока не пускают в админку (access_control требует ROLE_ADMIN, пункт A2); матрица проверяет для них отказ везде.',
-                implode(', ', $notAdmitted),
-            ));
-        }
-
-        self::assertSame([], $notAdmitted);
+        self::assertSame([], $notAdmitted, 'Роли не пускают в админку: '.implode(', ', $notAdmitted));
     }
 
     public function testAnonymousVisitorIsRejectedOnEveryAdminRoute(): void
@@ -301,22 +288,6 @@ final class AdminRoleMatrixTest extends WebTestCase
         $entityManager->flush();
 
         return $users;
-    }
-
-    /**
-     * AdminUser::getRoles() сейчас добавляет ROLE_ADMIN любому пользователю, поэтому
-     * EDITOR/SEO/MANAGER фактически являются администраторами и матрица для них
-     * бессмысленна. Проверки включатся сами, как только пункт A2 уберёт это повышение.
-     */
-    private function skipWhileStaffRoleIsEscalated(AdminUser $user): void
-    {
-        $stored = $user->storedRoles()[0] ?? '';
-        if (\in_array($stored, self::STAFF_ROLES, true) && \in_array('ROLE_ADMIN', $user->getRoles(), true)) {
-            self::markTestSkipped(\sprintf(
-                '%s неявно получает ROLE_ADMIN из AdminUser::getRoles() (пункт A2); матрица для неё включится после исправления.',
-                $stored,
-            ));
-        }
     }
 
     private function csrfToken(KernelBrowser $client, AdminUser $superAdmin): string

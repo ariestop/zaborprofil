@@ -122,7 +122,7 @@
 
 Ранее зафиксированные `AdminNoIndexHeaderTest` и 4 ошибки PHPStan устранены: тест проходит, `composer check:phpstan` чистый.
 
-Открытая проблема, выявленная матрицей ролей (`tests/Functional/Security/AdminRoleMatrixTest.php`): `AdminUser::getRoles()` неявно добавляет `ROLE_ADMIN` любому пользователю, поэтому `ROLE_EDITOR`, `ROLE_SEO` и `ROLE_MANAGER` фактически являются администраторами. Проверки матрицы для этих ролей пропускаются (`skipped`) и включатся автоматически после правки (пункт A2 плана улучшений админки).
+Ранее выявленная матрицей ролей (`tests/Functional/Security/AdminRoleMatrixTest.php`) проблема неявного `ROLE_ADMIN` у `ROLE_EDITOR`, `ROLE_SEO` и `ROLE_MANAGER` устранена в пункте A2: вход в админку открыт этим ролям, а матрица проверяет их права без пропусков (`skipped`).
 
 ## Risks (фиксация для архитектурного контроля)
 

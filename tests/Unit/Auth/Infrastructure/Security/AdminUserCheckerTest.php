@@ -45,6 +45,31 @@ final class AdminUserCheckerTest extends TestCase
         (new AdminUserChecker())->checkPostAuth($this->makeAdmin(active: false));
     }
 
+    public function testAllowsEveryAdminRole(): void
+    {
+        $checker = new AdminUserChecker();
+
+        foreach (['ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_EDITOR', 'ROLE_SEO', 'ROLE_MANAGER'] as $role) {
+            $checker->checkPostAuth(new AdminUser('user@example.com', 'hash', [$role]));
+        }
+
+        $this->expectNotToPerformAssertions();
+    }
+
+    public function testBlocksAccountWithoutAdminRolePostAuth(): void
+    {
+        $this->expectException(CustomUserMessageAccountStatusException::class);
+
+        (new AdminUserChecker())->checkPostAuth(new AdminUser('user@example.com', 'hash', ['ROLE_USER']));
+    }
+
+    public function testBlocksAccountWithoutAnyRolePostAuth(): void
+    {
+        $this->expectException(CustomUserMessageAccountStatusException::class);
+
+        (new AdminUserChecker())->checkPostAuth(new AdminUser('user@example.com', 'hash', []));
+    }
+
     private function makeAdmin(bool $active): AdminUser
     {
         $admin = new AdminUser('admin@example.com', 'hash');

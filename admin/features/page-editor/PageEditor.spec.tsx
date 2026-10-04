@@ -4,6 +4,7 @@ import { createMemoryRouter, Link, RouterProvider, useParams } from 'react-route
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ToastProvider } from '../../app/providers/toast-provider'
 import { useBuilderStore } from '../../modules/page-builder/state/builderStore'
+import { loginAs } from '../../shared/testing/roles'
 import { makePage } from './fixtures'
 import { PageEditor } from './PageEditor'
 import { stubRequestWithoutSignal } from './test-utils'
@@ -130,5 +131,31 @@ describe('PageEditor', () => {
     fireEvent.click(screen.getByText('outside-link'))
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/admin/other'))
+  })
+
+  it('hides the tabs and the publish button the role has no permission for', async () => {
+    loginAs('ROLE_EDITOR')
+    renderEditor('/admin/pages/page-1')
+
+    const tabs = await screen.findAllByRole('tab')
+    expect(tabs.map((tab) => tab.textContent)).toEqual(['Контент и блоки', 'Настройки', 'Ревизии'])
+    expect(screen.queryByRole('button', { name: 'Опубликовать' })).toBeNull()
+  })
+
+  it('shows an SEO specialist the SEO and revisions tabs but not the settings', async () => {
+    loginAs('ROLE_SEO')
+    renderEditor('/admin/pages/page-1/seo')
+
+    const tabs = await screen.findAllByRole('tab')
+    expect(tabs.map((tab) => tab.textContent)).toEqual(['Контент и блоки', 'SEO', 'Ревизии'])
+    expect(await screen.findByLabelText('SEO-заголовок (title)')).toBeTruthy()
+  })
+
+  it('shows the 403 stub when a hidden tab is opened by a direct link', async () => {
+    loginAs('ROLE_EDITOR')
+    renderEditor('/admin/pages/page-1/seo')
+
+    expect((await screen.findByRole('alert')).textContent).toContain('Нет доступа к этому разделу')
+    expect(screen.queryByLabelText('SEO-заголовок (title)')).toBeNull()
   })
 })

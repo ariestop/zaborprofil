@@ -26,6 +26,7 @@ import {
   loadUsersPage,
 } from './loaders'
 import { schedulePrefetchForCurrentRoute } from './prefetch'
+import { RouteGuard } from './RouteGuard'
 
 const DashboardPage = lazy(loadDashboardPage)
 const PagesPage = lazy(loadPagesPage)
@@ -65,42 +66,42 @@ function createAdminRouter() {
       children: [
         { path: '/admin', element: <Navigate to="/admin/dashboard" replace /> },
         { path: '/admin/dashboard', element: <DashboardPage /> },
-        { path: '/admin/pages', element: <PagesPage /> },
-        { path: '/admin/pages/new', element: <PageCreatePage /> },
+        { path: '/admin/pages', element: <RouteGuard routeKey="pages"><PagesPage /></RouteGuard> },
+        { path: '/admin/pages/new', element: <RouteGuard routeKey="pageNew"><PageCreatePage /></RouteGuard> },
         {
           // Один экран редактирования: вкладки переключаются без перемонтирования, чтобы не терять несохранённые правки.
           // Сегмент :tab разбирает PageEditorPage (builder — совместимый псевдоним «Контента»).
           path: '/admin/pages/:id',
-          element: <PageEditorPage />,
+          element: <RouteGuard routeKey="pageDetail"><PageEditorPage /></RouteGuard>,
           children: [
             { index: true, element: null },
             { path: ':tab', element: null },
           ],
         },
-        { path: '/admin/media', element: <MediaPage /> },
-        { path: '/admin/seo', element: <SeoPage /> },
+        { path: '/admin/media', element: <RouteGuard routeKey="media"><MediaPage /></RouteGuard> },
+        { path: '/admin/seo', element: <RouteGuard routeKey="seo"><SeoPage /></RouteGuard> },
         // Список и карточка заявки — один экран без перемонтирования: карточка открывается справа, фильтры и поиск сохраняются.
         {
           path: '/admin/crm',
-          element: <CrmPage />,
+          element: <RouteGuard routeKey="crm"><CrmPage /></RouteGuard>,
           children: [
             { index: true, element: null },
             { path: ':leadId', element: null },
           ],
         },
-        { path: '/admin/settings', element: <SettingsPage /> },
-        { path: '/admin/settings/migrations', element: <SettingsMigrationsPage /> },
-        { path: '/admin/users', element: <UsersPage /> },
-        { path: '/admin/system', element: <SystemDashboardPage /> },
-        { path: '/admin/system/processes', element: <SystemProcessesPage /> },
-        { path: '/admin/system/logs', element: <SystemLogsPage /> },
-        { path: '/admin/system/queues', element: <SystemQueuesPage /> },
-        { path: '/admin/system/cache', element: <SystemCachePage /> },
-        { path: '/admin/system/database', element: <SystemDatabasePage /> },
-        { path: '/admin/system/security', element: <SystemSecurityPage /> },
-        { path: '/admin/system/backups', element: <SystemBackupsPage /> },
-        { path: '/admin/system/deploy', element: <SystemDeployPage /> },
-        { path: '/admin/system/audit', element: <SystemAuditPage /> },
+        { path: '/admin/settings', element: <RouteGuard routeKey="settings"><SettingsPage /></RouteGuard> },
+        { path: '/admin/settings/migrations', element: <RouteGuard routeKey="settingsMigrations"><SettingsMigrationsPage /></RouteGuard> },
+        { path: '/admin/users', element: <RouteGuard routeKey="users"><UsersPage /></RouteGuard> },
+        { path: '/admin/system', element: <RouteGuard routeKey="system"><SystemDashboardPage /></RouteGuard> },
+        { path: '/admin/system/processes', element: <RouteGuard routeKey="systemProcesses"><SystemProcessesPage /></RouteGuard> },
+        { path: '/admin/system/logs', element: <RouteGuard routeKey="systemLogs"><SystemLogsPage /></RouteGuard> },
+        { path: '/admin/system/queues', element: <RouteGuard routeKey="systemQueues"><SystemQueuesPage /></RouteGuard> },
+        { path: '/admin/system/cache', element: <RouteGuard routeKey="systemCache"><SystemCachePage /></RouteGuard> },
+        { path: '/admin/system/database', element: <RouteGuard routeKey="systemDatabase"><SystemDatabasePage /></RouteGuard> },
+        { path: '/admin/system/security', element: <RouteGuard routeKey="systemSecurity"><SystemSecurityPage /></RouteGuard> },
+        { path: '/admin/system/backups', element: <RouteGuard routeKey="systemBackups"><SystemBackupsPage /></RouteGuard> },
+        { path: '/admin/system/deploy', element: <RouteGuard routeKey="systemDeploy"><SystemDeployPage /></RouteGuard> },
+        { path: '/admin/system/audit', element: <RouteGuard routeKey="systemAudit"><SystemAuditPage /></RouteGuard> },
         { path: '*', element: <Navigate to="/admin/dashboard" replace /> },
       ],
     },
