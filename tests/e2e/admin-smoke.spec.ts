@@ -40,7 +40,7 @@ test.describe('Admin smoke flow', () => {
     await page.goto(`/admin/pages/${createdPage.id}/builder`)
     await expect(page.getByTestId('page-editor')).toBeVisible()
     await expect(page.getByRole('tab', { name: PAGE_EDITOR_SELECTORS.tabContent })).toHaveAttribute('aria-selected', 'true')
-    await expect(page.getByRole('heading', { name: BUILDER_SELECTORS.blocksSectionTitle })).toBeVisible()
+    await expect(page.getByRole('heading', { name: BUILDER_SELECTORS.catalogSectionTitle })).toBeVisible()
 
     await expect(page.getByText(BUILDER_SELECTORS.previewPlaceholderText)).toBeVisible()
     await Promise.all([

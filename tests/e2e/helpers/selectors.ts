@@ -34,6 +34,7 @@ export const PAGE_EDITOR_SELECTORS = {
 
 export const BUILDER_SELECTORS = {
   blocksSectionTitle: 'Блоки страницы',
+  catalogSectionTitle: 'Каталог блоков',
   previewButtonName: 'Быстрый предпросмотр блоков',
   previewSectionTitle: 'Быстрый предпросмотр блоков',
   previewPlaceholderText: 'Нажмите «Быстрый предпросмотр блоков», чтобы получить HTML от backend без сохранения страницы.',
