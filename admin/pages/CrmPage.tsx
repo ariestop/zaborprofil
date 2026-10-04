@@ -1,43 +1,67 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useMatch, useNavigate, useSearchParams } from 'react-router-dom'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { useToast } from '../app/providers/toast-provider'
-import { exportLeadsCsv, useLeadAssigneesQuery, useLeadsQuery } from '../entities/lead/api'
+import { exportLeadsCsv, useLeadAssigneesQuery, useLeadsQuery, useLeadStatusMutation } from '../entities/lead/api'
 import {
-  LEAD_STATUS_LABELS,
   leadSourceLabel,
   leadStatusLabel,
-  leadStatusTone,
+  nextLeadAction,
   type LeadFilters,
   type LeadListParams,
   type LeadSortField,
 } from '../entities/lead/model'
+import {
+  detectPeriod,
+  formatLeadListTime,
+  leadInitials,
+  periodRange,
+  type LeadPeriod,
+} from '../entities/lead/presentation'
+import { CreateLeadDialog } from '../features/leads/CreateLeadDialog'
+import { FilterSelect } from '../features/leads/FilterSelect'
+import { useLeadSavedViews, type LeadSavedView } from '../features/leads/saved-views'
+import { UndoToast, type UndoToastState } from '../features/leads/UndoToast'
 import { describeApiError } from '../features/seo/redirects/redirect-rules'
 import { useDebouncedValue } from '../shared/hooks/use-debounced-value'
 import { downloadTextFile } from '../shared/lib/download'
 import { cn } from '../shared/lib/cn'
-import { formatDateTime, formatNumber } from '../shared/lib/format'
-import { Badge, Button, EmptyState, ErrorState, Input, PageHeader, Select } from '../shared/ui'
+import { formatNumber } from '../shared/lib/format'
+import { ErrorState } from '../shared/ui'
 import { Pagination } from '../shared/ui/pagination'
+import { NavIcon } from '../layouts/nav-icons'
+import { TopbarActions } from '../layouts/topbar-slot'
 import { useCan } from '../stores/auth'
 import type { LeadStatus } from '../types/api'
-import LeadDetailPage from './LeadDetailPage'
+import LeadDetailPage, { type LeadStatusChangeTarget } from './LeadDetailPage'
 
 const PER_PAGE = 25
 const STATUSES: LeadStatus[] = ['new', 'in_progress', 'done', 'spam']
 const SORTS: LeadSortField[] = ['createdAt', 'updatedAt', 'name', 'status', 'source']
+const WAITING_HOURS = 2
+const DESKTOP_QUERY = '(min-width: 1024px)'
 
-const sortOptions: Array<{ value: LeadSortField, label: string }> = [
-  { value: 'createdAt', label: 'По дате создания' },
-  { value: 'updatedAt', label: 'По дате изменения' },
-  { value: 'name', label: 'По имени' },
-  { value: 'status', label: 'По статусу' },
-  { value: 'source', label: 'По источнику' },
+const TABS: Array<{ id: LeadStatus | 'all', label: string }> = [
+  { id: 'all', label: 'Все' },
+  { id: 'new', label: 'Новые' },
+  { id: 'in_progress', label: 'В работе' },
+  { id: 'done', label: 'Готово' },
+  { id: 'spam', label: 'Спам' },
+]
+
+const PERIOD_OPTIONS: Array<{ value: LeadPeriod, label: string }> = [
+  { value: 'all', label: 'Период' },
+  { value: 'today', label: 'Сегодня' },
+  { value: 'yesterday', label: 'Вчера' },
+  { value: '7d', label: 'Последние 7 дней' },
+  { value: '30d', label: 'Последние 30 дней' },
+  { value: 'custom', label: 'Свои даты…' },
 ]
 
 function readParams(search: URLSearchParams): LeadListParams {
   const status = search.get('status')
   const sort = search.get('sort')
+  const waiting = Number.parseInt(search.get('waiting') ?? '', 10)
 
   return {
     q: '',
@@ -46,6 +70,8 @@ function readParams(search: URLSearchParams): LeadListParams {
     from: search.get('from') ?? '',
     to: search.get('to') ?? '',
     assignee: search.get('assignee') ?? 'all',
+    b2b: search.get('b2b') === '1',
+    waitingHours: Number.isFinite(waiting) && waiting > 0 ? waiting : 0,
     sort: SORTS.includes(sort as LeadSortField) ? (sort as LeadSortField) : 'createdAt',
     direction: search.get('direction') === 'asc' ? 'asc' : 'desc',
     page: Math.max(1, Number.parseInt(search.get('page') ?? '1', 10) || 1),
@@ -61,6 +87,8 @@ function writeParams(params: LeadListParams): URLSearchParams {
     ['from', params.from, ''],
     ['to', params.to, ''],
     ['assignee', params.assignee, 'all'],
+    ['b2b', params.b2b ? '1' : '', ''],
+    ['waiting', params.waitingHours > 0 ? String(params.waitingHours) : '', ''],
     ['sort', params.sort, 'createdAt'],
     ['direction', params.direction, 'desc'],
     ['page', String(params.page), '1'],
@@ -80,9 +108,22 @@ function withSearch(path: string, search: URLSearchParams): string {
   return query === '' ? path : `${path}?${query}`
 }
 
+function statusMatchesTab(tab: LeadStatus | 'all', status: LeadStatus): boolean {
+  return tab === 'all' ? status !== 'spam' : tab === status
+}
+
+function isDesktop(): boolean {
+  return typeof window.matchMedia === 'function' && window.matchMedia(DESKTOP_QUERY).matches
+}
+
+const filterButton = 'h-8'
+const chipBase = 'h-[30px] rounded-full border px-2.5 text-xs transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500'
+const chipOn = 'border-[#A6D8C4] bg-[#E7F5EF] font-semibold text-[#065F46] dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200'
+const chipOff = 'border-[#D0D5DD] bg-white font-medium text-[#344054] hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
+
 /**
- * Рабочее место по заявкам: слева список с фильтрами, справа карточка выбранной заявки.
- * Фильтры живут в адресе, поэтому сохраняются при переходе между заявками и по ссылке.
+ * Рабочее место по заявкам: слева список с вкладками статусов, фильтрами и быстрыми видами,
+ * справа карточка выбранной заявки. Фильтры живут в адресе, поэтому сохраняются при переходе между заявками.
  * На телефоне список и карточка показываются по очереди.
  */
 export default function CrmPage() {
@@ -97,8 +138,16 @@ export default function CrmPage() {
 
   const leadsQuery = useLeadsQuery(params)
   const assigneesQuery = useLeadAssigneesQuery()
+  const statusMutation = useLeadStatusMutation()
   const [exporting, setExporting] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
+  const [customPeriod, setCustomPeriod] = useState(false)
+  const [savingView, setSavingView] = useState(false)
+  const [viewName, setViewName] = useState('')
+  const [undo, setUndo] = useState<(UndoToastState & { leadId: string, from: LeadStatus }) | null>(null)
   const canExport = useCan('leads.export')
+  const canManage = useCan('leads.manage')
+  const savedViews = useLeadSavedViews()
 
   const update = (patch: Partial<LeadListParams>) => {
     setSearchParams(writeParams({ ...params, page: 1, ...patch }), { replace: true })
@@ -112,6 +161,8 @@ export default function CrmPage() {
       from: params.from,
       to: params.to,
       assignee: params.assignee,
+      b2b: params.b2b,
+      waitingHours: params.waitingHours,
     }
     setExporting(true)
     try {
@@ -125,15 +176,24 @@ export default function CrmPage() {
   }
 
   const data = leadsQuery.data
-  const items = data?.items ?? []
+  const items = useMemo(() => data?.items ?? [], [data])
   const sources = data?.sources ?? []
   const assignees = assigneesQuery.data?.items ?? []
+  const period = detectPeriod(params.from, params.to)
   const hasFilters = params.q !== '' || params.status !== 'all' || params.source !== ''
-    || params.from !== '' || params.to !== '' || params.assignee !== 'all'
-  const hasExtraFilters = params.from !== '' || params.to !== '' || params.sort !== 'createdAt' || params.direction !== 'desc'
+    || params.from !== '' || params.to !== '' || params.assignee !== 'all' || params.b2b || params.waitingHours > 0
 
-  const leadHref = (id: string) => withSearch(`/admin/crm/${id}`, searchParams)
+  const leadHref = useCallback((id: string) => withSearch(`/admin/crm/${id}`, searchParams), [searchParams])
   const listHref = withSearch('/admin/crm', searchParams)
+  const selected = leadId !== undefined && leadId !== ''
+
+  // На широком экране карточка справа всегда заполнена: открывается первая заявка списка.
+  const firstId = items[0]?.id
+  useEffect(() => {
+    if (!selected && firstId !== undefined && isDesktop()) {
+      navigate(leadHref(firstId), { replace: true })
+    }
+  }, [selected, firstId, navigate, leadHref])
 
   // J / K — следующая и предыдущая заявка в списке, как в почтовых клиентах.
   const moveSelection = (step: 1 | -1) => {
@@ -149,206 +209,436 @@ export default function CrmPage() {
       navigate(leadHref(next.id))
     }
   }
+
+  const changeStatus = async (lead: LeadStatusChangeTarget, status: LeadStatus) => {
+    if (status === lead.status) {
+      return
+    }
+
+    try {
+      await statusMutation.mutateAsync({ leadId: lead.id, status })
+    } catch (error) {
+      push({ title: 'Не удалось изменить статус', description: describeApiError(error, 'Повторите попытку.') })
+
+      return
+    }
+
+    setUndo({ id: Date.now(), leadId: lead.id, from: lead.status, text: `«${lead.name}» → ${leadStatusLabel(status)}` })
+
+    // Заявка ушла из текущей вкладки — переходим к соседней, как в макете.
+    if (selected && lead.id === leadId && !statusMatchesTab(params.status, status)) {
+      const index = items.findIndex((item) => item.id === lead.id)
+      const neighbour = items[index + 1] ?? items[index - 1]
+      navigate(neighbour === undefined ? listHref : leadHref(neighbour.id), { replace: true })
+    }
+  }
+
+  const undoLast = () => {
+    if (undo === null) {
+      return
+    }
+    const { leadId: id, from } = undo
+    setUndo(null)
+    void statusMutation.mutateAsync({ leadId: id, status: from }).then(
+      () => navigate(leadHref(id), { replace: true }),
+      (error: unknown) => push({ title: 'Не удалось отменить изменение', description: describeApiError(error, 'Повторите попытку.') }),
+    )
+  }
+
+  const dismissUndo = useCallback(() => setUndo(null), [])
+
+  const currentLead = items.find((item) => item.id === leadId)
   useHotkeys('j', () => moveSelection(1), [items, leadId, searchParams])
   useHotkeys('k', () => moveSelection(-1), [items, leadId, searchParams])
+  useHotkeys('e', () => {
+    const action = currentLead === undefined ? null : nextLeadAction(currentLead.status)
+    if (currentLead !== undefined && action !== null && canManage) {
+      void changeStatus({ id: currentLead.id, name: currentLead.name, status: currentLead.status }, action.status)
+    }
+  }, [currentLead, canManage, params.status, items, leadId])
+  useHotkeys('s', () => {
+    if (currentLead !== undefined && canManage) {
+      void changeStatus({ id: currentLead.id, name: currentLead.name, status: currentLead.status }, currentLead.status === 'spam' ? 'new' : 'spam')
+    }
+  }, [currentLead, canManage, params.status, items, leadId])
 
-  const selected = leadId !== undefined && leadId !== ''
+  const setPeriod = (next: LeadPeriod) => {
+    if (next === 'all') {
+      setCustomPeriod(false)
+      update({ from: '', to: '' })
+    } else if (next === 'custom') {
+      setCustomPeriod(true)
+    } else {
+      setCustomPeriod(false)
+      update(periodRange(next))
+    }
+  }
+
+  const applyView = (view: LeadSavedView) => {
+    const range = view.period === 'all' || view.period === 'custom' ? { from: view.from, to: view.to } : periodRange(view.period)
+    setCustomPeriod(view.period === 'custom')
+    setSearchText('')
+    setSearchParams(writeParams({
+      ...params,
+      q: '',
+      status: STATUSES.includes(view.status as LeadStatus) ? (view.status as LeadStatus) : 'all',
+      source: view.source,
+      assignee: view.assignee,
+      b2b: view.b2b,
+      waitingHours: view.waitingHours,
+      from: range.from,
+      to: range.to,
+      page: 1,
+    }), { replace: true })
+  }
+
+  const saveView = () => {
+    const name = viewName.trim()
+    if (name === '') {
+      return
+    }
+    savedViews.add({
+      name,
+      status: params.status,
+      source: params.source,
+      assignee: params.assignee,
+      b2b: params.b2b,
+      waitingHours: params.waitingHours,
+      period,
+      from: params.from,
+      to: params.to,
+    })
+    setSavingView(false)
+    setViewName('')
+    push({ title: 'Вид сохранён', description: name })
+  }
+
+  const counts = data?.counts
+  const tabCount = (id: LeadStatus | 'all'): string => {
+    if (counts === undefined) {
+      return ''
+    }
+
+    return formatNumber(id === 'all' ? counts.total - (counts.byStatus.spam ?? 0) : counts.byStatus[id] ?? 0)
+  }
+
+  const todayActive = period === 'today'
 
   return (
-    <div className="grid gap-4">
-      <PageHeader
-        title="Заявки"
-        description="Заявки с сайта: поиск, фильтры, ответственные и история работы с клиентом. J / K — следующая и предыдущая заявка."
-        actions={canExport ? (
-          <Button type="button" variant="outline" disabled={exporting} onClick={() => void exportCsv()}>
+    <>
+      <TopbarActions>
+        {canExport ? (
+          <button
+            type="button"
+            disabled={exporting}
+            onClick={() => void exportCsv()}
+            className="h-10 rounded-[10px] border border-[#D0D5DD] bg-white px-3.5 text-sm font-semibold text-[#344054] transition hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+          >
             Экспорт CSV
-          </Button>
-        ) : undefined}
-      />
+          </button>
+        ) : null}
+        {canManage ? (
+          <button
+            type="button"
+            onClick={() => setCreateOpen(true)}
+            className="inline-flex h-10 items-center gap-1.5 rounded-[10px] bg-[#047857] px-3.5 text-sm font-semibold text-white transition hover:bg-[#065F46] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+          >
+            <NavIcon name="plus" size={16} strokeWidth={2} />
+            Заявка после звонка
+          </button>
+        ) : null}
+      </TopbarActions>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(320px,400px)_minmax(0,1fr)]">
-        <section aria-label="Список заявок" className={cn('grid content-start gap-3', selected && 'hidden lg:grid')}>
-          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Фильтр по статусу">
-            <Button
-              type="button"
-              size="sm"
-              variant={params.status === 'all' ? 'default' : 'outline'}
-              aria-pressed={params.status === 'all'}
-              onClick={() => update({ status: 'all' })}
-            >
-              Все{data === undefined ? '' : ` · ${formatNumber(data.counts.total)}`}
-            </Button>
-            {STATUSES.map((status) => (
-              <Button
-                key={status}
-                type="button"
-                size="sm"
-                variant={params.status === status ? 'default' : 'outline'}
-                aria-pressed={params.status === status}
-                onClick={() => update({ status })}
-              >
-                {LEAD_STATUS_LABELS[status]}{data === undefined ? '' : ` · ${formatNumber(data.counts.byStatus[status] ?? 0)}`}
-              </Button>
-            ))}
-          </div>
+      <div className="flex flex-1 flex-col items-stretch lg:flex-row">
+        <section
+          aria-label="Список заявок"
+          className={cn(
+            'box-border flex min-w-0 flex-col border-r border-[#E4E7EC] bg-white lg:sticky lg:top-[65px] lg:h-[calc(100vh-65px)] lg:w-[380px] lg:shrink-0 lg:overflow-y-auto dark:border-slate-800 dark:bg-slate-900',
+            selected && 'hidden lg:flex',
+          )}
+        >
+          <div className="flex flex-col gap-3 px-[18px] pb-2.5 pt-[18px]">
+            <div role="tablist" aria-label="Статус заявок" className="flex gap-0.5 rounded-[11px] bg-[#EAECF0] p-[3px] dark:bg-slate-800">
+              {TABS.map((tab) => {
+                const active = params.status === tab.id
 
-          <Input
-            type="search"
-            aria-label="Поиск заявок"
-            placeholder="Имя, телефон, email или текст заявки"
-            value={searchText}
-            onChange={(event) => {
-              setSearchText(event.target.value)
-              if (urlParams.page !== 1) {
-                update({})
-              }
-            }}
-          />
-
-          <div className="grid gap-2 sm:grid-cols-2">
-            <Select
-              value={params.source === '' ? 'all' : params.source}
-              onValueChange={(value) => update({ source: value === 'all' ? '' : value })}
-              options={[
-                { value: 'all', label: 'Все источники' },
-                ...sources.map((source) => ({ value: source, label: leadSourceLabel(source) })),
-              ]}
-            />
-            <Select
-              value={params.assignee}
-              onValueChange={(value) => update({ assignee: value })}
-              options={[
-                { value: 'all', label: 'Любой ответственный' },
-                { value: 'me', label: 'Мои заявки' },
-                { value: 'none', label: 'Без ответственного' },
-                ...assignees.map((assignee) => ({ value: assignee.id, label: assignee.email })),
-              ]}
-            />
-          </div>
-
-          <details className="rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-800" open={hasExtraFilters}>
-            <summary className="cursor-pointer select-none font-medium text-slate-700 dark:text-slate-300">Период и сортировка</summary>
-            <div className="mt-3 grid gap-2">
-              <div className="grid grid-cols-2 gap-2">
-                <label className="grid gap-1 text-xs text-slate-500 dark:text-slate-400">
-                  С
-                  <Input type="date" aria-label="Дата от" value={params.from} onChange={(event) => update({ from: event.target.value })} />
-                </label>
-                <label className="grid gap-1 text-xs text-slate-500 dark:text-slate-400">
-                  По
-                  <Input type="date" aria-label="Дата до" value={params.to} onChange={(event) => update({ to: event.target.value })} />
-                </label>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Select value={params.sort} onValueChange={(value) => update({ sort: value as LeadSortField })} options={sortOptions} />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  aria-label="Направление сортировки"
-                  onClick={() => update({ direction: params.direction === 'desc' ? 'asc' : 'desc' })}
-                >
-                  {params.direction === 'desc' ? 'По убыванию ↓' : 'По возрастанию ↑'}
-                </Button>
-              </div>
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => update({ status: tab.id })}
+                    className={cn(
+                      'flex h-9 flex-[1_1_auto] items-center justify-center gap-1 whitespace-nowrap rounded-[9px] px-1.5 text-xs font-semibold focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500',
+                      active ? 'bg-white text-[#101828] dark:bg-slate-950 dark:text-slate-100' : 'bg-transparent text-[#475467] dark:text-slate-400',
+                    )}
+                  >
+                    {tab.label}
+                    <span className="text-[11px] font-bold text-[#5D6679] dark:text-slate-400">{tabCount(tab.id)}</span>
+                  </button>
+                )
+              })}
             </div>
-          </details>
 
-          {hasFilters ? (
-            <div>
-              <Button
+            <label className="flex h-10 items-center gap-2 rounded-[10px] border border-[#D0D5DD] px-3 text-[#5D6679] focus-within:ring-2 focus-within:ring-emerald-500 dark:border-slate-700 dark:text-slate-400">
+              <NavIcon name="search" size={16} />
+              <input
+                type="search"
+                aria-label="Поиск по заявкам"
+                placeholder="Имя, телефон, текст"
+                value={searchText}
+                onChange={(event) => {
+                  setSearchText(event.target.value)
+                  if (urlParams.page !== 1) {
+                    update({})
+                  }
+                }}
+                className="min-w-0 flex-1 border-0 bg-transparent text-sm text-[#101828] outline-hidden placeholder:text-[#5D6679] dark:text-slate-100"
+              />
+            </label>
+
+            <div className="flex flex-wrap gap-1.5">
+              <FilterSelect
+                label="Источник заявки"
+                value={params.source === '' ? 'all' : params.source}
+                active={params.source !== ''}
+                onChange={(value) => update({ source: value === 'all' ? '' : value })}
+                options={[
+                  { value: 'all', label: 'Все источники' },
+                  ...sources.map((source) => ({ value: source, label: leadSourceLabel(source) })),
+                ]}
+              />
+              <FilterSelect
+                label="Ответственный"
+                value={params.assignee}
+                active={params.assignee !== 'all'}
+                onChange={(value) => update({ assignee: value })}
+                options={[
+                  { value: 'all', label: 'Любой ответственный' },
+                  { value: 'me', label: 'Мои заявки' },
+                  { value: 'none', label: 'Без ответственного' },
+                  ...assignees.map((assignee) => ({ value: assignee.id, label: assignee.email })),
+                ]}
+              />
+              <FilterSelect
+                label="Период"
+                value={customPeriod ? 'custom' : period}
+                active={period !== 'all' || customPeriod}
+                onChange={(value) => setPeriod(value as LeadPeriod)}
+                options={PERIOD_OPTIONS}
+              />
+            </div>
+
+            {customPeriod || period === 'custom' ? (
+              <div className="grid grid-cols-2 gap-2">
+                <label className="grid gap-1 text-xs text-[#5D6679] dark:text-slate-400">
+                  С
+                  <input
+                    type="date"
+                    aria-label="Дата от"
+                    value={params.from}
+                    onChange={(event) => update({ from: event.target.value })}
+                    className="h-9 rounded-lg border border-[#D0D5DD] bg-white px-2 text-[13px] text-[#101828] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                  />
+                </label>
+                <label className="grid gap-1 text-xs text-[#5D6679] dark:text-slate-400">
+                  По
+                  <input
+                    type="date"
+                    aria-label="Дата до"
+                    value={params.to}
+                    onChange={(event) => update({ to: event.target.value })}
+                    className="h-9 rounded-lg border border-[#D0D5DD] bg-white px-2 text-[13px] text-[#101828] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                  />
+                </label>
+              </div>
+            ) : null}
+
+            <div className="flex flex-wrap gap-1.5">
+              <button
                 type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSearchText('')
-                  setSearchParams(new URLSearchParams(), { replace: true })
+                aria-pressed={todayActive}
+                onClick={() => setPeriod(todayActive ? 'all' : 'today')}
+                className={cn(chipBase, todayActive ? chipOn : chipOff)}
+              >
+                Сегодня
+              </button>
+              <button type="button" aria-pressed={params.b2b} onClick={() => update({ b2b: !params.b2b })} className={cn(chipBase, params.b2b ? chipOn : chipOff)}>
+                Юрлица B2B
+              </button>
+              <button
+                type="button"
+                aria-pressed={params.waitingHours > 0}
+                onClick={() => update({ waitingHours: params.waitingHours > 0 ? 0 : WAITING_HOURS })}
+                className={cn(chipBase, params.waitingHours > 0 ? chipOn : chipOff)}
+              >
+                Без ответа больше {WAITING_HOURS} ч
+              </button>
+              {savedViews.views.map((view) => (
+                <span key={view.id} className={cn(chipBase, chipOff, 'inline-flex items-center gap-1 pr-1')}>
+                  <button type="button" onClick={() => applyView(view)} className="max-w-36 truncate focus-visible:outline-hidden">{view.name}</button>
+                  <button
+                    type="button"
+                    aria-label={`Удалить вид «${view.name}»`}
+                    onClick={() => savedViews.remove(view.id)}
+                    className="flex h-5 w-5 items-center justify-center rounded-full text-[#5D6679] hover:bg-slate-100 dark:hover:bg-slate-800"
+                  >
+                    <NavIcon name="close" size={12} />
+                  </button>
+                </span>
+              ))}
+              {savedViews.views.length < savedViews.limit ? (
+                <button
+                  type="button"
+                  onClick={() => setSavingView((value) => !value)}
+                  className={cn(chipBase, 'border-dashed border-[#D0D5DD] bg-white font-medium text-[#5D6679] hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400')}
+                >
+                  + Сохранить вид
+                </button>
+              ) : null}
+            </div>
+
+            {savingView ? (
+              <form
+                className="flex gap-2"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  saveView()
                 }}
               >
-                Сбросить фильтры
-              </Button>
-            </div>
-          ) : null}
+                <input
+                  aria-label="Название вида"
+                  placeholder="Название, например «B2B без ответа»"
+                  maxLength={40}
+                  autoFocus
+                  value={viewName}
+                  onChange={(event) => setViewName(event.target.value)}
+                  className="h-9 min-w-0 flex-1 rounded-lg border border-[#D0D5DD] bg-white px-2.5 text-[13px] dark:border-slate-700 dark:bg-slate-900"
+                />
+                <button
+                  type="submit"
+                  disabled={viewName.trim() === ''}
+                  className="h-9 rounded-lg bg-[#047857] px-3 text-[13px] font-semibold text-white disabled:opacity-60"
+                >
+                  Сохранить
+                </button>
+              </form>
+            ) : null}
 
-          {leadsQuery.isError ? (
-            <ErrorState
-              title="Не удалось загрузить заявки"
-              description="Проверьте endpoint /admin/api/leads и право leads.view."
-            />
-          ) : null}
+            {hasFilters ? (
+              <div>
+                <button
+                  type="button"
+                  className={cn(filterButton, 'rounded-lg px-1 text-[13px] font-medium text-[#047857] hover:underline dark:text-emerald-400')}
+                  onClick={() => {
+                    setSearchText('')
+                    setCustomPeriod(false)
+                    setSearchParams(new URLSearchParams(), { replace: true })
+                  }}
+                >
+                  Сбросить фильтры
+                </button>
+              </div>
+            ) : null}
+          </div>
 
-          {leadsQuery.isPending ? <p className="text-sm text-slate-500">Загрузка...</p> : null}
+          <div className="flex flex-col gap-0.5 px-2 pb-4">
+            {leadsQuery.isError ? (
+              <ErrorState title="Не удалось загрузить заявки" description="Проверьте endpoint /admin/api/leads и право leads.view." />
+            ) : null}
 
-          {data !== undefined && items.length === 0 ? (
-            <EmptyState
-              title={hasFilters ? 'Ничего не найдено' : 'Заявок пока нет'}
-              description={hasFilters ? 'Измените поисковый запрос или сбросьте фильтры.' : 'Новые заявки с сайта появятся здесь.'}
-            />
-          ) : null}
+            {leadsQuery.isPending ? <p className="m-2 text-sm text-[#5D6679]">Загрузка...</p> : null}
 
-          {items.length > 0 ? (
-            <>
-              <ul className="grid gap-1" aria-label="Заявки">
+            {data !== undefined && items.length === 0 ? (
+              <div className="m-2 rounded-xl border border-dashed border-[#D0D5DD] p-6 text-center text-[#5D6679] dark:border-slate-700">
+                <p className="m-0 font-semibold text-[#101828] dark:text-slate-100">{hasFilters ? 'Ничего не найдено' : 'Здесь пусто'}</p>
+                <p className="m-0 mt-1 text-[13px]">
+                  {hasFilters ? 'Измените поисковый запрос или сбросьте фильтры' : 'Все заявки в этом статусе разобраны'}
+                </p>
+              </div>
+            ) : null}
+
+            {items.length > 0 ? (
+              <ul className="m-0 flex list-none flex-col gap-0.5 p-0" aria-label="Заявки">
                 {items.map((lead) => {
                   const isCurrent = lead.id === leadId
+                  const unread = lead.readAt === null && lead.status === 'new'
 
                   return (
-                    <li
-                      key={lead.id}
-                      data-testid="lead-row"
-                      className={cn(
-                        'relative rounded-xl border px-3 py-3 transition',
-                        isCurrent
-                          ? 'border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20'
-                          : 'border-transparent hover:bg-slate-50 dark:hover:bg-slate-800/60',
-                      )}
-                    >
-                      <div className="flex items-baseline gap-2">
-                        <Link
-                          to={leadHref(lead.id)}
-                          aria-current={isCurrent ? 'page' : undefined}
-                          className={cn(
-                            'min-w-0 flex-1 truncate text-sm after:absolute after:inset-0 after:rounded-xl focus-visible:outline-hidden focus-visible:after:ring-2 focus-visible:after:ring-emerald-500',
-                            lead.status === 'new' ? 'font-semibold' : 'font-medium',
-                          )}
+                    <li key={lead.id} data-testid="lead-row">
+                      <Link
+                        to={leadHref(lead.id)}
+                        aria-current={isCurrent ? 'true' : undefined}
+                        className={cn(
+                          'flex w-full gap-3 rounded-xl border px-3 py-[13px] text-left text-sm text-[#101828] no-underline hover:text-[#101828] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-slate-100',
+                          isCurrent
+                            ? 'border-[#A6D8C4] bg-[#E7F5EF] dark:border-emerald-800 dark:bg-emerald-900/20'
+                            : 'border-transparent bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800/60',
+                        )}
+                      >
+                        <span
+                          aria-hidden="true"
+                          className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-[#F2F4F7] text-[13px] font-bold text-[#344054] dark:bg-slate-800 dark:text-slate-200"
                         >
-                          {lead.name}
-                        </Link>
-                        <time dateTime={lead.createdAt} className="shrink-0 text-xs text-slate-500 dark:text-slate-400">{formatDateTime(lead.createdAt)}</time>
-                      </div>
-                      {lead.messagePreview !== null ? (
-                        <p className="mt-1 line-clamp-2 text-sm text-slate-600 dark:text-slate-300">{lead.messagePreview}</p>
-                      ) : null}
-                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-                        <Badge tone={leadStatusTone(lead.status)}>{leadStatusLabel(lead.status)}</Badge>
-                        <span>{lead.phone}</span>
-                        <span>{leadSourceLabel(lead.source)}</span>
-                        {lead.assignee !== null ? <span>{lead.assignee.email ?? 'Пользователь удалён'}</span> : null}
-                      </div>
+                          {leadInitials(lead.name)}
+                        </span>
+                        <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
+                          <span className="flex items-center gap-2">
+                            <span className={cn('min-w-0 flex-1 truncate', unread ? 'font-bold' : 'font-medium')}>{lead.name}</span>
+                            {unread ? <span aria-label="Не прочитана" className="h-2 w-2 shrink-0 rounded-full bg-[#C2410C]" /> : null}
+                            <time dateTime={lead.createdAt} className="shrink-0 text-xs text-[#5D6679] dark:text-slate-400">{formatLeadListTime(lead.createdAt)}</time>
+                          </span>
+                          {lead.messagePreview !== null ? (
+                            <span className="line-clamp-2 text-[13px] text-[#475467] dark:text-slate-300">{lead.messagePreview}</span>
+                          ) : null}
+                          <span className="flex flex-wrap gap-1.5 text-xs text-[#5D6679] dark:text-slate-400">
+                            <span>{leadSourceLabel(lead.source)}</span>
+                            {lead.b2b ? <span className="rounded-[5px] bg-[#E0EAFF] px-1.5 font-bold text-[#1E40AF] dark:bg-blue-900/40 dark:text-blue-200">B2B</span> : null}
+                          </span>
+                        </span>
+                      </Link>
                     </li>
                   )
                 })}
               </ul>
-              {data !== undefined ? (
+            ) : null}
+
+            {data !== undefined && data.pages > 1 ? (
+              <div className="mt-2 px-2">
                 <Pagination page={data.page} pages={data.pages} total={data.total} onPageChange={(page) => update({ page })} />
-              ) : null}
-            </>
-          ) : null}
+              </div>
+            ) : null}
+          </div>
         </section>
 
-        <section aria-label="Карточка заявки" className={cn('min-w-0', !selected && 'hidden lg:block')}>
+        <section
+          aria-label="Карточка заявки"
+          className={cn('box-border min-w-0 flex-1 px-4 pb-8 pt-6 lg:px-7', !selected && 'hidden lg:block')}
+        >
           {selected ? (
-            <LeadDetailPage key={leadId} leadId={leadId} closeHref={listHref} />
+            <LeadDetailPage key={leadId} leadId={leadId} closeHref={listHref} onChangeStatus={changeStatus} />
           ) : (
-            <div className="flex min-h-80 flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700">
-              <p className="text-base font-semibold">Выберите заявку в списке</p>
-              <p className="mt-1 max-w-sm text-sm text-slate-500 dark:text-slate-400">
-                Здесь откроется карточка: запрос клиента, звонок в один клик, статус, ответственный и история.
-              </p>
+            <div className="mx-auto my-20 max-w-[360px] text-center text-[#5D6679] dark:text-slate-400">
+              <p className="m-0 text-lg font-bold text-[#101828] dark:text-slate-100">Выберите заявку слева</p>
+              <p className="m-0 mt-1.5">Или переключите статус вверху списка</p>
             </div>
           )}
         </section>
       </div>
-    </div>
+
+      <UndoToast toast={undo} onUndo={undoLast} onDismiss={dismissUndo} />
+
+      <CreateLeadDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={(id, name) => {
+          setCreateOpen(false)
+          push({ title: 'Заявка создана', description: name })
+          setSearchText('')
+          navigate(`/admin/crm/${id}`)
+        }}
+      />
+    </>
   )
 }

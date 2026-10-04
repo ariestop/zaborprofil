@@ -276,6 +276,8 @@ export interface LeadItem {
   status: LeadStatus
   assignee: LeadAssigneeRef | null
   spamScore: number
+  b2b: boolean
+  readAt: string | null
   messagePreview: string | null
   createdAt: string
   updatedAt: string
@@ -303,6 +305,10 @@ export interface LeadDetail {
   assignee: LeadAssigneeRef | null
   spamScore: number
   spamReasons: string[]
+  pageUrl: string | null
+  utm: Record<string, string>
+  b2b: boolean
+  readAt: string | null
   createdAt: string
   updatedAt: string
   events: LeadEvent[]

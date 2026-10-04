@@ -21,6 +21,9 @@ export type NavIconName =
   | 'chevron'
   | 'phone'
   | 'mail'
+  | 'plus'
+  | 'send'
+  | 'calculator'
 
 const paths: Record<NavIconName, ReactElement> = {
   dashboard: (
@@ -109,6 +112,20 @@ const paths: Record<NavIconName, ReactElement> = {
   chevron: <path d="M6 9.5l6 6 6-6" />,
   phone: (
     <path d="M5.5 4h3.5l1.8 4.5-2.3 1.4a10.5 10.5 0 0 0 5.6 5.6l1.4-2.3L20 15v3.5a2 2 0 0 1-2 2A14.5 14.5 0 0 1 3.5 6a2 2 0 0 1 2-2z" />
+  ),
+  plus: <path d="M12 5v14M5 12h14" />,
+  send: (
+    <>
+      <path d="M20.5 3.5L3.5 10.5l7 2.5 2.5 7z" />
+      <path d="M10.5 13L20.5 3.5" />
+    </>
+  ),
+  calculator: (
+    <>
+      <rect x="5" y="3.5" width="14" height="17" rx="2" />
+      <path d="M8.5 7.5h7" />
+      <path d="M8.5 12h.01M12 12h.01M15.5 12h.01M8.5 16h.01M12 16h.01M15.5 16h.01" />
+    </>
   ),
   mail: (
     <>

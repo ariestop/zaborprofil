@@ -7,7 +7,7 @@ import 'swiper/css/effect-coverflow'
 import 'swiper/css/effect-fade'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
-import { initLeadFormContext } from './leadForm'
+import { collectUtm, initLeadFormContext } from './leadForm'
 
 interface SiteSliderBreakpoints {
   mobileSlidesPerView: number
@@ -230,6 +230,7 @@ function formPayload(form: HTMLFormElement): Record<string, unknown> {
     formLoadedAt: String(data.get('formLoadedAt') ?? ''),
     pageUrl: String(data.get('pageUrl') || window.location.href),
     policyUrl: String(data.get('policyUrl') ?? '/privacy/'),
+    utm: collectUtm(),
   }
 }
 

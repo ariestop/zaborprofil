@@ -13,6 +13,7 @@ use App\Module\Lead\Domain\Repository\LeadRepositoryInterface;
 use App\Module\Lead\Domain\ValueObject\LeadActor;
 use App\Module\Lead\Domain\ValueObject\LeadEventType;
 use App\Module\Lead\Domain\ValueObject\LeadStatus;
+use App\Module\Lead\Domain\ValueObject\PhoneNumber;
 use App\Shared\Application\Logging\BusinessEventLogger;
 use InvalidArgumentException;
 use Symfony\Component\Uid\Ulid;
@@ -32,6 +33,54 @@ final readonly class LeadWorkflow
         private AdminAuditLogger $audit,
         private BusinessEventLogger $businessEvents,
     ) {
+    }
+
+    public const string MANUAL_SOURCE = 'phone_call';
+
+    /**
+     * Заявка, которую менеджер завёл сам, например после телефонного звонка.
+     * Согласие на обработку данных при этом не фиксируется, и карточка показывает это явно.
+     */
+    public function createManual(string $name, string $phone, ?string $email, ?string $message, LeadActor $actor): Lead
+    {
+        $name = trim($name);
+        $phone = trim($phone);
+        $email = $email === null ? null : trim($email);
+        if ($name === '' || mb_strlen($name) > 180) {
+            throw new InvalidArgumentException('Lead name must be between 1 and 180 characters.');
+        }
+        if (mb_strlen($phone) > 40 || \strlen(PhoneNumber::digits($phone)) < 6) {
+            throw new InvalidArgumentException('Lead phone must contain at least 6 digits.');
+        }
+        if ($email !== null && $email !== '' && (mb_strlen($email) > 180 || filter_var($email, FILTER_VALIDATE_EMAIL) === false)) {
+            throw new InvalidArgumentException('Lead email is not valid.');
+        }
+        if ($message !== null && mb_strlen($message) > self::NOTE_MAX_LENGTH) {
+            throw new InvalidArgumentException(\sprintf('Lead message must not exceed %d characters.', self::NOTE_MAX_LENGTH));
+        }
+
+        $lead = new Lead(self::MANUAL_SOURCE, $name, $phone, $email, $message, ['consent' => false, 'origin' => 'manual']);
+        $lead->markRead();
+        $this->leads->save($lead);
+
+        $leadId = (string) $lead->id();
+        $this->audit->log('lead.created_manually', 'lead', $leadId, [], ['source' => self::MANUAL_SOURCE]);
+        $this->businessEvents->log('lead.created', [
+            'leadId' => $leadId,
+            'source' => self::MANUAL_SOURCE,
+            'status' => $lead->status(),
+            'maskedContact' => PhoneNumber::mask($phone),
+        ]);
+
+        return $lead;
+    }
+
+    public function markRead(Lead $lead): Lead
+    {
+        $lead->markRead();
+        $this->leads->save($lead);
+
+        return $lead;
     }
 
     public function changeStatus(Lead $lead, string $status, LeadActor $actor): Lead

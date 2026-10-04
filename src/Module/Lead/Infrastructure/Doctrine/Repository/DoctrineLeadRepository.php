@@ -138,6 +138,8 @@ final class DoctrineLeadRepository extends ServiceEntityRepository implements Le
 
         if ($criteria->status !== null) {
             $builder->andWhere('lead.status = :status')->setParameter('status', $criteria->status);
+        } elseif ($criteria->excludeSpam) {
+            $builder->andWhere('lead.status <> :excludedStatus')->setParameter('excludedStatus', LeadStatus::SPAM);
         }
 
         if ($criteria->source !== null && $criteria->source !== '') {
@@ -150,6 +152,18 @@ final class DoctrineLeadRepository extends ServiceEntityRepository implements Le
 
         if ($criteria->createdBefore !== null) {
             $builder->andWhere('lead.createdAt < :createdBefore')->setParameter('createdBefore', $criteria->createdBefore, Types::DATETIME_IMMUTABLE);
+        }
+
+        if ($criteria->b2bOnly) {
+            $builder->andWhere('lead.b2b = true');
+        }
+
+        if ($criteria->waitingHours !== null) {
+            $builder
+                ->andWhere('lead.status = :waitingStatus')
+                ->andWhere('lead.createdAt <= :waitingBefore')
+                ->setParameter('waitingStatus', LeadStatus::NEW)
+                ->setParameter('waitingBefore', new \DateTimeImmutable(\sprintf('-%d hours', $criteria->waitingHours)), Types::DATETIME_IMMUTABLE);
         }
 
         if ($criteria->assignee === LeadSearchCriteria::ASSIGNEE_NONE) {

@@ -271,6 +271,45 @@ final class LeadAdminApiTest extends AdminApiTestCase
         self::assertEquals(['status' => 'new', 'source' => 'callback', 'from' => null, 'to' => null, 'assignee' => null, 'hasQuery' => false], $values['filters']);
     }
 
+    public function testManagerCanCreateLeadAfterCallAndMarkLeadsRead(): void
+    {
+        $client = $this->adminClient();
+        $lead = $this->seedLeads()['Анна'];
+
+        $this->api($client, 'POST', '/admin/api/leads', ['name' => 'ООО «СтройДвор»', 'phone' => '+7 900 000-80-02', 'email' => '', 'message' => 'Нужна смета на 2000 штакетин']);
+        self::assertResponseStatusCodeSame(201);
+        $created = $this->json($client);
+        self::assertSame('phone_call', $created['source']);
+        self::assertSame('new', $created['status']);
+        self::assertTrue($created['b2b']);
+        self::assertNotNull($created['readAt']);
+        self::assertIsArray($created['consentSnapshot']);
+        self::assertFalse($created['consentSnapshot']['consent'] ?? null);
+        self::assertCount(1, $this->auditEntries('lead.created_manually'));
+
+        $this->api($client, 'POST', '/admin/api/leads', ['name' => 'Иван', 'phone' => '12']);
+        self::assertResponseStatusCodeSame(422);
+
+        $this->api($client, 'GET', '/admin/api/leads?status=active&perPage=100');
+        self::assertNotContains('spam', array_column($this->rows($this->json($client)['items']), 'status'));
+        self::assertSame(6, $this->json($client)['total']);
+
+        $this->api($client, 'GET', '/admin/api/leads?b2b=1');
+        self::assertSame(['ООО «СтройДвор»'], $this->names($this->json($client)));
+
+        $this->api($client, 'GET', '/admin/api/leads/'.$lead->id());
+        self::assertNull($this->json($client)['readAt']);
+        $this->api($client, 'PATCH', '/admin/api/leads/'.$lead->id().'/read');
+        self::assertResponseIsSuccessful();
+        self::assertNotNull($this->json($client)['readAt']);
+
+        $this->api($client, 'GET', '/admin/api/leads?waiting=2');
+        $waiting = $this->names($this->json($client));
+        self::assertContains('Анна', $waiting);
+        self::assertNotContains('ООО «СтройДвор»', $waiting, 'Свежая заявка ещё не считается неотвеченной.');
+        self::assertNotContains('Вера', $waiting, 'Заявка в работе не считается неотвеченной.');
+    }
+
     public function testMutationsRequireManagePermissionAndExportRequiresExportPermission(): void
     {
         $client = $this->adminClient();
@@ -286,6 +325,8 @@ final class LeadAdminApiTest extends AdminApiTestCase
             ['PATCH', '/admin/api/leads/'.$lead->id().'/status'],
             ['PATCH', '/admin/api/leads/'.$lead->id().'/assignee'],
             ['POST', '/admin/api/leads/'.$lead->id().'/notes'],
+            ['POST', '/admin/api/leads'],
+            ['PATCH', '/admin/api/leads/'.$lead->id().'/read'],
         ];
         foreach ($requests as [$method, $uri]) {
             $this->api($client, $method, $uri, $method === 'GET' ? [] : ['status' => 'done', 'text' => 'x', 'assigneeId' => null]);
