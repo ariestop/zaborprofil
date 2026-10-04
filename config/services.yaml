@@ -5,6 +5,8 @@ parameters:
     app.site_url: '%env(SITE_URL)%'
     app.vite.manifest_path: '%kernel.project_dir%/public_html/build/.vite/manifest.json'
     app.vite.public_build_path: /build
+    # Только для локальной разработки: http://localhost:5173 включает HMR без `npm run build`.
+    app.vite.dev_server_url: '%env(default:empty_string:VITE_DEV_SERVER_URL)%'
     app.release_info_path: '%kernel.project_dir%/var/release-info.json'
     app.media_upload_dir: '%kernel.project_dir%/public_html/uploads/media'
     app.sitemap_chunk_size: 50000
@@ -96,6 +98,7 @@ services:
         arguments:
             $manifestPath: '%app.vite.manifest_path%'
             $publicBuildPath: '%app.vite.public_build_path%'
+            $devServerUrl: '%app.vite.dev_server_url%'
 
     App\Shared\UI\Console\SmokeTestCommand:
         arguments:
@@ -145,4 +148,10 @@ services:
 when@test:
     parameters:
         app.vite.manifest_path: '%kernel.project_dir%/tests/Fixtures/vite/manifest.json'
+        app.vite.dev_server_url: ''
         app.sitemap_chunk_size: 2
+
+# Dev-сервер Vite не должен включиться на staging/production, даже если переменная попала в окружение.
+when@prod:
+    parameters:
+        app.vite.dev_server_url: ''

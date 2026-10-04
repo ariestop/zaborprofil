@@ -219,7 +219,9 @@ DEFAULT_URI=http://localhost:8000
 make npm-dev          # vite на :5173
 ```
 
-`ViteAssetExtension` отдаёт ссылки на `:5173` пока активен dev server и manifest отсутствует / устарел. Hot Module Replacement работает для admin SPA.
+Чтобы страницы грузили ассеты с Vite (HMR, без `make npm-build`), задайте в `.env.local`
+`VITE_DEV_SERVER_URL=http://localhost:5173`. Без этой переменной `ViteAssetExtension` использует
+`manifest.json`, и `make npm-dev` на страницы не влияет. Подробности: [22-frontend-assets](22-frontend-assets.md).
 
 ## IDE
 
@@ -246,7 +248,8 @@ make npm-dev          # vite на :5173
 | 502 на `http://localhost` | php контейнер ещё не поднялся | `make logs`, дождаться FPM ready |
 | `permission denied` на `var/cache` | mount-перезапись прав | `make shell` → `chown -R www-data:www-data var` или `make build` |
 | Postgres конфликтует с локальным | порт `5432` занят | `POSTGRES_PORT=15432` уже в default; либо ставите свой |
-| HMR Vite не работает | dev server не запущен | `make npm-dev` |
+| HMR Vite не работает / правки видны только после сборки | не задан `VITE_DEV_SERVER_URL` или не запущен dev server | `VITE_DEV_SERVER_URL=http://localhost:5173` в `.env.local` и `make npm-dev` |
+| Страницы без стилей и JS после включения dev-режима | задан `VITE_DEV_SERVER_URL`, но `make npm-dev` не запущен | запустить `make npm-dev` или закомментировать переменную |
 | Тесты падают на CSRF | нет `.env.test.local` | используйте phpunit с дефолтным `.env.test`, для CI используется `.env.test.ci` |
 | Время в логах не московское | `php.ini` timezone | `docker/php/php.ini` → `date.timezone` |
 | Браузер: «не удаётся подключиться» к `127.0.0.1:8081` | Docker на **другом** хосте, чем Firefox, или туннель закрыт | SSH `-L` / `LocalForward` в `~/.ssh/config`, см. раздел «Удалённый сервер» выше |

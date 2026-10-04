@@ -40,25 +40,37 @@ make npm-build
 ## Dev server (только локально)
 
 ```bash
+# 1. В .env.local: VITE_DEV_SERVER_URL=http://localhost:5173
+# 2. В отдельном терминале:
 make npm-dev        # vite dev на :5173, HMR
 ```
 
-`ViteAssetExtension` определяет, использовать manifest или dev server (по наличию `manifest.json`).
+Режим включается **только** переменной `VITE_DEV_SERVER_URL` (параметр `app.vite.dev_server_url`).
+Пока она не задана, страницы берут файлы из `manifest.json`, и изменения видны только после
+`make npm-build`. В `prod` и `test` параметр принудительно пустой.
+
+Пока переменная задана, а `make npm-dev` не запущен, страницы остаются без стилей и JS.
+Для проверки production-сборки закомментируйте переменную и выполните `make npm-build`.
+Если проект лежит на файловой системе без inotify (например, `C:\` под Docker Desktop),
+запускайте `VITE_USE_POLLING=1 make npm-dev`.
 
 ## Подключение в Twig
 
 ```twig
-{# В base.html.twig #}
-<link rel="stylesheet" href="{{ vite_asset('assets/site/main.ts') }}">
-{{ vite_styles() }}
-<script type="module" src="{{ vite_asset('assets/admin/main.ts') }}"></script>
+{# base.html.twig (публичный сайт): CSS входа #}
+{{ vite_entry_link_tags('assets/site/app.ts') }}
+
+{# admin/dashboard.html.twig #}
+{{ vite_entry_link_tags('assets/admin/app.ts') }}
+{{ vite_entry_script_tags('assets/admin/app.ts') }}
 ```
 
 `ViteAssetExtension`:
 
-- читает `public_html/build/.vite/manifest.json`;
-- возвращает финальные хешированные пути;
-- в dev — отдаёт `http://localhost:5173/...`.
+- в production читает `public_html/build/.vite/manifest.json` и возвращает хешированные пути;
+- в dev-режиме подключает с `VITE_DEV_SERVER_URL` клиент HMR, React Fast Refresh и сам вход;
+  CSS приходит через модуль входа, поэтому каждый вход выводится на странице один раз
+  (вторая функция для того же входа возвращает пустую строку).
 
 ## Cache busting
 
