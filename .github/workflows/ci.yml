@@ -8,12 +8,14 @@ on:
     branches:
       - main
       - develop
+      - dev
       - 'feature/**'
       - 'fix/**'
   pull_request:
     branches:
       - main
       - develop
+      - dev
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -98,6 +100,12 @@ jobs:
           for script in tools/deploy/*.sh; do
             bash -n "$script"
           done
+
+      - name: Beget deploy script checks
+        run: |
+          set -e
+          shellcheck -x tools/deploy/deploy-beget.sh tests/shell/deploy-beget.sh
+          bash tests/shell/deploy-beget.sh
 
       - name: PHPUnit
         run: composer test

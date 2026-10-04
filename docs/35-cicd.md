@@ -6,8 +6,8 @@
 
 Триггеры:
 
-- push в `main`/`develop`/`feature/**`/`fix/**`;
-- pull_request в `main`/`develop`.
+- push в `main`/`develop`/`dev`/`feature/**`/`fix/**`;
+- pull_request в `main`/`develop`/`dev`.
 
 Концепт `concurrency: ci-${{ github.ref }}; cancel-in-progress: true` — отменяет старый CI при пуше нового коммита.
 
@@ -34,7 +34,7 @@
 13. `doctrine:schema:validate --env=test --skip-sync`.
 14. `lint:container --env=test`.
 15. `lint:twig templates --env=test`.
-16. Bash syntax check для `tools/deploy/*.sh`.
+16. Bash syntax check для `tools/deploy/*.sh`; ShellCheck и `tests/shell/deploy-beget.sh` для Beget-деплоя (проверка `mysql://`, симлинков `shared/`, прогрева кэша, отката).
 17. `php bin/console app:smoke:test --env=test`.
 18. `composer test` (PHPUnit).
 
@@ -46,7 +46,21 @@
 4. `npm audit --audit-level=high`.
 5. `npm run build` (включает `tsc --noEmit`).
 
+### `.github/workflows/deploy-staging-beget.yml`
+
+Быстрый деплой staging `https://dev.zaborprofil.ru` на Beget. Подробности, секреты и настройка сервера: [49-beget-staging-deploy](49-beget-staging-deploy.md).
+
+- Триггеры: push в ветку `dev` и `workflow_dispatch` (вход `ref`).
+- `concurrency: deploy-staging-beget` (`cancel-in-progress: false`), environment `staging`.
+- Шаги: проверка наличия секретов (`DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`; без них деплой пропускается с предупреждением), быстрые проверки (`php -l`, `bash -n`), сборка frontend (Node 25.9.0) в `frontend-build.tar.gz`, загрузка архива и запуск `tools/deploy/deploy-beget.sh` через SSH stdin, smoke-check (без пароля 401, с `STAGING_BASIC_AUTH` — 200 и `X-Robots-Tag: noindex`) и прогрев публичных страниц. На сервере: MySQL 8.4 (`pdo_mysql`), файловый кэш в `shared/cache`, сессии в `shared/sessions`, Redis не нужен.
+- Полный CI не ждёт: он запускается отдельным workflow `CI` (push в `dev` и PR в `dev` включены).
+- Production этим workflow не деплоится.
+
 ### `.github/workflows/deploy.yml`
+
+> **Статус: отключён по умолчанию (legacy, VPS).** Автозапуск по push в `main` выполняется только если задана repository variable `VPS_DEPLOY_ENABLED=true` (Settings -> Secrets and variables -> Actions -> Variables). Условие стоит на каждом job; при выключенной переменной run завершается со статусом skipped. Ручной запуск (`workflow_dispatch`) доступен всегда.
+>
+> Как включить обратно: создать переменную `VPS_DEPLOY_ENABLED` со значением `true` (или `gh variable set VPS_DEPLOY_ENABLED --body true`); для production нужны секреты `STAGING_SSH_*`/`PRODUCTION_SSH_*` (см. раздел Secrets). Как выключить: удалить переменную или задать любое значение, кроме `true`.
 
 Триггеры:
 

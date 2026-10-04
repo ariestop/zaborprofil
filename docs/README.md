@@ -34,7 +34,7 @@
 | Безопасность | [20-security-and-access-control](20-security-and-access-control.md), [25-files-and-uploads](25-files-and-uploads.md) |
 | Кеш (filesystem) | [23-cache](23-cache.md) |
 | Очереди / Messenger | [24-messenger-and-queues](24-messenger-and-queues.md) |
-| Деплой / инфраструктура | [32-docker-architecture](32-docker-architecture.md), [33-local-development](33-local-development.md), [34-deployment](34-deployment.md), [35-cicd](35-cicd.md), [36-backup-restore](36-backup-restore.md), [37-runbooks](37-runbooks.md), [47-dev-database-state](47-dev-database-state.md) |
+| Деплой / инфраструктура | [32-docker-architecture](32-docker-architecture.md), [33-local-development](33-local-development.md), [34-deployment](34-deployment.md), [35-cicd](35-cicd.md), [36-backup-restore](36-backup-restore.md), [37-runbooks](37-runbooks.md), [47-dev-database-state](47-dev-database-state.md), [49-beget-staging-deploy](49-beget-staging-deploy.md) |
 | Новый модуль | [06-module-architecture](06-module-architecture.md), [43-module-development-guide](43-module-development-guide.md) |
 | Новая фича end-to-end | [41-implementation-playbook](41-implementation-playbook.md), [42-feature-development-guide](42-feature-development-guide.md) |
 
@@ -106,6 +106,7 @@
 - [46-glossary](46-glossary.md) — термины проекта.
 - [47-dev-database-state](47-dev-database-state.md) — единое dev-состояние БД, fixtures и правила для dev snapshots в Git.
 - [48-documentation-normalization](48-documentation-normalization.md) — матрица перехода `docs/*.md -> docs/NN-*.md` и кандидаты на удаление дублей.
+- [49-beget-staging-deploy](49-beget-staging-deploy.md) — автодеплой staging `dev.zaborprofil.ru` на Beget (ветка `dev`, GitHub Actions, SSH).
 
 ### ADR
 

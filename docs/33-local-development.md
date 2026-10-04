@@ -263,8 +263,13 @@ php bin/console router:match /health
 vendor/bin/phpunit
 ```
 
+## Локально и на staging Beget
+
+Локально используется Docker (MySQL 8.4, Mailpit, файловый кэш в `var/cache`). Staging `https://dev.zaborprofil.ru` на Beget работает без Docker: тот же MySQL 8.4 (`pdo_mysql`), файловый кэш и сессии в `shared/`, Redis не нужен, ветка `dev` деплоится автоматически. Отличия окружения (Basic Auth, `MAILER_DSN=null://null`, prebuilt frontend) и порядок настройки: [49-beget-staging-deploy](49-beget-staging-deploy.md). Скрипт деплоя и его тесты запускаются без Docker: `bash tests/shell/deploy-beget.sh`.
+
 ## Связанные документы
 
+- [49-beget-staging-deploy](49-beget-staging-deploy.md)
 - [32-docker-architecture](32-docker-architecture.md)
 - [27-config-and-env](27-config-and-env.md)
 - [44-troubleshooting](44-troubleshooting.md)

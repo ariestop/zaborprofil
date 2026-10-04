@@ -162,6 +162,8 @@ Staging и production деплоятся без Docker через release-based 
 
 Production deploy разрешен только после успешного staging deploy, с backup перед миграциями и health-check после переключения релиза.
 
+Staging-стенд `https://dev.zaborprofil.ru` на хостинге Beget деплоится автоматически из ветки `dev` (GitHub Actions по SSH, без Docker; MySQL 8.4, файловый кэш и сессии в `shared/`, Redis не нужен): `docs/49-beget-staging-deploy.md`.
+
 Документация:
 
 - `docs/STAGING.md`

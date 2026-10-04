@@ -1,0 +1,244 @@
+name: Deploy staging (Beget)
+
+# Быстрый staging-стенд https://dev.zaborprofil.ru: push в ветку `dev` -> Beget по SSH.
+# Полный CI не ждём (он идёт отдельным workflow `CI`): здесь только быстрые проверки,
+# сборка frontend (на Beget нет Node.js) и деплой. Production этим workflow не затрагивается.
+# Описание: docs/49-beget-staging-deploy.md
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Ветка, тег или SHA для выкладки на staging
+        required: false
+        default: dev
+        type: string
+
+concurrency:
+  group: deploy-staging-beget
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy dev.zaborprofil.ru
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event_name == 'workflow_dispatch' || !github.event.deleted
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_URL || 'https://dev.zaborprofil.ru/' }}
+
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
+      STAGING_PATH: ${{ secrets.STAGING_PATH || vars.STAGING_PATH || '~/dev.zaborprofil.ru' }}
+      STAGING_URL: ${{ vars.STAGING_URL || 'https://dev.zaborprofil.ru/' }}
+      STAGING_BASIC_AUTH: ${{ secrets.STAGING_BASIC_AUTH }}
+      REQUESTED_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.sha }}
+
+    steps:
+      - name: Check configuration
+        id: config
+        run: |
+          set -euo pipefail
+          missing=()
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY; do
+            if [[ -z "${!name}" ]]; then
+              missing+=("$name")
+            fi
+          done
+          if ((${#missing[@]} > 0)); then
+            echo "::warning::Деплой пропущен: не заданы секреты GitHub Actions: ${missing[*]}. См. docs/49-beget-staging-deploy.md."
+            echo "configured=false" >>"$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if ! [[ "$STAGING_PATH" =~ ^[A-Za-z0-9._~/-]+$ ]]; then
+            echo "::error::STAGING_PATH содержит недопустимые символы."
+            exit 1
+          fi
+          if ! [[ "$REQUESTED_REF" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]*$ ]]; then
+            echo "::error::Недопустимый ref: $REQUESTED_REF"
+            exit 1
+          fi
+          echo "configured=true" >>"$GITHUB_OUTPUT"
+
+      - name: Checkout target
+        if: steps.config.outputs.configured == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.REQUESTED_REF }}
+          path: target
+
+      - name: Checkout deploy tooling
+        if: steps.config.outputs.configured == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: tooling
+          sparse-checkout: tools/deploy
+          sparse-checkout-cone-mode: true
+
+      - name: Pin commit
+        if: steps.config.outputs.configured == 'true'
+        id: pin
+        working-directory: target
+        run: echo "sha=$(git rev-parse HEAD)" >>"$GITHUB_OUTPUT"
+
+      - name: Setup PHP
+        if: steps.config.outputs.configured == 'true'
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          coverage: none
+
+      - name: Quick syntax checks
+        if: steps.config.outputs.configured == 'true'
+        run: |
+          set -euo pipefail
+          cd target
+          git ls-files -z -- '*.php' bin/console | xargs -0 -r -n 50 -P 4 php -d display_errors=stderr -l >/dev/null
+          cd ..
+          bash -n tooling/tools/deploy/deploy-beget.sh
+
+      - name: Setup Node
+        if: steps.config.outputs.configured == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 25.9.0
+          cache: npm
+          cache-dependency-path: target/package-lock.json
+
+      - name: Build frontend
+        if: steps.config.outputs.configured == 'true'
+        working-directory: target
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run build
+          test -f public_html/build/.vite/manifest.json
+
+      - name: Package frontend build
+        if: steps.config.outputs.configured == 'true'
+        run: |
+          set -euo pipefail
+          mkdir dist
+          cp -r target/public_html/build dist/build
+          printf '%s\n' "${{ steps.pin.outputs.sha }}" >dist/BUILD_COMMIT
+          tar -czf frontend-build.tar.gz -C dist .
+
+      - name: Configure SSH
+        if: steps.config.outputs.configured == 'true'
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" >~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          if [[ -n "$DEPLOY_KNOWN_HOSTS" ]]; then
+            printf '%s\n' "$DEPLOY_KNOWN_HOSTS" >~/.ssh/known_hosts
+          else
+            echo "::warning::DEPLOY_KNOWN_HOSTS не задан: ключ хоста берётся через ssh-keyscan без проверки подлинности."
+            ssh-keyscan -p "$DEPLOY_PORT" -H "$DEPLOY_HOST" >~/.ssh/known_hosts 2>/dev/null
+          fi
+          chmod 644 ~/.ssh/known_hosts
+          cat >~/.ssh/config <<EOF
+          Host deploy-target
+            HostName $DEPLOY_HOST
+            User $DEPLOY_USER
+            Port $DEPLOY_PORT
+            IdentityFile ~/.ssh/deploy_key
+            IdentitiesOnly yes
+            StrictHostKeyChecking yes
+            BatchMode yes
+            ServerAliveInterval 30
+          EOF
+          chmod 600 ~/.ssh/config
+
+      - name: Upload frontend build
+        if: steps.config.outputs.configured == 'true'
+        run: |
+          set -euo pipefail
+          remote_archive="\$HOME/.deploy-tmp/frontend-build-${{ steps.pin.outputs.sha }}.tar.gz"
+          # shellcheck disable=SC2029
+          ssh deploy-target "umask 077 && mkdir -p \"\$HOME/.deploy-tmp\" && cat > \"$remote_archive\"" <frontend-build.tar.gz
+
+      - name: Deploy over SSH
+        if: steps.config.outputs.configured == 'true'
+        run: |
+          set -euo pipefail
+          sha="${{ steps.pin.outputs.sha }}"
+          remote_env="DEPLOY_PATH=$(printf '%q' "$STAGING_PATH")"
+          remote_env+=" FRONTEND_BUILD_ARCHIVE=\"\$HOME/.deploy-tmp/frontend-build-${sha}.tar.gz\""
+          # shellcheck disable=SC2029
+          ssh deploy-target "$remote_env bash -s -- $(printf '%q' "$sha")" <tooling/tools/deploy/deploy-beget.sh
+
+      - name: Smoke check
+        if: steps.config.outputs.configured == 'true'
+        run: |
+          set -euo pipefail
+          url="${STAGING_URL%/}"
+          curl_opts=(-sS --retry 5 --retry-delay 5 --retry-all-errors --max-time 30)
+
+          status="$(curl "${curl_opts[@]}" -o /dev/null -D /tmp/anon.headers -w '%{http_code}' "$url/")"
+          if [[ "$status" != "401" ]] || ! grep -qi '^www-authenticate: *basic' /tmp/anon.headers; then
+            echo "::error::Без пароля staging ответил $status, ожидался 401 с WWW-Authenticate: Basic. Стенд может быть открыт."
+            exit 1
+          fi
+
+          if [[ -z "$STAGING_BASIC_AUTH" ]]; then
+            echo "::notice::STAGING_BASIC_AUTH не задан: проверка с паролем пропущена."
+            exit 0
+          fi
+
+          status="$(curl "${curl_opts[@]}" -u "$STAGING_BASIC_AUTH" -o /dev/null -D /tmp/auth.headers -w '%{http_code}' "$url/health/live")"
+          if [[ "$status" != "200" ]]; then
+            echo "::error::/health/live с паролем ответил $status, ожидался 200."
+            exit 1
+          fi
+          if ! grep -qi '^x-robots-tag:.*noindex' /tmp/auth.headers; then
+            echo "::error::В ответе нет X-Robots-Tag: noindex."
+            exit 1
+          fi
+
+          status="$(curl "${curl_opts[@]}" -u "$STAGING_BASIC_AUTH" -o /dev/null -w '%{http_code}' "$url/admin/login")"
+          if [[ "$status" != "200" ]]; then
+            echo "::error::/admin/login ответил $status, ожидался 200."
+            exit 1
+          fi
+
+          ready="$(curl "${curl_opts[@]}" -u "$STAGING_BASIC_AUTH" -o /dev/null -w '%{http_code}' "$url/health/ready" || true)"
+          if [[ "$ready" != "200" ]]; then
+            echo "::warning::/health/ready ответил $ready (проверьте БД MySQL и каталоги shared/cache, shared/sessions на стенде)."
+          fi
+
+      - name: Warm up public pages
+        if: steps.config.outputs.configured == 'true' && env.STAGING_BASIC_AUTH != ''
+        continue-on-error: true
+        run: |
+          url="${STAGING_URL%/}"
+          for path in / /sitemap.xml /robots.txt; do
+            curl -sS -o /dev/null -w "%{http_code} $path\n" --max-time 30 -u "$STAGING_BASIC_AUTH" "$url$path" || true
+          done
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## Deploy staging (Beget)"
+            echo
+            if [[ "${{ steps.config.outputs.configured }}" == "true" ]]; then
+              echo "- Коммит: \`${{ steps.pin.outputs.sha }}\`"
+              echo "- URL: ${STAGING_URL}"
+              echo "- Лог на сервере: \`var/log/deploy.log\`, история: \`var/log/deploy-history.log\`"
+            else
+              echo "Деплой пропущен: не заданы секреты \`DEPLOY_HOST\`, \`DEPLOY_USER\`, \`DEPLOY_SSH_KEY\`."
+            fi
+          } >>"$GITHUB_STEP_SUMMARY"

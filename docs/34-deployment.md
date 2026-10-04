@@ -4,6 +4,8 @@
 
 > Staging и production деплоятся **на VPS без Docker**. Docker — только для local dev.
 
+> Отдельный staging-стенд `https://dev.zaborprofil.ru` на хостинге Beget (ветка `dev`, деплой по SSH без release-структуры) описан в [49-beget-staging-deploy](49-beget-staging-deploy.md). Этот документ описывает release-схему VPS (`tools/deploy/deploy-staging.sh`, `deploy-production.sh`). Автозапуск VPS-деплоя из `.github/workflows/deploy.yml` по умолчанию выключен: включается repository variable `VPS_DEPLOY_ENABLED=true` (см. [35-cicd](35-cicd.md)).
+
 ## Release layout
 
 ```text
@@ -40,7 +42,8 @@
 `tools/deploy/`:
 
 - `common.sh` — общие функции, переменные.
-- `deploy-staging.sh` — деплой staging.
+- `deploy-staging.sh` — деплой staging (VPS, release-схема).
+- `deploy-beget.sh` — деплой staging `dev.zaborprofil.ru` на Beget (git-клон на месте, см. [49-beget-staging-deploy](49-beget-staging-deploy.md)).
 - `deploy-production.sh` — деплой production (требует `CONFIRM_STAGING_DEPLOYED=yes` и `CONFIRM_DEPLOY_SAFETY_CHECKLIST=yes`).
 - `rollback.sh` — переключение `current` на предыдущий релиз или выбранный релиз.
 - `health-check.sh` — curl healthcheck с retry.
@@ -169,6 +172,7 @@ Redis не используется. Кэш приложения (`framework.cac
 
 - Каждый релиз имеет собственный `var/cache`, поэтому после переключения `current` кэш «холодный» — это штатно, `cache:warmup` выполняется в release-скрипте.
 - Каталоги `var/cache` и `var/sessions` должны принадлежать `www-data` (шаг `chown` release-скрипта).
+- Staging на Beget (`deploy-beget.sh`): `var/cache` и `var/sessions` — симлинки на `shared/cache` и `shared/sessions` внутри каталога сайта; сессии переживают деплой, кэш очищается и прогревается (`cache:warmup`) на каждом деплое. Подробнее: [49-beget-staging-deploy](49-beget-staging-deploy.md).
 - Файловый кэш не разделяется между серверами; для нескольких серверов потребуется общий FS либо возврат к Redis (см. [ADR-0007](adr/0007-filesystem-cache-and-doctrine-messenger.md)).
 
 ## systemd
@@ -273,6 +277,7 @@ php bin/console cache:warmup --env=prod
 - [27-config-and-env](27-config-and-env.md)
 - [29-healthchecks](29-healthchecks.md)
 - [35-cicd](35-cicd.md)
+- [49-beget-staging-deploy](49-beget-staging-deploy.md)
 - [36-backup-restore](36-backup-restore.md)
 - [37-runbooks](37-runbooks.md)
 - [37-runbooks](37-runbooks.md)
