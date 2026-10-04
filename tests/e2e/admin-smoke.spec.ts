@@ -78,6 +78,8 @@ test.describe('Admin smoke flow', () => {
     )
     await expect(page.getByRole('button', { name: 'hero position: 1' })).toBeVisible()
 
+    // dnd-kit подавляет click в течение ~50 мс после drop, поэтому слишком быстрый клик по «Save now» теряется.
+    await page.waitForTimeout(200)
     await Promise.all([
       waitForBuilderResponse(page, createdPage.id, 'PUT'),
       page.getByRole('button', { name: BUILDER_SELECTORS.saveNowButtonName }).click(),
