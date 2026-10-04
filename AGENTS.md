@@ -71,6 +71,7 @@ make health
 ## Staging на Beget (dev.zaborprofil.ru)
 
 - Push в ветку `dev` запускает workflow `Deploy staging (Beget)` (`.github/workflows/deploy-staging-beget.yml`, скрипт `tools/deploy/deploy-beget.sh`). Описание, секреты и настройка сервера: `docs/49-beget-staging-deploy.md`.
+- На staging MySQL 8.4 (`DATABASE_URL=mysql://...`, `pdo_mysql`), Redis не используется; `var/cache` и `var/sessions` — симлинки в `shared/` на сервере, кэш прогревается после каждого деплоя.
 - Стенд один: перед push в `dev` убедиться, что он не занят чужой работой. Не использовать `git push --force` в `dev` без явной просьбы пользователя.
 - Workflow `.github/workflows/deploy.yml` (VPS) выключен по умолчанию и включается только repository variable `VPS_DEPLOY_ENABLED=true`; агенты эту переменную не меняют.
 - Агенты не деплоят production, не запускают `deploy-beget.sh` против production, не применяют миграции и не трогают БД production.

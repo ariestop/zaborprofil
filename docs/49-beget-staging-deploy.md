@@ -1,7 +1,7 @@
 # 49. Staging на Beget: dev.zaborprofil.ru
 
 Автодеплой стенда `https://dev.zaborprofil.ru` на хостинг Beget: push в ветку `dev` -> GitHub Actions -> SSH -> Beget.
-Схема повторяет проверенный подход из проекта `m2saratov` (деплой по SSH скриптом из stdin, отдельный git-клон на сервере, Basic Auth в приложении, noindex, автооткат), но адаптирована под Symfony 8: Doctrine migrations вместо `install.php`, prebuilt frontend из CI вместо `sync-assets`, web root `public_html/`.
+Схема повторяет проверенный подход из проекта `m2saratov` (деплой по SSH скриптом из stdin, отдельный git-клон на сервере, Basic Auth в приложении, noindex, автооткат), но адаптирована под Symfony 8: Doctrine migrations (MySQL 8.4) вместо `install.php`, prebuilt frontend из CI вместо `sync-assets`, web root `public_html/`.
 
 > Стенд работает без Docker (native stack на сервере). Production этим процессом **не** деплоится.
 > Для production по-прежнему действует release-схема из [34-deployment](34-deployment.md) и [35-cicd](35-cicd.md).
@@ -30,11 +30,13 @@ git push origin dev
         ├─ ssh: cat > ~/.deploy-tmp/frontend-build-<sha>.tar.gz
         └─ ssh: bash -s -- <sha> < tools/deploy/deploy-beget.sh      (в ~/dev.zaborprofil.ru)
              ├─ preflight (APP_ENV=staging, отдельная БД, Basic Auth настроен)
+             ├─ var/cache и var/sessions -> симлинки в shared/ (сессии переживают деплой)
              ├─ git checkout --force -B staging-deployed <sha>, composer install --no-dev
              ├─ установка prebuilt frontend (проверка BUILD_COMMIT == sha)
-             ├─ doctrine:migrations:migrate, cache:warmup, app:smoke:test
+             ├─ doctrine:migrations:migrate, очистка shared/cache, cache:warmup, app:smoke:test
              └─ при ошибке: автооткат кода и frontend на предыдущий коммит
-        └─ smoke-check: без пароля 401, с паролем /health/live = 200 + noindex, /admin/login = 200
+        └─ smoke-check: без пароля 401, с паролем /health/live = 200 + noindex, /admin/login = 200;
+           затем прогрев публичных страниц (/, /sitemap.xml, /robots.txt)
 ```
 
 Ключевые решения:
@@ -45,19 +47,16 @@ git push origin dev
 - **Миграции на staging всегда применяются автоматически.** Изменения БД при откате кода не откатываются (только восстановление из бэкапа).
 - **Basic Auth в приложении, а не в `.htaccess`.** На Beget директивы `AuthType/AuthUserFile/Require` в `.htaccess` ломают PHP (500, PHP работает как CGI). Заголовок `Authorization` пробрасывается правилом `RewriteRule .* - [E=HTTP_AUTHORIZATION:...]`.
 - **Закрыты только PHP-страницы.** Статику, которую Apache/nginx отдаёт мимо PHP (`/build/*`, `/uploads/*`), пароль не закрывает.
+- **Кэш и сессии в `shared/`.** Каталог `~/dev.zaborprofil.ru/shared/` (в `.gitignore`, вне `public_html`) содержит `cache/` и `sessions/`; `var/cache` и `var/sessions` — симлинки на них (`DEPLOY_SHARED_DIR` меняет расположение). Сессии не теряются при деплое; `cache/` (скомпилированный контейнер, Twig и файловый кэш приложения) очищается на каждом деплое и сразу прогревается `cache:warmup`. Симлинки создаются до `composer install`, поэтому первый запуск ничего не требует вручную. Старое содержимое реального `var/sessions` при первом деплое переносится в `shared/sessions`.
 - **Production не затронут.** Preflight отказывается работать, если `APP_ENV` не `staging`, если каталог совпадает с `DEPLOY_PROD_PATH` (в том числе через симлинк) или БД совпадает с прод-БД.
 
 ## Предварительные условия (проверить до первого деплоя)
 
-Проект требует PHP `>=8.5`, PostgreSQL `>=18` и Redis `>=8` (кэш `cache.app` работает через Redis, см. [23-cache-and-redis](23-cache-and-redis.md)).
-На тарифах shared-хостинга Beget по умолчанию доступен MySQL, а не PostgreSQL 18, и нет Redis. Перед настройкой нужно убедиться, что на выбранном тарифе Beget доступно:
+Стек проекта: PHP `>=8.5`, MySQL `>=8.4` (InnoDB, utf8mb4). Redis **не используется**: кэш приложения файловый (`cache.adapter.filesystem`, см. [23-cache](23-cache.md) и [ADR-0007](adr/0007-filesystem-cache-and-doctrine-messenger.md)), очередь Messenger — Doctrine transport. На Beget нужно убедиться, что доступно:
 
-1. PHP 8.5 CLI и web с расширениями `ctype`, `iconv`, `intl`, `mbstring`, `pdo_pgsql`, `xml` (скрипт проверяет их сам и останавливается с понятной ошибкой).
-2. PostgreSQL 18 (хост, порт, БД, пользователь). Если на тарифе его нет, нужен Beget VPS/облако или внешний сервер PostgreSQL, доступный с хостинга.
-3. Redis 8 (локальный или внешний). `REDIS_URL` задаётся в `.env.local`.
-4. SSH-доступ и возможность выбрать версию PHP для сайта в панели.
-
-Если этих условий нет, стенд на shared-хостинге Beget не поднимется без правок приложения (например, без замены Redis-кэша на файловый). Это отдельное архитектурное решение, оно здесь не принималось.
+1. PHP 8.5 CLI и web с расширениями `ctype`, `iconv`, `intl`, `mbstring`, `pdo_mysql`, `xml` (скрипт проверяет их сам и останавливается с понятной ошибкой).
+2. MySQL версии 8.4 или совместимой (версия задаётся в `serverVersion=8.4` в `DATABASE_URL`). Права пользователя БД и глобальные переменные (`innodb_*`, `lock_wait_timeout`) на хостинге могут отличаться от Docker, см. [18-migrations](18-migrations.md).
+3. SSH-доступ и возможность выбрать версию PHP для сайта в панели.
 
 ## Настройка сервера (один раз)
 
@@ -67,7 +66,7 @@ git push origin dev
 2. Версия PHP сайта: 8.5 (как в `composer.json`).
 3. SSL (Let's Encrypt) для `dev.zaborprofil.ru` включить обязательно, иначе при HSTS с `includeSubDomains` на основном домене браузер не откроет поддомен.
 4. DNS: `dev.zaborprofil.ru` указывает на сервер Beget (A-запись или делегирование на DNS Beget).
-5. Создать отдельную БД PostgreSQL и пользователя для staging (не использовать боевую).
+5. «MySQL»: создать отдельную БД и пользователя для staging (не использовать боевую), кодировка `utf8mb4`. На Beget имя БД обычно совпадает с именем пользователя, хост — `localhost`.
 6. Если включено ограничение SSH по IP, снять его: адреса GitHub Actions меняются.
 
 ### 2. Клон репозитория в существующей папке сайта
@@ -114,8 +113,8 @@ chmod 600 .env.local
 Правила:
 
 - Хеш bcrypt обязательно в **одинарных кавычках**: Symfony Dotenv раскрывает `$...` в значениях без кавычек и портит хеш. Скрипт проверяет формат и отказывается деплоить.
-- `APP_ENV=staging`, `STAGING_AUTH_ENABLED=1`, `MAILER_DSN=null://null` (письма со стенда не уходят).
-- `DATABASE_URL`: спецсимволы пароля кодируются (`rawurlencode`). База должна отличаться от боевой.
+- `APP_ENV=staging`, `STAGING_AUTH_ENABLED=1`, `MAILER_DSN=null://null` (письма со стенда не уходят). `REDIS_URL` не нужен.
+- `DATABASE_URL`: только `mysql://...?serverVersion=8.4&charset=utf8mb4`, спецсимволы пароля кодируются (`rawurlencode`). База должна отличаться от боевой.
 - `APP_SECRET`: случайная строка (`openssl rand -hex 32`), не шаблонное значение.
 - Смена пароля: повторить блок с хешем, деплой не нужен.
 
@@ -192,15 +191,15 @@ curl -sI -u 'dev:ПАРОЛЬ' https://dev.zaborprofil.ru/health/live     # 200 
 
 1. возвращает код на предыдущий коммит (`checkout --force`);
 2. возвращает предыдущий `public_html/build`;
-3. выполняет `composer install --no-dev` и очищает кэш.
+3. выполняет `composer install --no-dev` и очищает `shared/cache` (сессии остаются).
 
-Изменения БД, если миграции успели примениться, не откатываются: откат БД только из бэкапа. Если автооткат не удался, в логе будет строка `КРИТИЧНО: ...`.
+Изменения БД, если миграции успели примениться, не откатываются (DDL в MySQL не транзакционен, неудавшаяся миграция может оставить схему в промежуточном состоянии): откат БД только из бэкапа. Если автооткат не удался, в логе будет строка `КРИТИЧНО: ...`.
 
 ## Чек-лист проверки после настройки
 
 1. SSH по ключу без пароля: `ssh -i <ключ> -o IdentitiesOnly=yes <user>@<host> 'cd ~/dev.zaborprofil.ru && git log --oneline -1'`.
-2. `/usr/local/bin/php8.5 -v` — PHP 8.5; `php8.5 ~/composer.phar --version` — Composer 2; `git fetch origin` без пароля.
-3. `.env.local` содержит `APP_ENV=staging`, отдельную БД, `STAGING_AUTH_ENABLED=1`, хеш в одинарных кавычках.
+2. `/usr/local/bin/php8.5 -v` — PHP 8.5, `php8.5 -m | grep pdo_mysql`; `php8.5 ~/composer.phar --version` — Composer 2; `git fetch origin` без пароля.
+3. `.env.local` содержит `APP_ENV=staging`, `mysql://` `DATABASE_URL` с отдельной БД, `STAGING_AUTH_ENABLED=1`, хеш в одинарных кавычках.
 4. В GitHub заданы `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY` (желательно `DEPLOY_KNOWN_HOSTS`, `STAGING_BASIC_AUTH`).
 5. `curl -sI https://dev.zaborprofil.ru/` -> `401` и `WWW-Authenticate: Basic`; с верным паролем `/health/live` -> `200` и `X-Robots-Tag: noindex, nofollow`.
 6. `https://dev.zaborprofil.ru/robots.txt` (с паролем) содержит `Disallow: /` (для окружения не `prod` это поведение приложения).
@@ -217,7 +216,8 @@ curl -sI -u 'dev:ПАРОЛЬ' https://dev.zaborprofil.ru/health/live     # 200 
 | Поддомен не открывается по http | на основном домене HSTS с `includeSubDomains`, на поддомене нет SSL | включить Let's Encrypt для `dev.zaborprofil.ru` |
 | `STAGING_AUTH_HASH должен быть bcrypt-хешем в ОДИНАРНЫХ кавычках` | Dotenv раскрывает `$...` | взять хеш в `'...'`, сгенерировать заново |
 | `не PHP 8.5+` / `Не найден PHP` | неверный путь или версия | `ls /usr/local/bin/php*`, задать `PHP_BIN` |
-| `В ... нет расширений: pdo_pgsql ...` | расширение не включено на тарифе | включить в панели Beget или сменить тариф/сервер |
+| `В ... нет расширений: pdo_mysql ...` | расширение не включено для PHP 8.5 | включить в панели Beget |
+| `DATABASE_URL должен начинаться с mysql://` | в `.env.local` остался старый pgsql-URL или значение из Docker | взять формат из `.env.staging.beget.example` |
 | `fatal: detected dubious ownership` | папка сайта принадлежит другому пользователю | `git config --global --add safe.directory "$(pwd -P)"` |
 | `git status` показывает все файлы изменёнными | права файлов на Beget отличаются от git | `git config core.fileMode false` |
 | Все страницы 500, `.env.local` не найден | нет `.env.local` или он не читается | создать по шаблону, `chmod 600` |
@@ -227,7 +227,8 @@ curl -sI -u 'dev:ПАРОЛЬ' https://dev.zaborprofil.ru/health/live     # 200 
 | Push в `dev` не запускает деплой | в коммите нет `deploy-staging-beget.yml` | влить workflow в `dev`; пока что запускать вручную |
 | Workflow зелёный, но шаги пропущены | не заданы `DEPLOY_HOST`/`DEPLOY_USER`/`DEPLOY_SSH_KEY` | добавить секреты |
 | GitHub не подключается по SSH | в панели включено ограничение по IP | снять ограничение |
-| `/health/ready` отвечает 503 | недоступны БД или Redis | проверить `DATABASE_URL`, `REDIS_URL` |
+| `/health/ready` отвечает 503 | недоступна БД или каталог кэша | проверить `DATABASE_URL`, права на `shared/cache` и `shared/sessions` |
+| Пользователей «разлогинило» после деплоя | `var/sessions` не был симлинком на `shared/sessions` | деплой сам создаёт симлинк; проверить `ls -l var/` |
 
 ## Проверки перед изменением деплоя
 

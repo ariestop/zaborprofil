@@ -172,6 +172,7 @@ Redis не используется. Кэш приложения (`framework.cac
 
 - Каждый релиз имеет собственный `var/cache`, поэтому после переключения `current` кэш «холодный» — это штатно, `cache:warmup` выполняется в release-скрипте.
 - Каталоги `var/cache` и `var/sessions` должны принадлежать `www-data` (шаг `chown` release-скрипта).
+- Staging на Beget (`deploy-beget.sh`): `var/cache` и `var/sessions` — симлинки на `shared/cache` и `shared/sessions` внутри каталога сайта; сессии переживают деплой, кэш очищается и прогревается (`cache:warmup`) на каждом деплое. Подробнее: [49-beget-staging-deploy](49-beget-staging-deploy.md).
 - Файловый кэш не разделяется между серверами; для нескольких серверов потребуется общий FS либо возврат к Redis (см. [ADR-0007](adr/0007-filesystem-cache-and-doctrine-messenger.md)).
 
 ## systemd

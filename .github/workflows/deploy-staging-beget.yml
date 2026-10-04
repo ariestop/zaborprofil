@@ -216,8 +216,17 @@ jobs:
 
           ready="$(curl "${curl_opts[@]}" -u "$STAGING_BASIC_AUTH" -o /dev/null -w '%{http_code}' "$url/health/ready" || true)"
           if [[ "$ready" != "200" ]]; then
-            echo "::warning::/health/ready ответил $ready (проверьте БД и Redis на стенде)."
+            echo "::warning::/health/ready ответил $ready (проверьте БД MySQL и каталоги shared/cache, shared/sessions на стенде)."
           fi
+
+      - name: Warm up public pages
+        if: steps.config.outputs.configured == 'true' && env.STAGING_BASIC_AUTH != ''
+        continue-on-error: true
+        run: |
+          url="${STAGING_URL%/}"
+          for path in / /sitemap.xml /robots.txt; do
+            curl -sS -o /dev/null -w "%{http_code} $path\n" --max-time 30 -u "$STAGING_BASIC_AUTH" "$url$path" || true
+          done
 
       - name: Summary
         if: always()

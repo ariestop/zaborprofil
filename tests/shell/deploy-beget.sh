@@ -61,7 +61,7 @@ make_env() {
   cat >"$dir/.env.local" <<EOF
 APP_ENV=$app_env
 APP_SECRET=0123456789abcdef
-DATABASE_URL="postgresql://u:p@127.0.0.1:5432/$db?serverVersion=18&charset=utf8"
+DATABASE_URL="mysql://u:p@127.0.0.1:3306/$db?serverVersion=8.4&charset=utf8mb4"
 MAILER_DSN=null://null
 STAGING_AUTH_ENABLED=1
 STAGING_AUTH_USER=dev
@@ -133,6 +133,9 @@ new_app "$APP"
 : >"$WORK/php.log"
 mkdir -p "$APP/public_html/build"
 echo old >"$APP/public_html/build/marker.txt"
+mkdir -p "$APP/var/sessions/staging" "$APP/var/cache/staging"
+echo keep >"$APP/var/sessions/staging/sess_abc"
+echo stale >"$APP/var/cache/staging/stale.php"
 ARCHIVE="$WORK/frontend.tar.gz"
 make_frontend_archive "$SHA2" "$ARCHIVE" new
 cp "$ARCHIVE" "$WORK/frontend-copy.tar.gz"
@@ -148,12 +151,19 @@ assert_not_exists "предыдущий build удалён после успех
 assert_not_exists "архив frontend удалён" "$WORK/frontend-copy.tar.gz"
 assert_file_contains "release-info.json содержит коммит" "$APP/var/release-info.json" "$SHA2"
 assert_file_contains "история деплоя записана" "$APP/var/log/deploy-history.log" "$SHA2"
+assert_eq "var/cache — симлинк в shared/cache" "$(readlink "$APP/var/cache")" "$APP/shared/cache"
+assert_eq "var/sessions — симлинк в shared/sessions" "$(readlink "$APP/var/sessions")" "$APP/shared/sessions"
+assert_file_contains "существующие сессии перенесены в shared" "$APP/shared/sessions/staging/sess_abc" "keep"
+assert_not_exists "старый кэш очищен" "$APP/shared/cache/staging/stale.php"
+assert_eq "кэш прогрет после миграций" "$(grep -n -E 'migrations:migrate|cache:warmup' "$WORK/php.log" | sed -E 's/^[0-9]+:[^ ]* ?//' | cut -d' ' -f1 | tr '\n' ' ')" "doctrine:migrations:migrate cache:warmup "
 assert_file_contains ".env.local не затронут" "$APP/.env.local" "APP_ENV=staging"
 
 echo "# деплой ветки по умолчанию (origin/dev) и идемпотентность"
 : >"$WORK/php.log"
+echo session2 >"$APP/shared/sessions/staging/sess_def"
 run_deploy "$APP"
 assert_eq "повторный деплой успешен" "$LAST_STATUS" "0"
+assert_file_contains "сессии переживают деплой" "$APP/shared/sessions/staging/sess_def" "session2"
 assert_eq "HEAD = origin/dev" "$(git -C "$APP" rev-parse HEAD)" "$SHA2"
 
 echo "# откат при падении миграции"
@@ -187,6 +197,17 @@ new_app "$APP"
 make_env "$APP" staging zp_prod
 run_deploy "$APP" "$SHA2"
 assert_contains "та же БД, что у прода" "$LAST_OUT" "ту же БД, что и прод"
+
+new_app "$APP"
+make_env "$APP" staging zp_staging
+sed -i 's|^DATABASE_URL=.*|DATABASE_URL="postgresql://u:p@127.0.0.1:5432/zp_staging?serverVersion=18"|' "$APP/.env.local"
+run_deploy "$APP" "$SHA2"
+assert_contains "не MySQL DATABASE_URL" "$LAST_OUT" "должен начинаться с mysql://"
+
+new_app "$APP"
+sed -i 's|@127.0.0.1:3306|@mysql:3306|' "$APP/.env.local"
+run_deploy "$APP" "$SHA2"
+assert_contains "Docker-хост mysql" "$LAST_OUT" "Docker-хост mysql"
 
 new_app "$APP"
 sed -i "s|^STAGING_AUTH_HASH=.*|STAGING_AUTH_HASH=$HASH|" "$APP/.env.local"
@@ -228,8 +249,8 @@ DEPLOY_SOURCE_ONLY=1 source "$DEPLOY_SCRIPT"
 # shellcheck disable=SC2088
 assert_eq "expand_home ~/x" "$(HOME=/home/u expand_home '~/dev.site.ru')" "/home/u/dev.site.ru"
 assert_eq "expand_home абсолютный путь" "$(expand_home /srv/app)" "/srv/app"
-assert_eq "имя БД из URL" "$(database_name_from_url 'postgresql://u:p@db.local:5432/zp_stg?serverVersion=18')" "zp_stg"
-assert_eq "хост БД из URL" "$(database_host_from_url 'postgresql://u:p@db.local:5432/zp_stg?serverVersion=18')" "db.local"
+assert_eq "имя БД из URL" "$(database_name_from_url 'mysql://u:p@db.local:3306/zp_stg?serverVersion=8.4&charset=utf8mb4')" "zp_stg"
+assert_eq "хост БД из URL" "$(database_host_from_url 'mysql://u:p@db.local:3306/zp_stg?serverVersion=8.4&charset=utf8mb4')" "db.local"
 
 echo
 echo "Пройдено: $PASS, провалено: $FAIL"

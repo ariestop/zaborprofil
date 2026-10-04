@@ -13,6 +13,7 @@
 # Переменные окружения (все необязательные):
 #   DEPLOY_PATH            каталог staging-клона (по умолчанию ~/dev.zaborprofil.ru)
 #   DEPLOY_PROD_PATH       каталог прода: защита от путаницы стендов (по умолчанию ~/zaborprofil.ru)
+#   DEPLOY_SHARED_DIR      постоянные данные между деплоями: cache/ и sessions/ (по умолчанию <DEPLOY_PATH>/shared)
 #   PHP_BIN                CLI PHP (по умолчанию /usr/local/bin/php8.5)
 #   COMPOSER_PHAR          composer.phar (по умолчанию ~/composer.phar)
 #   DEPLOY_REMOTE          git remote (по умолчанию origin)
@@ -24,7 +25,7 @@
 set -Eeuo pipefail
 
 REQUIRED_PHP_VERSION_ID=80500
-REQUIRED_PHP_EXTENSIONS=(ctype iconv intl mbstring pdo_pgsql xml)
+REQUIRED_PHP_EXTENSIONS=(ctype iconv intl mbstring pdo_mysql xml)
 STAGING_BRANCH_NAME="staging-deployed"
 CLEAN_PATHS=(assets bin config migrations src templates tests tools translations)
 KEEP_LOG_LINES=2000
@@ -37,6 +38,7 @@ PREV_BUILD_BACKUP=""
 ROLLBACK_ARMED=0
 TARGET_SHA=""
 LOCK_DIR=""
+SHARED_DIR=""
 ARCHIVE_PATH=""
 
 log() {
@@ -79,7 +81,7 @@ env_value() {
   return 1
 }
 
-# Имя БД из DATABASE_URL вида postgresql://user:pass@host:5432/dbname?serverVersion=18
+# Имя БД из DATABASE_URL вида mysql://user:pass@host:3306/dbname?serverVersion=8.4&charset=utf8mb4
 database_name_from_url() {
   local url="$1" rest
   rest="${url#*://}"
@@ -121,7 +123,10 @@ staging_preflight() {
 
   db_url="$(env_value DATABASE_URL || true)"
   [[ -n "$db_url" ]] || fail "DATABASE_URL не задан в .env.local."
-  [[ "$db_url" != *"@postgres:"* ]] || fail "DATABASE_URL указывает на Docker-хост postgres: это значение из локальной разработки."
+  [[ "$db_url" == mysql://* ]] || fail "DATABASE_URL должен начинаться с mysql:// (MySQL 8.4), сейчас: '${db_url%%://*}://...'."
+  [[ "$db_url" != *"@mysql:"* ]] || fail "DATABASE_URL указывает на Docker-хост mysql: это значение из локальной разработки."
+  [[ "$db_url" == *serverVersion=8.4* ]] || warn "В DATABASE_URL нет serverVersion=8.4: Doctrine будет определять версию сервера запросом."
+  [[ "$db_url" == *charset=utf8mb4* ]] || warn "В DATABASE_URL нет charset=utf8mb4."
   db_name="$(database_name_from_url "$db_url")"
   [[ -n "$db_name" ]] || fail "Не удалось определить имя БД из DATABASE_URL."
 
@@ -149,10 +154,37 @@ staging_preflight() {
     fail "STAGING_AUTH_HASH должен быть bcrypt-хешем в ОДИНАРНЫХ кавычках (Symfony Dotenv раскрывает \$... без кавычек)."
   fi
 
+  if [[ -n "$(env_value REDIS_URL || true)" ]]; then
+    warn "REDIS_URL задан, но Redis не используется: кэш приложения файловый (var/cache/staging/pools)."
+  fi
+
   mailer="$(env_value MAILER_DSN || true)"
   if [[ "$mailer" != null://* ]]; then
     warn "MAILER_DSN на staging не null://null: со стенда могут уйти реальные письма."
   fi
+}
+
+# var/cache и var/sessions живут в shared/ и переживают checkout/clean; код всегда ходит через симлинки.
+link_shared_dirs() {
+  local name target link
+
+  mkdir -p "$APP_DIR/var"
+  for name in cache sessions; do
+    target="$SHARED_DIR/$name"
+    link="$APP_DIR/var/$name"
+    mkdir -p "$target"
+
+    if [[ -L "$link" && "$(real_dir "$link")" == "$(real_dir "$target")" ]]; then
+      continue
+    fi
+
+    if [[ -d "$link" && ! -L "$link" && "$name" == "sessions" ]]; then
+      cp -R -- "$link/." "$target/" 2>/dev/null || true
+    fi
+    rm -rf -- "$link"
+    ln -s -- "$target" "$link"
+  done
+  chmod 700 "$SHARED_DIR/sessions"
 }
 
 setup_logging() {
@@ -286,9 +318,11 @@ write_release_info() {
     "${sha:0:12}" "$sha" "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" >"$APP_DIR/var/release-info.json"
 }
 
+# Чистит содержимое shared/cache (контейнер, Twig и файловый кэш приложения var/cache/staging/pools),
+# сам каталог и симлинк var/cache остаются. Сессии не трогаются.
 clear_caches() {
-  rm -rf "$APP_DIR/var/cache"
-  mkdir -p "$APP_DIR/var/cache"
+  mkdir -p "$SHARED_DIR/cache"
+  find "$SHARED_DIR/cache" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
 }
 
 run_health_check() {
@@ -361,6 +395,7 @@ main() {
   PHP_BIN="$(expand_home "${PHP_BIN:-/usr/local/bin/php8.5}")"
   COMPOSER_PHAR="$(expand_home "${COMPOSER_PHAR:-~/composer.phar}")"
   APP_DIR="$(expand_home "${DEPLOY_PATH:-~/dev.zaborprofil.ru}")"
+  SHARED_DIR="$(expand_home "${DEPLOY_SHARED_DIR:-$APP_DIR/shared}")"
   archive="$(expand_home "${FRONTEND_BUILD_ARCHIVE:-}")"
   ARCHIVE_PATH="$archive"
 
@@ -380,6 +415,7 @@ main() {
 
   ROLLBACK_ARMED=1
 
+  link_shared_dirs
   checkout_staging "$TARGET_SHA"
   composer_install
 
@@ -395,6 +431,7 @@ main() {
   log "Миграции Doctrine"
   console doctrine:migrations:migrate --env=staging --allow-no-migration
 
+  log "Прогрев кэша"
   console cache:warmup --env=staging
   run_health_check
 

@@ -24,6 +24,8 @@
 | `staging` | staging VPS | production-like, отдельный домен, robots `Disallow: /` |
 | `prod` | production VPS | оптимизированный cache, no debug, full logging |
 
+> Staging на Beget (`dev.zaborprofil.ru`) запускается с литеральным `APP_ENV=staging` и `STAGING_AUTH_*` (см. [49-beget-staging-deploy](49-beget-staging-deploy.md)); `DATABASE_URL` — только `mysql://`, `REDIS_URL` не используется.
+
 > Symfony знает только `dev`/`test`/`prod` как ключи. `staging` — это `APP_ENV=prod` + отдельная инфраструктура и `.env.staging` в shared.
 
 ## Обязательные переменные
