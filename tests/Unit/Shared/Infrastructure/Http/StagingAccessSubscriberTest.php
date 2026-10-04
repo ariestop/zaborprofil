@@ -118,6 +118,29 @@ final class StagingAccessSubscriberTest extends TestCase
         self::assertSame('noindex, nofollow', $response->headers->get('X-Robots-Tag'));
     }
 
+    public function testAddsNoIndexHeaderWhenBasicAuthIsDisabled(): void
+    {
+        $subscriber = $this->subscriber(authEnabled: false);
+
+        self::assertFalse($this->requestEvent($subscriber, $this->request())->hasResponse());
+        self::assertSame(
+            'noindex, nofollow',
+            $this->responseFor($subscriber, new Response())->headers->get('X-Robots-Tag'),
+        );
+    }
+
+    public function testAddsNoIndexHeaderWhenBasicAuthIsEnabled(): void
+    {
+        $subscriber = $this->subscriber();
+        $unauthorized = $this->requestEvent($subscriber, $this->request())->getResponse();
+
+        self::assertNotNull($unauthorized);
+        self::assertSame(
+            'noindex, nofollow',
+            $this->responseFor($subscriber, $unauthorized)->headers->get('X-Robots-Tag'),
+        );
+    }
+
     public function testDoesNotAddNoIndexHeaderOutsideStaging(): void
     {
         $response = $this->responseFor($this->subscriber(environment: 'prod'), new Response());

@@ -9,6 +9,8 @@
 #
 # Без аргументов деплоится origin/dev. Production этим скриптом не деплоится:
 # preflight отказывается работать, если APP_ENV в .env.local не равен staging.
+# Basic Auth (STAGING_AUTH_ENABLED=1) обязателен; временно открытый staging допустим только при
+# STAGING_AUTH_ENABLED=0 и явном STAGING_ALLOW_PUBLIC=1 в .env.local (с предупреждением в логе).
 #
 # Переменные окружения (все необязательные):
 #   DEPLOY_PATH            каталог staging-клона (по умолчанию ~/dev.zaborprofil.ru)
@@ -40,6 +42,8 @@ TARGET_SHA=""
 LOCK_DIR=""
 SHARED_DIR=""
 ARCHIVE_PATH=""
+PUBLIC_STAGING=0
+PUBLIC_STAGING_WARNING="Basic Auth ВЫКЛЮЧЕН (STAGING_AUTH_ENABLED=0, STAGING_ALLOW_PUBLIC=1): staging открыт всем. Индексация закрыта (noindex, robots.txt Disallow: /), /admin защищён формой входа. Чтобы вернуть пароль: STAGING_AUTH_ENABLED=1 и убрать STAGING_ALLOW_PUBLIC."
 
 log() {
   printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"
@@ -104,9 +108,34 @@ real_dir() {
   (cd "$dir" && pwd -P)
 }
 
+# Basic Auth обязателен. Исключение — временный открытый staging: STAGING_AUTH_ENABLED=0 допустим
+# только вместе с явным STAGING_ALLOW_PUBLIC=1. Защита от индексации (X-Robots-Tag, meta robots,
+# robots.txt Disallow: /) от Basic Auth не зависит и действует всегда при APP_ENV=staging.
+check_staging_access() {
+  local auth_enabled allow_public hash_line
+
+  auth_enabled="$(env_value STAGING_AUTH_ENABLED || true)"
+  allow_public="$(env_value STAGING_ALLOW_PUBLIC || true)"
+
+  if [[ "$auth_enabled" == "0" && "$allow_public" == "1" ]]; then
+    PUBLIC_STAGING=1
+    warn "$PUBLIC_STAGING_WARNING"
+    return 0
+  fi
+
+  [[ "$auth_enabled" == "1" ]] \
+    || fail "STAGING_AUTH_ENABLED=1 обязателен: staging должен быть закрыт Basic Auth. Открытый staging разрешён только при STAGING_AUTH_ENABLED=0 и STAGING_ALLOW_PUBLIC=1 в .env.local."
+  [[ -n "$(env_value STAGING_AUTH_USER || true)" ]] || fail "STAGING_AUTH_USER не задан."
+
+  hash_line="$(grep -E '^STAGING_AUTH_HASH=' "$APP_DIR/.env.local" | tail -n 1 || true)"
+  if ! [[ "$hash_line" =~ ^STAGING_AUTH_HASH=\'\$2[aby]\$[0-9]{2}\$[./A-Za-z0-9]{53}\'[[:space:]]*$ ]]; then
+    fail "STAGING_AUTH_HASH должен быть bcrypt-хешем в ОДИНАРНЫХ кавычках (Symfony Dotenv раскрывает \$... без кавычек)."
+  fi
+}
+
 staging_preflight() {
   local prod_dir app_real prod_real app_env db_url db_name prod_db_url prod_db_name
-  local secret mailer hash_line
+  local secret mailer
 
   prod_dir="$(expand_home "${DEPLOY_PROD_PATH:-~/zaborprofil.ru}")"
   app_real="$(real_dir "$APP_DIR")"
@@ -145,14 +174,7 @@ staging_preflight() {
     fail "APP_SECRET не задан или остался шаблонным значением."
   fi
 
-  [[ "$(env_value STAGING_AUTH_ENABLED || true)" == "1" ]] \
-    || fail "STAGING_AUTH_ENABLED=1 обязателен: staging должен быть закрыт Basic Auth."
-  [[ -n "$(env_value STAGING_AUTH_USER || true)" ]] || fail "STAGING_AUTH_USER не задан."
-
-  hash_line="$(grep -E '^STAGING_AUTH_HASH=' "$APP_DIR/.env.local" | tail -n 1 || true)"
-  if ! [[ "$hash_line" =~ ^STAGING_AUTH_HASH=\'\$2[aby]\$[0-9]{2}\$[./A-Za-z0-9]{53}\'[[:space:]]*$ ]]; then
-    fail "STAGING_AUTH_HASH должен быть bcrypt-хешем в ОДИНАРНЫХ кавычках (Symfony Dotenv раскрывает \$... без кавычек)."
-  fi
+  check_staging_access
 
   if [[ -n "$(env_value REDIS_URL || true)" ]]; then
     warn "REDIS_URL задан, но Redis не используется: кэш приложения файловый (var/cache/staging/pools)."
@@ -405,6 +427,9 @@ main() {
   setup_logging
   acquire_lock
   log "=== staging: старт, ref=$ref, пользователь $(id -un) ==="
+  if ((PUBLIC_STAGING == 1)); then
+    warn "$PUBLIC_STAGING_WARNING"
+  fi
   check_php
 
   resolve_target "$ref" "$remote"

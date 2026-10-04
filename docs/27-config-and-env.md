@@ -50,6 +50,7 @@
 | `TRUSTED_HOSTS` | regex hostname | Symfony framework |
 | `STAGING_AUTH_ENABLED` | `1` включает Basic Auth на `APP_ENV=staging` (по умолчанию выключено) | `StagingAccessSubscriber` |
 | `STAGING_AUTH_USER` / `STAGING_AUTH_HASH` | логин и bcrypt-хеш пароля; хеш в `.env.local` в **одинарных кавычках**. При `STAGING_AUTH_ENABLED=1` и неверных значениях доступ закрыт для всех | `StagingAccessSubscriber` |
+| `STAGING_ALLOW_PUBLIC` | `1` вместе с `STAGING_AUTH_ENABLED=0` разрешает деплой временно открытого staging без Basic Auth; без явного `1` preflight `deploy-beget.sh` требует `STAGING_AUTH_ENABLED=1`. Приложение флаг не читает; noindex действует всегда ([49-beget-staging-deploy](49-beget-staging-deploy.md)) | `tools/deploy/deploy-beget.sh` |
 | `ADMIN_WEB_MIGRATIONS_ENABLED` | `0` (по умолчанию) / `1` — разрешить apply/rollback Doctrine-миграций из веб-админки (только `ROLE_SUPER_ADMIN` + confirm-token). На staging/production держать `0` | `MigrationsApiController` |
 | `XDEBUG_MODE` | `off` / `develop,debug` | Docker PHP-FPM |
 | `MYSQL_DATABASE`/`MYSQL_USER`/`MYSQL_PASSWORD`/`MYSQL_ROOT_PASSWORD`/`MYSQL_PORT` | для Docker Compose | Compose |

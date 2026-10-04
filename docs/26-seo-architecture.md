@@ -188,6 +188,7 @@
 - Поле `Page.indexable` (`bool`) хранится в БД, доступно в admin-API и **рендерится** в `<meta name="robots">`: `index, follow` для `true`, `noindex, nofollow` для `false`. Логика — в `PublicPageController` (переменная `meta_robots`).
 - По умолчанию для новой страницы — `indexable=true`.
 - Для admin/preview/dev URL — всегда `noindex,nofollow` (программно): admin покрыт `AdminNoIndexSubscriber`, dev/staging — через `RobotsController` (см. §5.2).
+- На `APP_ENV=staging` `base.html.twig` всегда рендерит `<meta name="robots" content="noindex, nofollow">` (поверх `meta_robots` страницы), `StagingAccessSubscriber` ставит `X-Robots-Tag: noindex, nofollow`, а `robots.txt` отдаёт `Disallow: /` — независимо от `STAGING_AUTH_ENABLED` (см. [49-beget-staging-deploy](49-beget-staging-deploy.md), раздел про открытый staging).
 
 ### 5.2 robots.txt
 
