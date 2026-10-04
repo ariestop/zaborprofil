@@ -7,9 +7,12 @@ namespace App\Module\Content\Application\Handler;
 use App\Module\Content\Application\Command\CreatePageCommand;
 use App\Module\Content\Application\DTO\PageOutput;
 use App\Module\Content\Application\Service\ContentId;
+use App\Module\Content\Application\Service\PageTemplateBlocks;
 use App\Module\Content\Domain\Entity\Page;
+use App\Module\Content\Domain\Entity\PageTemplate;
 use App\Module\Content\Domain\Enum\PageType;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
+use App\Module\Content\Domain\Repository\PageTemplateRepositoryInterface;
 use InvalidArgumentException;
 
 final readonly class CreatePageHandler
@@ -17,6 +20,8 @@ final readonly class CreatePageHandler
     public function __construct(
         private PageRepositoryInterface $pages,
         private ContentId $contentId,
+        private PageTemplateRepositoryInterface $templates,
+        private PageTemplateBlocks $templateBlocks,
     ) {
     }
 
@@ -40,8 +45,48 @@ final readonly class CreatePageHandler
             $command->visibility,
         );
 
+        if ($command->starterTemplate !== null && $command->starterTemplate !== '' && $command->starterTemplate !== 'default') {
+            $this->applyStarterTemplate($page, $command->starterTemplate);
+        }
+
         $this->pages->save($page);
 
         return PageOutput::fromPage($page);
+    }
+
+    private function applyStarterTemplate(Page $page, string $code): void
+    {
+        $template = $this->templates->getByCode($code);
+        if (!$template->isActive() || $template->kind() !== PageTemplate::KIND_PAGE) {
+            throw new InvalidArgumentException('Page template is not available.');
+        }
+
+        $this->templateBlocks->applyTo($page, $template->blocksSchema());
+
+        $seo = $template->defaultSeo();
+        if ($seo === []) {
+            return;
+        }
+
+        $page->updateSeoMetadata(
+            $this->optionalString($seo, 'metaDescription'),
+            null,
+            $this->optionalString($seo, 'ogTitle'),
+            $this->optionalString($seo, 'ogDescription'),
+            null,
+            $this->optionalString($seo, 'ogType'),
+            null,
+        );
+        $page->updateMetaTitle($this->optionalString($seo, 'metaTitle'));
+    }
+
+    /**
+     * @param array<string, mixed> $values
+     */
+    private function optionalString(array $values, string $key): ?string
+    {
+        $value = $values[$key] ?? null;
+
+        return \is_string($value) && trim($value) !== '' ? trim($value) : null;
     }
 }
