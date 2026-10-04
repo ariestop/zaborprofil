@@ -406,8 +406,9 @@ public function down(Schema $schema): void
 - Шаги:
     1. `doctrine:migrations:status` — показ всех миграций.
     2. `doctrine:migrations:migrate --env=test --allow-no-migration --no-interaction` — применение на свежую БД.
-    3. `doctrine:schema:validate --env=test --skip-sync` — синхронизация attributes ↔ схемы.
-    4. `phpunit` — функциональные/интеграционные тесты на новой схеме.
+    3. `doctrine:migrations:migrate first` и повторный `migrate` — проверка `down()` всех миграций: откат до пустой схемы и повторное применение.
+    4. `doctrine:schema:validate --env=test` — полная синхронизация attributes ↔ схемы (без `--skip-sync`); легитимные исключения (`path_active`, `messenger_messages`) описаны в [17-doctrine-and-database](17-doctrine-and-database.md) §13.1.
+    5. `phpunit` — функциональные/интеграционные тесты на новой схеме.
 
 ### 8.2 Локально перед коммитом
 
@@ -417,7 +418,7 @@ public function down(Schema $schema): void
 make reset-db            # пересоздать dev-БД с нуля: drop/create + migrate + fixtures
 make test-db             # создать zaborprofil_test и выдать права
 make migrate             # применить миграции к dev-БД
-docker compose exec app php bin/console doctrine:schema:validate --skip-sync
+docker compose exec app php bin/console doctrine:schema:validate
 make test
 ```
 
@@ -485,7 +486,7 @@ make test
 - [ ] Прогон в CI прошёл (`status` + `migrate` + `schema:validate`).
 - [ ] Backup-этап на production предусмотрен deploy-скриптом (`mysqldump` перед миграцией).
 - [ ] Документация модели в [05-domain-model](05-domain-model.md) обновлена.
-- [ ] Entity ↔ schema проверка (`doctrine:schema:validate --skip-sync`) — без ошибок.
+- [ ] Entity ↔ schema проверка (`doctrine:schema:validate`) — без ошибок.
 - [ ] Repository тесты обновлены (если меняется набор колонок/типов).
 
 ---
@@ -579,7 +580,7 @@ make test
 
 - [ ] `doctrine:migrations:status` — показывает новую миграцию.
 - [ ] `doctrine:migrations:migrate --env=test` — успешно (на MySQL из Docker Compose).
-- [ ] `doctrine:schema:validate --skip-sync` — без ошибок.
+- [ ] `doctrine:schema:validate` — без ошибок.
 - [ ] `composer test` — зелёный.
 - [ ] Документация в [05-domain-model](05-domain-model.md) обновлена.
 - [ ] План rollback зафиксирован в planning note.

@@ -31,12 +31,13 @@
 10. `cp .env.test.ci .env.test.local` — переключает тесты на MySQL.
 11. `doctrine:migrations:status --env=test`.
 12. `doctrine:migrations:migrate --env=test --allow-no-migration`.
-13. `doctrine:schema:validate --env=test --skip-sync`.
-14. `lint:container --env=test`.
-15. `lint:twig templates --env=test`.
-16. Bash syntax check для `tools/deploy/*.sh`; ShellCheck и `tests/shell/deploy-beget.sh` для Beget-деплоя (проверка `mysql://`, симлинков `shared/`, прогрева кэша, отката).
-17. `php bin/console app:smoke:test --env=test`.
-18. `composer test` (PHPUnit).
+13. `doctrine:migrations:migrate first` + `doctrine:migrations:migrate` — откат до пустой схемы и повторное применение (проверка `down()`).
+14. `doctrine:schema:validate --env=test` — полная проверка mapping и БД (исключения: [17-doctrine-and-database](17-doctrine-and-database.md) §13.1).
+15. `lint:container --env=test`.
+16. `lint:twig templates --env=test`.
+17. Bash syntax check для `tools/deploy/*.sh`; ShellCheck и `tests/shell/deploy-beget.sh` для Beget-деплоя (проверка `mysql://`, симлинков `shared/`, прогрева кэша, отката).
+18. `php bin/console app:smoke:test --env=test`.
+19. `composer test` (PHPUnit).
 
 #### Frontend job
 

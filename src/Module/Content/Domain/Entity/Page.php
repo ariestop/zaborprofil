@@ -26,7 +26,8 @@ use Symfony\Component\Uid\Ulid;
 // `uniq_content_pages_path_active` over the generated column `path_active`
 // (`IF(deleted_at IS NULL, path, NULL)`) created in the initial migration.
 // MySQL has no partial indexes and ORM attributes cannot describe generated
-// columns, so the constraint is intentionally NOT declared here. Application
+// columns, so the column and index are declared in the expected schema by
+// `PagePathActiveSchemaListener` instead of this entity. Application
 // code MUST still rely on `PageRepositoryInterface::existsByPath()` to reject
 // duplicate live paths with a friendly error.
 final class Page

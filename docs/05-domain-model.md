@@ -51,7 +51,7 @@ stateDiagram-v2
 
 Ключевые правила:
 
-- Уникальность `path` среди live (`deleted_at IS NULL`) проверяется на уровне приложения через `PageRepositoryInterface::existsByPath()`: MySQL не поддерживает partial unique index, а Doctrine attributes не выражают условные индексы. Гарантию на уровне БД можно добавить unique-индексом по generated column `path_active = IF(deleted_at IS NULL, path, NULL)` (целевая миграция, см. [17-doctrine-and-database](17-doctrine-and-database.md) §13). Сравнение `path` в MySQL регистронезависимое (collation `utf8mb4_0900_ai_ci`).
+- Уникальность `path` среди live (`deleted_at IS NULL`) проверяется на уровне приложения через `PageRepositoryInterface::existsByPath()`: MySQL не поддерживает partial unique index, а Doctrine attributes не выражают условные индексы. Гарантию на уровне БД даёт unique-индекс `uniq_content_pages_path_active` по generated column `path_active = IF(deleted_at IS NULL, path, NULL)` (создан в `Version20261004000100`, в ожидаемую схему Doctrine добавляется `PagePathActiveSchemaListener`, см. [17-doctrine-and-database](17-doctrine-and-database.md) §13 и §13.1). Сравнение `path` в MySQL регистронезависимое (collation `utf8mb4_0900_ai_ci`).
 - Изменение `path` опубликованной страницы должно сопровождаться созданием `Redirect` (на уровне application layer / Seo listener `PagePathChangeListener`).
 - Только `Published` отображается публично. `Draft`/`Archived` -> `404`.
 
