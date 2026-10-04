@@ -4,6 +4,7 @@ export const ADMIN_ROUTES = {
   pages: '/admin/pages',
   seo: '/admin/seo',
   media: '/admin/media',
+  crm: '/admin/crm',
 } as const
 
 export const ADMIN_LOGIN_SELECTORS = {
@@ -61,4 +62,15 @@ const ONE_PIXEL_PNG_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADE
 export const MEDIA_SELECTORS = {
   headingName: 'Медиатека',
   pngBuffer: Buffer.from(ONE_PIXEL_PNG_BASE64, 'base64'),
+} as const
+
+export const CRM_SELECTORS = {
+  searchLabel: 'Поиск заявок',
+  takeIntoWorkName: 'Взять в работу',
+} as const
+
+export const PUBLIC_LEAD_FORM_SELECTORS = {
+  form: '.js-lead-form',
+  submitName: 'Отправить заявку',
+  successText: 'Спасибо! Заявка отправлена.',
 } as const

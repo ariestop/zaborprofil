@@ -37,7 +37,8 @@
 16. `lint:twig templates --env=test`.
 17. Bash syntax check для `tools/deploy/*.sh`; ShellCheck и `tests/shell/deploy-beget.sh` для Beget-деплоя (проверка `mysql://`, симлинков `shared/`, прогрева кэша, отката).
 18. `php bin/console app:smoke:test --env=test`.
-19. `composer test` (PHPUnit).
+19. `composer test:coverage` (PHPUnit с `pcov`, Clover-отчёт в `var/coverage/clover.xml`).
+20. `composer check:coverage` — порог покрытия строк PHP (75%).
 
 #### Frontend job
 
@@ -46,7 +47,7 @@
 3. `npm ci`.
 4. `npm audit --audit-level=high`.
 5. `npm run typecheck`.
-6. `npm run test:frontend`.
+6. `npm run test:frontend:coverage` (Vitest + пороги покрытия из `vitest.config.ts`).
 7. `npm run lint:admin`.
 8. `npm run build`.
 9. `npm run check:chunks`.
@@ -65,7 +66,7 @@
    - `VITE_MANIFEST_PATH` указывает на реальный `public_html/build/.vite/manifest.json`: в `APP_ENV=test`
      по умолчанию используется фикстурный манифест (`tests/Fixtures/vite/manifest.json`), ассеты которого не существуют.
 6. Устанавливает Chromium (`npx playwright install --with-deps chromium`).
-7. Запускает `npm run test:e2e:smoke` (login -> pages -> единый редактор (в т. ч. старый URL `/builder`) -> быстрый preview, создание страницы -> правка SEO -> сохранение -> предпросмотр -> предупреждение при уходе, DnD-сортировка блоков в builder с проверкой сохранённого порядка через `GET /builder` и после перезагрузки страницы, negative 422 contract check).
+7. Запускает `npm run test:e2e` — smoke и сквозной сценарий «страница -> SEO -> картинка -> публикация -> публичная страница -> заявка -> статус в CRM» (`content-to-lead.spec.ts`). Smoke: (login -> pages -> единый редактор (в т. ч. старый URL `/builder`) -> быстрый preview, создание страницы -> правка SEO -> сохранение -> предпросмотр -> предупреждение при уходе, DnD-сортировка блоков в builder с проверкой сохранённого порядка через `GET /builder` и после перезагрузки страницы, negative 422 contract check).
 8. При падении публикует Playwright artifacts (`test-results`, `playwright-report`, app server log).
 
 ### `.github/workflows/deploy-staging-beget.yml`
@@ -149,15 +150,15 @@ GitHub Environments дают:
 - Symfony container lint.
 - Twig lint.
 - Deploy scripts syntax.
-- PHPUnit (MySQL).
+- PHPUnit (MySQL) с порогом покрытия.
 - `app:smoke:test` для базовой release readiness.
 - npm audit.
 - Frontend typecheck как отдельный quality gate.
-- Frontend unit tests (`test:frontend`).
+- Frontend unit tests с порогом покрытия (`test:frontend:coverage`).
 - Scoped admin lint (`lint:admin`).
 - npm/Vite build.
 - Budget guardrail по критичным admin chunks (`check:chunks`).
-- Browser smoke regression admin-flow (`test:e2e:smoke`).
+- Browser smoke regression и сквозной сценарий (`test:e2e`).
 
 ## Что НЕ автоматизировано (целевое)
 

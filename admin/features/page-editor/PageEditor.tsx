@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import type { AdminPermission } from '../../entities/user/permissions'
+import ForbiddenPage from '../../pages/ForbiddenPage'
 import { Badge, Button, Switch } from '../../shared/ui'
+import { useAuthStore } from '../../stores/auth'
 import { useBuilderStore } from '../../modules/page-builder/state/builderStore'
 import type { BuilderBlock } from '../../modules/page-builder/types'
 import { normalizePageBlocks } from '../../modules/page-builder/utils/pageBlocks'
@@ -26,11 +29,11 @@ interface PageEditorProps {
   tab: EditorTab
 }
 
-export const editorTabs: Array<{ value: EditorTab, label: string }> = [
+export const editorTabs: Array<{ value: EditorTab, label: string, permission?: AdminPermission }> = [
   { value: 'content', label: 'Контент и блоки' },
-  { value: 'seo', label: 'SEO' },
-  { value: 'settings', label: 'Настройки' },
-  { value: 'revisions', label: 'Ревизии' },
+  { value: 'seo', label: 'SEO', permission: 'seo.edit' },
+  { value: 'settings', label: 'Настройки', permission: 'pages.edit' },
+  { value: 'revisions', label: 'Ревизии', permission: 'pages.view_revisions' },
 ]
 
 export function pageEditorTabPath(pageId: string, tab: EditorTab): string {
@@ -95,7 +98,10 @@ export function PageEditor({ page, initialBlocks, initialBuilderVersion = null, 
     [isGuardDisabled, page.id],
   )
 
-  const publishVisible = canPublishFrom(page.status)
+  const permissions = useAuthStore((state) => state.permissions)
+  const visibleTabs = editorTabs.filter((item) => item.permission === undefined || permissions.includes(item.permission))
+  const tabAllowed = visibleTabs.some((item) => item.value === tab)
+  const publishVisible = canPublishFrom(page.status) && permissions.includes('pages.publish')
 
   return (
     <div data-testid="page-editor">
@@ -159,7 +165,7 @@ export function PageEditor({ page, initialBlocks, initialBuilderVersion = null, 
       />
 
       <div role="tablist" aria-label="Разделы страницы" className="mb-4 flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-800">
-        {editorTabs.map((item) => {
+        {visibleTabs.map((item) => {
           const active = item.value === tab
           return (
             <Link
@@ -184,10 +190,11 @@ export function PageEditor({ page, initialBlocks, initialBuilderVersion = null, 
       </div>
 
       <div role="tabpanel" aria-label={editorTabs.find((item) => item.value === tab)?.label}>
-        {tab === 'content' ? <ContentTab pageId={page.id} /> : null}
-        {tab === 'seo' ? <SeoTab controller={controller} onOpenTab={openTab} /> : null}
-        {tab === 'settings' ? <SettingsTab controller={controller} page={page} /> : null}
-        {tab === 'revisions' ? <RevisionsTab controller={controller} status={page.status} /> : null}
+        {!tabAllowed ? <ForbiddenPage /> : null}
+        {tabAllowed && tab === 'content' ? <ContentTab pageId={page.id} /> : null}
+        {tabAllowed && tab === 'seo' ? <SeoTab controller={controller} onOpenTab={openTab} /> : null}
+        {tabAllowed && tab === 'settings' ? <SettingsTab controller={controller} page={page} /> : null}
+        {tabAllowed && tab === 'revisions' ? <RevisionsTab controller={controller} status={page.status} /> : null}
       </div>
     </div>
   )
