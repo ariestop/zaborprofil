@@ -11,6 +11,7 @@ import {
   BUILDER_SELECTORS,
   MEDIA_SELECTORS,
   PAGES_SELECTORS,
+  SEO_SELECTORS,
 } from './helpers/selectors'
 import {
   createBlockViaAdminApi,
@@ -99,6 +100,49 @@ test.describe('Admin smoke flow', () => {
   test('admin api returns 422 for invalid page payload', async ({ page }) => {
     await loginToAdmin(page)
     await createPageExpectValidationError(page, buildInvalidPagePayload())
+  })
+
+  test('seo panel: redirect from 404 journal, robots validation', async ({ page, request }) => {
+    await loginToAdmin(page)
+    const suffix = Date.now().toString(36)
+    const missingPath = `/e2e-missing-${suffix}/`
+    const targetPath = `/e2e-target-${suffix}/`
+
+    const missing = await request.get(missingPath)
+    expect(missing.status()).toBe(404)
+
+    await page.goto(ADMIN_ROUTES.seo)
+    await expect(page.getByRole('heading', { name: SEO_SELECTORS.headingName })).toBeVisible()
+
+    // Плавающий виджет сборки ассетов перекрывает правую колонку таблиц.
+    const assetWidgetToggle = page.getByRole('button', { name: SEO_SELECTORS.collapseAssetWidgetName })
+    if (await assetWidgetToggle.isVisible()) {
+      await assetWidgetToggle.click()
+    }
+
+    await page.getByRole('tab', { name: SEO_SELECTORS.notFoundTabName }).click()
+    await page.getByLabel(SEO_SELECTORS.notFoundSearchLabel).fill(`e2e-missing-${suffix}`)
+    const row = page.getByTestId('not-found-row').filter({ hasText: missingPath })
+    await expect(row).toBeVisible()
+
+    await row.getByRole('button', { name: SEO_SELECTORS.createRedirectButtonName }).click()
+    await expect(page.getByLabel(SEO_SELECTORS.sourceInputLabel)).toHaveValue(missingPath)
+    await page.getByLabel(SEO_SELECTORS.targetInputLabel).fill(targetPath)
+    await page.getByRole('button', { name: SEO_SELECTORS.saveButtonName }).click()
+    await expect(row.getByText('Редирект есть')).toBeVisible()
+
+    const redirected = await request.get(missingPath, { maxRedirects: 0 })
+    expect(redirected.status()).toBe(301)
+    expect(redirected.headers().location).toBe(targetPath)
+
+    await page.getByRole('tab', { name: 'Редиректы' }).click()
+    await page.getByLabel(SEO_SELECTORS.redirectSearchLabel).fill(`e2e-missing-${suffix}`)
+    await expect(page.getByTestId('redirect-row').filter({ hasText: missingPath })).toBeVisible()
+
+    await page.getByRole('tab', { name: SEO_SELECTORS.robotsTabName }).click()
+    await page.getByLabel(SEO_SELECTORS.robotsEditorLabel).fill('User-agent: *\nDisallow: private')
+    await expect(page.getByLabel(SEO_SELECTORS.robotsIssuesLabel)).toContainText('строка 2')
+    await expect(page.getByRole('button', { name: SEO_SELECTORS.saveButtonName })).toBeDisabled()
   })
 
   test('media library: upload, edit alt, search and delete', async ({ page }) => {

@@ -8,7 +8,7 @@
 ## Маршрутизация
 
 - `/admin/login` остается серверной Twig-страницей.
-- `/admin`, `/admin/dashboard`, `/admin/settings`, `/admin/seo/redirects` рендерят один SPA shell.
+- `/admin`, `/admin/dashboard`, `/admin/settings`, `/admin/seo` (SEO-панель: редиректы, robots.txt, журнал 404, аудит) рендерят один SPA shell.
 - `/admin/api/*` остается JSON API и защищается CSRF subscriber.
 
 Используется `react-router-dom` для клиентской навигации и `zustand` для

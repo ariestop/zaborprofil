@@ -195,6 +195,8 @@
 - В `dev`/`staging` окружениях — `User-agent: *` + `Disallow: /` (полный запрет индексации).
 - В `prod` — стандартный robots с `Sitemap:` директивой и точечными `Disallow:` для служебных путей.
 - Редактирование production robots.txt: `GET/PUT /admin/api/seo/robots` (требует `AdminPermission::SEO_EDIT`), значение хранится в Settings `seo.robots_txt`.
+- Проверка и предпросмотр без сохранения: `POST /admin/api/seo/robots/preview` (`{body}` → `{normalizedBody, effectiveBody, usesDefault, overriddenByEnvironment, valid, issues[]}`). Синтаксис проверяет `RobotsTxtValidator`: ошибки (директива вне группы `User-agent`, путь без `/` или `*`, `Sitemap` не абсолютный URL, неверный `Crawl-delay`) блокируют сохранение `PUT` ответом `422` с `details[{field: "body", message: "Строка N: ..."}]`; предупреждения (нет `Sitemap`, нет `Disallow: /admin/`, `Disallow: /` для всех роботов, неизвестная директива) только показываются в панели.
+- `GET` дополнительно возвращает `defaultBody` (стандартный файл), `environment` и `overriddenByEnvironment` — на не-production окружении сохранённое содержимое не используется, роботам всегда отдаётся `Disallow: /`.
 
 Минимальный production robots.txt:
 
@@ -269,13 +271,60 @@ Sitemap: https://zaborprofil.ru/sitemap.xml
 
 - Сущность `Module\Seo\Domain\Entity\Redirect` ([код](../src/Module/Seo/Domain/Entity/Redirect.php)).
 - Обрабатывается `RedirectKernelSubscriber` на `kernel.request` **до** Router (priority выше, см. [код](../src/Module/Seo/Infrastructure/Http/RedirectKernelSubscriber.php)).
-- Поддерживает 301 и 302; default — 301.
+- Поддерживает 301, 302, 307 и 308; default — 301.
 - Поле `active` — для временного отключения без удаления.
 
 ### 7.2 Автоматическое создание при смене path
 
 - При смене `Page.path` — `PagePathChangeListener` ([код](../src/Module/Seo/Infrastructure/Doctrine/PagePathChangeListener.php)) создаёт 301 со старого пути на новый.
 - Если для нового пути уже есть `Redirect → старый путь` — это loop, и операция должна быть отклонена в Application.
+
+### 7.2.1 Управление через админку (SEO-панель)
+
+Раздел `/admin/seo` (вкладка «Редиректы») работает поверх `Module\Seo\UI\Admin\RedirectApiController`. Все операции требуют `AdminPermission::SEO_EDIT`, ошибки возвращаются в формате `{error, code}` через `AdminApiErrorResponder` (для полей формы добавляется `details[{field, message}]`).
+
+| Метод и путь | Назначение |
+|---|---|
+| `GET /admin/api/seo/redirects?q=&status=all\|active\|inactive&sort=source\|hits\|lastHit\|updated&direction=asc\|desc&page=&perPage=` | Список с поиском по старому и новому URL, серверной пагинацией (до 100 на страницу) и счётчиками `counts` |
+| `POST /admin/api/seo/redirects` | Создание: `{sourcePath, targetPath, statusCode?, isActive?}` |
+| `PUT /admin/api/seo/redirects/{id}` | Правка (в том числе смена `sourcePath`); `id` — ULID |
+| `DELETE /admin/api/seo/redirects/{id}` | Удаление (`204`); пишется в журнал аудита |
+| `GET /admin/api/seo/redirects/analysis` | Все циклы и цепочки среди активных правил |
+| `POST /admin/api/seo/redirects/import` | Импорт CSV (см. §7.2.2) |
+| `GET /admin/api/seo/redirects/export` | Выгрузка `redirects.csv` |
+
+Правила валидации (`RedirectRuleValidator`):
+
+- источник — локальный путь без домена, `?` и `#` (сервер сопоставляет только путь), без `//`, длиной до 512 символов; пути под `/admin`, `/build`, `/health`, `/uploads`, `/_profiler`, `/_wdt` запрещены (`RedirectKernelSubscriber` их не обрабатывает);
+- цель — путь от корня или `http(s)://`-адрес; `javascript:`, `ftp:`, `//host` и цели под `/admin` отклоняются;
+- редирект на самого себя (в том числе абсолютным URL своего домена) запрещён;
+- код ответа: 301, 302, 307 или 308; дубликат источника даёт `REDIRECT_DUPLICATE`;
+- **цикл** (`A → B → A`) блокирует сохранение ответом `422` с кодом `REDIRECT_LOOP`; неактивное правило проверке цикла не подлежит;
+- **цепочка** (`A → B → C`) не блокирует сохранение, но возвращается в `warnings[]` ответа; также предупреждаем, если источник совпадает с опубликованной страницей (редирект её перекроет) или цель не найдена среди страниц CMS.
+
+Кириллические и прочие не-ASCII адреса сохраняются в percent-encoding (`UrlPathEncoder`), потому что `Request::getPathInfo()` отдаёт путь в закодированном виде: правило, введённое как `/старая/`, срабатывает на запрос `/%D1%81%D1%82%D0%B0%D1%80%D0%B0%D1%8F/`. В интерфейсе пути показываются в читаемом виде.
+
+Счётчик срабатываний (`hitCount`, `lastHitAt`) не попадает в журнал аудита; создание, правка и удаление правил — попадают.
+
+### 7.2.2 Импорт и экспорт CSV
+
+- Формат: `source,target[,status[,active]]`. Разделитель `,`, `;` или TAB определяется автоматически, заголовок необязателен (понимаются алиасы `source/from/old`, `target/to/new`, `status/code`, `active/enabled`), BOM и строки-комментарии `#` игнорируются. Лимиты: 1 МБ и 2000 строк за импорт, только UTF-8.
+- `POST /admin/api/seo/redirects/import` принимает `{csv, dryRun = true, updateExisting = false}`. Сначала выполняется проверка (`dryRun: true`, ничего не записывается), затем применение (`dryRun: false`). Корректные строки применяются одной транзакцией, ошибочные пропускаются и попадают в отчёт.
+- Отчёт: `{dryRun, totalRows, created, updated, skipped, failed, errors[{line, source, message}], warnings[], preview[]}`. Каждая строка проходит те же правила, что и одиночное создание; циклы и дубли внутри самого файла тоже ловятся. Существующие источники пропускаются, либо обновляются при `updateExisting: true`.
+- В интерфейсе отчёт об ошибках можно скачать как CSV (`line,source,error`).
+- Экспорт отдаёт `source,target,status,active`; файл можно импортировать обратно без изменений.
+
+### 7.2.3 Проверка циклов и цепочек
+
+`RedirectAnalyzer` строит граф активных правил «источник → внутренний целевой путь» (`RedirectGraph`; внешние цели — конечные узлы). Панель показывает циклы (с кнопками «Отключить» для каждого правила) и цепочки (кнопка «Вести напрямую на конечный URL» обновляет все промежуточные правила).
+
+### 7.2.4 Журнал 404
+
+- Публичные ответы 404 (`GET`/`HEAD`) фиксирует `NotFoundLogSubscriber` (`kernel.response`) через `NotFoundRecorder` в таблицу `seo_not_found_log`: одна строка на путь, счётчик обращений, первое и последнее обращение, последний источник перехода (без query и якоря).
+- Пути под служебными префиксами (`/admin`, `/build`, `/health`, `/uploads`, `/_profiler`, `/_wdt`) и длиннее 512 символов не пишутся. Таблица ограничена 5000 записей: при переполнении новые пути не добавляются, счётчики существующих продолжают расти. Сбой записи логируется в канал `seo` и не ломает ответ.
+- API: `GET /admin/api/seo/not-found?q=&sort=hits|lastSeen&page=&perPage=` (в записях есть флаг `hasRedirect`), `DELETE /admin/api/seo/not-found/{id}`, `DELETE /admin/api/seo/not-found` (очистить всё) и `DELETE /admin/api/seo/not-found?olderThanDays=N`.
+- Консоль: `php bin/console app:seo:not-found:prune --days=90` удаляет записи, к которым не обращались N дней; его удобно повесить на cron.
+- Из журнала редирект создаётся в один клик: форма открывается с предзаполненным старым URL.
 
 ### 7.3 Когда 301 vs 302
 

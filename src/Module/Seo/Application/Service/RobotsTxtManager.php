@@ -21,15 +21,37 @@ final readonly class RobotsTxtManager
 
     public function body(): string
     {
-        if ($this->environment !== 'prod') {
+        return $this->isProduction() ? $this->bodyFor($this->editableBody()) : $this->bodyFor(null);
+    }
+
+    /**
+     * Что получит робот, если сохранить `$custom` в текущем окружении.
+     */
+    public function bodyFor(?string $custom): string
+    {
+        if (!$this->isProduction()) {
             return "User-agent: *\nDisallow: /\n";
         }
 
-        $custom = $this->editableBody();
-        if (trim($custom) !== '') {
+        if ($custom !== null && trim($custom) !== '') {
             return $this->withTrailingNewline($custom);
         }
 
+        return $this->defaultBody();
+    }
+
+    public function isProduction(): bool
+    {
+        return $this->environment === 'prod';
+    }
+
+    public function environment(): string
+    {
+        return $this->environment;
+    }
+
+    public function defaultBody(): string
+    {
         return $this->defaultProductionBody();
     }
 

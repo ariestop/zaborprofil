@@ -33,6 +33,13 @@ final readonly class AuditLogSubscriber
         AdminUser::class,
     ];
 
+    /**
+     * Счётчик срабатываний меняется на каждый публичный запрос и не является действием администратора.
+     *
+     * @var list<string>
+     */
+    private const array REDIRECT_COUNTER_FIELDS = ['hitCount', 'lastHitAt', 'updatedAt'];
+
     private const string REDACTED = '[redacted]';
 
     public function __construct(
@@ -56,7 +63,7 @@ final readonly class AuditLogSubscriber
         }
 
         foreach ($unitOfWork->getScheduledEntityDeletions() as $entity) {
-            if (!$entity instanceof AdminUser) {
+            if (!$entity instanceof AdminUser && !$entity instanceof Redirect) {
                 continue;
             }
 
@@ -73,6 +80,10 @@ final readonly class AuditLogSubscriber
             $newValues = [];
 
             foreach ($changeSet as $field => $change) {
+                if ($entity instanceof Redirect && \in_array($field, self::REDIRECT_COUNTER_FIELDS, true)) {
+                    continue;
+                }
+
                 if ($entity instanceof AdminUser && $field === 'passwordHash') {
                     $oldValues['password'] = self::REDACTED;
                     $newValues['password'] = self::REDACTED;

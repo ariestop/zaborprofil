@@ -86,6 +86,13 @@ services:
     App\Module\Seo\Domain\Repository\RedirectRepositoryInterface:
         alias: App\Module\Seo\Infrastructure\Doctrine\Repository\DoctrineRedirectRepository
 
+    App\Module\Seo\Domain\Repository\NotFoundLogRepositoryInterface:
+        alias: App\Module\Seo\Infrastructure\Doctrine\Repository\DoctrineNotFoundLogRepository
+
+    App\Module\Seo\Application\Redirect\RedirectRuleValidator:
+        arguments:
+            $siteUrl: '%app.site_url%'
+
     App\Module\AuditLog\Domain\Repository\AuditLogRepositoryInterface:
         alias: App\Module\AuditLog\Infrastructure\Doctrine\Repository\DoctrineAuditLogRepository
 
