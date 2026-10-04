@@ -96,10 +96,7 @@ final class AdminUser implements UserInterface, PasswordAuthenticatedUserInterfa
      */
     public function getRoles(): array
     {
-        $roles = $this->roles;
-        $roles[] = 'ROLE_ADMIN';
-
-        return array_values(array_unique($roles));
+        return $this->storedRoles();
     }
 
     public function getPassword(): string
@@ -123,7 +120,7 @@ final class AdminUser implements UserInterface, PasswordAuthenticatedUserInterfa
     }
 
     /**
-     * Роли, фактически сохранённые в БД (без принудительно добавляемой ROLE_ADMIN из getRoles()).
+     * Роли, сохранённые в БД. Совпадает с getRoles(): права строятся только из назначенных ролей и role_hierarchy.
      *
      * @return list<string>
      */

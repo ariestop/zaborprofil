@@ -19,6 +19,7 @@ import { cn } from '../shared/lib/cn'
 import { formatDateTime, formatNumber } from '../shared/lib/format'
 import { Badge, Button, EmptyState, ErrorState, Input, PageHeader, Select } from '../shared/ui'
 import { Pagination } from '../shared/ui/pagination'
+import { useCan } from '../stores/auth'
 import type { LeadStatus } from '../types/api'
 import LeadDetailPage from './LeadDetailPage'
 
@@ -97,6 +98,7 @@ export default function CrmPage() {
   const leadsQuery = useLeadsQuery(params)
   const assigneesQuery = useLeadAssigneesQuery()
   const [exporting, setExporting] = useState(false)
+  const canExport = useCan('leads.export')
 
   const update = (patch: Partial<LeadListParams>) => {
     setSearchParams(writeParams({ ...params, page: 1, ...patch }), { replace: true })
@@ -157,11 +159,11 @@ export default function CrmPage() {
       <PageHeader
         title="Заявки"
         description="Заявки с сайта: поиск, фильтры, ответственные и история работы с клиентом. J / K — следующая и предыдущая заявка."
-        actions={(
+        actions={canExport ? (
           <Button type="button" variant="outline" disabled={exporting} onClick={() => void exportCsv()}>
             Экспорт CSV
           </Button>
-        )}
+        ) : undefined}
       />
 
       <div className="grid gap-5 lg:grid-cols-[minmax(320px,400px)_minmax(0,1fr)]">

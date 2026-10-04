@@ -42,4 +42,14 @@ final class AdminRole
     {
         return array_any($roles, static fn (string $role): bool => \in_array($role, self::administrative(), true));
     }
+
+    /**
+     * Есть ли среди ролей хотя бы одна админская: только такой аккаунт может войти в `/admin`.
+     *
+     * @param list<string> $roles
+     */
+    public static function grantsAdminAccess(array $roles): bool
+    {
+        return array_any($roles, static fn (string $role): bool => self::isKnown($role));
+    }
 }

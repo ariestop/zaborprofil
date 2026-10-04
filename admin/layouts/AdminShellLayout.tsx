@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, Outlet } from 'react-router-dom'
-import { useAuthStore } from '../stores/auth'
+import { useAuthStore, useCan } from '../stores/auth'
 import { CommandPaletteDialog } from '../widgets/CommandPaletteDialog'
 import AssetBuildWidget from '../components/AssetBuildWidget'
 import { cn } from '../shared/lib/cn'
@@ -106,6 +106,7 @@ function SidebarContent({ collapsed, onToggleCollapsed, onClose }: SidebarConten
 }
 
 export function AdminShellLayout() {
+  const canViewSystem = useCan('system.view')
   const [collapsed, setCollapsed] = useState(readCollapsed)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
@@ -167,7 +168,7 @@ export function AdminShellLayout() {
       </div>
 
       <CommandPaletteDialog />
-      <AssetBuildWidget />
+      {canViewSystem ? <AssetBuildWidget /> : null}
     </div>
   )
 }
