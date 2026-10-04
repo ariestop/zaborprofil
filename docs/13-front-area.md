@@ -71,7 +71,7 @@ templates/
 
 **Фактическое состояние:**
 
-- `<title>` — `Page.title`.
+- `<title>` — `Page.metaTitle`; если не задан — шаблон `seo.title_template` из настроек; если нет и его — `Page.title` (см. [26-seo-architecture §4.2.1](26-seo-architecture.md)).
 - `<h1>` — `Page.h1`.
 - `<meta name="robots">` — `index, follow` или `noindex, nofollow` на основе `Page.indexable`.
 - `<meta name="description">` — `Page.metaDescription` (если задано).

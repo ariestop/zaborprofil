@@ -96,6 +96,7 @@ export interface AuditLogEntryItem {
 }
 
 export interface PageSeoPayload {
+  metaTitle: string | null
   metaDescription: string | null
   canonicalUrl: string | null
   ogTitle: string | null
