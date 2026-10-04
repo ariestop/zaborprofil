@@ -65,10 +65,11 @@ jobs:
 
             core.info('CI is green for current SHA. Proceeding with deploy.');
 
-  deploy-staging:
-    name: Deploy Staging
+  # The frontend (Vite/Tailwind/React admin) is built once here and the same
+  # archive is shipped to staging and production, so the VPS needs no Node.js.
+  build-frontend:
+    name: Build frontend
     runs-on: ubuntu-latest
-    environment: staging
     needs:
       - verify-ci
     if: github.ref == 'refs/heads/main'
@@ -76,6 +77,53 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 25.9.0
+          cache: npm
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Package frontend build
+        run: |
+          set -euo pipefail
+          test -f public_html/build/.vite/manifest.json
+          mkdir dist
+          cp -r public_html/build dist/build
+          printf '%s\n' "${GITHUB_SHA}" > dist/BUILD_COMMIT
+          tar -czf frontend-build.tar.gz -C dist .
+          tar -tzf frontend-build.tar.gz | head -n 20
+
+      - name: Upload frontend build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend-build.tar.gz
+          if-no-files-found: error
+          retention-days: 14
+
+  deploy-staging:
+    name: Deploy Staging
+    runs-on: ubuntu-latest
+    environment: staging
+    needs:
+      - verify-ci
+      - build-frontend
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download frontend build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+
       - name: Upload deploy scripts
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -87,6 +135,16 @@ jobs:
           target: /tmp/zaborprofil-deploy
           strip_components: 2
 
+      - name: Upload frontend build
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.STAGING_SSH_HOST }}
+          username: ${{ secrets.STAGING_SSH_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          port: ${{ secrets.STAGING_SSH_PORT || 22 }}
+          source: frontend-build.tar.gz
+          target: /tmp/zaborprofil-deploy
+
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -96,10 +154,13 @@ jobs:
           port: ${{ secrets.STAGING_SSH_PORT || 22 }}
           script: |
             set -euo pipefail
+            trap 'rm -f /tmp/zaborprofil-deploy/frontend-build.tar.gz' EXIT
             chmod +x /tmp/zaborprofil-deploy/*.sh
             BRANCH="${STAGING_BRANCH:-${{ env.DEPLOY_REF }}}" \
             APP_ROOT="${STAGING_APP_ROOT:-/var/www/zaborprofil}" \
             HEALTH_URL="${STAGING_HEALTH_URL:-https://staging.zaborprofil.ru/health}" \
+            DEPLOY_COMMIT="${{ github.sha }}" \
+            FRONTEND_BUILD_ARCHIVE=/tmp/zaborprofil-deploy/frontend-build.tar.gz \
             /tmp/zaborprofil-deploy/deploy-staging.sh
 
   deploy-production:
@@ -107,11 +168,17 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     needs:
+      - build-frontend
       - deploy-staging
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Download frontend build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
 
       - name: Upload deploy scripts
         uses: appleboy/scp-action@v0.1.7
@@ -124,6 +191,16 @@ jobs:
           target: /tmp/zaborprofil-deploy
           strip_components: 2
 
+      - name: Upload frontend build
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.PRODUCTION_SSH_HOST }}
+          username: ${{ secrets.PRODUCTION_SSH_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_SSH_PORT || 22 }}
+          source: frontend-build.tar.gz
+          target: /tmp/zaborprofil-deploy
+
       - name: Deploy over SSH
         uses: appleboy/ssh-action@v1.2.0
         with:
@@ -133,10 +210,13 @@ jobs:
           port: ${{ secrets.PRODUCTION_SSH_PORT || 22 }}
           script: |
             set -euo pipefail
+            trap 'rm -f /tmp/zaborprofil-deploy/frontend-build.tar.gz' EXIT
             chmod +x /tmp/zaborprofil-deploy/*.sh
             BRANCH="${PRODUCTION_BRANCH:-${{ env.DEPLOY_REF }}}" \
             APP_ROOT="${PRODUCTION_APP_ROOT:-/var/www/zaborprofil}" \
             HEALTH_URL="${PRODUCTION_HEALTH_URL:-https://zaborprofil.ru/health}" \
             CONFIRM_STAGING_DEPLOYED=yes \
             CONFIRM_DEPLOY_SAFETY_CHECKLIST=yes \
+            DEPLOY_COMMIT="${{ github.sha }}" \
+            FRONTEND_BUILD_ARCHIVE=/tmp/zaborprofil-deploy/frontend-build.tar.gz \
             /tmp/zaborprofil-deploy/deploy-production.sh

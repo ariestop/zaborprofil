@@ -34,7 +34,7 @@
 | systemd | как ОС | управляет php-fpm, nginx, postgres, redis, messenger worker |
 | TLS | Let’s Encrypt / certbot | автоматическое продление |
 | Composer | 2.x | глобально |
-| Node.js | 25.9.0 | nvm / nodesource (для `npm ci` во время deploy) |
+| Node.js | не нужен | frontend собирается в GitHub Actions и приезжает на сервер архивом (`FRONTEND_BUILD_ARCHIVE`). Node 25.9.0 нужен на VPS только для ручного deploy без архива (fallback `npm ci && npm run build`) |
 
 ## Скрипты
 
@@ -77,7 +77,7 @@ flowchart TB
     s4 --> s5[5. ln -s shared/public_html/uploads releases/<ts>/public_html/uploads]
     s5 --> s6[6. ln -s shared/var/log releases/<ts>/var/log]
     s6 --> s7[7. composer install --no-dev --optimize-autoloader]
-    s7 --> s8[8. npm ci && npm run build]
+    s7 --> s8[8. распаковать готовый build/ из CI-архива; fallback: npm ci && npm run build]
     s8 --> s9[9. PROD only: pg_dump backup + copy uploads]
     s9 --> s10[10. doctrine:migrations:migrate --no-interaction]
     s10 --> s11[11. cache:clear --env=prod --no-warmup]
