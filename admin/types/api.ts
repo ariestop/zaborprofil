@@ -208,7 +208,31 @@ export interface MediaAssetItem {
   }>
   alt: string | null
   title: string | null
+  description?: string | null
+  folder?: string | null
+  fileHash?: string | null
+  usageCount?: number
+  duplicate?: boolean
   createdAt: string
+}
+
+export interface MediaUsageItem {
+  type: 'page_seo' | 'page_block' | 'product' | 'category' | 'menu_item' | 'setting'
+  sourceId: string
+  title: string
+  location: string
+  adminPath: string | null
+  status: string | null
+}
+
+export interface MediaUsageResponse {
+  total: number
+  usages: MediaUsageItem[]
+}
+
+export interface MediaFolderItem {
+  name: string
+  count: number
 }
 
 export interface MediaPagination {

@@ -6,6 +6,9 @@ namespace App\Module\Media\UI\Admin;
 
 use App\Module\Auth\Domain\Security\AdminPermission;
 use App\Module\Media\Application\Service\MediaOptimizer;
+use App\Module\Media\Application\Usage\MediaUsageFinder;
+use App\Module\Media\Application\Usage\MediaUsageIndex;
+use App\Module\Media\Application\Usage\MediaUsageReference;
 use App\Module\Media\Domain\Entity\MediaAsset;
 use App\Module\Media\Domain\Repository\MediaAssetRepositoryInterface;
 use App\Shared\Infrastructure\Upload\UploadValidator;
@@ -29,6 +32,7 @@ final readonly class MediaApiController
         private string $mediaUploadDir,
         private MediaOptimizer $mediaOptimizer,
         private AdminApiErrorResponder $errors,
+        private MediaUsageFinder $usageFinder,
     ) {
     }
 
@@ -40,13 +44,18 @@ final readonly class MediaApiController
         }
 
         try {
-            $page = $this->assets->search(MediaListRequest::criteriaFrom($request));
+            $usage = $this->usageFinder->index();
+            $criteria = MediaListRequest::criteriaFrom(
+                $request,
+                fn (): array => $usage->usedAssetIds($this->assets->publicPathMap()),
+            );
+            $page = $this->assets->search($criteria);
         } catch (Throwable $exception) {
             return $this->errors->fromThrowable($exception, 'Admin Media API');
         }
 
         return new JsonResponse([
-            'assets' => array_map(static fn (MediaAsset $asset): array => $asset->toArray(), $page->items),
+            'assets' => array_map(static fn (MediaAsset $asset): array => $asset->toArray() + ['usageCount' => $usage->count($asset)], $page->items),
             'pagination' => [
                 'page' => $page->page,
                 'perPage' => $page->perPage,
@@ -54,6 +63,36 @@ final readonly class MediaApiController
                 'totalPages' => $page->totalPages(),
             ],
         ]);
+    }
+
+    #[Route('/folders', name: 'admin_api_media_folders_index', methods: ['GET'])]
+    public function folders(): JsonResponse
+    {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::MEDIA_UPLOAD)) {
+            return $this->accessDenied();
+        }
+
+        try {
+            return new JsonResponse(['folders' => $this->assets->folders()]);
+        } catch (Throwable $exception) {
+            return $this->errors->fromThrowable($exception, 'Admin Media API');
+        }
+    }
+
+    #[Route('/assets/{id}/usages', name: 'admin_api_media_assets_usages', methods: ['GET'])]
+    public function usages(string $id): JsonResponse
+    {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::MEDIA_UPLOAD)) {
+            return $this->accessDenied();
+        }
+
+        try {
+            $asset = $this->assets->get($id);
+
+            return new JsonResponse($this->usagePayload($this->usageFinder->index(), $asset));
+        } catch (Throwable $exception) {
+            return $this->errors->fromThrowable($exception, 'Admin Media API');
+        }
     }
 
     #[Route('/assets', name: 'admin_api_media_assets_upload', methods: ['POST'])]
@@ -74,6 +113,20 @@ final readonly class MediaApiController
             }
 
             $validated = $this->uploadValidator->validate($file);
+            $folder = MediaAsset::normalizeFolder($this->optionalFormString($request, 'folder'));
+            $fileHash = hash_file('sha256', $file->getPathname());
+            if ($fileHash === false) {
+                throw new RuntimeException('Uploaded file hash cannot be calculated.');
+            }
+
+            $duplicate = $this->assets->findOneByFileHash($fileHash);
+            if ($duplicate instanceof MediaAsset) {
+                return new JsonResponse($duplicate->toArray() + [
+                    'duplicate' => true,
+                    'usageCount' => $this->usageFinder->index()->count($duplicate),
+                ]);
+            }
+
             if (!is_dir($this->mediaUploadDir) && !mkdir($this->mediaUploadDir, 0775, true) && !is_dir($this->mediaUploadDir)) {
                 throw new RuntimeException('Media upload directory cannot be created.');
             }
@@ -96,10 +149,14 @@ final readonly class MediaApiController
                 $optimized->width,
                 $optimized->height,
                 $optimized->variants,
+                $fileHash,
             );
+            if ($folder !== null) {
+                $asset->updateMetadata(null, null, null, $folder);
+            }
             $this->assets->save($asset);
 
-            return new JsonResponse($asset->toArray(), 201);
+            return new JsonResponse($asset->toArray() + ['duplicate' => false, 'usageCount' => 0], 201);
         } catch (Throwable $exception) {
             return $this->errors->fromThrowable($exception, 'Admin Media API');
         }
@@ -116,19 +173,21 @@ final readonly class MediaApiController
             $payload = $request->toArray();
             $asset = $this->assets->get($id);
             $asset->updateMetadata(
-                $this->optionalString($payload, 'alt'),
-                $this->optionalString($payload, 'title'),
+                $this->metadataValue($payload, 'alt', $asset->alt()),
+                $this->metadataValue($payload, 'title', $asset->title()),
+                $this->metadataValue($payload, 'description', $asset->description()),
+                $this->metadataValue($payload, 'folder', $asset->folder()),
             );
             $this->assets->save($asset);
 
-            return new JsonResponse($asset->toArray());
+            return new JsonResponse($asset->toArray() + ['usageCount' => $this->usageFinder->index()->count($asset)]);
         } catch (Throwable $exception) {
             return $this->errors->fromThrowable($exception, 'Admin Media API');
         }
     }
 
     #[Route('/assets/{id}', name: 'admin_api_media_assets_delete', methods: ['DELETE'])]
-    public function delete(string $id): JsonResponse
+    public function delete(string $id, Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::MEDIA_DELETE)) {
             return $this->accessDenied();
@@ -136,6 +195,17 @@ final readonly class MediaApiController
 
         try {
             $asset = $this->assets->get($id);
+            if (!$request->query->getBoolean('force')) {
+                $payload = $this->usagePayload($this->usageFinder->index(), $asset);
+                if ($payload['total'] > 0) {
+                    return $this->errors->conflict(
+                        'Media asset is used on the site. Confirm deletion to remove it anyway.',
+                        'MEDIA_IN_USE',
+                        $payload,
+                    );
+                }
+            }
+
             $this->removeAssetFiles($asset);
             $this->assets->remove($asset);
 
@@ -143,6 +213,40 @@ final readonly class MediaApiController
         } catch (Throwable $exception) {
             return $this->errors->fromThrowable($exception, 'Admin Media API');
         }
+    }
+
+    /**
+     * @return array{total: int, usages: list<array<string, mixed>>}
+     */
+    private function usagePayload(MediaUsageIndex $index, MediaAsset $asset): array
+    {
+        $usages = array_map(
+            static fn (MediaUsageReference $reference): array => $reference->toArray(),
+            $index->forAsset($asset),
+        );
+
+        return ['total' => \count($usages), 'usages' => $usages];
+    }
+
+    private function optionalFormString(Request $request, string $key): ?string
+    {
+        $value = $request->request->get($key);
+
+        return \is_string($value) ? $value : null;
+    }
+
+    /**
+     * Ключ отсутствует в теле запроса — значение не меняется; `null` или пустая строка очищают поле.
+     *
+     * @param array<mixed> $payload
+     */
+    private function metadataValue(array $payload, string $key, ?string $current): ?string
+    {
+        if (!\array_key_exists($key, $payload)) {
+            return $current;
+        }
+
+        return $this->optionalString($payload, $key);
     }
 
     /**

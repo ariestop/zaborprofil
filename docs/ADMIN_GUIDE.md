@@ -6,7 +6,7 @@
 - защищенный dashboard `/admin/dashboard`;
 - страницы и блоки `/admin/pages`;
 - структурированный builder страницы `/admin/pages/{id}/builder`;
-- Media Library `/admin/media`: загрузка drag&drop с прогрессом, поиск, пагинация, alt/title, удаление с подтверждением, variants для изображений (см. [admin/media-library](admin/media-library.md));
+- Media Library `/admin/media`: загрузка drag&drop с прогрессом и дедупликацией по хешу, поиск и фильтры, пагинация, alt/title/описание/папки, «где используется», удаление с подтверждением и защитой используемых файлов, variants для изображений (см. [admin/media-library](admin/media-library.md));
 - управляемые меню `/admin/menu` для `header`, `footer`, `service`;
 - заявки `/admin/leads` со статусами `new`, `in_progress`, `done`, `spam` и spam score/reasons;
 - SEO-панель `/admin/seo`: редиректы, robots.txt, журнал 404 и SEO-аудит;
