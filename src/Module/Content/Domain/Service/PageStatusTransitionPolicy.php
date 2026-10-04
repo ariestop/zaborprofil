@@ -14,10 +14,10 @@ final readonly class PageStatusTransitionPolicy
      */
     private const array TRANSITIONS = [
         'draft' => [PageStatus::Review, PageStatus::Approved, PageStatus::Published, PageStatus::Deleted],
-        'review' => [PageStatus::Approved, PageStatus::Draft, PageStatus::Deleted],
+        'review' => [PageStatus::Approved, PageStatus::Draft, PageStatus::Published, PageStatus::Deleted],
         'approved' => [PageStatus::Published, PageStatus::Scheduled, PageStatus::Draft, PageStatus::Deleted],
         'published' => [PageStatus::Unpublished, PageStatus::Scheduled, PageStatus::Archived, PageStatus::Deleted],
-        'scheduled' => [PageStatus::Published, PageStatus::Draft, PageStatus::Deleted],
+        'scheduled' => [PageStatus::Published, PageStatus::Approved, PageStatus::Draft, PageStatus::Deleted],
         'unpublished' => [PageStatus::Draft, PageStatus::Published, PageStatus::Archived, PageStatus::Deleted],
         'archived' => [PageStatus::Draft, PageStatus::Deleted],
         'deleted' => [PageStatus::Draft],
