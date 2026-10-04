@@ -231,9 +231,10 @@ jobs:
           APP_DEBUG: 0
           SITE_URL: http://127.0.0.1:8000
           DEFAULT_URI: http://127.0.0.1:8000
+          VITE_MANIFEST_PATH: ${{ github.workspace }}/public_html/build/.vite/manifest.json
         run: |
           export DATABASE_URL="mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}?serverVersion=8.4&charset=utf8mb4"
-          php -S 127.0.0.1:8000 -t public_html >/tmp/e2e-app.log 2>&1 &
+          php -d variables_order=EGPCS -S 127.0.0.1:8000 -t public_html >/tmp/e2e-app.log 2>&1 &
 
       - name: Wait for app server
         run: |

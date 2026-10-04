@@ -10,12 +10,16 @@ export const ADMIN_LOGIN_SELECTORS = {
   submitButtonName: 'Войти',
 } as const
 
+export const PAGES_SELECTORS = {
+  headingName: 'Редактор страниц',
+} as const
+
 export const BUILDER_SELECTORS = {
   openBuilderLinkName: 'Перейти в Builder',
   saveNowButtonName: 'Save now',
-  previewLinkName: 'Preview',
-  dndSectionTitle: 'DnD blocks (backend reorder)',
-  richTextAriaLabel: 'Main content area, start typing to enter text.',
-  saveRichTextButtonName: 'Сохранить rich text в block settings',
-  runtimeText: 'Builder snapshot editor',
+  previewButtonName: 'Preview',
+  runtimeText: 'Structured Visual CMS Builder',
+  blocksSectionTitle: 'Блоки страницы',
+  previewSectionTitle: 'Page preview',
+  previewPlaceholderText: 'Нажмите «Preview», чтобы получить HTML предпросмотра от backend.',
 } as const

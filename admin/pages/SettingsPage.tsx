@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useSettingsQuery, useUpsertSettingMutation } from '../entities/settings/api'
 import { PageHeader, Card, Button, ErrorState, PageLoadingState, Select } from '../shared/ui'
 import { useToast } from '../app/providers/toast-provider'
@@ -13,20 +13,14 @@ export default function SettingsPage() {
   const settingsQuery = useSettingsQuery(contentScope)
   const upsertSetting = useUpsertSettingMutation()
   const { push } = useToast()
-  const [publicBlocksSourceDraft, setPublicBlocksSourceDraft] = useState<PublicBlocksSource>('snapshot')
+  const [publicBlocksSourceOverride, setPublicBlocksSourceOverride] = useState<PublicBlocksSource | null>(null)
 
   const currentPublicBlocksSource: PublicBlocksSource = (() => {
     const item = settingsQuery.data?.find((setting) => setting.key === publicBlocksSourceKey)
     return item?.value === 'live' ? 'live' : 'snapshot'
   })()
 
-  useEffect(() => {
-    if (settingsQuery.data === undefined) {
-      return
-    }
-
-    setPublicBlocksSourceDraft(currentPublicBlocksSource)
-  }, [currentPublicBlocksSource, settingsQuery.data])
+  const publicBlocksSourceDraft = publicBlocksSourceOverride ?? currentPublicBlocksSource
 
   const savePublicBlocksSource = async (): Promise<void> => {
     try {
@@ -36,6 +30,7 @@ export default function SettingsPage() {
         value: publicBlocksSourceDraft,
         description: 'Источник блоков для публичного рендера: snapshot ревизии или live блоки.',
       })
+      setPublicBlocksSourceOverride(null)
       push({
         title: 'Настройка сохранена',
         description: publicBlocksSourceDraft === 'live'
@@ -84,7 +79,7 @@ export default function SettingsPage() {
           </div>
           <Select
             value={publicBlocksSourceDraft}
-            onValueChange={(value) => setPublicBlocksSourceDraft(value as PublicBlocksSource)}
+            onValueChange={(value) => setPublicBlocksSourceOverride(value as PublicBlocksSource)}
             options={[
               { value: 'snapshot', label: 'Snapshot ревизии (по умолчанию)' },
               { value: 'live', label: 'Live блоки из builder' },

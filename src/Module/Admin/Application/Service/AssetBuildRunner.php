@@ -54,7 +54,7 @@ final readonly class AssetBuildRunner
     }
 
     /**
-     * @param list<string> $requestedTargets
+     * @param array<mixed> $requestedTargets
      *
      * @return array<string, mixed>
      */
@@ -342,6 +342,9 @@ SH;
         ];
     }
 
+    /**
+     * @param list<string> $selectedTargets
+     */
     private function commandForTargets(array $selectedTargets): string
     {
         if ($selectedTargets === [self::TARGET_ALL]) {
@@ -368,7 +371,7 @@ SH;
     }
 
     /**
-     * @param list<string> $requestedTargets
+     * @param array<mixed> $requestedTargets
      *
      * @return list<string>
      */

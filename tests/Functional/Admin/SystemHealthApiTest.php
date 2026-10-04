@@ -28,6 +28,21 @@ final class SystemHealthApiTest extends WebTestCase
         self::assertIsArray($payload['environment'] ?? null);
     }
 
+    public function testDatabaseStatusReportsRealServerInfo(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+        $client->loginUser($this->createAdminUser());
+
+        $client->request('GET', '/admin/api/system/database');
+
+        self::assertResponseIsSuccessful();
+        $payload = json_decode($client->getResponse()->getContent() ?: '{}', true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($payload);
+        self::assertNotSame('unknown', $payload['databaseName'] ?? null);
+        self::assertNotSame('unknown', $payload['serverVersion'] ?? null);
+    }
+
     private function createAdminUser(): AdminUser
     {
         $entityManager = $this->entityManager();

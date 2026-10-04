@@ -76,6 +76,8 @@ final class AdminEditorFlowRegressionTest extends WebTestCase
         self::assertResponseIsSuccessful();
         $payload = json_decode((string) $client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($payload);
+        self::assertIsArray($payload['blocks'] ?? null);
+        self::assertIsArray($payload['blocks'][0] ?? null);
         self::assertSame($secondBlockId, $payload['blocks'][0]['id'] ?? null);
 
         $this->jsonRequestWithCsrf($client, 'PUT', '/admin/api/content/blocks/'.$secondBlockId, [
@@ -97,6 +99,9 @@ final class AdminEditorFlowRegressionTest extends WebTestCase
         self::assertStringContainsString('/_preview/', $previewPayload['previewUrl']);
     }
 
+    /**
+     * @param list<string> $roles
+     */
     private function createAdminUser(string $email, array $roles): AdminUser
     {
         $entityManager = $this->entityManager();

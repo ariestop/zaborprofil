@@ -31,15 +31,26 @@ final class BlockSchemaRegistryTest extends TestCase
         $schema = (new BlockSchemaRegistry())->get(BlockType::Slider);
 
         self::assertArrayHasKey('items', $schema->defaultContent);
-        self::assertIsArray($schema->defaultContent['items']);
-        self::assertNotEmpty($schema->defaultContent['items']);
-        self::assertSame('Заголовок слайда', $schema->defaultContent['items'][0]['title'] ?? null);
-        self::assertSame('Подробнее', $schema->defaultContent['items'][0]['buttonLabel'] ?? null);
+        $items = $schema->defaultContent['items'];
+        self::assertIsArray($items);
+        self::assertNotEmpty($items);
+        self::assertIsArray($items[0]);
+        self::assertSame('Заголовок слайда', $items[0]['title'] ?? null);
+        self::assertSame('Подробнее', $items[0]['buttonLabel'] ?? null);
         self::assertSame(4500, $schema->defaultSettings['delayMs'] ?? null);
         self::assertSame('slide', $schema->defaultSettings['effect'] ?? null);
         self::assertSame(500, $schema->defaultSettings['speedMs'] ?? null);
-        self::assertSame('Предыдущий слайд', $schema->defaultSettings['a11yLabels']['prevSlide'] ?? null);
-        self::assertSame(6, $schema->defaultSettings['cardsEffect']['perSlideOffset'] ?? null);
-        self::assertSame(18, $schema->defaultSettings['coverflowEffect']['rotate'] ?? null);
+
+        $a11yLabels = $schema->defaultSettings['a11yLabels'] ?? null;
+        self::assertIsArray($a11yLabels);
+        self::assertSame('Предыдущий слайд', $a11yLabels['prevSlide'] ?? null);
+
+        $cardsEffect = $schema->defaultSettings['cardsEffect'] ?? null;
+        self::assertIsArray($cardsEffect);
+        self::assertSame(6, $cardsEffect['perSlideOffset'] ?? null);
+
+        $coverflowEffect = $schema->defaultSettings['coverflowEffect'] ?? null;
+        self::assertIsArray($coverflowEffect);
+        self::assertSame(18, $coverflowEffect['rotate'] ?? null);
     }
 }

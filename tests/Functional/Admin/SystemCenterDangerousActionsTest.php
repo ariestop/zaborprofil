@@ -51,10 +51,10 @@ final class SystemCenterDangerousActionsTest extends WebTestCase
         self::assertResponseStatusCodeSame(201);
         $tokenPayload = json_decode($client->getResponse()->getContent() ?: '{}', true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($tokenPayload);
-        self::assertArrayHasKey('confirmToken', $tokenPayload);
+        self::assertIsString($tokenPayload['confirmToken'] ?? null);
 
         $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/system/cache/clear', [
-            'confirmToken' => (string) $tokenPayload['confirmToken'],
+            'confirmToken' => $tokenPayload['confirmToken'],
         ]);
         self::assertResponseIsSuccessful();
 
@@ -62,15 +62,15 @@ final class SystemCenterDangerousActionsTest extends WebTestCase
         self::assertResponseIsSuccessful();
         $audit = json_decode($client->getResponse()->getContent() ?: '[]', true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($audit);
-        self::assertTrue($this->containsAuditAction($audit, 'system.cache.success'));
+        self::assertTrue($this->containsAuditAction(array_values($audit), 'system.cache.success'));
     }
 
     /**
-     * @param list<array<string, mixed>> $entries
+     * @param list<mixed> $entries
      */
     private function containsAuditAction(array $entries, string $expectedAction): bool
     {
-        return array_any($entries, fn ($entry) => ($entry['action'] ?? null) === $expectedAction);
+        return array_any($entries, static fn (mixed $entry): bool => \is_array($entry) && ($entry['action'] ?? null) === $expectedAction);
     }
 
     /**

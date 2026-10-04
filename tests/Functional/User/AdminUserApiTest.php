@@ -38,7 +38,8 @@ final class AdminUserApiTest extends WebTestCase
 
         $updatedPayload = json_decode((string) $client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($updatedPayload);
-        self::assertContains('ROLE_ADMIN', $updatedPayload['roles'] ?? []);
+        self::assertIsArray($updatedPayload['roles'] ?? null);
+        self::assertContains('ROLE_ADMIN', $updatedPayload['roles']);
     }
 
     public function testAdminCanListUsers(): void
@@ -165,6 +166,9 @@ final class AdminUserApiTest extends WebTestCase
         self::assertStringContainsString('Invalid request origin', (string) $client->getResponse()->getContent());
     }
 
+    /**
+     * @param list<string> $roles
+     */
     private function createAdminUser(string $email, array $roles): AdminUser
     {
         $entityManager = $this->entityManager();
@@ -187,6 +191,7 @@ final class AdminUserApiTest extends WebTestCase
 
     /**
      * @param array<string, mixed> $payload
+     * @param array<string, string> $headers
      */
     private function jsonRequestWithCsrf(KernelBrowser $client, string $method, string $uri, array $payload = [], array $headers = []): void
     {
