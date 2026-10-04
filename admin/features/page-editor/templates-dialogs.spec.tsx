@@ -2,6 +2,7 @@ import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { BuilderBlock } from '../../modules/page-builder/types'
 import type { PageTemplateItem } from '../../types/api'
+import { loginAs } from '../../shared/testing/roles'
 import { renderWithProviders } from '../seo/test-utils'
 import { SaveTemplateDialog } from './SaveTemplateDialog'
 import { SectionTemplatesDialog } from './SectionTemplatesDialog'
@@ -103,5 +104,30 @@ describe('SectionTemplatesDialog', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Точно удалить' }))
     await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('/admin/api/content/templates/custom_faq', { method: 'DELETE' }))
+  })
+})
+
+describe('SectionTemplatesDialog: удаление по праву pages.manage_templates', () => {
+  beforeEach(() => {
+    apiRequest.mockResolvedValue({ templates: [section] })
+  })
+
+  it.each([
+    ['ROLE_EDITOR'],
+    ['ROLE_SEO'],
+    ['ROLE_MANAGER'],
+  ] as const)('%s не видит удаление пользовательских шаблонов', async (role) => {
+    loginAs(role)
+    renderWithProviders(<SectionTemplatesDialog open onClose={vi.fn()} onInsert={vi.fn()} />)
+
+    expect(await screen.findByText('FAQ про гарантию')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Удалить' })).toBeNull()
+  })
+
+  it('ROLE_ADMIN видит удаление пользовательских шаблонов', async () => {
+    loginAs('ROLE_ADMIN')
+    renderWithProviders(<SectionTemplatesDialog open onClose={vi.fn()} onInsert={vi.fn()} />)
+
+    expect(await screen.findByRole('button', { name: 'Удалить' })).toBeTruthy()
   })
 })

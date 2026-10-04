@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useState } from 'react'
 import { useToast } from '../../app/providers/toast-provider'
 import { previewPageBuilder } from '../../entities/page/api'
 import { Button, PageLoadingState } from '../../shared/ui'
+import { useCan } from '../../stores/auth'
 import { useBuilderStore } from '../../modules/page-builder/state/builderStore'
 import type { BuilderBlock } from '../../modules/page-builder/types'
 import { createBlock, duplicateBlock, normalizePageBlocks, reorderBlocks } from '../../modules/page-builder/utils/pageBlocks'
@@ -22,6 +23,7 @@ interface ContentTabProps {
 export function ContentTab({ pageId, pageType }: ContentTabProps) {
   const { push } = useToast()
   const advanced = useAdvancedMode((state) => state.enabled)
+  const canManageTemplates = useCan('pages.manage_templates')
   const [previewHtml, setPreviewHtml] = useState<string | null>(null)
   const [previewLoading, setPreviewLoading] = useState(false)
   const [sectionsOpen, setSectionsOpen] = useState(false)
@@ -90,20 +92,24 @@ export function ContentTab({ pageId, pageType }: ContentTabProps) {
 
   return (
     <Suspense fallback={<PageLoadingState />}>
-      <div className="mb-3 flex flex-wrap gap-2">
-        <Button type="button" size="sm" variant="outline" onClick={() => setSectionsOpen(true)}>Вставить секцию из шаблона</Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          disabled={blocks.length === 0}
-          onClick={() => setSaveRequest({ kind: 'page', blocks })}
-        >
-          Сохранить страницу как шаблон
-        </Button>
-      </div>
-      <SectionTemplatesDialog open={sectionsOpen} onClose={() => setSectionsOpen(false)} onInsert={handleInsertSection} />
-      <SaveTemplateDialog request={saveRequest} pageType={pageType} onClose={() => setSaveRequest(null)} />
+      {canManageTemplates ? (
+        <>
+          <div className="mb-3 flex flex-wrap gap-2">
+            <Button type="button" size="sm" variant="outline" onClick={() => setSectionsOpen(true)}>Вставить секцию из шаблона</Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={blocks.length === 0}
+              onClick={() => setSaveRequest({ kind: 'page', blocks })}
+            >
+              Сохранить страницу как шаблон
+            </Button>
+          </div>
+          <SectionTemplatesDialog open={sectionsOpen} onClose={() => setSectionsOpen(false)} onInsert={handleInsertSection} />
+          <SaveTemplateDialog request={saveRequest} pageType={pageType} onClose={() => setSaveRequest(null)} />
+        </>
+      ) : null}
       <PageBuilderContainer
         blocks={blocks}
         selectedBlockId={selectedBlockId}
@@ -117,7 +123,7 @@ export function ContentTab({ pageId, pageType }: ContentTabProps) {
         onUpdateBlock={(block) => updateBlock(block.id, () => block)}
         onDeleteBlock={deleteBlock}
         onDuplicateBlock={handleDuplicate}
-        onSaveBlockAsTemplate={handleSaveBlockAsTemplate}
+        onSaveBlockAsTemplate={canManageTemplates ? handleSaveBlockAsTemplate : undefined}
         onPreview={handlePreview}
       />
     </Suspense>
