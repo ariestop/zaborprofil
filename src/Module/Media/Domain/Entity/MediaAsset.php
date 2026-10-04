@@ -15,12 +15,15 @@ use Symfony\Component\Uid\Ulid;
 #[ORM\Index(name: 'idx_media_assets_mime_type', columns: ['mime_type'])]
 #[ORM\Index(name: 'idx_media_assets_file_hash', columns: ['file_hash'])]
 #[ORM\Index(name: 'idx_media_assets_folder', columns: ['folder'])]
+#[ORM\Index(name: 'idx_media_assets_public_path', columns: ['public_path'], options: ['lengths' => [191]])]
 final class MediaAsset
 {
     public const int METADATA_MAX_LENGTH = 255;
     public const int DESCRIPTION_MAX_LENGTH = 2000;
     public const int FOLDER_MAX_LENGTH = 120;
     public const string FOLDER_NONE = '__none__';
+    public const int FOCAL_MIN = 0;
+    public const int FOCAL_MAX = 100;
 
     #[ORM\Id]
     #[ORM\Column(type: 'ulid', unique: true)]
@@ -67,6 +70,12 @@ final class MediaAsset
 
     #[ORM\Column(name: 'file_hash', length: 64, nullable: true)]
     private ?string $fileHash = null;
+
+    #[ORM\Column(name: 'focal_x', type: 'smallint', nullable: true, options: ['unsigned' => true])]
+    private ?int $focalX = null;
+
+    #[ORM\Column(name: 'focal_y', type: 'smallint', nullable: true, options: ['unsigned' => true])]
+    private ?int $focalY = null;
 
     #[ORM\Column]
     private DateTimeImmutable $createdAt;
@@ -123,6 +132,21 @@ final class MediaAsset
         ]));
     }
 
+    public function mimeType(): string
+    {
+        return $this->mimeType;
+    }
+
+    public function width(): ?int
+    {
+        return $this->width;
+    }
+
+    public function height(): ?int
+    {
+        return $this->height;
+    }
+
     public function alt(): ?string
     {
         return $this->alt;
@@ -154,6 +178,42 @@ final class MediaAsset
         $this->title = self::optionalText($title, 'title');
         $this->description = self::optionalText($description, 'description', self::DESCRIPTION_MAX_LENGTH);
         $this->folder = self::normalizeFolder($folder);
+    }
+
+    public function focalX(): ?int
+    {
+        return $this->focalX;
+    }
+
+    public function focalY(): ?int
+    {
+        return $this->focalY;
+    }
+
+    /**
+     * Фокальная точка в процентах от ширины/высоты (0–100); обе координаты задаются или очищаются вместе.
+     */
+    public function updateFocalPoint(?int $x, ?int $y): void
+    {
+        if ($x === null && $y === null) {
+            $this->focalX = null;
+            $this->focalY = null;
+
+            return;
+        }
+
+        if ($x === null || $y === null) {
+            throw new InvalidArgumentException('Media asset focal point requires both coordinates.');
+        }
+
+        foreach ([$x, $y] as $coordinate) {
+            if ($coordinate < self::FOCAL_MIN || $coordinate > self::FOCAL_MAX) {
+                throw new InvalidArgumentException(\sprintf('Media asset focal point must be between %d and %d.', self::FOCAL_MIN, self::FOCAL_MAX));
+            }
+        }
+
+        $this->focalX = $x;
+        $this->focalY = $y;
     }
 
     public function attachFileHash(string $fileHash): void
@@ -189,6 +249,8 @@ final class MediaAsset
             'description' => $this->description,
             'folder' => $this->folder,
             'fileHash' => $this->fileHash,
+            'focalX' => $this->focalX,
+            'focalY' => $this->focalY,
             'createdAt' => $this->createdAt->format(DATE_ATOM),
         ];
     }

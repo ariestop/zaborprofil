@@ -31,7 +31,7 @@ export interface PageUpdatePayload {
   visibility: 'public' | 'hidden' | 'unlisted'
 }
 
-export type PageCreatePayload = PageUpdatePayload
+export type PageCreatePayload = PageUpdatePayload & { starterTemplate?: string }
 
 export type PageSeoUpdatePayload = Omit<PageSeoPayload, 'ogType'> & { ogType: string | null }
 
@@ -97,14 +97,103 @@ export function usePagePreviewLinkQuery(pageId: string) {
   ))
 }
 
+const pageTemplatesQueryKey = ['admin', 'page-templates'] as const
+
 export function usePageTemplatesQuery() {
   return useQuery(queryOptions(
-    ['admin', 'page-templates'],
+    [...pageTemplatesQueryKey],
     async () => {
       const response = await apiRequest<PageTemplatesResponse>('/admin/api/content/templates')
-      return response.templates
+      return response.templates ?? []
     },
   ))
+}
+
+export function useSectionTemplatesQuery() {
+  return useQuery(queryOptions(
+    [...pageTemplatesQueryKey, 'section'],
+    async () => {
+      const response = await apiRequest<PageTemplatesResponse>('/admin/api/content/templates?kind=section')
+      return response.templates ?? []
+    },
+  ))
+}
+
+export interface SaveTemplatePayload {
+  name: string
+  description: string | null
+  kind: 'page' | 'section'
+  pageType: string
+  blocks: BuilderBlock[]
+}
+
+export function useSaveTemplateMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload: SaveTemplatePayload) => apiRequest<PageTemplateItem>('/admin/api/content/templates', {
+      method: 'POST',
+      body: { ...payload, blocks: serializeBuilderBlocks(payload.blocks) },
+    }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: [...pageTemplatesQueryKey] })
+    },
+  })
+}
+
+export function useDeleteTemplateMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (code: string) => apiRequest<void>(`/admin/api/content/templates/${encodeURIComponent(code)}`, { method: 'DELETE' }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: [...pageTemplatesQueryKey] })
+    },
+  })
+}
+
+export interface DuplicatePagePayload {
+  title?: string
+  slug?: string
+  path?: string
+}
+
+export function useDuplicatePageMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ pageId, ...body }: DuplicatePagePayload & { pageId: string }) => apiRequest<ContentPageItem>(`/admin/api/content/pages/${pageId}/duplicate`, {
+      method: 'POST',
+      body,
+    }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: pagesQueryKey() })
+    },
+  })
+}
+
+export type BulkPagesPayload =
+  | { ids: string[]; action: 'status'; status: PageStatus }
+  | { ids: string[]; action: 'indexable'; indexable: boolean }
+
+export interface BulkPagesResponse {
+  results: Array<{ id: string; ok: boolean; error: string | null }>
+  succeeded: number
+  failed: number
+}
+
+export function useBulkPagesMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload: BulkPagesPayload) => apiRequest<BulkPagesResponse>('/admin/api/content/pages/bulk', {
+      method: 'POST',
+      body: payload,
+    }),
+    onSettled: async () => {
+      await queryClient.invalidateQueries({ queryKey: pagesQueryKey() })
+    },
+  })
 }
 
 export function fetchPagePreviewLink(pageId: string): Promise<PagePreviewResponse> {
@@ -140,22 +229,6 @@ export function useChangePageStatusMutation(pageId: string) {
       ])
     },
   })
-}
-
-export async function createPageStarterBlocks(pageId: string, template: PageTemplateItem): Promise<void> {
-  for (const block of template.blocksSchema) {
-    await apiRequest(`/admin/api/content/pages/${pageId}/blocks`, {
-      method: 'POST',
-      body: {
-        type: block.type,
-        name: block.name,
-        position: block.position,
-        content: block.content,
-        settings: block.settings,
-        isEnabled: block.type === 'faq' ? false : block.isEnabled,
-      },
-    })
-  }
 }
 
 export interface PageEditorData {
@@ -231,7 +304,14 @@ export function useCreatePageMutation() {
 export interface BuilderDocumentResponse {
   pageId: string
   updatedAt: string | null
+  /** Хэш содержимого блоков: отправляется при сохранении как `baseVersion` для оптимистичной блокировки. */
+  version: string
   blocks: BuilderBlock[]
+}
+
+export interface SavePageBuilderVariables {
+  blocks: BuilderBlock[]
+  baseVersion: string | null
 }
 
 export interface BuilderPreviewResponse {
@@ -262,10 +342,12 @@ export function useSavePageBuilderMutation(pageId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (blocks: BuilderBlock[]) => deserializeBuilderDocument(
+    mutationFn: async ({ blocks, baseVersion }: SavePageBuilderVariables) => deserializeBuilderDocument(
       await apiRequest<BuilderDocumentResponse>(`/admin/api/content/pages/${pageId}/builder`, {
         method: 'PUT',
-        body: { blocks: serializeBuilderBlocks(blocks) },
+        body: baseVersion === null
+          ? { blocks: serializeBuilderBlocks(blocks) }
+          : { blocks: serializeBuilderBlocks(blocks), baseVersion },
       }),
     ),
     onSuccess: async () => {
@@ -274,6 +356,28 @@ export function useSavePageBuilderMutation(pageId: string) {
         queryClient.invalidateQueries({ queryKey: pageQueryKey(pageId) }),
       ])
     },
+  })
+}
+
+export interface PageEditLockStatus {
+  locked: boolean
+  ownedByMe: boolean
+  holder: { label: string, isSelf: boolean, since: string, lastSeenAt: string } | null
+  ttlSeconds: number
+  heartbeatSeconds: number
+}
+
+export function acquirePageEditLock(pageId: string, sessionId: string, takeOver = false): Promise<PageEditLockStatus> {
+  return apiRequest<PageEditLockStatus>(`/admin/api/content/pages/${pageId}/edit-lock`, {
+    method: 'POST',
+    body: { sessionId, takeOver },
+  })
+}
+
+export function releasePageEditLock(pageId: string, sessionId: string): Promise<void> {
+  return apiRequest<void>(`/admin/api/content/pages/${pageId}/edit-lock`, {
+    method: 'DELETE',
+    body: { sessionId },
   })
 }
 

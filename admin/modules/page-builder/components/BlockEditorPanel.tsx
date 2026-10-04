@@ -21,11 +21,12 @@ interface BlockEditorPanelProps {
   onUpdate: (nextBlock: BuilderBlock) => void
   onDelete: (blockId: string) => void
   onDuplicate: (blockId: string) => void
+  onSaveAsTemplate?: (blockId: string) => void
   /** Расширенный режим: JSON-формы доступны для любых блоков. */
   showJson?: boolean
 }
 
-export function BlockEditorPanel({ block, onUpdate, onDelete, onDuplicate, showJson = false }: BlockEditorPanelProps) {
+export function BlockEditorPanel({ block, onUpdate, onDelete, onDuplicate, onSaveAsTemplate, showJson = false }: BlockEditorPanelProps) {
   const form = useForm<z.infer<typeof editorSchema>>({
     resolver: zodResolver(editorSchema),
     defaultValues: {
@@ -75,6 +76,7 @@ export function BlockEditorPanel({ block, onUpdate, onDelete, onDuplicate, showJ
         onToggle={() => onUpdate({ ...block, enabled: !block.enabled })}
         onDelete={() => onDelete(block.id)}
         onDuplicate={() => onDuplicate(block.id)}
+        onSaveAsTemplate={onSaveAsTemplate === undefined ? undefined : () => onSaveAsTemplate(block.id)}
       />
 
       {(block.type === 'rich-text' || typeof block.content.html === 'string' || typeof block.content.text === 'string') ? (

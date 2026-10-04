@@ -157,19 +157,24 @@ export interface BlockSchemaItem {
   isLegacy: boolean
 }
 
+export interface PageTemplateBlock {
+  type: string
+  name: string
+  position: number
+  content: Record<string, unknown>
+  settings: Record<string, unknown>
+  isEnabled: boolean
+  hint?: string
+}
+
 export interface PageTemplateItem {
   id: string
   code: string
   name: string
+  description: string | null
+  kind: 'page' | 'section'
   pageType: string
-  blocksSchema: Array<{
-    type: string
-    name: string
-    position: number
-    content: Record<string, unknown>
-    settings: Record<string, unknown>
-    isEnabled: boolean
-  }>
+  blocksSchema: PageTemplateBlock[]
   defaultSeo: Record<string, unknown>
   defaultSettings: Record<string, unknown>
   isSystem: boolean
@@ -212,6 +217,8 @@ export interface MediaAssetItem {
   description?: string | null
   folder?: string | null
   fileHash?: string | null
+  focalX?: number | null
+  focalY?: number | null
   usageCount?: number
   duplicate?: boolean
   createdAt: string

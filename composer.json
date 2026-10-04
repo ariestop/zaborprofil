@@ -86,6 +86,8 @@
         "check:phpstan": "php vendor/bin/phpstan analyse --memory-limit=512M",
         "check:rector": "php vendor/bin/rector process --dry-run --ansi",
         "test": "php vendor/bin/phpunit",
+        "test:coverage": "php -d pcov.directory=src vendor/bin/phpunit --coverage-clover var/coverage/clover.xml",
+        "check:coverage": "php tools/quality/check-coverage.php var/coverage/clover.xml 75",
         "check": [
             "@check:syntax",
             "@check:cs",

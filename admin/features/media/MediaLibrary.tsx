@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type DragEvent, type MouseEvent } from 'react'
 import {
   DEFAULT_MEDIA_LIST_PARAMS,
   MEDIA_FOLDER_NONE,
@@ -18,6 +18,7 @@ import { Badge, Button, EmptyState, ErrorState, Input, Skeleton, Textarea } from
 import { cn } from '../../shared/lib/cn'
 import { ApiError } from '../../shared/api/client'
 import type { MediaAssetItem, MediaFolderItem } from '../../types/api'
+import { useCan } from '../../stores/auth'
 import { DeleteMediaDialog } from './DeleteMediaDialog'
 import { MediaUsageList } from './MediaUsageList'
 import { assetExtension, describeDuplicate, describeMediaError, formatFileSize, formatUsageCount, isImageAsset, MEDIA_ACCEPT, thumbnailPath, validateUploadFile } from './utils'
@@ -147,6 +148,49 @@ function UploadRow({ item, onCancel, onRetry }: { item: UploadItem; onCancel: ()
   )
 }
 
+function FocalPointPicker({
+  asset,
+  value,
+  onChange,
+}: {
+  asset: MediaAssetItem
+  value: { x: number; y: number } | null
+  onChange: (value: { x: number; y: number } | null) => void
+}) {
+  const pick = (event: MouseEvent<HTMLButtonElement>): void => {
+    const rect = event.currentTarget.getBoundingClientRect()
+    if (rect.width === 0 || rect.height === 0) {
+      return
+    }
+    const clamp = (number: number): number => Math.min(100, Math.max(0, Math.round(number)))
+    onChange({
+      x: clamp(((event.clientX - rect.left) / rect.width) * 100),
+      y: clamp(((event.clientY - rect.top) / rect.height) * 100),
+    })
+  }
+
+  return (
+    <section aria-label="Фокальная точка" className="space-y-1.5" data-testid="asset-focal-point">
+      <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-200">Фокальная точка</h3>
+      <p className="text-xs text-slate-500">Кликните по главному объекту: при обрезке на сайте он останется в кадре.</p>
+      <button type="button" aria-label="Выбрать фокальную точку" onClick={pick} className="relative block w-full cursor-crosshair overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800">
+        <img src={asset.publicPath} alt="" className="max-h-48 w-full object-contain" draggable={false} />
+        {value !== null ? (
+          <span
+            data-testid="focal-marker"
+            className="pointer-events-none absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-red-600 shadow"
+            style={{ left: `${value.x}%`, top: `${value.y}%` }}
+          />
+        ) : null}
+      </button>
+      <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
+        <span>{value === null ? 'По центру (по умолчанию)' : `X ${value.x}% · Y ${value.y}%`}</span>
+        {value !== null ? <Button type="button" variant="ghost" onClick={() => onChange(null)}>Сбросить</Button> : null}
+      </div>
+    </section>
+  )
+}
+
 function AssetDetails({
   asset,
   mode,
@@ -164,19 +208,32 @@ function AssetDetails({
 }) {
   const { push } = useToast()
   const updateMutation = useUpdateMediaAssetMutation()
+  const canDelete = useCan('media.delete')
   const [alt, setAlt] = useState(asset.alt ?? '')
   const [title, setTitle] = useState(asset.title ?? '')
   const [description, setDescription] = useState(asset.description ?? '')
   const [folder, setFolder] = useState(asset.folder ?? '')
+  const [focal, setFocal] = useState<{ x: number; y: number } | null>(
+    asset.focalX != null && asset.focalY != null ? { x: asset.focalX, y: asset.focalY } : null,
+  )
   const [saveError, setSaveError] = useState<string | null>(null)
   const usagesQuery = useMediaUsagesQuery(asset.id)
+  const savedFocal = asset.focalX != null && asset.focalY != null ? { x: asset.focalX, y: asset.focalY } : null
+  const focalChanged = focal?.x !== savedFocal?.x || focal?.y !== savedFocal?.y
   const dirty =
-    alt !== (asset.alt ?? '') || title !== (asset.title ?? '') || description !== (asset.description ?? '') || folder.trim() !== (asset.folder ?? '')
+    alt !== (asset.alt ?? '') || title !== (asset.title ?? '') || description !== (asset.description ?? '') || folder.trim() !== (asset.folder ?? '') || focalChanged
 
   const save = async (): Promise<MediaAssetItem | null> => {
     setSaveError(null)
     try {
-      const updated = await updateMutation.mutateAsync({ id: asset.id, alt, title, description, folder: folder.trim() })
+      const updated = await updateMutation.mutateAsync({
+        id: asset.id,
+        alt,
+        title,
+        description,
+        folder: folder.trim(),
+        ...(focalChanged ? { focalX: focal?.x ?? null, focalY: focal?.y ?? null } : {}),
+      })
       push({ title: 'Описание файла сохранено' })
       onUpdated(updated)
       return updated
@@ -258,6 +315,7 @@ function AssetDetails({
           {folders.map((item) => <option key={item.name} value={item.name} />)}
         </datalist>
       </label>
+      {isImageAsset(asset) ? <FocalPointPicker asset={asset} value={focal} onChange={setFocal} /> : null}
       {saveError !== null ? <p className="text-xs text-red-700 dark:text-red-400" role="alert">{saveError}</p> : null}
 
       <div className="flex flex-wrap gap-2">
@@ -268,7 +326,7 @@ function AssetDetails({
           {updateMutation.isPending ? 'Сохранение...' : 'Сохранить'}
         </Button>
         <Button type="button" size="sm" variant="outline" onClick={() => { void copyUrl() }}>Копировать ссылку</Button>
-        <Button type="button" size="sm" variant="danger" onClick={onDelete}>Удалить</Button>
+        {canDelete ? <Button type="button" size="sm" variant="danger" onClick={onDelete}>Удалить</Button> : null}
       </div>
     </aside>
   )

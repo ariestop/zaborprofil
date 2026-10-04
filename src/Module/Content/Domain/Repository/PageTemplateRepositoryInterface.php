@@ -13,8 +13,10 @@ interface PageTemplateRepositoryInterface
 
     public function getByCode(string $code): PageTemplate;
 
+    public function findByCode(string $code): ?PageTemplate;
+
     /**
      * @return list<PageTemplate>
      */
-    public function findActive(?PageType $pageType = null): array;
+    public function findActive(?PageType $pageType = null, ?string $kind = PageTemplate::KIND_PAGE): array;
 }

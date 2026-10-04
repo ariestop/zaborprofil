@@ -1,24 +1,31 @@
 import { lazy, Suspense, useCallback, useState } from 'react'
 import { useToast } from '../../app/providers/toast-provider'
 import { previewPageBuilder } from '../../entities/page/api'
-import { PageLoadingState } from '../../shared/ui'
+import { Button, PageLoadingState } from '../../shared/ui'
 import { useBuilderStore } from '../../modules/page-builder/state/builderStore'
 import type { BuilderBlock } from '../../modules/page-builder/types'
 import { createBlock, duplicateBlock, normalizePageBlocks, reorderBlocks } from '../../modules/page-builder/utils/pageBlocks'
+import type { PageTemplateItem } from '../../types/api'
 import { describeApiError } from '../seo/redirects/redirect-rules'
 import { useAdvancedMode } from './advanced-mode'
+import { SaveTemplateDialog, type SaveTemplateRequest } from './SaveTemplateDialog'
+import { SectionTemplatesDialog } from './SectionTemplatesDialog'
+import { templateToBlocks } from './template-blocks'
 
 const PageBuilderContainer = lazy(async () => import('../../modules/page-builder/components/PageBuilderContainer').then((module) => ({ default: module.PageBuilderContainer })))
 
 interface ContentTabProps {
   pageId: string
+  pageType: string
 }
 
-export function ContentTab({ pageId }: ContentTabProps) {
+export function ContentTab({ pageId, pageType }: ContentTabProps) {
   const { push } = useToast()
   const advanced = useAdvancedMode((state) => state.enabled)
   const [previewHtml, setPreviewHtml] = useState<string | null>(null)
   const [previewLoading, setPreviewLoading] = useState(false)
+  const [sectionsOpen, setSectionsOpen] = useState(false)
+  const [saveRequest, setSaveRequest] = useState<SaveTemplateRequest | null>(null)
 
   const blocks = useBuilderStore((state) => state.blocks)
   const selectedBlockId = useBuilderStore((state) => state.selectedBlockId)
@@ -48,6 +55,25 @@ export function ContentTab({ pageId }: ContentTabProps) {
     selectBlock(duplicated.id)
   }, [blocks, selectBlock, setBlocks])
 
+  const handleSaveBlockAsTemplate = useCallback((blockId: string) => {
+    const block = blocks.find((item) => item.id === blockId)
+    if (block !== undefined) {
+      setSaveRequest({ kind: 'section', blocks: [block] })
+    }
+  }, [blocks])
+
+  const handleInsertSection = useCallback((template: PageTemplateItem) => {
+    const inserted = templateToBlocks(template, blocks.length)
+    if (inserted.length === 0) {
+      return
+    }
+
+    setBlocks(normalizePageBlocks([...blocks, ...inserted]), true)
+    selectBlock(inserted[0]?.id ?? null)
+    setSectionsOpen(false)
+    push({ title: 'Секция добавлена', description: `Блоков: ${inserted.length}. Замените тексты-заготовки на свои.` })
+  }, [blocks, push, selectBlock, setBlocks])
+
   const handleReorder = useCallback((sourceIndex: number, targetIndex: number) => {
     setBlocks(reorderBlocks(blocks, sourceIndex, targetIndex), true)
   }, [blocks, setBlocks])
@@ -64,6 +90,20 @@ export function ContentTab({ pageId }: ContentTabProps) {
 
   return (
     <Suspense fallback={<PageLoadingState />}>
+      <div className="mb-3 flex flex-wrap gap-2">
+        <Button type="button" size="sm" variant="outline" onClick={() => setSectionsOpen(true)}>Вставить секцию из шаблона</Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={blocks.length === 0}
+          onClick={() => setSaveRequest({ kind: 'page', blocks })}
+        >
+          Сохранить страницу как шаблон
+        </Button>
+      </div>
+      <SectionTemplatesDialog open={sectionsOpen} onClose={() => setSectionsOpen(false)} onInsert={handleInsertSection} />
+      <SaveTemplateDialog request={saveRequest} pageType={pageType} onClose={() => setSaveRequest(null)} />
       <PageBuilderContainer
         blocks={blocks}
         selectedBlockId={selectedBlockId}
@@ -77,6 +117,7 @@ export function ContentTab({ pageId }: ContentTabProps) {
         onUpdateBlock={(block) => updateBlock(block.id, () => block)}
         onDeleteBlock={deleteBlock}
         onDuplicateBlock={handleDuplicate}
+        onSaveBlockAsTemplate={handleSaveBlockAsTemplate}
         onPreview={handlePreview}
       />
     </Suspense>

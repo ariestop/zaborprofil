@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderWithProviders } from '../features/seo/test-utils'
+import { loginAs } from '../shared/testing/roles'
 import { SidebarNav } from './SidebarNav'
 
 const apiRequest = vi.fn()
@@ -86,5 +87,48 @@ describe('SidebarNav', () => {
     expect(screen.getByRole('link', { name: 'Страницы' }).getAttribute('aria-current')).toBe('page')
     expect(screen.queryByText('Контент')).toBeNull()
     expect(screen.getByRole('link', { name: 'Сервер' }).getAttribute('href')).toBe('/admin/system')
+  })
+
+  it('shows a manager only the dashboard and leads', async () => {
+    loginAs('ROLE_MANAGER')
+    renderWithProviders(<SidebarNav />, '/admin/dashboard')
+
+    const nav = screen.getByRole('navigation', { name: 'Разделы админки' })
+    expect(within(nav).getByRole('link', { name: 'Сводка' })).toBeTruthy()
+    expect(await within(nav).findByRole('link', { name: /Заявки/ })).toBeTruthy()
+    for (const hidden of ['Страницы', 'Медиатека', 'SEO']) {
+      expect(within(nav).queryByRole('link', { name: hidden })).toBeNull()
+    }
+    expect(within(nav).queryByText('Управление')).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Сервер' })).toBeNull()
+  })
+
+  it('shows an editor pages and media without leads, SEO or the server group, and does not poll leads', () => {
+    loginAs('ROLE_EDITOR')
+    renderWithProviders(<SidebarNav />, '/admin/dashboard')
+
+    expect(screen.getByRole('link', { name: 'Страницы' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Медиатека' })).toBeTruthy()
+    expect(screen.queryByRole('link', { name: /Заявки/ })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'SEO' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Сервер' })).toBeNull()
+    expect(apiRequest).not.toHaveBeenCalledWith('/admin/api/leads/summary')
+  })
+
+  it('shows an SEO specialist pages and SEO', () => {
+    loginAs('ROLE_SEO')
+    renderWithProviders(<SidebarNav />, '/admin/seo')
+
+    expect(screen.getByRole('link', { name: 'SEO' }).getAttribute('aria-current')).toBe('page')
+    expect(screen.getByRole('link', { name: 'Страницы' })).toBeTruthy()
+    expect(screen.queryByRole('link', { name: 'Медиатека' })).toBeNull()
+  })
+
+  it('keeps users and the server group for administrators', () => {
+    loginAs('ROLE_ADMIN')
+    renderWithProviders(<SidebarNav />, '/admin/dashboard')
+
+    expect(screen.getByRole('link', { name: 'Пользователи и роли' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Сервер' })).toBeTruthy()
   })
 })

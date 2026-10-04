@@ -38,7 +38,11 @@
 - `PATCH /admin/api/content/pages/{id}/status`
 - `GET /admin/api/content/pages/{pageId}/revisions`
 - `POST /admin/api/content/pages/{pageId}/revisions/{revisionId}/rollback`
-- `GET /admin/api/content/templates`
+- `GET /admin/api/content/templates?kind=page|section|all`
+- `POST /admin/api/content/templates`
+- `DELETE /admin/api/content/templates/{code}`
+- `POST /admin/api/content/pages/{id}/duplicate`
+- `POST /admin/api/content/pages/bulk`
 - `GET /admin/api/content/block-schemas`
 - `POST /admin/api/content/pages/{pageId}/blocks`
 - `PUT /admin/api/content/blocks/{id}`

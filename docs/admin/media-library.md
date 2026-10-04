@@ -28,13 +28,26 @@
 | `to`      | дата загрузки не позже `YYYY-MM-DD` (включительно)                             | без границы  |
 | `sort`    | `newest`, `oldest`, `name`, `size`, `size_asc`                                 | `newest`     |
 
-Ответ: `{"assets": [...], "pagination": {"page", "perPage", "total", "totalPages"}}`. Элемент `assets` содержит `id`, `originalName`, `filename`, `publicPath`, `mimeType`, `size`, `width`, `height`, `variants`, `alt`, `title`, `description`, `folder`, `fileHash`, `usageCount`, `createdAt`. Некорректные параметры (в том числе неверная дата или `from > to`) дают `422` `{"error", "code": "VALIDATION"}`.
+Ответ: `{"assets": [...], "pagination": {"page", "perPage", "total", "totalPages"}}`. Элемент `assets` содержит `id`, `originalName`, `filename`, `publicPath`, `mimeType`, `size`, `width`, `height`, `variants`, `alt`, `title`, `description`, `folder`, `fileHash`, `focalX`, `focalY`, `usageCount`, `createdAt`. Некорректные параметры (в том числе неверная дата или `from > to`) дают `422` `{"error", "code": "VALIDATION"}`.
 
 Ошибки загрузки и изменения имеют единый формат `{error, code}` (`AdminApiErrorResponder`, см. [12-admin-area](../12-admin-area.md)): нет поля `file` — `400 BAD_REQUEST`, файл больше лимита PHP — `422 FILE_TOO_LARGE`, недопустимый тип/размер/размеры — `422 VALIDATION`, неизвестный `id` — `404 NOT_FOUND`, удаление используемого файла без `force` — `409 MEDIA_IN_USE`.
 
 ## Метаданные
 
 Поля `alt`, `title`, `description` (до 2000 символов), `folder` (до 120 символов, без `/`, `\` и управляющих символов; значение `__none__` зарезервировано под фильтр) хранятся в `media_assets` (nullable; миграции `Version20261006090000` и `Version20261007100000`). Папки плоские: отдельной сущности нет, список строится по значениям `folder`. `PATCH` частичный: переданные ключи меняются, остальные сохраняются. Размеры, тип, вес и дата загрузки показываются в панели свойств и в режиме «Список».
+
+## Фокальная точка и адаптивные изображения
+
+`PATCH` принимает `focalX`/`focalY` — целые проценты `0–100` от ширины и высоты изображения (`null` очищает обе координаты; передавать нужно обе, иначе `422`). В панели свойств файла фокальная точка задаётся кликом по превью, кнопка «Сбросить» возвращает кадрирование по центру.
+
+На публичном сайте блоки `image`, `text_image`, `gallery`, `slider` и `hero` (необязательное поле `image` — фоновая картинка) выводят изображения Twig-функцией `responsive_image(src, options)`:
+
+- блоки хранят прямой URL, поэтому ассет находится по точному `publicPath` оригинала (`ResponsiveImageResolver`, индекс `idx_media_assets_public_path`, результат кэшируется только в памяти запроса); URL не из медиатеки выводится обычным `<img>`;
+- для найденного ассета рендерится `<picture>`: `<source>` для AVIF и WebP с `srcset` по ширинам из `variants` и `sizes` (по умолчанию `(min-width: 1152px) 1152px, 100vw`, в шаблонах блоков заданы свои), `<img>` с оригиналом как fallback, обязательные `width`/`height` (защита от CLS) и `object-position` из фокальной точки;
+- `alt`: явный `alt` блока, затем `alt` ассета, затем запасной текст (название блока); для декоративных картинок (фон `hero`) `alt=""`;
+- первый блок страницы (`above_fold`) отдаёт главное изображение с `loading="eager"` и `fetchpriority="high"` (LCP), для первых трёх картинок галереи — только `eager`; всё остальное — `loading="lazy"` и `decoding="async"`.
+
+Опции `responsive_image`: `alt`, `fallback_alt`, `decorative`, `class`, `sizes`, `priority`, `eager`. Разметку собирает `PictureHtmlBuilder`.
 
 ## Где используется
 

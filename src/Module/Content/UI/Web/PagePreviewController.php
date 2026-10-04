@@ -43,8 +43,8 @@ final class PagePreviewController extends AbstractController
         ]);
 
         $blocks = [];
-        foreach ($page->enabledBlocks() as $block) {
-            $blocks[] = $blockRenderer->render(PageBlockView::fromBlock($block));
+        foreach ($page->enabledBlocks() as $index => $block) {
+            $blocks[] = $blockRenderer->render(PageBlockView::fromBlock($block), $index === 0);
         }
 
         $canonical = $page->canonicalUrl()

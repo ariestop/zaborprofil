@@ -26,6 +26,8 @@ final readonly class PageTemplateOutput
             'id' => (string) $this->template->id(),
             'code' => $this->template->code(),
             'name' => $this->template->name(),
+            'description' => $this->template->description(),
+            'kind' => $this->template->kind(),
             'pageType' => $this->template->pageType()->value,
             'blocksSchema' => $this->template->blocksSchema(),
             'defaultSeo' => $this->template->defaultSeo(),

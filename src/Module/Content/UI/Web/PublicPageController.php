@@ -38,8 +38,8 @@ final class PublicPageController extends AbstractController
         }
 
         $blocks = [];
-        foreach ($page->blocks as $block) {
-            $blocks[] = $blockRenderer->render($block);
+        foreach ($page->blocks as $index => $block) {
+            $blocks[] = $blockRenderer->render($block, $index === 0);
         }
 
         $canonical = $page->canonicalUrl

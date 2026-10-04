@@ -157,4 +157,38 @@ final class MediaAssetTest extends TestCase
             $asset->allPublicPaths(),
         );
     }
+
+    public function testFocalPointIsStoredClearedAndValidated(): void
+    {
+        $asset = new MediaAsset('a.jpg', 'a.jpg', '/uploads/media/a.jpg', 'image/jpeg', 10, 100, 100);
+        self::assertNull($asset->focalX());
+
+        $asset->updateFocalPoint(0, 100);
+        self::assertSame(0, $asset->toArray()['focalX']);
+        self::assertSame(100, $asset->toArray()['focalY']);
+
+        $asset->updateFocalPoint(null, null);
+        self::assertNull($asset->focalX());
+        self::assertNull($asset->focalY());
+    }
+
+    /**
+     * @return iterable<string, array{int|null, int|null}>
+     */
+    public static function invalidFocalPoints(): iterable
+    {
+        yield 'only x' => [50, null];
+        yield 'only y' => [null, 50];
+        yield 'negative' => [-1, 50];
+        yield 'too large' => [50, 101];
+    }
+
+    #[DataProvider('invalidFocalPoints')]
+    public function testRejectsInvalidFocalPoint(?int $x, ?int $y): void
+    {
+        $asset = new MediaAsset('a.jpg', 'a.jpg', '/uploads/media/a.jpg', 'image/jpeg', 10, 100, 100);
+
+        $this->expectException(InvalidArgumentException::class);
+        $asset->updateFocalPoint($x, $y);
+    }
 }
