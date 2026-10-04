@@ -191,7 +191,7 @@ export function PageEditor({ page, initialBlocks, initialBuilderVersion = null, 
 
       <div role="tabpanel" aria-label={editorTabs.find((item) => item.value === tab)?.label}>
         {!tabAllowed ? <ForbiddenPage /> : null}
-        {tabAllowed && tab === 'content' ? <ContentTab pageId={page.id} /> : null}
+        {tabAllowed && tab === 'content' ? <ContentTab pageId={page.id} pageType={page.type} /> : null}
         {tabAllowed && tab === 'seo' ? <SeoTab controller={controller} onOpenTab={openTab} /> : null}
         {tabAllowed && tab === 'settings' ? <SettingsTab controller={controller} page={page} /> : null}
         {tabAllowed && tab === 'revisions' ? <RevisionsTab controller={controller} status={page.status} /> : null}

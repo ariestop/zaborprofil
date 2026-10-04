@@ -369,6 +369,12 @@ final class Page
         $this->touch();
     }
 
+    public function changeIndexable(bool $indexable): void
+    {
+        $this->indexable = $indexable;
+        $this->touch();
+    }
+
     public function updateMetaTitle(?string $metaTitle): void
     {
         $this->metaTitle = self::normalizeOptionalString($metaTitle, 255, 'metaTitle');

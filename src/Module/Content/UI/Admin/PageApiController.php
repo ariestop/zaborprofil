@@ -6,9 +6,11 @@ namespace App\Module\Content\UI\Admin;
 
 use App\Module\Auth\Domain\Security\AdminPermission;
 use App\Module\Content\Application\Command\ArchivePageCommand;
+use App\Module\Content\Application\Command\BulkUpdatePagesCommand;
 use App\Module\Content\Application\Command\CancelPageScheduleCommand;
 use App\Module\Content\Application\Command\ChangePageStatusCommand;
 use App\Module\Content\Application\Command\CreatePageCommand;
+use App\Module\Content\Application\Command\DuplicatePageCommand;
 use App\Module\Content\Application\Command\PublishPageCommand;
 use App\Module\Content\Application\Command\SchedulePageCommand;
 use App\Module\Content\Application\Command\UpdatePageCommand;
@@ -16,9 +18,11 @@ use App\Module\Content\Application\Command\UpdatePageSeoMetadataCommand;
 use App\Module\Content\Application\DTO\PageBlockOutput;
 use App\Module\Content\Application\DTO\PageOutput;
 use App\Module\Content\Application\Handler\ArchivePageHandler;
+use App\Module\Content\Application\Handler\BulkUpdatePagesHandler;
 use App\Module\Content\Application\Handler\CancelPageScheduleHandler;
 use App\Module\Content\Application\Handler\ChangePageStatusHandler;
 use App\Module\Content\Application\Handler\CreatePageHandler;
+use App\Module\Content\Application\Handler\DuplicatePageHandler;
 use App\Module\Content\Application\Handler\PublishPageHandler;
 use App\Module\Content\Application\Handler\SchedulePageHandler;
 use App\Module\Content\Application\Handler\UpdatePageHandler;
@@ -99,6 +103,7 @@ final readonly class PageApiController
                 $this->jsonRequest->bool($payload, 'isIndexable', true),
                 $this->jsonRequest->nullableString($payload, 'parentId'),
                 PageVisibility::from($this->jsonRequest->string($payload, 'visibility', PageVisibility::Public->value)),
+                $this->jsonRequest->nullableString($payload, 'starterTemplate'),
             ));
 
             return new JsonResponse($page->toArray(), 201);
@@ -131,6 +136,68 @@ final readonly class PageApiController
             ));
 
             return new JsonResponse($page->toArray());
+        } catch (Throwable $exception) {
+            return $this->responder->error($exception);
+        }
+    }
+
+    #[Route('/bulk', name: 'admin_api_content_page_bulk', methods: ['POST'])]
+    public function bulk(Request $request, BulkUpdatePagesHandler $handler): JsonResponse
+    {
+        try {
+            $payload = $this->jsonRequest->payload($request);
+            $action = $this->jsonRequest->string($payload, 'action');
+            $status = $this->jsonRequest->nullableString($payload, 'status');
+            $permission = match ($action) {
+                BulkUpdatePagesCommand::ACTION_STATUS => $this->permissionForStatus($status ?? ''),
+                BulkUpdatePagesCommand::ACTION_INDEXABLE => AdminPermission::SEO_EDIT,
+                default => AdminPermission::PAGES_EDIT,
+            };
+
+            if (!$this->authorizationChecker->isGranted($permission)) {
+                return $this->accessDenied();
+            }
+
+            $indexable = $payload['indexable'] ?? null;
+            if ($indexable !== null && !\is_bool($indexable)) {
+                throw new \InvalidArgumentException('Field "indexable" must be a boolean or null.');
+            }
+
+            $results = $handler(new BulkUpdatePagesCommand(
+                $this->jsonRequest->stringList($payload, 'ids'),
+                $action,
+                $status,
+                $indexable,
+                $this->jsonRequest->nullableString($payload, 'comment'),
+            ));
+            $succeeded = \count(array_filter($results, static fn (array $result): bool => $result['ok']));
+
+            return new JsonResponse([
+                'results' => $results,
+                'succeeded' => $succeeded,
+                'failed' => \count($results) - $succeeded,
+            ]);
+        } catch (Throwable $exception) {
+            return $this->responder->error($exception);
+        }
+    }
+
+    #[Route('/{id}/duplicate', name: 'admin_api_content_page_duplicate', methods: ['POST'])]
+    public function duplicate(string $id, Request $request, DuplicatePageHandler $handler): JsonResponse
+    {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_CREATE)) {
+            return $this->accessDenied();
+        }
+
+        try {
+            $payload = $request->getContent() === '' ? [] : $this->jsonRequest->payload($request);
+
+            return new JsonResponse($handler(new DuplicatePageCommand(
+                $id,
+                $this->jsonRequest->nullableString($payload, 'title'),
+                $this->jsonRequest->nullableString($payload, 'slug'),
+                $this->jsonRequest->nullableString($payload, 'path'),
+            ))->toArray(), 201);
         } catch (Throwable $exception) {
             return $this->responder->error($exception);
         }
@@ -186,18 +253,7 @@ final readonly class PageApiController
         try {
             $payload = $this->jsonRequest->payload($request);
             $status = $this->jsonRequest->string($payload, 'status');
-            $permission = match ($status) {
-                'draft', 'review' => AdminPermission::PAGES_SUBMIT_REVIEW,
-                'published' => AdminPermission::PAGES_PUBLISH,
-                'approved' => AdminPermission::PAGES_APPROVE,
-                'unpublished' => AdminPermission::PAGES_UNPUBLISH,
-                'scheduled' => AdminPermission::PAGES_SCHEDULE,
-                'archived' => AdminPermission::PAGES_ARCHIVE,
-                'deleted' => AdminPermission::PAGES_DELETE,
-                default => AdminPermission::PAGES_EDIT,
-            };
-
-            if (!$this->authorizationChecker->isGranted($permission)) {
+            if (!$this->authorizationChecker->isGranted($this->permissionForStatus($status))) {
                 return $this->accessDenied();
             }
 
@@ -304,6 +360,20 @@ final readonly class PageApiController
         } catch (Throwable $exception) {
             return $this->responder->error($exception);
         }
+    }
+
+    private function permissionForStatus(string $status): string
+    {
+        return match ($status) {
+            'draft', 'review' => AdminPermission::PAGES_SUBMIT_REVIEW,
+            'published' => AdminPermission::PAGES_PUBLISH,
+            'approved' => AdminPermission::PAGES_APPROVE,
+            'unpublished' => AdminPermission::PAGES_UNPUBLISH,
+            'scheduled' => AdminPermission::PAGES_SCHEDULE,
+            'archived' => AdminPermission::PAGES_ARCHIVE,
+            'deleted' => AdminPermission::PAGES_DELETE,
+            default => AdminPermission::PAGES_EDIT,
+        };
     }
 
     private function accessDenied(): JsonResponse

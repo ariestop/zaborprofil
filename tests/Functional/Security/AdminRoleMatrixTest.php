@@ -42,6 +42,7 @@ final class AdminRoleMatrixTest extends WebTestCase
      */
     private const array GRANTS = [
         'pages.view' => ['ROLE_EDITOR', 'ROLE_SEO', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+        'pages.create' => ['ROLE_EDITOR', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
         'pages.edit' => ['ROLE_EDITOR', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
         'pages.review' => ['ROLE_EDITOR', 'ROLE_SEO', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
         'pages.approve' => ['ROLE_SEO', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
@@ -77,6 +78,11 @@ final class AdminRoleMatrixTest extends WebTestCase
             ['GET', "/admin/api/content/pages/{$id}/revisions", [], 'pages.view', true],
             ['POST', '/admin/api/content/pages', [], 'pages.edit', true],
             ['PUT', "/admin/api/content/pages/{$id}", [], 'pages.edit', true],
+            ['POST', "/admin/api/content/pages/{$id}/duplicate", [], 'pages.create', true],
+            ['POST', '/admin/api/content/pages/bulk', ['ids' => [$id], 'action' => 'status', 'status' => 'draft'], 'pages.review', true],
+            ['POST', '/admin/api/content/pages/bulk', ['ids' => [$id], 'action' => 'indexable', 'indexable' => false], 'seo.edit', true],
+            ['POST', '/admin/api/content/templates', [], 'admin.only', true],
+            ['DELETE', '/admin/api/content/templates/matrix-unknown-template', [], 'admin.only', true],
             ['POST', "/admin/api/content/pages/{$id}/blocks", [], 'pages.edit', true],
             ['PUT', "/admin/api/content/pages/{$id}/builder", [], 'pages.edit', true],
             ['POST', "/admin/api/content/pages/{$id}/edit-lock", ['sessionId' => 'matrix-session-1'], 'pages.edit', true],

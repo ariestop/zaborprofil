@@ -121,6 +121,11 @@ final class PageRevision
         $this->changeSummary = $changeSummary;
     }
 
+    public function changeIndexable(bool $indexable): void
+    {
+        $this->seoSnapshot['isIndexable'] = $indexable;
+    }
+
     public function id(): Ulid
     {
         return $this->id;
