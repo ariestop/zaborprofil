@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useToast } from '../../app/providers/toast-provider'
 import { useDeleteTemplateMutation, useSectionTemplatesQuery } from '../../entities/page/api'
 import { Badge, Button, Dialog, EmptyState } from '../../shared/ui'
+import { useCan } from '../../stores/auth'
 import type { PageTemplateItem } from '../../types/api'
 import { describeApiError } from '../seo/redirects/redirect-rules'
 
@@ -15,6 +16,7 @@ export function SectionTemplatesDialog({ open, onClose, onInsert }: SectionTempl
   const { push } = useToast()
   const query = useSectionTemplatesQuery()
   const remove = useDeleteTemplateMutation()
+  const canManageTemplates = useCan('pages.manage_templates')
   const [confirmCode, setConfirmCode] = useState<string | null>(null)
   const templates = query.data ?? []
 
@@ -44,7 +46,7 @@ export function SectionTemplatesDialog({ open, onClose, onInsert }: SectionTempl
             </div>
             <div className="flex shrink-0 gap-2">
               <Button type="button" size="sm" onClick={() => onInsert(template)}>Вставить</Button>
-              {template.isSystem ? null : confirmCode === template.code ? (
+              {template.isSystem || !canManageTemplates ? null : confirmCode === template.code ? (
                 <Button
                   type="button"
                   size="sm"
