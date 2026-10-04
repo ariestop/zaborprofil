@@ -217,6 +217,8 @@ export interface MediaAssetItem {
   description?: string | null
   folder?: string | null
   fileHash?: string | null
+  focalX?: number | null
+  focalY?: number | null
   usageCount?: number
   duplicate?: boolean
   createdAt: string

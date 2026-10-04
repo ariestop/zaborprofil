@@ -178,6 +178,12 @@ final readonly class MediaApiController
                 $this->metadataValue($payload, 'description', $asset->description()),
                 $this->metadataValue($payload, 'folder', $asset->folder()),
             );
+            if (\array_key_exists('focalX', $payload) || \array_key_exists('focalY', $payload)) {
+                $asset->updateFocalPoint(
+                    $this->focalValue($payload, 'focalX', $asset->focalX()),
+                    $this->focalValue($payload, 'focalY', $asset->focalY()),
+                );
+            }
             $this->assets->save($asset);
 
             return new JsonResponse($asset->toArray() + ['usageCount' => $this->usageFinder->index()->count($asset)]);
@@ -247,6 +253,25 @@ final readonly class MediaApiController
         }
 
         return $this->optionalString($payload, $key);
+    }
+
+    /**
+     * Ключ отсутствует — значение не меняется; `null` очищает координату.
+     *
+     * @param array<mixed> $payload
+     */
+    private function focalValue(array $payload, string $key, ?int $current): ?int
+    {
+        if (!\array_key_exists($key, $payload)) {
+            return $current;
+        }
+
+        $value = $payload[$key];
+        if ($value === null || \is_int($value)) {
+            return $value;
+        }
+
+        throw new InvalidArgumentException(\sprintf('Field "%s" must be an integer or null.', $key));
     }
 
     /**

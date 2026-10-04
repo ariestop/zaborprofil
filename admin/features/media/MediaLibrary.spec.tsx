@@ -239,6 +239,31 @@ describe('MediaLibrary', () => {
     )
   })
 
+  it('sets and clears the focal point through PATCH', async () => {
+    mockApi({
+      list: () => listResponse([makeAsset('a')]),
+      mutate: () => makeAsset('a', { focalX: 25, focalY: 50 }),
+    })
+    renderWithProviders(<MediaLibrary mode="manage" />)
+
+    fireEvent.click(await screen.findByRole('button', { name: /a\.jpg/ }))
+    const picker = await screen.findByRole('button', { name: 'Выбрать фокальную точку' })
+    vi.spyOn(picker, 'getBoundingClientRect').mockReturnValue({ left: 0, top: 0, width: 200, height: 100, right: 200, bottom: 100, x: 0, y: 0, toJSON: () => ({}) })
+    fireEvent.click(picker, { clientX: 50, clientY: 50 })
+
+    const details = await screen.findByTestId('asset-details')
+    expect(within(details).getByTestId('focal-marker')).toBeTruthy()
+    expect(within(details).getByText('X 25% · Y 50%')).toBeTruthy()
+    fireEvent.click(within(details).getByRole('button', { name: 'Сохранить' }))
+
+    await waitFor(() =>
+      expect(apiRequest).toHaveBeenCalledWith('/admin/api/media/assets/a', {
+        method: 'PATCH',
+        body: { alt: '', title: '', description: '', folder: '', focalX: 25, focalY: 50 },
+      }),
+    )
+  })
+
   it('sends extended filters, resets them and changes the page size', async () => {
     mockApi({ list: () => listResponse([makeAsset('a')], { total: 60, totalPages: 3 }), folders: [{ name: 'Заборы', count: 3 }] })
     renderWithProviders(<MediaLibrary mode="manage" />)

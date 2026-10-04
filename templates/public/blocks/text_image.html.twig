@@ -6,6 +6,12 @@
         {% endif %}
     </div>
     {% if block.content.image is defined %}
-        <img class="w-full rounded-2xl object-cover" src="{{ block.content.image }}" alt="{{ block.content.alt|default(block.content.title|default(block.name)) }}" loading="lazy" decoding="async">
+        {{ responsive_image(block.content.image, {
+            alt: block.content.alt ?? null,
+            fallback_alt: block.content.title ?? block.name,
+            class: 'w-full rounded-2xl object-cover',
+            sizes: '(min-width: 1152px) 540px, (min-width: 768px) 50vw, 100vw',
+            priority: above_fold|default(false)
+        }) }}
     {% endif %}
 </section>
