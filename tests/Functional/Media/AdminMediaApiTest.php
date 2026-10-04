@@ -308,6 +308,34 @@ final class AdminMediaApiTest extends WebTestCase
         self::assertFileDoesNotExist($storedFile);
     }
 
+    public function testFocalPointIsUpdatedClearedAndValidatedThroughPatch(): void
+    {
+        $client = $this->adminClient();
+        $asset = $this->seedAsset('photo.jpg', 'image/jpeg', 100);
+
+        $this->csrfRequest($client, 'PATCH', '/admin/api/media/assets/'.$asset->id(), [], ['focalX' => 20]);
+        self::assertResponseStatusCodeSame(422);
+
+        $this->csrfRequest($client, 'PATCH', '/admin/api/media/assets/'.$asset->id(), [], ['focalX' => 20, 'focalY' => 80]);
+        self::assertResponseIsSuccessful();
+        $payload = $this->payload($client);
+        self::assertSame(20, $payload['focalX']);
+        self::assertSame(80, $payload['focalY']);
+
+        $this->csrfRequest($client, 'PATCH', '/admin/api/media/assets/'.$asset->id(), [], ['alt' => 'Новый alt']);
+        self::assertSame(20, $this->payload($client)['focalX']);
+
+        foreach ([['focalX' => 101, 'focalY' => 1], ['focalX' => '50', 'focalY' => 50]] as $invalid) {
+            $this->csrfRequest($client, 'PATCH', '/admin/api/media/assets/'.$asset->id(), [], $invalid);
+            self::assertResponseStatusCodeSame(422, json_encode($invalid, JSON_THROW_ON_ERROR));
+        }
+
+        $this->csrfRequest($client, 'PATCH', '/admin/api/media/assets/'.$asset->id(), [], ['focalX' => null, 'focalY' => null]);
+        self::assertResponseIsSuccessful();
+        self::assertNull($this->payload($client)['focalX']);
+        self::assertNull($this->payload($client)['focalY']);
+    }
+
     public function testExtendedMetadataFoldersAndPartialPatch(): void
     {
         $client = $this->adminClient();

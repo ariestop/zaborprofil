@@ -27,15 +27,15 @@ final readonly class TwigBlockRenderer
     {
     }
 
-    public function render(PageBlockView $block): string
+    public function render(PageBlockView $block, bool $aboveFold = false): string
     {
         $templateType = self::TEMPLATE_ALIASES[$block->type] ?? $block->type;
         $template = \sprintf('public/blocks/%s.html.twig', $templateType);
 
         try {
-            return $this->twig->render($template, ['block' => $block]);
+            return $this->twig->render($template, ['block' => $block, 'above_fold' => $aboveFold]);
         } catch (Error) {
-            return $this->twig->render('public/blocks/default.html.twig', ['block' => $block]);
+            return $this->twig->render('public/blocks/default.html.twig', ['block' => $block, 'above_fold' => $aboveFold]);
         }
     }
 }

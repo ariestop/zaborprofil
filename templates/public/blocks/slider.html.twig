@@ -36,12 +36,12 @@
                     <article class="swiper-slide">
                         <div class="relative isolate min-h-[340px] sm:min-h-[420px] lg:min-h-[520px]">
                             {% if item.src is defined and item.src %}
-                                <img
-                                    src="{{ item.src }}"
-                                    alt="{{ item.alt is defined ? item.alt : '' }}"
-                                    class="absolute inset-0 h-full w-full object-cover"
-                                    loading="lazy"
-                                >
+                                {{ responsive_image(item.src, {
+                                    alt: item.alt ?? null,
+                                    class: 'absolute inset-0 h-full w-full object-cover',
+                                    sizes: '100vw',
+                                    priority: above_fold|default(false) and loop.first
+                                }) }}
                             {% else %}
                                 <div class="absolute inset-0 bg-linear-to-br from-slate-900 to-slate-700"></div>
                             {% endif %}
