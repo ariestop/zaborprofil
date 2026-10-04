@@ -1,9 +1,13 @@
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import { apiRequest } from '../api/client'
 import { MediaPicker } from '../features/media/MediaPicker'
+import { workflowQueryKey } from '../features/publishing/api'
+import { PagePublishingPanel } from '../features/publishing/PagePublishingPanel'
+import { RevisionHistory } from '../features/publishing/RevisionHistory'
 import { LengthCounter } from '../features/seo/LengthCounter'
 import { useSeoTitleSettings } from '../features/seo/seoSettings'
 import { SnippetPreview } from '../features/seo/SnippetPreview'
@@ -24,17 +28,7 @@ type SliderPresetOption = {
 }
 
 const pageTypes = ['home', 'landing', 'service', 'product_category_landing', 'material_landing', 'portfolio_index', 'portfolio_item', 'contacts', 'prices', 'text_page', 'seo_landing', 'system_page']
-const statusTransitions: Record<PageStatus, PageStatus[]> = {
-  draft: ['review', 'approved', 'published', 'deleted'],
-  review: ['approved', 'draft', 'deleted'],
-  approved: ['published', 'scheduled', 'draft', 'deleted'],
-  published: ['unpublished', 'scheduled', 'archived', 'deleted'],
-  scheduled: ['published', 'draft', 'deleted'],
-  unpublished: ['draft', 'published', 'archived', 'deleted'],
-  archived: ['draft', 'deleted'],
-  deleted: ['draft'],
-}
-const hiddenStatusActions = new Set<PageStatus>(['review', 'approved', 'published', 'scheduled', 'deleted'])
+const publishableStatuses: PageStatus[] = ['draft', 'approved', 'unpublished', 'review', 'scheduled']
 const statusLabels: Record<PageStatus, string> = {
   draft: 'Черновик',
   review: 'На проверке',
@@ -269,6 +263,7 @@ function SortableBlockCard({
 }
 
 export default function ContentPagesView() {
+  const queryClient = useQueryClient()
   const seoTitleSettings = useSeoTitleSettings()
   const [pages, setPages] = useState<ContentPageItem[]>([])
   const [templates, setTemplates] = useState<PageTemplateItem[]>([])
@@ -367,13 +362,9 @@ export default function ContentPagesView() {
   const selectedBlockExampleContent = useMemo(() => selectedBlockSchema?.defaultContent ?? {}, [selectedBlockSchema])
   const selectedBlockExampleSettings = useMemo(() => selectedBlockSchema?.defaultSettings ?? {}, [selectedBlockSchema])
   const blockSupportsVisualEditor = supportsVisualEditor(blockForm.type)
-  const availableStatusActions = useMemo(() => {
-    if (!selected) return []
-    return statusTransitions[selected.status].filter((status) => !hiddenStatusActions.has(status))
-  }, [selected])
   const canPublishSelected = useMemo(() => {
     if (!selected || selected.status === 'published') return false
-    return statusTransitions[selected.status].includes('published')
+    return publishableStatuses.includes(selected.status)
   }, [selected])
 
   const statusLabel = (status: PageStatus): string => statusLabels[status] ?? status
@@ -562,6 +553,7 @@ export default function ContentPagesView() {
       }
     }
     await loadRevisions(id)
+    await queryClient.invalidateQueries({ queryKey: workflowQueryKey(id) })
   }
 
   const resetPageForm = (): void => {
@@ -770,21 +762,6 @@ export default function ContentPagesView() {
     }
   }
 
-  const changeStatus = async (status: PageStatus): Promise<void> => {
-    if (!selected || !availableStatusActions.includes(status) || statusChanging !== null) return
-    setError(null)
-    setStatusChanging(status)
-    try {
-      await apiRequest<ContentPageItem>(`/admin/api/content/pages/${selected.id}/status`, { method: 'PATCH', body: { status } })
-      await loadPages()
-      await selectPage(selected.id)
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Не удалось изменить статус')
-    } finally {
-      setStatusChanging(null)
-    }
-  }
-
   const deletePage = async (): Promise<void> => {
     if (!selected || statusChanging !== null) return
 
@@ -829,13 +806,6 @@ export default function ContentPagesView() {
     const audit = await apiRequest<SeoAuditResult>(`/admin/api/seo/audit/pages/${pageId}`)
     setSeoAuditToast(audit)
     window.setTimeout(() => setSeoAuditToast(null), 10000)
-  }
-
-  const rollbackRevision = async (revision: PageRevisionItem): Promise<void> => {
-    if (!selected) return
-    await apiRequest(`/admin/api/content/pages/${selected.id}/revisions/${revision.id}/rollback`, { method: 'POST' })
-    await loadPages()
-    await selectPage(selected.id)
   }
 
   useEffect(() => {
@@ -1013,12 +983,6 @@ export default function ContentPagesView() {
                   {statusChanging === 'published' ? 'Публикуется...' : 'Опубликовать'}
                 </button>
               )}
-              {selected && <span className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700">Текущий: {statusLabel(selected.status)}</span>}
-              {availableStatusActions.map((status) => (
-                <button key={status} type="button" className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60" disabled={statusChanging !== null} onClick={() => { void changeStatus(status) }}>
-                  {statusChanging === status ? '...' : statusLabel(status)}
-                </button>
-              ))}
               {selected && selected.status !== 'deleted' && (
                 <button
                   type="button"
@@ -1186,19 +1150,24 @@ export default function ContentPagesView() {
           )}
 
           {selected && (
-            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
-              <h3 className="text-base font-semibold text-slate-950">История публикаций</h3>
-              {revisions.length === 0 && <p className="mt-2 text-sm text-slate-500">Публикаций пока нет.</p>}
-              {revisions.map((revision) => (
-                <div key={revision.id} className="mt-3 flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3">
-                  <div>
-                    <p className="font-medium text-slate-900">v{revision.version} · {revision.title}</p>
-                    <p className="text-xs text-slate-500">{revision.path} · {revision.createdAt} · {revision.comment ?? 'без комментария'}</p>
-                  </div>
-                  <button type="button" className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" onClick={() => { void rollbackRevision(revision) }}>Откатить</button>
-                </div>
-              ))}
-            </section>
+            <PagePublishingPanel
+              pageId={selected.id}
+              onChanged={async () => {
+                await loadPages()
+                await selectPage(selected.id)
+              }}
+            />
+          )}
+
+          {selected && (
+            <RevisionHistory
+              pageId={selected.id}
+              revisions={revisions}
+              onRolledBack={async () => {
+                await loadPages()
+                await selectPage(selected.id)
+              }}
+            />
           )}
         </div>
       </div>
