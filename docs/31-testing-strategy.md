@@ -121,7 +121,27 @@ Functional тесты на `/health`, `/sitemap.xml`, `/robots.txt`, `/admin/log
 
 - `tests/e2e/helpers/admin.ts` — login + API mutations + runtime assertions;
 - `tests/e2e/helpers/selectors.ts` — централизованные UI selectors/labels;
-- `tests/e2e/helpers/fixtures.ts` — генерация deterministic payloads.
+- `tests/e2e/helpers/fixtures.ts` — генерация deterministic payloads и уникальных PNG (медиатека дедуплицирует файлы по хешу).
+
+Набор E2E минимален и держится в двух файлах:
+
+- `tests/e2e/admin-smoke.spec.ts` — регрессия админ-интерфейса (редактор страницы, builder, SEO-панель, медиатека, контракт 422);
+- `tests/e2e/content-to-lead.spec.ts` — сквозной сценарий: создание страницы -> блок -> SEO-поля -> загрузка картинки через MediaPicker и выбор её как og:image -> публикация -> публичная страница (title, description, og:image, h1) -> заявка посетителя через публичную форму -> заявка в CRM со статусом «Новая» -> «Взять в работу».
+
+## Матрица ролей и граничные случаи API
+
+- `tests/Functional/Security/AdminRoleMatrixTest.php` — таблица «роль × эндпоинт» для `SUPER_ADMIN`, `ADMIN`, `EDITOR`, `SEO`, `MANAGER`. Ожидаемые права записаны в тесте независимо от `AdminPermissionVoter`, поэтому любое изменение прав требует осознанной правки таблицы. Деструктивные эндпоинты (очистка кэша, перезапуск процессов, режим обслуживания, миграции) проверяются только на отказ. Отдельный тест проверяет, что анонимный пользователь не получает доступ ни к одному маршруту `/admin/*`, в том числе к новым.
+- `tests/Functional/Media/AdminMediaEdgeCasesTest.php` и `tests/Unit/Shared/Upload/UploadValidatorLimitsTest.php` — небезопасные и повреждённые файлы, размер и размеры изображения, двойное расширение, обход пути в имени, лимиты метаданных, границы пагинации.
+- `tests/Functional/Lead/LeadAdminEdgeCasesTest.php` — пагинация и фильтры, все переходы статусов, типы входных данных, границы заметок, назначение ответственного, CSV-выгрузка.
+
+Когда в проект добавляется новый маршрут `/admin/api/*`, его нужно добавить в `endpoints()` матрицы ролей.
+
+## Пороги покрытия
+
+- PHP: `composer test:coverage` (PHPUnit с `pcov`, Clover-отчёт `var/coverage/clover.xml`) и `composer check:coverage` — порог покрытия строк 75% (`tools/quality/check-coverage.php`). Фактическое значение на момент введения — около 81%.
+- Frontend: `npm run test:frontend:coverage` (Vitest + `@vitest/coverage-v8`); пороги в `vitest.config.ts` — statements/lines 30%, functions 50%, branches 70%.
+
+Пороги — защита от падения покрытия, а не цель. Повышайте их вместе с ростом покрытия, не снижайте без обсуждения.
 
 ## SEO tests (целевое)
 
@@ -140,7 +160,10 @@ make quality        # validate + syntax + cs + phpstan + rector + schema/lint + 
 npm run typecheck
 npm run test:frontend
 npm run lint:admin
-npm run test:e2e:smoke
+npm run test:frontend:coverage
+npm run test:e2e:smoke   # только smoke
+npm run test:e2e         # smoke + сквозной сценарий
+composer test:coverage && composer check:coverage
 ```
 
 В CI — `composer test` (см. composer.json scripts).
@@ -167,7 +190,8 @@ npm run test:frontend
 - [ ] `npm run typecheck` ok.
 - [ ] `npm run test:frontend` ok.
 - [ ] `npm run lint:admin` ok.
-- [ ] `npm run test:e2e:smoke` ok.
+- [ ] `npm run test:e2e` ok.
+- [ ] `composer check:coverage` и `npm run test:frontend:coverage` ok.
 - [ ] `npm run build` ok.
 - [ ] `npm run check:chunks` ok.
 
