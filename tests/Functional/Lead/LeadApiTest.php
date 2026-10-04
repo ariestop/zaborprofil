@@ -71,6 +71,40 @@ final class LeadApiTest extends WebTestCase
         self::assertContains('honeypot_filled', $spamReasons);
     }
 
+    public function testPublicFormRejectsMalformedBodyWithoutParserDetails(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+
+        $client->request('POST', '/api/leads', server: ['CONTENT_TYPE' => 'application/json', 'REMOTE_ADDR' => '127.0.0.12'], content: '{"name": "broken');
+
+        self::assertResponseStatusCodeSame(400);
+        self::assertSame(
+            ['error' => 'Request body is invalid.', 'code' => 'BAD_REQUEST'],
+            json_decode($client->getResponse()->getContent() ?: '{}', true, flags: JSON_THROW_ON_ERROR),
+        );
+    }
+
+    public function testPublicFormReturnsValidationErrorWithCode(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+
+        $client->jsonRequest('POST', '/api/leads', [
+            'source' => 'public_page_form',
+            'name' => 'Иван',
+            'phone' => '+79990000000',
+            'consent' => false,
+            'formLoadedAt' => (new \DateTimeImmutable('-10 seconds'))->format(DATE_ATOM),
+        ], server: ['REMOTE_ADDR' => '127.0.0.13']);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame(
+            ['error' => 'Consent is required.', 'code' => 'VALIDATION'],
+            json_decode($client->getResponse()->getContent() ?: '{}', true, flags: JSON_THROW_ON_ERROR),
+        );
+    }
+
     private function entityManager(): EntityManagerInterface
     {
         $entityManager = self::getContainer()->get(EntityManagerInterface::class);

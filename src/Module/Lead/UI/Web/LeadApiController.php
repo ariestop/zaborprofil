@@ -8,6 +8,7 @@ use App\Module\Lead\Application\AntiSpam\LeadAntiSpamChecker;
 use App\Module\Lead\Application\Notification\LeadNotifier;
 use App\Module\Lead\Domain\Entity\Lead;
 use App\Module\Lead\Domain\Repository\LeadRepositoryInterface;
+use App\Shared\UI\Http\AdminApiErrorResponder;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,6 +21,7 @@ final readonly class LeadApiController
         private LeadRepositoryInterface $leads,
         private LeadAntiSpamChecker $antiSpam,
         private LeadNotifier $notifier,
+        private AdminApiErrorResponder $errors,
     ) {
     }
 
@@ -62,7 +64,7 @@ final readonly class LeadApiController
 
             return new JsonResponse(['status' => $spamCheck->isSpam() ? 'accepted' : 'created', 'id' => $lead->toArray()['id']], $spamCheck->isSpam() ? 202 : 201);
         } catch (Throwable $exception) {
-            return new JsonResponse(['error' => $exception->getMessage()], 400);
+            return $this->errors->fromThrowable($exception, 'Public Lead API');
         }
     }
 

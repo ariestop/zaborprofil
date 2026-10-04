@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiRequest } from '../../shared/api/client'
+import { issueDangerousActionToken } from '../../shared/api/dangerous-action'
 import { adminQueryKeys } from '../../shared/api/query'
 import type {
   AuditLogEntryItem,
@@ -23,13 +24,6 @@ function invalidateSystemQueries(queryClient: ReturnType<typeof useQueryClient>)
     queryClient.invalidateQueries({ queryKey: adminQueryKeys.systemCache }),
     queryClient.invalidateQueries({ queryKey: adminQueryKeys.systemAudit }),
   ])
-}
-
-async function issueDangerousActionToken(action: string) {
-  return apiRequest<{ confirmToken: string, expiresAt: string }>('/admin/api/system/security/confirm-token', {
-    method: 'POST',
-    body: { action },
-  })
 }
 
 export function useSystemOverviewQuery() {

@@ -10,6 +10,7 @@ use App\Module\Menu\Application\Service\MenuProvider;
 use App\Module\Menu\Domain\Entity\MenuItem;
 use App\Module\Menu\Domain\Repository\MenuItemRepositoryInterface;
 use App\Module\Menu\Domain\ValueObject\MenuPosition;
+use App\Shared\UI\Http\AdminApiErrorResponder;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -24,6 +25,7 @@ final readonly class MenuApiController
         private JsonRequest $jsonRequest,
         private MenuProvider $menuProvider,
         private AuthorizationCheckerInterface $authorizationChecker,
+        private AdminApiErrorResponder $errors,
     ) {
     }
 
@@ -61,7 +63,7 @@ final readonly class MenuApiController
 
             return new JsonResponse($item->toArray(), 201);
         } catch (Throwable $exception) {
-            return new JsonResponse(['error' => $exception->getMessage()], 400);
+            return $this->errors->fromThrowable($exception, 'Admin Menu API');
         }
     }
 
@@ -89,7 +91,7 @@ final readonly class MenuApiController
 
             return new JsonResponse($item->toArray());
         } catch (Throwable $exception) {
-            return new JsonResponse(['error' => $exception->getMessage()], 400);
+            return $this->errors->fromThrowable($exception, 'Admin Menu API');
         }
     }
 
@@ -108,7 +110,7 @@ final readonly class MenuApiController
 
             return new JsonResponse(null, 204);
         } catch (Throwable $exception) {
-            return new JsonResponse(['error' => $exception->getMessage()], 400);
+            return $this->errors->fromThrowable($exception, 'Admin Menu API');
         }
     }
 
