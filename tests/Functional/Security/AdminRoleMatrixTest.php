@@ -79,6 +79,8 @@ final class AdminRoleMatrixTest extends WebTestCase
             ['PUT', "/admin/api/content/pages/{$id}", [], 'pages.edit', true],
             ['POST', "/admin/api/content/pages/{$id}/blocks", [], 'pages.edit', true],
             ['PUT', "/admin/api/content/pages/{$id}/builder", [], 'pages.edit', true],
+            ['POST', "/admin/api/content/pages/{$id}/edit-lock", ['sessionId' => 'matrix-session-1'], 'pages.edit', true],
+            ['DELETE', "/admin/api/content/pages/{$id}/edit-lock", ['sessionId' => 'matrix-session-1'], 'pages.edit', true],
             ['PATCH', "/admin/api/content/pages/{$id}/status", ['status' => 'review'], 'pages.review', true],
             ['PATCH', "/admin/api/content/pages/{$id}/status", ['status' => 'approved'], 'pages.approve', true],
             ['PATCH', "/admin/api/content/pages/{$id}/status", ['status' => 'published'], 'pages.publish', true],

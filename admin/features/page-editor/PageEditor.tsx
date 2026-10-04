@@ -10,6 +10,7 @@ import { normalizePageBlocks } from '../../modules/page-builder/utils/pageBlocks
 import type { ContentPageDetail } from '../../types/api'
 import { useAdvancedMode } from './advanced-mode'
 import { ContentTab } from './ContentTab'
+import { DraftRestoreBanner, EditConflictDialog, EditLockBanner } from './EditSafetyPanels'
 import type { EditorTab } from './form'
 import { LeaveGuard } from './LeaveGuard'
 import { canPublishFrom, pageStatusLabels, statusTone } from './page-status'
@@ -18,11 +19,13 @@ import { SaveIndicator } from './SaveIndicator'
 import { SeoTab } from './SeoTab'
 import { SettingsTab } from './SettingsTab'
 import { PagePublishingSlot } from './slots'
+import { usePageEditLock } from './usePageEditLock'
 import { usePageEditorController } from './usePageEditorController'
 
 interface PageEditorProps {
   page: ContentPageDetail
   initialBlocks: BuilderBlock[]
+  initialBuilderVersion?: string | null
   tab: EditorTab
 }
 
@@ -48,7 +51,7 @@ function initBuilderStore(initialBlocks: BuilderBlock[]): void {
   store.setValidationIssues([])
 }
 
-export function PageEditor({ page, initialBlocks, tab }: PageEditorProps) {
+export function PageEditor({ page, initialBlocks, initialBuilderVersion = null, tab }: PageEditorProps) {
   const navigate = useNavigate()
   const advanced = useAdvancedMode((state) => state.enabled)
   const setAdvanced = useAdvancedMode((state) => state.setEnabled)
@@ -73,7 +76,8 @@ export function PageEditor({ page, initialBlocks, tab }: PageEditorProps) {
     void navigate(pageEditorTabPath(page.id, target))
   }, [navigate, page.id])
 
-  const controller = usePageEditorController({ page, onInvalidTab: openTab })
+  const controller = usePageEditorController({ page, builderVersion: initialBuilderVersion, onInvalidTab: openTab })
+  const editLock = usePageEditLock(page.id)
   const { saveAll } = controller
 
   useEffect(() => {
@@ -150,6 +154,15 @@ export function PageEditor({ page, initialBlocks, tab }: PageEditorProps) {
           />
         </div>
       </header>
+
+      <EditLockBanner lock={editLock} />
+      <DraftRestoreBanner draft={controller.pendingDraft} onRestore={controller.restoreDraft} onDiscard={controller.discardDraft} />
+      <EditConflictDialog
+        conflict={controller.conflict}
+        onOverwrite={() => void controller.overwriteConflict()}
+        onReload={() => void controller.reloadFromServer()}
+        onDismiss={controller.dismissConflict}
+      />
 
       <div role="tablist" aria-label="Разделы страницы" className="mb-4 flex flex-wrap gap-1 border-b border-slate-200 dark:border-slate-800">
         {visibleTabs.map((item) => {

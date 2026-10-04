@@ -19,4 +19,12 @@ final readonly class ContentApiResponder
     {
         return $this->responder->fromThrowable($exception, 'Admin Content API');
     }
+
+    /**
+     * @param array<string, mixed> $extra
+     */
+    public function conflict(string $message, string $code, array $extra = []): JsonResponse
+    {
+        return $this->responder->conflict($message, $code, $extra);
+    }
 }

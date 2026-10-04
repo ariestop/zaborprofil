@@ -8,8 +8,10 @@ import { useBuilderStore } from '../../modules/page-builder/state/builderStore'
 import { createBlock } from '../../modules/page-builder/utils/pageBlocks'
 import { ApiError } from '../../shared/api/client'
 import type { ContentPageDetail } from '../../types/api'
+import { draftKey, readDraft, writeDraft } from './draft-storage'
 import { makePage } from './fixtures'
-import { AUTOSAVE_DELAY_MS, usePageEditorController } from './usePageEditorController'
+import { pageToFormValues } from './form'
+import { AUTOSAVE_DELAY_MS, DRAFT_WRITE_DELAY_MS, usePageEditorController } from './usePageEditorController'
 
 const apiRequest = vi.fn()
 
@@ -31,8 +33,28 @@ function wrapper({ children }: { children: ReactNode }) {
   )
 }
 
-function renderController(page: ContentPageDetail = makePage()) {
-  return renderHook(() => usePageEditorController({ page }), { wrapper })
+function renderController(page: ContentPageDetail = makePage(), builderVersion: string | null = 'v1') {
+  return renderHook(() => usePageEditorController({ page, builderVersion }), { wrapper })
+}
+
+/** Своё хранилище в памяти: в Node 25 глобальный localStorage без --localstorage-file не поддерживает clear(). */
+function installMemoryStorage() {
+  const data = new Map<string, string>()
+  const storage = {
+    getItem: (key: string) => data.get(key) ?? null,
+    setItem: (key: string, value: string) => void data.set(key, String(value)),
+    removeItem: (key: string) => void data.delete(key),
+    clear: () => data.clear(),
+    key: (index: number) => Array.from(data.keys())[index] ?? null,
+    get length() {
+      return data.size
+    },
+  }
+  Object.defineProperty(window, 'localStorage', { value: storage, configurable: true })
+}
+
+function conflictError(version = 'server-v2'): ApiError {
+  return new ApiError('Page blocks were changed by another editor.', 409, { error: 'conflict', code: 'EDIT_CONFLICT', version, updatedAt: '2026-10-04T10:00:00+00:00' })
 }
 
 function calls(method: string, suffix: string): unknown[][] {
@@ -49,10 +71,11 @@ async function advance(ms: number): Promise<void> {
 
 beforeEach(() => {
   vi.useFakeTimers()
+  installMemoryStorage()
   apiRequest.mockReset()
   apiRequest.mockImplementation((url: string) => {
     if (url.endsWith('/builder')) {
-      return Promise.resolve({ pageId: 'page-1', updatedAt: null, blocks: [] })
+      return Promise.resolve({ pageId: 'page-1', updatedAt: null, version: 'v-saved', blocks: [] })
     }
 
     return Promise.resolve(makePage())
@@ -194,5 +217,214 @@ describe('usePageEditorController manual save', () => {
 
     const urls = apiRequest.mock.calls.map(([url]) => url as string)
     expect(urls.findIndex((url) => url.endsWith('/seo'))).toBeLessThan(urls.findIndex((url) => url.endsWith('/publish')))
+  })
+})
+
+describe('usePageEditorController edit conflicts', () => {
+  it('sends the known builder version and adopts the one returned by the server', async () => {
+    const { result } = renderController()
+
+    act(() => useBuilderStore.getState().setBlocks([createBlock('text', 0)], true))
+    await act(async () => {
+      await result.current.saveAll()
+    })
+    expect((calls('PUT', '/builder')[0]?.[1] as { body: { baseVersion: string } }).body.baseVersion).toBe('v1')
+
+    act(() => useBuilderStore.getState().updateBlock(useBuilderStore.getState().blocks[0]?.id ?? '', (block) => ({ ...block })))
+    await act(async () => {
+      await result.current.saveAll()
+    })
+    expect((calls('PUT', '/builder')[1]?.[1] as { body: { baseVersion: string } }).body.baseVersion).toBe('v-saved')
+  })
+
+  it('omits baseVersion when the editor was opened without a known version', async () => {
+    const { result } = renderController(makePage(), null)
+
+    act(() => useBuilderStore.getState().setBlocks([createBlock('text', 0)], true))
+    await act(async () => {
+      await result.current.saveAll()
+    })
+    expect(Object.keys((calls('PUT', '/builder')[0]?.[1] as { body: object }).body)).toEqual(['blocks'])
+  })
+
+  it('reports a conflict instead of a generic error and stops autosave until it is resolved', async () => {
+    apiRequest.mockImplementation((url: string, options?: { method?: string }) => {
+      if (url.endsWith('/builder') && options?.method === 'PUT') {
+        return Promise.reject(conflictError())
+      }
+
+      return Promise.resolve(makePage())
+    })
+    const { result } = renderController()
+
+    act(() => useBuilderStore.getState().setBlocks([createBlock('text', 0)], true))
+    await advance(AUTOSAVE_DELAY_MS)
+
+    expect(result.current.conflict).toEqual({ serverVersion: 'server-v2', serverUpdatedAt: '2026-10-04T10:00:00+00:00' })
+    expect(result.current.saveState).toBe('error')
+    expect(result.current.errorMessage).toContain('другой пользователь')
+    expect(result.current.autosaveEnabled).toBe(false)
+
+    await advance(AUTOSAVE_DELAY_MS * 3)
+    expect(calls('PUT', '/builder')).toHaveLength(1)
+  })
+
+  it('overwrites the server blocks by resending them with the server version', async () => {
+    let attempts = 0
+    apiRequest.mockImplementation((url: string, options?: { method?: string }) => {
+      if (url.endsWith('/builder') && options?.method === 'PUT') {
+        attempts += 1
+        return attempts === 1
+          ? Promise.reject(conflictError())
+          : Promise.resolve({ pageId: 'page-1', updatedAt: null, version: 'v-after-overwrite', blocks: [] })
+      }
+
+      return Promise.resolve(makePage())
+    })
+    const { result } = renderController()
+
+    act(() => useBuilderStore.getState().setBlocks([createBlock('text', 0)], true))
+    await act(async () => {
+      await result.current.saveAll()
+    })
+    expect(result.current.conflict).not.toBeNull()
+
+    await act(async () => {
+      expect(await result.current.overwriteConflict()).toBe(true)
+    })
+
+    const puts = calls('PUT', '/builder')
+    expect(puts).toHaveLength(2)
+    expect((puts[1]?.[1] as { body: { baseVersion: string } }).body.baseVersion).toBe('server-v2')
+    expect(result.current.conflict).toBeNull()
+    expect(result.current.saveState).toBe('saved')
+    expect(useBuilderStore.getState().dirty).toBe(false)
+  })
+
+  it('reloads the server state and drops local changes when the user picks the server version', async () => {
+    apiRequest.mockImplementation((url: string, options?: { method?: string }) => {
+      if (url.endsWith('/builder')) {
+        return options?.method === 'PUT'
+          ? Promise.reject(conflictError())
+          : Promise.resolve({ pageId: 'page-1', updatedAt: null, version: 'server-v2', blocks: [] })
+      }
+
+      return Promise.resolve(makePage())
+    })
+    const { result } = renderController()
+
+    act(() => useBuilderStore.getState().setBlocks([createBlock('text', 0)], true))
+    await act(async () => {
+      await result.current.saveAll()
+    })
+    expect(result.current.conflict).not.toBeNull()
+
+    await act(async () => {
+      await result.current.reloadFromServer()
+    })
+
+    expect(result.current.conflict).toBeNull()
+    expect(useBuilderStore.getState().blocks).toHaveLength(0)
+    expect(result.current.hasUnsavedChanges).toBe(false)
+
+    act(() => useBuilderStore.getState().setBlocks([createBlock('text', 0)], true))
+    await act(async () => {
+      await result.current.saveAll()
+    })
+    expect((calls('PUT', '/builder')[1]?.[1] as { body: { baseVersion: string } }).body.baseVersion).toBe('server-v2')
+  })
+
+  it('can dismiss the conflict dialog without losing the error state', async () => {
+    apiRequest.mockImplementation((url: string, options?: { method?: string }) => (
+      url.endsWith('/builder') && options?.method === 'PUT' ? Promise.reject(conflictError()) : Promise.resolve(makePage())
+    ))
+    const { result } = renderController()
+
+    act(() => useBuilderStore.getState().setBlocks([createBlock('text', 0)], true))
+    await act(async () => {
+      await result.current.saveAll()
+    })
+    act(() => result.current.dismissConflict())
+
+    expect(result.current.conflict).toBeNull()
+    expect(result.current.saveState).toBe('error')
+  })
+})
+
+describe('usePageEditorController local draft', () => {
+  it('stores unsaved changes in localStorage after a short pause and removes them once saved', async () => {
+    const { result } = renderController()
+
+    act(() => result.current.form.setValue('metaTitle', 'Черновой SEO', { shouldDirty: true }))
+    act(() => useBuilderStore.getState().setBlocks([createBlock('text', 0)], true))
+    expect(readDraft('page-1')).toBeNull()
+
+    await advance(DRAFT_WRITE_DELAY_MS)
+    const draft = readDraft('page-1')
+    expect(draft?.baseVersion).toBe('v1')
+    expect(draft?.values.metaTitle).toBe('Черновой SEO')
+    expect(draft?.blocks).toHaveLength(1)
+
+    await act(async () => {
+      await result.current.saveAll()
+    })
+    expect(readDraft('page-1')).toBeNull()
+  })
+
+  it('offers to restore a draft that differs from the server state', () => {
+    const saved = pageToFormValues(makePage())
+    writeDraft('page-1', { baseVersion: 'v0', blocks: [createBlock('text', 0)], values: { ...saved, title: 'Из черновика' } })
+
+    const { result } = renderController()
+
+    expect(result.current.pendingDraft?.serverChanged).toBe(true)
+    expect(result.current.hasUnsavedChanges).toBe(false)
+
+    act(() => result.current.restoreDraft())
+
+    expect(result.current.pendingDraft).toBeNull()
+    expect(result.current.form.getValues('title')).toBe('Из черновика')
+    expect(result.current.settingsDirty).toBe(true)
+    expect(useBuilderStore.getState().blocks).toHaveLength(1)
+    expect(result.current.blocksDirty).toBe(true)
+  })
+
+  it('restored drafts keep the original base version so that a stale draft surfaces as a conflict', async () => {
+    apiRequest.mockImplementation((url: string, options?: { method?: string }) => (
+      url.endsWith('/builder') && options?.method === 'PUT' ? Promise.reject(conflictError()) : Promise.resolve(makePage())
+    ))
+    writeDraft('page-1', { baseVersion: 'v0', blocks: [createBlock('text', 0)], values: pageToFormValues(makePage()) })
+    const { result } = renderController()
+
+    act(() => result.current.restoreDraft())
+    await act(async () => {
+      await result.current.saveAll()
+    })
+
+    expect((calls('PUT', '/builder')[0]?.[1] as { body: { baseVersion: string } }).body.baseVersion).toBe('v0')
+    expect(result.current.conflict).not.toBeNull()
+  })
+
+  it('discards a pending draft and does not overwrite it before the user decides', async () => {
+    const saved = pageToFormValues(makePage())
+    writeDraft('page-1', { baseVersion: 'v1', blocks: [], values: { ...saved, h1: 'Другой H1' } })
+    const { result } = renderController()
+
+    act(() => result.current.form.setValue('metaTitle', 'Новое', { shouldDirty: true }))
+    await advance(DRAFT_WRITE_DELAY_MS * 2)
+    expect(readDraft('page-1')?.values.h1).toBe('Другой H1')
+
+    act(() => result.current.discardDraft())
+    expect(result.current.pendingDraft).toBeNull()
+    expect(window.localStorage.getItem(draftKey('page-1'))).toBeNull()
+  })
+
+  it('ignores a draft identical to the server state', () => {
+    writeDraft('page-1', { baseVersion: 'v1', blocks: [], values: pageToFormValues(makePage()) })
+
+    const { result } = renderController()
+
+    expect(result.current.pendingDraft).toBeNull()
+    expect(readDraft('page-1')).toBeNull()
   })
 })
