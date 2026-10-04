@@ -35,7 +35,7 @@ export default function SystemQueuesPage() {
       return
     }
 
-    if (!(await confirm({ title: 'Retry failed messages?', description: 'Повторная обработка всех failed-сообщений.', confirmLabel: 'Retry failed' }))) {
+    if (!(await confirm({ title: 'Повторить задачи с ошибкой?', description: 'Все задачи из очереди ошибок будут отправлены на повторную обработку.', confirmLabel: 'Повторить' }))) {
       return
     }
 
@@ -62,7 +62,7 @@ export default function SystemQueuesPage() {
       return
     }
 
-    if (!(await confirm({ title: 'Remove failed messages?', description: 'Операция необратима для failed очереди.', confirmLabel: 'Remove failed' }))) {
+    if (!(await confirm({ title: 'Удалить задачи с ошибкой?', description: 'Задачи из очереди ошибок будут удалены без возможности восстановления.', confirmLabel: 'Удалить' }))) {
       return
     }
 
@@ -82,17 +82,17 @@ export default function SystemQueuesPage() {
 
   return (
     <div>
-      <PageHeader title="Очереди Symfony Messenger" description="Мониторинг async/failed transport и ручные действия." />
+      <PageHeader title="Очереди задач" description="Фоновые задачи (уведомления, письма): сколько ждут обработки и сколько завершились ошибкой." />
       <Card title="Состояние очередей">
         <div className="space-y-2 text-sm">
-          <p>async: {queuesQuery.data.transports.async}</p>
-          <p>failed: {queuesQuery.data.transports.failed}</p>
+          <p>Ожидают обработки: {queuesQuery.data.transports.async}</p>
+          <p>С ошибкой: {queuesQuery.data.transports.failed}</p>
         </div>
       </Card>
-      <Card className="mt-4" title="Danger zone">
+      <Card className="mt-4" title="Опасные действия">
         <div className="flex gap-2">
-          <Button variant="danger" onClick={() => void runRetryFailed()} disabled={retryFailedMutation.isPending || !canRunDangerousActions}>Retry failed</Button>
-          <Button variant="danger" onClick={() => void runRemoveFailed()} disabled={removeFailedMutation.isPending || !canRunDangerousActions}>Remove failed</Button>
+          <Button variant="danger" onClick={() => void runRetryFailed()} disabled={retryFailedMutation.isPending || !canRunDangerousActions}>Повторить задачи с ошибкой</Button>
+          <Button variant="danger" onClick={() => void runRemoveFailed()} disabled={removeFailedMutation.isPending || !canRunDangerousActions}>Удалить задачи с ошибкой</Button>
         </div>
       </Card>
     </div>

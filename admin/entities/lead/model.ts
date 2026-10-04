@@ -73,3 +73,32 @@ export function leadSourceLabel(source: string): string {
 export function leadStatusLabel(status: string): string {
   return LEAD_STATUS_SINGULAR[status as LeadStatus] ?? status
 }
+
+export function leadStatusTone(status: LeadStatus): 'neutral' | 'success' | 'warning' {
+  if (status === 'done') {
+    return 'success'
+  }
+
+  return status === 'new' || status === 'spam' ? 'warning' : 'neutral'
+}
+
+export interface LeadNextAction {
+  status: LeadStatus
+  label: string
+}
+
+/** Основное действие в карточке: следующий шаг работы с заявкой в один клик. */
+export function nextLeadAction(status: LeadStatus): LeadNextAction | null {
+  switch (status) {
+    case 'new':
+      return { status: 'in_progress', label: 'Взять в работу' }
+    case 'in_progress':
+      return { status: 'done', label: 'Завершить' }
+    case 'done':
+      return { status: 'in_progress', label: 'Вернуть в работу' }
+    case 'spam':
+      return { status: 'new', label: 'Это не спам' }
+    default:
+      return null
+  }
+}

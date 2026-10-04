@@ -34,7 +34,7 @@ export default function SystemCachePage() {
       return
     }
 
-    if (!(await confirm({ title: 'Clear application cache?', description: 'Будет выполнен cache:clear.', confirmLabel: 'Clear cache' }))) {
+    if (!(await confirm({ title: 'Очистить кэш приложения?', description: 'Будет выполнен cache:clear. Первые запросы после очистки будут медленнее.', confirmLabel: 'Очистить' }))) {
       return
     }
 
@@ -54,14 +54,14 @@ export default function SystemCachePage() {
 
   return (
     <div>
-      <PageHeader title="Кэш" description="Состояние cache adapter и безопасная очистка через whitelist." />
-      <Card title="Adapter">
+      <PageHeader title="Кэш" description="Хранилище кэша и безопасная очистка." />
+      <Card title="Хранилище кэша">
         <p className="text-sm">{cacheQuery.data.adapter}</p>
-        <p className="text-sm text-slate-500 dark:text-slate-400">Namespace: {cacheQuery.data.namespace || '(empty)'}</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">Пространство имён: {cacheQuery.data.namespace || 'не задано'}</p>
       </Card>
-      <Card className="mt-4" title="Danger zone">
+      <Card className="mt-4" title="Опасные действия">
         <Button variant="danger" onClick={() => void runClearCache()} disabled={clearMutation.isPending || !canRunDangerousActions}>
-          Clear cache
+          Очистить кэш
         </Button>
       </Card>
     </div>

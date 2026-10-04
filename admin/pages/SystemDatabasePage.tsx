@@ -23,7 +23,7 @@ export default function SystemDatabasePage() {
       <Card title="Состояние подключения">
         <div className="flex items-center gap-2">
           <Badge tone={databaseQuery.data.connected ? 'success' : 'warning'}>
-            {databaseQuery.data.connected ? 'Connected' : 'Disconnected'}
+            {databaseQuery.data.connected ? 'Подключено' : 'Нет подключения'}
           </Badge>
           <span className="text-sm">{databaseQuery.data.databaseName}</span>
         </div>

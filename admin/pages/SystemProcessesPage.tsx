@@ -35,7 +35,7 @@ export default function SystemProcessesPage() {
       return
     }
 
-    if (!(await confirm({ title: `Restart ${service}?`, description: 'Операция влияет на production-процессы.', confirmLabel: 'Restart' }))) {
+    if (!(await confirm({ title: `Перезапустить ${service}?`, description: 'Сервис будет перезапущен, сайт может кратковременно не отвечать.', confirmLabel: 'Перезапустить' }))) {
       return
     }
 
@@ -62,7 +62,7 @@ export default function SystemProcessesPage() {
       return
     }
 
-    if (!(await confirm({ title: `Reload ${service}?`, description: 'Операция перечитает конфигурацию сервиса.', confirmLabel: 'Reload' }))) {
+    if (!(await confirm({ title: `Перечитать конфигурацию ${service}?`, description: 'Сервис перечитает конфигурацию без остановки.', confirmLabel: 'Перечитать' }))) {
       return
     }
 
@@ -82,19 +82,19 @@ export default function SystemProcessesPage() {
 
   return (
     <div>
-      <PageHeader title="Процессы и сервисы" description="Управление whitelisted системными сервисами." />
+      <PageHeader title="Процессы и сервисы" description="Перезапуск разрешённых системных сервисов." />
       <Card title="Поддерживаемые команды">
         <div className="space-y-3 text-sm">
-          <p>Host: {processesQuery.data.host}</p>
+          <p>Сервер: {processesQuery.data.host}</p>
           <div className="flex flex-wrap gap-2">
             {processesQuery.data.supportedActions.restart.map((service) => (
               <Button key={`restart-${service}`} variant="danger" onClick={() => void runRestart(service)} disabled={restartMutation.isPending || !canRunDangerousActions}>
-                Restart {service}
+                Перезапустить {service}
               </Button>
             ))}
             {processesQuery.data.supportedActions.reload.map((service) => (
               <Button key={`reload-${service}`} onClick={() => void runReload(service)} disabled={reloadMutation.isPending || !canRunDangerousActions}>
-                Reload {service}
+                Перечитать {service}
               </Button>
             ))}
           </div>

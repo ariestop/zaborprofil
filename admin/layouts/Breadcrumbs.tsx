@@ -1,30 +1,36 @@
 import { Link, matchPath, useLocation } from 'react-router-dom'
-import { adminRoutes } from '../routes/route-config'
+import { adminRoutes, type AdminRouteDefinition } from '../routes/route-config'
 
-function labelForPath(pathname: string): string {
+function routeForPath(pathname: string): AdminRouteDefinition | null {
   for (const route of adminRoutes) {
     if (matchPath({ path: route.path, end: true }, pathname) !== null) {
-      return route.title
+      return route
     }
   }
 
-  return 'Панель управления'
+  return null
 }
 
 export function Breadcrumbs() {
   const location = useLocation()
-  const title = labelForPath(location.pathname)
+  const route = routeForPath(location.pathname)
+  const parent = route?.parentKey === undefined ? null : (adminRoutes.find((item) => item.key === route.parentKey) ?? null)
+  const title = route === null ? 'Сводка' : (route.navTitle ?? route.title)
 
   return (
-    <nav aria-label="breadcrumbs" className="text-sm text-slate-500 dark:text-slate-400">
-      <ol className="flex items-center gap-2">
-        <li>
-          <Link to="/admin/dashboard" className="hover:text-slate-800 dark:hover:text-slate-100">
-            Админка
-          </Link>
-        </li>
-        <li>/</li>
-        <li className="text-slate-900 dark:text-slate-200">{title}</li>
+    <nav aria-label="Хлебные крошки" className="min-w-0 text-sm">
+      <ol className="flex min-w-0 items-center gap-2">
+        {parent !== null ? (
+          <>
+            <li className="shrink-0">
+              <Link to={parent.path} className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100">
+                {parent.navTitle ?? parent.title}
+              </Link>
+            </li>
+            <li aria-hidden="true" className="text-slate-400">/</li>
+          </>
+        ) : null}
+        <li aria-current="page" className="truncate font-semibold text-slate-900 dark:text-slate-100">{title}</li>
       </ol>
     </nav>
   )
