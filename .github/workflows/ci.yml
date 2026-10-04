@@ -85,8 +85,13 @@ jobs:
       - name: Run Doctrine migrations on the CI MySQL
         run: php bin/console doctrine:migrations:migrate --env=test --no-interaction --allow-no-migration
 
-      - name: Doctrine schema validation
-        run: php bin/console doctrine:schema:validate --env=test --no-interaction --skip-sync
+      - name: Doctrine migrations rollback to empty schema and re-apply
+        run: |
+          php bin/console doctrine:migrations:migrate first --env=test --no-interaction
+          php bin/console doctrine:migrations:migrate --env=test --no-interaction
+
+      - name: Doctrine schema validation (mapping and database in sync)
+        run: php bin/console doctrine:schema:validate --env=test --no-interaction
 
       - name: Symfony container linter
         run: php bin/console lint:container --env=test --no-interaction

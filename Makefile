@@ -89,7 +89,7 @@ quality: test-db
 	$(PHP) php vendor/bin/phpstan analyse
 	$(PHP) php vendor/bin/rector process --dry-run --ansi
 	$(PHP) $(TEST_ENV) php bin/console doctrine:migrations:status --env=test --no-interaction
-	$(PHP) $(TEST_ENV) php bin/console doctrine:schema:validate --env=test --no-interaction --skip-sync
+	$(PHP) $(TEST_ENV) php bin/console doctrine:schema:validate --env=test --no-interaction
 	$(PHP) $(TEST_ENV) php bin/console lint:container --env=test --no-interaction
 	$(PHP) $(TEST_ENV) php bin/console lint:twig templates --env=test --no-interaction
 	$(PHP) $(TEST_ENV) php vendor/bin/phpunit

@@ -16,6 +16,7 @@
 - DBAL `default_table_options`: `charset: utf8mb4`, `collation: utf8mb4_0900_ai_ci`, `engine: InnoDB` — применяются ко всем таблицам, которые генерирует Doctrine (`CREATE TABLE ... DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci ENGINE = InnoDB`).
 - ORM: `naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware`, `validate_xml_mapping: true`.
 - Маппинг: `type: attribute`, `dir: %kernel.project_dir%/src`, `prefix: App`, `alias: App`.
+- В `test`: `dbal.schema_filter` исключает таблицу `messenger_messages` из сравнения схемы (в тестах Messenger на in-memory транспортах); обоснование и остальные исключения — §13.1.
 - В `prod`: query/result cache pools на filesystem-кэше (`doctrine.system_cache_pool` → `cache.system`, `doctrine.result_cache_pool` → `cache.app`, см. [23-cache](23-cache.md)).
 
 Формат `DATABASE_URL`:
@@ -393,7 +394,7 @@ CREATE INDEX idx_content_page_blocks_tags
     ON content_page_blocks ((CAST(content->'$.tags' AS CHAR(64) ARRAY)));
 ```
 
-> **Важно.** Doctrine ничего не знает о generated columns и functional indexes, поэтому `doctrine:migrations:diff` может предлагать их удалить. Такие объекты создаются только вручную в миграции, а лишние `DROP` из автоматического diff нужно вычищать (см. [18-migrations](18-migrations.md) §3). Если generated column нужна приложению, её можно замапить как read-only: `#[ORM\Column(columnDefinition: '...', insertable: false, updatable: false)]`.
+> **Важно.** Doctrine ничего не знает о generated columns и functional indexes, поэтому `doctrine:migrations:diff` может предлагать их удалить. Такие объекты создаются только вручную в миграции, а лишние `DROP` из автоматического diff нужно вычищать (см. [18-migrations](18-migrations.md) §3). Чтобы такие объекты не попадали в diff, их описывают в ожидаемой схеме listener-ом `ToolEvents::postGenerateSchema` (пример — `PagePathActiveSchemaListener`, см. §13.1) либо, если колонка нужна приложению, мапят как read-only: `#[ORM\Column(columnDefinition: '...', insertable: false, updatable: false)]`.
 
 > **Запрещено.** Делать `WHERE CAST(content AS CHAR) LIKE '%...%'` или `JSON_SEARCH` без индекса на больших таблицах — full table scan + преобразование каждого документа, сжигает CPU.
 
@@ -470,7 +471,7 @@ ALTER TABLE content_pages
     ALGORITHM=INPLACE, LOCK=NONE;
 ```
 
-> **Фактическое состояние.** Индекс `uniq_content_pages_path_active` (generated column `path_active`) создан в начальной миграции `Version20261004000100`. Приложение дополнительно проверяет уникальность через `PageRepositoryInterface::existsByPath()`, чтобы вернуть понятную ошибку. Generated column не отражена в attributes, поэтому `doctrine:migrations:diff` будет предлагать удалить `path_active` и индекс — такие изменения из diff нужно удалять вручную (см. §11.5). В тестах схема строится `SchemaTool` из attributes и этого индекса не содержит.
+> **Фактическое состояние.** Индекс `uniq_content_pages_path_active` (generated column `path_active`) создан в начальной миграции `Version20261004000100`. Приложение дополнительно проверяет уникальность через `PageRepositoryInterface::existsByPath()`, чтобы вернуть понятную ошибку. Атрибуты ORM не выражают generated column, поэтому она и индекс описываются в ожидаемой схеме Doctrine listener-ом `PagePathActiveSchemaListener` (см. §13.1): `doctrine:schema:validate` и `doctrine:migrations:diff` их не считают лишними, а `SchemaTool` в тестах создаёт то же ограничение, что и миграции.
 
 ```php
 #[ORM\Column(type: 'integer')]
@@ -481,6 +482,25 @@ private int $position;
 ```
 
 > Двойная защита (Validator + CHECK) — не избыточность, а защита от багов в ETL/импорте, которые обходят Validator.
+
+### 13.1 Синхронность схемы: проверка и известные исключения
+
+Контракт: после `doctrine:migrations:migrate` на пустой БД команда `doctrine:schema:validate` (без `--skip-sync`) должна завершаться `[OK]` и для mapping, и для database. Это проверяется в CI (job Backend) и в `make quality`; в CI дополнительно выполняется откат на пустую схему (`migrate first`) и повторное применение, чтобы `down()` всех миграций оставался рабочим.
+
+Расхождения, которые принято считать легитимными, и способ их исключения из сравнения:
+
+| Объект | Почему расходится | Как закрыто |
+| --- | --- | --- |
+| `content_pages.path_active` + `uniq_content_pages_path_active` | Generated column (`IF(deleted_at IS NULL, path, NULL)`) и unique-индекс по ней нельзя выразить атрибутами ORM; в MySQL нет partial unique index. | Listener `App\Module\Content\Infrastructure\Doctrine\PagePathActiveSchemaListener` (событие `ToolEvents::postGenerateSchema`) добавляет колонку и индекс в ожидаемую схему. DBAL игнорирует `columnDefinition` при сравнении, поэтому проверяются тип/длина/nullable колонки и состав и уникальность индекса. Бонус: тестовая схема из `SchemaTool` содержит то же ограничение (см. `PagePathActiveConstraintTest`). |
+| `messenger_messages` | Таблицу создают миграции (`Version20261004000100`), а в ожидаемую схему её добавляет Symfony-listener Doctrine-транспорта Messenger. В `test` транспорты `in-memory://`, listener ничего не добавляет, и таблица выглядит «лишней». | `schema_filter: '~^(?!messenger_messages$)~'` в `when@test` файла `config/packages/doctrine.yaml`. В `dev`/`prod` фильтр не включён: там таблица сверяется с определением Symfony и расхождение будет замечено. |
+
+Правила:
+
+- Не добавлять в `schema_filter` и в listener ничего без письменного обоснования в этой таблице.
+- Остальные расхождения (индексы, FK, типы колонок, `NOT NULL`/`DEFAULT`) — реальные: исправляются маппингом и/или **новой** миграцией с более поздней версией. Уже применённые на staging/production миграции не редактируются.
+- Имена внешних ключей, заданные вручную в миграциях (например `FK_LEAD_EVENTS_LEAD`), Doctrine при сравнении не учитывает — сравниваются колонки, целевая таблица и `ON DELETE`.
+- Если после изменения listener-а или `doctrine.yaml` в `prod` проверка внезапно «красная», сначала очистить кэш контейнера (`cache:clear`): Doctrine-listener-ы регистрируются на этапе компиляции.
+
 
 ---
 
@@ -651,7 +671,7 @@ MySQL не должен слушать публичный интерфейс (`b
 - [ ] Timestamps (через trait, если бизнес требует).
 - [ ] Soft delete (если предметная область требует).
 - [ ] Тесты: unit на Entity (инварианты), integration на repository.
-- [ ] `php bin/console doctrine:schema:validate --skip-sync` — без ошибок.
+- [ ] `php bin/console doctrine:schema:validate` — без ошибок.
 - [ ] Документация модели в [05-domain-model](05-domain-model.md) обновлена.
 - [ ] Если новая таблица будет расти — добавлены индексы под ожидаемые запросы.
 
@@ -705,7 +725,7 @@ MySQL не должен слушать публичный интерфейс (`b
 
 После изменения:
 
-- [ ] `doctrine:schema:validate --skip-sync` — без ошибок.
+- [ ] `doctrine:schema:validate` — без ошибок.
 - [ ] Repository тесты — зелёные.
 - [ ] Performance review checklist пройден.
 - [ ] Документация обновлена.

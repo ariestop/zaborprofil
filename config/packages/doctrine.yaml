@@ -23,6 +23,15 @@ doctrine:
                 alias: App
 
 
+when@test:
+    doctrine:
+        dbal:
+            # В test-окружении Messenger работает на in-memory транспортах, поэтому Symfony-listener не
+            # добавляет `messenger_messages` в ожидаемую схему, а миграции эту таблицу создают (как и в dev/prod).
+            # Исключаем таблицу из сравнения, чтобы `doctrine:schema:validate` в CI не считал её лишней.
+            # См. docs/17-doctrine-and-database.md §13.1.
+            schema_filter: '~^(?!messenger_messages$)~'
+
 when@prod:
     doctrine:
         orm:
