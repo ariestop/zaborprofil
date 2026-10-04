@@ -7,6 +7,7 @@ parameters:
     app.vite.public_build_path: /build
     # Только для локальной разработки: http://localhost:5173 включает HMR без `npm run build`.
     app.vite.dev_server_url: '%env(default:empty_string:VITE_DEV_SERVER_URL)%'
+    app.observability_dir: '%kernel.logs_dir%/observability'
     app.release_info_path: '%kernel.project_dir%/var/release-info.json'
     app.media_upload_dir: '%kernel.project_dir%/public_html/uploads/media'
     app.sitemap_chunk_size: 50000
@@ -213,6 +214,16 @@ services:
         tags:
             - { name: monolog.processor }
 
+    App\Shared\Infrastructure\Observability\ServerErrorCounter:
+        arguments:
+            $directory: '%app.observability_dir%'
+
+    Sentry\Monolog\LogToSentryIssueHandler:
+        arguments:
+            $hub: '@Sentry\State\HubInterface'
+            $level: 'error'
+            $fillExtraContext: true
+
 when@test:
     parameters:
         app.vite.test_manifest_path: '%kernel.project_dir%/tests/Fixtures/vite/manifest.json'
@@ -220,9 +231,13 @@ when@test:
         app.vite.manifest_path: '%env(default:app.vite.test_manifest_path:VITE_MANIFEST_PATH)%'
         app.vite.dev_server_url: ''
         app.sitemap_chunk_size: 2
+        app.observability_dir: '%kernel.cache_dir%/observability'
         env(PUBLIC_HTTP_CACHE_ENABLED): '1'
 
     services:
+        test.rate_limiter.storage:
+            class: Symfony\Component\RateLimiter\Storage\InMemoryStorage
+
         # Тесты не должны менять схему тестовой БД через веб-админку.
         App\Tests\Support\Settings\FakeMigrationAdminService: ~
 

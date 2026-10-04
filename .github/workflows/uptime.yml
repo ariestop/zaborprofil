@@ -1,0 +1,33 @@
+name: Uptime
+
+permissions:
+  contents: read
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Health endpoints
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: tools/monitoring
+
+      - name: Check /health endpoints
+        env:
+          UPTIME_URLS: ${{ vars.UPTIME_URLS }}
+          UPTIME_BASIC_AUTH: ${{ secrets.UPTIME_BASIC_AUTH }}
+          ALERT_TELEGRAM_BOT_TOKEN: ${{ secrets.ALERT_TELEGRAM_BOT_TOKEN }}
+          ALERT_TELEGRAM_CHAT_ID: ${{ secrets.ALERT_TELEGRAM_CHAT_ID }}
+        run: bash tools/monitoring/uptime-check.sh

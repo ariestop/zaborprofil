@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom'
 import type { AdminPermission } from '../entities/user/permissions'
 import { useLeadSummaryQuery } from '../entities/lead/api'
 import { LEAD_STATUS_LABELS } from '../entities/lead/model'
-import { useSystemBackupsQuery, useSystemOverviewQuery } from '../entities/system/api'
+import { useSystemBackupsQuery, useSystemObservabilityQuery, useSystemOverviewQuery } from '../entities/system/api'
 import { buildAttentionItems, type AttentionTone } from '../features/dashboard/attention'
+import { buildObservabilityTiles, type ObservabilityTone } from '../features/dashboard/observability'
 import { cn } from '../shared/lib/cn'
 import { useAuthStore } from '../stores/auth'
 import { formatDateTime, formatNumber } from '../shared/lib/format'
@@ -18,6 +19,12 @@ const markerTone: Record<AttentionTone, string> = {
   leads: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200',
   critical: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
   warning: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
+}
+
+const tileTone: Record<ObservabilityTone, string> = {
+  ok: '',
+  warning: 'text-amber-700 dark:text-amber-400',
+  critical: 'text-red-700 dark:text-red-400',
 }
 
 const quickActions: Array<{ label: string, href: string, permission: AdminPermission }> = [
@@ -42,11 +49,14 @@ export default function DashboardPage() {
   const leadsQuery = useLeadSummaryQuery()
   const overviewQuery = useSystemOverviewQuery()
   const backupsQuery = useSystemBackupsQuery()
+  const observabilityQuery = useSystemObservabilityQuery()
 
   const attention = buildAttentionItems({
     newLeads: leadsQuery.data?.new,
     warnings: overviewQuery.data?.warnings,
     hasBackups: backupsQuery.data === undefined ? undefined : backupsQuery.data.latestBackup !== null,
+    failedMessages: observabilityQuery.data?.queue.failed,
+    serverErrorsLastHour: observabilityQuery.data?.serverErrors.lastHour,
   })
   const attentionLoading = leadsQuery.isLoading || overviewQuery.isLoading || backupsQuery.isLoading
 
@@ -140,6 +150,24 @@ export default function DashboardPage() {
                 <span className="block text-sm text-slate-500 dark:text-slate-400">Всего</span>
                 <span className="mt-1 block text-2xl font-bold">{leadsQuery.data === undefined ? '—' : formatNumber(leadsQuery.data.total)}</span>
               </Link>
+            </div>
+          ) : null}
+
+          {canViewSystem && observabilityQuery.isSuccess ? (
+            <div className="grid gap-3" aria-label="Мониторинг сервера">
+              {buildObservabilityTiles(observabilityQuery.data).map((tile) => (
+                <Link
+                  key={tile.id}
+                  to={tile.href}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 p-4 transition hover:border-emerald-300 dark:border-slate-800 dark:hover:border-emerald-800"
+                >
+                  <span>
+                    <span className="block text-sm text-slate-500 dark:text-slate-400">{tile.label}</span>
+                    <span className="block text-xs text-slate-500 dark:text-slate-400">{tile.hint}</span>
+                  </span>
+                  <span className={cn('text-2xl font-bold', tileTone[tile.tone])}>{tile.value}</span>
+                </Link>
+              ))}
             </div>
           ) : null}
 

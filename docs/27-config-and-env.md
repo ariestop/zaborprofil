@@ -61,6 +61,9 @@
 | `MAILPIT_PORT`/`ADMINER_PORT`/`VITE_PORT` | хост-порты | Compose, dev only |
 | `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | для critical alerts | `TelegramErrorHandler` |
 | `RELEASE_TAG` | версия для логов/Sentry | `ReleaseProcessor` |
+| `LEAD_NOTIFICATION_EMAIL` / `LEAD_TELEGRAM_BOT_TOKEN` / `LEAD_TELEGRAM_CHAT_ID` | куда уходят уведомления о новых заявках; если доставка не удалась ни по одному каналу, пишется `error` в канал `observability` (алерт) | `LeadNotifier` |
+| `SENTRY_DSN` | DSN Sentry или self-hosted (GlitchTip); пусто — error tracking выключен. Персональные данные не отправляются ([28-logging-observability](28-logging-observability.md)) | `sentry/sentry-symfony` |
+| `SENTRY_RELEASE` | необязательная метка релиза в Sentry | `sentry/sentry-symfony` |
 
 ## Deploy script variables (операционные)
 

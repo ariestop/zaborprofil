@@ -127,6 +127,7 @@ final class AdminRoleMatrixTest extends WebTestCase
             ['DELETE', "/admin/api/users/{$id}", [], 'admin.only', true],
             ['GET', '/admin/api/system/health', [], 'admin.only', true],
             ['GET', '/admin/api/system/overview', [], 'admin.only', true],
+            ['GET', '/admin/api/system/observability', [], 'admin.only', true],
             ['GET', '/admin/api/system/audit', [], 'admin.only', true],
             ['GET', '/admin/api/system/logs', [], 'admin.only', true],
             ['GET', '/admin/api/system/cache', [], 'admin.only', true],
@@ -143,6 +144,7 @@ final class AdminRoleMatrixTest extends WebTestCase
             ['POST', '/admin/api/settings/migrations/Version20250101000000/apply', [], 'super.only', false],
             ['POST', '/admin/api/users/me/password', [], 'any.admitted', true],
             ['GET', '/admin/api/me', [], 'any.admitted', true],
+            ['POST', '/admin/api/client-errors', ['message' => 'matrix probe', 'source' => 'window-error', 'url' => '/admin/dashboard'], 'any.admitted', true],
         ];
     }
 

@@ -53,6 +53,7 @@ php bin/console app:system:diagnostics
 - `tools/deploy/health-check.sh` использует `/health` после переключения релиза.
 - `tools/deploy/staging-smoke.sh` проверяет `/health` и `/health/ready`.
 - Local Docker `make health` использует тот же health endpoint.
+- Внешняя uptime-проверка (GitHub Actions, `tools/monitoring/uptime-check.sh`) опрашивает `/health/ready` по расписанию: [28-logging-observability](28-logging-observability.md).
 
 ## Ограничения и безопасность
 

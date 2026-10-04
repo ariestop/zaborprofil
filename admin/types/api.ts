@@ -346,6 +346,24 @@ export interface SystemQueuesResponse {
   checkedAt: string
 }
 
+export interface SystemObservabilityResponse {
+  serverErrors: {
+    lastHour: number
+    last24Hours: number
+  }
+  queue: {
+    pending: number
+    failed: number
+  }
+  disk: {
+    status: 'ok' | 'warning' | 'fail'
+    freeBytes: number | null
+    totalBytes: number | null
+    usedPercent: number | null
+  }
+  checkedAt: string
+}
+
 export interface SystemCacheResponse {
   adapter: string
   namespace: string

@@ -1,5 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { installGlobalClientErrorReporting } from '../shared/lib/client-error-reporter'
 import { initializeAuthStore, parsePermissions, parseRoles } from '../stores/auth'
 import { AdminApp } from './AdminApp'
 
@@ -16,6 +17,8 @@ export function bootstrapAdminApp(): void {
     roles: parseRoles(root.dataset.roles),
     permissions: parsePermissions(root.dataset.permissions),
   })
+
+  installGlobalClientErrorReporting()
 
   createRoot(root).render(
     <StrictMode>

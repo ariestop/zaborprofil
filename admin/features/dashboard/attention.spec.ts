@@ -31,4 +31,17 @@ describe('buildAttentionItems', () => {
     expect(items.map((item) => item.id)).toEqual(['warning-db', 'warning-disk'])
     expect(items[0]?.tone).toBe('critical')
   })
+
+  it('flags failed queue messages and recent server errors only when data is known', () => {
+    expect(buildAttentionItems({ failedMessages: 0, serverErrorsLastHour: 0 })).toEqual([])
+    expect(buildAttentionItems({})).toEqual([])
+
+    const items = buildAttentionItems({ failedMessages: 3, serverErrorsLastHour: 2 })
+
+    expect(items.map((item) => [item.id, item.marker, item.tone])).toEqual([
+      ['queue-failed', '3', 'critical'],
+      ['server-errors', '2', 'warning'],
+    ])
+    expect(items[0]?.href).toBe('/admin/system/queues')
+  })
 })
