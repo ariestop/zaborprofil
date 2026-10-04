@@ -11,6 +11,15 @@ export default defineConfig({
       { find: '@/lib', replacement: fileURLToPath(new URL('./assets/admin/components/lib', import.meta.url)) },
     ],
   },
+  server: {
+    // Страницы отдаёт nginx на другом порту, поэтому ссылки на ассеты внутри CSS/JS
+    // (шрифты, картинки) должны вести на dev-сервер, а не на origin страницы.
+    origin: process.env.VITE_DEV_SERVER_URL ?? 'http://localhost:5173',
+    strictPort: true,
+    // Нужен только если проект лежит на файловой системе, где не работают события inotify
+    // (например, на C:\ под Docker Desktop): VITE_USE_POLLING=1 make npm-dev
+    watch: process.env.VITE_USE_POLLING === '1' ? { usePolling: true, interval: 300 } : undefined,
+  },
   build: {
     outDir: 'public_html/build',
     emptyOutDir: true,
