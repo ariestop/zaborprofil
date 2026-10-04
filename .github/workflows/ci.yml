@@ -52,7 +52,7 @@ jobs:
         with:
           php-version: '8.5'
           extensions: ctype, iconv, intl, mbstring, opcache, pdo_mysql
-          coverage: none
+          coverage: pcov
           tools: composer:v2
 
       - name: Validate Composer
@@ -112,8 +112,11 @@ jobs:
           shellcheck -x tools/deploy/deploy-beget.sh tests/shell/deploy-beget.sh
           bash tests/shell/deploy-beget.sh
 
-      - name: PHPUnit
-        run: composer test
+      - name: PHPUnit with coverage
+        run: composer test:coverage
+
+      - name: PHP coverage threshold
+        run: composer check:coverage
 
   frontend:
     name: Frontend
@@ -138,8 +141,8 @@ jobs:
       - name: Frontend typecheck
         run: npm run typecheck
 
-      - name: Frontend unit tests
-        run: npm run test:frontend
+      - name: Frontend unit tests with coverage threshold
+        run: npm run test:frontend:coverage
 
       - name: Frontend lint (admin scope)
         run: npm run lint:admin
@@ -253,12 +256,12 @@ jobs:
           cat /tmp/e2e-app.log || true
           exit 1
 
-      - name: Run Playwright smoke suite
+      - name: Run Playwright E2E suite (smoke + content-to-lead flow)
         env:
           E2E_BASE_URL: http://127.0.0.1:8000
           E2E_ADMIN_EMAIL: e2e-admin@example.test
           E2E_ADMIN_PASSWORD: ${{ env.E2E_ADMIN_PASSWORD }}
-        run: npm run test:e2e:smoke
+        run: npm run test:e2e
 
       - name: Upload Playwright artifacts
         if: failure()

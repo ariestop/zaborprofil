@@ -31,6 +31,7 @@ export default function PageEditorPage() {
       key={id}
       page={editorQuery.data.page}
       initialBlocks={editorQuery.data.builder.blocks}
+      initialBuilderVersion={editorQuery.data.builder.version}
       tab={resolvedTab}
     />
   )

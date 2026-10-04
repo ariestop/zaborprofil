@@ -3,7 +3,7 @@ import { useMemo } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { useToast } from '../../app/providers/toast-provider'
-import { createPageStarterBlocks, useCreatePageMutation, usePageTemplatesQuery, usePagesQuery } from '../../entities/page/api'
+import { useCreatePageMutation, usePageTemplatesQuery, usePagesQuery } from '../../entities/page/api'
 import { applyServerValidationErrors } from '../../shared/api/validation'
 import { Button, Card, Input } from '../../shared/ui'
 import { describeApiError } from '../seo/redirects/redirect-rules'
@@ -12,6 +12,7 @@ import { emptyFormValues, pageEditorSchema, pathFromSlug, slugify, toPagePayload
 import { LeaveGuard, useLeaveBypass } from './LeaveGuard'
 import { pageTypeLabels, templateLabels, visibilityLabels } from './page-status'
 import { buildParentOptions } from './parent-options'
+import { TemplatePreview } from './TemplatePreview'
 
 const createSchema = pageEditorSchema.pick({
   type: true,
@@ -62,6 +63,11 @@ export function PageCreateForm() {
     return [...codes, { code: 'default', label: templateLabels.default ?? 'Без шаблона' }]
   }, [templatesQuery.data, type])
 
+  const selectedTemplate = useMemo(
+    () => (templatesQuery.data ?? []).find((item) => item.isActive && item.pageType === type && item.code === template),
+    [templatesQuery.data, template, type],
+  )
+
   const parentOptions = useMemo(() => buildParentOptions(pagesQuery.data ?? [], null, parentId), [pagesQuery.data, parentId])
   const parentPath = (pagesQuery.data ?? []).find((item) => item.id === parentId)?.path ?? ''
 
@@ -89,15 +95,8 @@ export function PageCreateForm() {
 
   const submit = async (values: CreateFormValues): Promise<void> => {
     try {
-      const created = await createMutation.mutateAsync(toPagePayload({ ...emptyFormValues(), ...values }))
-      const starter = (templatesQuery.data ?? []).find((item) => item.code === values.template)
-      if (starter !== undefined && starter.blocksSchema.length > 0) {
-        try {
-          await createPageStarterBlocks(created.id, starter)
-        } catch (error) {
-          push({ title: 'Страница создана, но стартовые блоки не добавлены', description: describeApiError(error, 'Добавьте блоки вручную в редакторе.') })
-        }
-      }
+      const starterTemplate = values.template !== 'default' && selectedTemplate !== undefined ? values.template : undefined
+      const created = await createMutation.mutateAsync({ ...toPagePayload({ ...emptyFormValues(), ...values }), starterTemplate })
 
       allowLeave()
       push({ title: 'Страница создана', description: 'Добавьте контент и SEO-данные.' })
@@ -144,7 +143,7 @@ export function PageCreateForm() {
               </NativeSelect>
             )}
           </Field>
-          <Field label="Шаблон" error={errors.template?.message} hint="Шаблон создаёт стартовый набор блоков.">
+          <Field label="Шаблон" error={errors.template?.message} hint="Шаблон создаёт стартовый набор блоков с подсказками, что заполнить.">
             {(id) => (
               <NativeSelect id={id} value={template} onChange={(event) => setValue('template', event.target.value, { shouldDirty: true })}>
                 {templateOptions.map((item) => <option key={item.code} value={item.code}>{item.label}</option>)}
@@ -193,6 +192,7 @@ export function PageCreateForm() {
             )}
           </Field>
         </div>
+        {selectedTemplate !== undefined ? <div className="mt-4"><TemplatePreview template={selectedTemplate} /></div> : null}
         <div className="mt-6 flex flex-wrap gap-2">
           <Button type="submit" disabled={createMutation.isPending}>
             {createMutation.isPending ? 'Создание…' : 'Создать страницу'}

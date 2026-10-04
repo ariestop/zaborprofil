@@ -21,7 +21,7 @@
 `access_control`:
 
 - `^/admin/login$` — `PUBLIC_ACCESS`;
-- `^/admin` — `ROLE_ADMIN`.
+- `^/admin` — любая админская роль (`ROLE_EDITOR`, `ROLE_SEO`, `ROLE_MANAGER`; `ROLE_ADMIN` и `ROLE_SUPER_ADMIN` — через `role_hierarchy`). Права на разделы проверяет `AdminPermissionVoter`, меню и маршруты SPA строятся по `GET /admin/api/me`.
 
 ## RBAC
 

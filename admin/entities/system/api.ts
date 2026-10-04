@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiRequest } from '../../shared/api/client'
 import { issueDangerousActionToken } from '../../shared/api/dangerous-action'
 import { adminQueryKeys } from '../../shared/api/query'
+import { useCan } from '../../stores/auth'
 import type {
   AuditLogEntryItem,
   SystemBackupsResponse,
@@ -27,7 +28,10 @@ function invalidateSystemQueries(queryClient: ReturnType<typeof useQueryClient>)
 }
 
 export function useSystemOverviewQuery() {
+  const enabled = useCan('system.view')
+
   return useQuery({
+    enabled,
     queryKey: adminQueryKeys.systemOverview,
     queryFn: () => apiRequest<SystemOverviewResponse>('/admin/api/system/overview'),
   })
@@ -79,7 +83,10 @@ export function useSystemSecurityQuery() {
 }
 
 export function useSystemBackupsQuery() {
+  const enabled = useCan('system.view')
+
   return useQuery({
+    enabled,
     queryKey: adminQueryKeys.systemBackups,
     queryFn: () => apiRequest<SystemBackupsResponse>('/admin/api/system/backups'),
   })
