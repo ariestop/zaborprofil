@@ -232,11 +232,7 @@ final class AdminMediaApiTest extends WebTestCase
     private function pngUpload(string $clientName): UploadedFile
     {
         $path = $this->temporaryFile('png');
-        $image = imagecreatetruecolor(40, 30);
-        if ($image === false) {
-            throw new LogicException('GD cannot create test image.');
-        }
-        imagepng($image, $path);
+        file_put_contents($path, base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC', true));
 
         return new UploadedFile($path, $clientName, 'image/png', null, true);
     }

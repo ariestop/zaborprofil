@@ -9,6 +9,7 @@ import {
 import {
   ADMIN_ROUTES,
   BUILDER_SELECTORS,
+  MEDIA_SELECTORS,
   PAGES_SELECTORS,
 } from './helpers/selectors'
 import {
@@ -98,5 +99,36 @@ test.describe('Admin smoke flow', () => {
   test('admin api returns 422 for invalid page payload', async ({ page }) => {
     await loginToAdmin(page)
     await createPageExpectValidationError(page, buildInvalidPagePayload())
+  })
+
+  test('media library: upload, edit alt, search and delete', async ({ page }) => {
+    await loginToAdmin(page)
+    await page.goto(ADMIN_ROUTES.media)
+    await expect(page.getByRole('heading', { name: MEDIA_SELECTORS.headingName })).toBeVisible()
+
+    const fileName = `e2e-fence-${Date.now()}.png`
+    await Promise.all([
+      page.waitForResponse((response) => response.url().endsWith('/admin/api/media/assets') && response.request().method() === 'POST' && response.status() === 201),
+      page.getByTestId('media-file-input').setInputFiles({ name: fileName, mimeType: 'image/png', buffer: MEDIA_SELECTORS.pngBuffer }),
+    ])
+
+    const details = page.getByTestId('asset-details')
+    await expect(details).toBeVisible()
+    await details.getByLabel(/^Alt/).fill('Забор из профнастила E2E')
+    await Promise.all([
+      page.waitForResponse((response) => response.url().includes('/admin/api/media/assets/') && response.request().method() === 'PATCH' && response.ok()),
+      details.getByRole('button', { name: 'Сохранить' }).click(),
+    ])
+
+    await page.getByLabel('Поиск по медиатеке').fill('профнастила E2E')
+    await expect(page.getByTestId('media-grid').getByRole('button', { name: new RegExp(fileName) })).toBeVisible()
+
+    await page.getByTestId('media-grid').getByRole('button', { name: new RegExp(fileName) }).click()
+    await page.getByTestId('asset-details').getByRole('button', { name: 'Удалить' }).click()
+    await Promise.all([
+      page.waitForResponse((response) => response.url().includes('/admin/api/media/assets/') && response.request().method() === 'DELETE' && response.status() === 204),
+      page.getByRole('dialog').getByRole('button', { name: 'Удалить' }).click(),
+    ])
+    await expect(page.getByText('Ничего не найдено')).toBeVisible()
   })
 })

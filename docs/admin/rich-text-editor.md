@@ -11,6 +11,10 @@ TipTap используется **только как редактор rich-text
 - `admin/modules/page-builder/components/BlockEditorPanel.tsx`
 - `admin/components/TiptapRichTextEditor.tsx`
 
+## Изображения
+
+Кнопка «Загрузить» в тулбаре загружает файл через `POST /admin/api/media/assets` (`handleImageUpload` в `admin/components/lib/tiptap-utils.ts`) и вставляет `publicPath`; кнопка «Медиатека» открывает `MediaPickerDialog` и вставляет выбранное изображение с `alt`/`title`. Подробнее: [media-library](media-library.md).
+
 ## Безопасность
 
 На backend rich-text проходит sanitize-процедуру через

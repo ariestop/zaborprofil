@@ -98,6 +98,17 @@ Admin API использует **double-submit CSRF**:
 | `DELETE` | `/admin/api/content/blocks/{id}` | Удалить блок |
 | `POST` | `/admin/api/content/pages/{pageId}/blocks/reorder` | Изменить порядок |
 
+### Маршруты Media
+
+| Метод | URL | Действие |
+|---|---|---|
+| `GET` | `/admin/api/media/assets` | Список (`page`, `perPage`, `q`, `type`, `sort`; в ответе `assets` и `pagination`) |
+| `POST` | `/admin/api/media/assets` | Загрузка файла (`multipart`, поле `file`) |
+| `PATCH` | `/admin/api/media/assets/{id}` | Изменить `alt` и `title` |
+| `DELETE` | `/admin/api/media/assets/{id}` | Удалить ассет и файлы |
+
+Подробности: [admin/media-library](admin/media-library.md).
+
 ## Admin SPA
 
 См. [ADMIN_FRONTEND.md](ADMIN_FRONTEND.md). React + TypeScript + Tailwind + Vite, билдится в `public_html/build/`. Manifest рендерится в Twig через `ViteAssetExtension`.
