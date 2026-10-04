@@ -11,37 +11,33 @@ import { PagePreview } from './PagePreview'
 interface PageBuilderContainerProps {
   blocks: BuilderBlock[]
   selectedBlockId: string | null
-  dirty: boolean
   validationIssues: Array<{ blockId: string; path: string; message: string }>
   previewHtml: string | null
-  isSaving: boolean
+  isPreviewLoading: boolean
   onAddBlock: (type: BuilderBlock['type']) => void
   onReorderBlocks: (sourceIndex: number, targetIndex: number) => void
   onSelectBlock: (blockId: string) => void
   onUpdateBlock: (block: BuilderBlock) => void
   onDeleteBlock: (blockId: string) => void
   onDuplicateBlock: (blockId: string) => void
-  onSave: () => void
   onPreview: () => void
-  onPublish: () => void
+  showJson: boolean
 }
 
 export function PageBuilderContainer({
   blocks,
   selectedBlockId,
-  dirty,
   validationIssues,
   previewHtml,
-  isSaving,
+  isPreviewLoading,
   onAddBlock,
   onReorderBlocks,
   onSelectBlock,
   onUpdateBlock,
   onDeleteBlock,
   onDuplicateBlock,
-  onSave,
   onPreview,
-  onPublish,
+  showJson,
 }: PageBuilderContainerProps) {
   const selectedBlock = selectedBlockId === null
     ? null
@@ -49,7 +45,7 @@ export function PageBuilderContainer({
 
   return (
     <section className="space-y-4">
-      <BuilderTopbar dirty={dirty} isSaving={isSaving} onSave={onSave} onPreview={onPreview} onPublish={onPublish} />
+      <BuilderTopbar isPreviewLoading={isPreviewLoading} onPreview={onPreview} />
       <BuilderValidationErrors issues={validationIssues} />
       <div className="grid gap-4 xl:grid-cols-[280px_1fr_380px]">
         <BuilderSidebar onAddBlock={onAddBlock} />
@@ -72,6 +68,7 @@ export function PageBuilderContainer({
             onUpdate={onUpdateBlock}
             onDelete={onDeleteBlock}
             onDuplicate={onDuplicateBlock}
+            showJson={showJson}
           />
           <BlockPreview block={selectedBlock} />
         </div>

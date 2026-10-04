@@ -5,13 +5,16 @@ export interface AdminRouteDefinition {
   navTitle?: string
   parentKey?: string
   section: 'content' | 'system'
+  /** Маршрут доступен по прямой ссылке и в командной палитре, но не выводится в боковой навигации. */
+  hideInNav?: boolean
 }
 
 export const adminRoutes: AdminRouteDefinition[] = [
   { key: 'dashboard', path: '/admin/dashboard', title: 'Панель управления', section: 'system' },
   { key: 'pages', path: '/admin/pages', title: 'Страницы', section: 'content' },
-  { key: 'pageDetail', path: '/admin/pages/:id', title: 'Страница', section: 'content' },
-  { key: 'pageBuilder', path: '/admin/pages/:id/builder', title: 'Page Builder', section: 'content' },
+  { key: 'pageNew', path: '/admin/pages/new', title: 'Новая страница', parentKey: 'pages', section: 'content', hideInNav: true },
+  { key: 'pageDetail', path: '/admin/pages/:id', title: 'Редактор страницы', section: 'content' },
+  { key: 'pageTab', path: '/admin/pages/:id/:tab', title: 'Редактор страницы', section: 'content' },
   { key: 'media', path: '/admin/media', title: 'Медиа', section: 'content' },
   { key: 'seo', path: '/admin/seo', title: 'SEO', section: 'content' },
   { key: 'crm', path: '/admin/crm', title: 'CRM', section: 'system' },
@@ -30,4 +33,4 @@ export const adminRoutes: AdminRouteDefinition[] = [
   { key: 'systemAudit', path: '/admin/system/audit', title: 'Аудит действий админов', parentKey: 'system', section: 'system' },
 ]
 
-export const sidebarRoutes = adminRoutes.filter((route) => !route.path.includes('/:'))
+export const sidebarRoutes = adminRoutes.filter((route) => !route.path.includes('/:') && route.hideInNav !== true)

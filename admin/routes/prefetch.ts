@@ -3,8 +3,8 @@ import {
   loadCrmPage,
   loadDashboardCharts,
   loadMediaPage,
-  loadPageBuilderPage,
-  loadPageDetailPage,
+  loadPageCreatePage,
+  loadPageEditorPage,
   loadPagesPage,
   loadRichTextRuntime,
   loadSeoPage,
@@ -165,20 +165,19 @@ const routePrefetchers: Array<{ match: RegExp, tasks: PrefetchTask[] }> = [
   {
     match: /^\/admin\/pages$/,
     tasks: [
-      { key: 'route-page-detail', run: loadPageDetailPage },
-      { key: 'route-page-builder', run: loadPageBuilderPage },
-      { key: 'runtime-rich-text', run: loadRichTextRuntime },
+      { key: 'route-page-editor', run: loadPageEditorPage },
+      { key: 'route-page-create', run: loadPageCreatePage },
+      { key: 'runtime-builder', run: loadBuilderRuntime },
     ],
   },
   {
-    match: /^\/admin\/pages\/[^/]+$/,
+    match: /^\/admin\/pages\/new$/,
     tasks: [
-      { key: 'route-page-builder', run: loadPageBuilderPage },
-      { key: 'runtime-rich-text', run: loadRichTextRuntime },
+      { key: 'route-page-editor', run: loadPageEditorPage },
     ],
   },
   {
-    match: /^\/admin\/pages\/[^/]+\/builder$/,
+    match: /^\/admin\/pages\/(?!new$)[^/]+(\/(builder|content|seo|settings|revisions))?$/,
     tasks: [
       { key: 'runtime-builder', run: loadBuilderRuntime },
       { key: 'runtime-rich-text', run: loadRichTextRuntime },
@@ -248,6 +247,6 @@ export function schedulePrefetchForCurrentRoute(path: string): void {
   })
 }
 
-export function preloadBuilderOnIntent(): void {
-  enqueuePrefetchTask({ key: 'route-page-builder', run: loadPageBuilderPage })
+export function preloadPageEditorOnIntent(): void {
+  enqueuePrefetchTask({ key: 'route-page-editor', run: loadPageEditorPage })
 }

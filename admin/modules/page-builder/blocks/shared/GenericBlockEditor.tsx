@@ -8,7 +8,7 @@ interface GenericBlockEditorProps {
 export function GenericBlockEditor({ block }: GenericBlockEditorProps) {
   return (
     <div className="rounded-md border border-slate-200 p-3 text-xs dark:border-slate-700">
-      Редактор блока <span className="font-semibold">{block.type}</span> использует JSON-панель справа.
+      Блок <span className="font-semibold">{block.type}</span> редактируется через JSON-панель ниже.
     </div>
   )
 }

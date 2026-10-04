@@ -1,5 +1,5 @@
-import { lazy, Suspense, useEffect } from 'react'
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { lazy, Suspense, useEffect, useState } from 'react'
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { AdminShellLayout } from '../layouts/AdminShellLayout'
 import { ErrorBoundary } from '../shared/ui/error-boundary'
 import { PageLoadingState } from '../shared/ui/page-loading-state'
@@ -7,8 +7,8 @@ import {
   loadCrmPage,
   loadDashboardPage,
   loadMediaPage,
-  loadPageBuilderPage,
-  loadPageDetailPage,
+  loadPageCreatePage,
+  loadPageEditorPage,
   loadPagesPage,
   loadSeoPage,
   loadSettingsPage,
@@ -29,8 +29,8 @@ import { schedulePrefetchForCurrentRoute } from './prefetch'
 
 const DashboardPage = lazy(loadDashboardPage)
 const PagesPage = lazy(loadPagesPage)
-const PageDetailPage = lazy(loadPageDetailPage)
-const PageBuilderPage = lazy(loadPageBuilderPage)
+const PageCreatePage = lazy(loadPageCreatePage)
+const PageEditorPage = lazy(loadPageEditorPage)
 const MediaPage = lazy(loadMediaPage)
 const SeoPage = lazy(loadSeoPage)
 const CrmPage = lazy(loadCrmPage)
@@ -48,43 +48,63 @@ const SystemBackupsPage = lazy(loadSystemBackupsPage)
 const SystemDeployPage = lazy(loadSystemDeployPage)
 const SystemAuditPage = lazy(loadSystemAuditPage)
 
+function RootLayout() {
+  return (
+    <ErrorBoundary>
+      <Suspense fallback={<PageLoadingState />}>
+        <AdminShellLayout />
+      </Suspense>
+    </ErrorBoundary>
+  )
+}
+
+function createAdminRouter() {
+  return createBrowserRouter([
+    {
+      element: <RootLayout />,
+      children: [
+        { path: '/admin', element: <Navigate to="/admin/dashboard" replace /> },
+        { path: '/admin/dashboard', element: <DashboardPage /> },
+        { path: '/admin/pages', element: <PagesPage /> },
+        { path: '/admin/pages/new', element: <PageCreatePage /> },
+        {
+          // Один экран редактирования: вкладки переключаются без перемонтирования, чтобы не терять несохранённые правки.
+          // Сегмент :tab разбирает PageEditorPage (builder — совместимый псевдоним «Контента»).
+          path: '/admin/pages/:id',
+          element: <PageEditorPage />,
+          children: [
+            { index: true, element: null },
+            { path: ':tab', element: null },
+          ],
+        },
+        { path: '/admin/media', element: <MediaPage /> },
+        { path: '/admin/seo', element: <SeoPage /> },
+        { path: '/admin/crm', element: <CrmPage /> },
+        { path: '/admin/settings', element: <SettingsPage /> },
+        { path: '/admin/settings/migrations', element: <SettingsMigrationsPage /> },
+        { path: '/admin/users', element: <UsersPage /> },
+        { path: '/admin/system', element: <SystemDashboardPage /> },
+        { path: '/admin/system/processes', element: <SystemProcessesPage /> },
+        { path: '/admin/system/logs', element: <SystemLogsPage /> },
+        { path: '/admin/system/queues', element: <SystemQueuesPage /> },
+        { path: '/admin/system/cache', element: <SystemCachePage /> },
+        { path: '/admin/system/database', element: <SystemDatabasePage /> },
+        { path: '/admin/system/security', element: <SystemSecurityPage /> },
+        { path: '/admin/system/backups', element: <SystemBackupsPage /> },
+        { path: '/admin/system/deploy', element: <SystemDeployPage /> },
+        { path: '/admin/system/audit', element: <SystemAuditPage /> },
+        { path: '*', element: <Navigate to="/admin/dashboard" replace /> },
+      ],
+    },
+  ])
+}
+
 export function AdminRouter() {
+  const [router] = useState(createAdminRouter)
+
   useEffect(() => {
     schedulePrefetchForCurrentRoute(window.location.pathname)
   }, [])
 
-  return (
-    <BrowserRouter>
-      <ErrorBoundary>
-        <Suspense fallback={<PageLoadingState />}>
-          <Routes>
-            <Route element={<AdminShellLayout />}>
-              <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-              <Route path="/admin/dashboard" element={<DashboardPage />} />
-              <Route path="/admin/pages" element={<PagesPage />} />
-              <Route path="/admin/pages/:id" element={<PageDetailPage />} />
-              <Route path="/admin/pages/:id/builder" element={<PageBuilderPage />} />
-              <Route path="/admin/media" element={<MediaPage />} />
-              <Route path="/admin/seo" element={<SeoPage />} />
-              <Route path="/admin/crm" element={<CrmPage />} />
-              <Route path="/admin/settings" element={<SettingsPage />} />
-              <Route path="/admin/settings/migrations" element={<SettingsMigrationsPage />} />
-              <Route path="/admin/users" element={<UsersPage />} />
-              <Route path="/admin/system" element={<SystemDashboardPage />} />
-              <Route path="/admin/system/processes" element={<SystemProcessesPage />} />
-              <Route path="/admin/system/logs" element={<SystemLogsPage />} />
-              <Route path="/admin/system/queues" element={<SystemQueuesPage />} />
-              <Route path="/admin/system/cache" element={<SystemCachePage />} />
-              <Route path="/admin/system/database" element={<SystemDatabasePage />} />
-              <Route path="/admin/system/security" element={<SystemSecurityPage />} />
-              <Route path="/admin/system/backups" element={<SystemBackupsPage />} />
-              <Route path="/admin/system/deploy" element={<SystemDeployPage />} />
-              <Route path="/admin/system/audit" element={<SystemAuditPage />} />
-              <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
-            </Route>
-          </Routes>
-        </Suspense>
-      </ErrorBoundary>
-    </BrowserRouter>
-  )
+  return <RouterProvider router={router} />
 }

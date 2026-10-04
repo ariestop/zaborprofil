@@ -13,11 +13,12 @@ export function GlobalSearchDialog() {
 
   const results = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
+    const navigable = adminRoutes.filter((route) => !route.path.includes('/:'))
     if (normalizedQuery === '') {
-      return adminRoutes
+      return navigable
     }
 
-    return adminRoutes.filter((route) => route.title.toLowerCase().includes(normalizedQuery))
+    return navigable.filter((route) => route.title.toLowerCase().includes(normalizedQuery))
   }, [query])
 
   return (
@@ -47,8 +48,7 @@ export function GlobalSearchDialog() {
               variant="outline"
               className="w-full justify-start"
               onClick={() => {
-                const path = route.path.includes('/:') ? route.path.replace(':id', 'demo-page') : route.path
-                navigate(path)
+                navigate(route.path)
                 close()
               }}
             >
