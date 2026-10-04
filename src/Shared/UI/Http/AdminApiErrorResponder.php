@@ -55,9 +55,12 @@ final readonly class AdminApiErrorResponder
         return $this->internal($exception, $operation);
     }
 
-    public function validation(string $message, string $code = self::CODE_VALIDATION): JsonResponse
+    /**
+     * @param list<array{field: string, message: string}> $details
+     */
+    public function validation(string $message, string $code = self::CODE_VALIDATION, array $details = []): JsonResponse
     {
-        return $this->json($message, $code, 422);
+        return $this->json($message, $code, 422, $details);
     }
 
     public function notFound(string $message = 'Not found.'): JsonResponse
@@ -79,8 +82,16 @@ final readonly class AdminApiErrorResponder
         return $this->json('Internal server error', self::CODE_INTERNAL, 500);
     }
 
-    private function json(string $message, string $code, int $status): JsonResponse
+    /**
+     * @param list<array{field: string, message: string}> $details
+     */
+    private function json(string $message, string $code, int $status, array $details = []): JsonResponse
     {
-        return new JsonResponse(['error' => $message, 'code' => $code], $status);
+        $payload = ['error' => $message, 'code' => $code];
+        if ($details !== []) {
+            $payload['details'] = $details;
+        }
+
+        return new JsonResponse($payload, $status);
     }
 }

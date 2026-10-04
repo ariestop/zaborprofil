@@ -111,6 +111,49 @@ final class AdminUser implements UserInterface, PasswordAuthenticatedUserInterfa
     {
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function __serialize(): array
+    {
+        $data = (array) $this;
+        $data["\0".self::class."\0passwordHash"] = hash('crc32c', $this->passwordHash);
+
+        return $data;
+    }
+
+    /**
+     * Роли, фактически сохранённые в БД (без принудительно добавляемой ROLE_ADMIN из getRoles()).
+     *
+     * @return list<string>
+     */
+    public function storedRoles(): array
+    {
+        return array_values(array_unique($this->roles));
+    }
+
+    public function changePasswordHash(string $passwordHash): void
+    {
+        if ($passwordHash === '') {
+            throw new InvalidArgumentException('Password hash cannot be empty.');
+        }
+
+        $this->passwordHash = $passwordHash;
+        $this->touch();
+    }
+
+    public function activate(): void
+    {
+        $this->active = true;
+        $this->touch();
+    }
+
+    public function deactivate(): void
+    {
+        $this->active = false;
+        $this->touch();
+    }
+
     public function touch(): void
     {
         $this->updatedAt = new DateTimeImmutable();
