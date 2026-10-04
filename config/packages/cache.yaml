@@ -16,6 +16,9 @@ framework:
             cache.seo:
                 adapter: cache.app
                 default_lifetime: 86400
+            cache.page_edit_lock:
+                adapter: cache.app
+                default_lifetime: 300
 
 when@test:
     framework:
@@ -31,3 +34,5 @@ when@test:
                     adapter: cache.adapter.array
                 cache.seo:
                     adapter: cache.adapter.array
+                cache.page_edit_lock:
+                    adapter: cache.adapter.filesystem

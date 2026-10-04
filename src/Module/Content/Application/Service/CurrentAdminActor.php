@@ -20,6 +20,11 @@ final readonly class CurrentAdminActor
         return $user instanceof AdminUser ? (string) $user->id() : null;
     }
 
+    public function label(): ?string
+    {
+        return $this->security->getUser()?->getUserIdentifier();
+    }
+
     /**
      * @return list<string>
      */
