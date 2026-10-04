@@ -1,5 +1,4 @@
 import { expect, type Locator, type Page } from '@playwright/test'
-import { RICH_TEXT_SMOKE_APPEND } from './fixtures'
 import { ADMIN_LOGIN_SELECTORS, ADMIN_ROUTES } from './selectors'
 
 export interface CreatedPagePayload {
@@ -90,58 +89,28 @@ export async function createBlockViaAdminApi(
   return response.payload as CreatedBlockPayload
 }
 
-export async function triggerReorderWithRetries(
+export async function dragWithRetries(
   page: Page,
-  pageId: string,
   source: Locator,
   target: Locator,
+  isReordered: () => Promise<boolean>,
 ): Promise<void> {
   for (const targetYOffsetRatio of [0.2, 0.5, 0.8]) {
-    const responsePromise = page.waitForResponse((response) => {
-      return response.request().method() === 'POST'
-        && response.url().includes(`/admin/api/content/pages/${pageId}/blocks/reorder`)
-        && response.status() === 200
-    }, { timeout: 5000 }).then(() => true).catch(() => false)
-
     await dragElementToElement(page, source, target, targetYOffsetRatio)
-    if (await responsePromise) {
+    if (await isReordered()) {
       return
     }
   }
 
-  throw new Error('DnD reorder mutation did not fire after retries.')
+  throw new Error('DnD reorder did not change block order after retries.')
 }
 
-export async function waitForRichTextSaveResponse(page: Page): Promise<void> {
-  await page.waitForResponse((response) => {
-    const requestBody = response.request().postData() ?? ''
-    return response.request().method() === 'PUT'
-      && response.url().includes('/admin/api/content/blocks/')
+export function waitForBuilderResponse(page: Page, pageId: string, method: 'PUT' | 'POST', suffix = ''): Promise<unknown> {
+  return page.waitForResponse((response) => {
+    return response.request().method() === method
+      && response.url().endsWith(`/admin/api/content/pages/${pageId}/builder${suffix}`)
       && response.status() === 200
-      && requestBody.includes(RICH_TEXT_SMOKE_APPEND.trim())
   }, { timeout: 10000 })
-}
-
-export async function assertPreviewPageIsReachable(
-  page: Page,
-  previewLink: Locator,
-  pageId: string,
-): Promise<void> {
-  const href = await previewLink.getAttribute('href')
-  if (href === null || href === '') {
-    throw new Error('Preview link href is empty.')
-  }
-
-  const [previewPopup] = await Promise.all([
-    page.waitForEvent('popup'),
-    previewLink.click(),
-  ])
-  await previewPopup.waitForLoadState('domcontentloaded')
-  await expect(previewPopup).toHaveURL(new RegExp(`/_preview/content/pages/${pageId}/`))
-  await previewPopup.close()
-
-  const previewResponse = await page.request.get(href)
-  expect(previewResponse.status()).toBe(200)
 }
 
 async function dragElementToElement(

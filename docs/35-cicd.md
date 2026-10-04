@@ -58,9 +58,13 @@
 2. Применяет migrations в `test` env.
 3. Создаёт e2e admin user через `tools/testing/seed-e2e-admin.php`.
 4. Собирает frontend.
-5. Поднимает встроенный PHP server (`php -S`) на `127.0.0.1:8000`.
+5. Поднимает встроенный PHP server (`php -d variables_order=EGPCS -S`) на `127.0.0.1:8000`.
+   - `variables_order=EGPCS` обязателен: при дефолтном `GPCS` переменные окружения не попадают в `$_SERVER`,
+     Symfony Runtime игнорирует `APP_ENV`/`DATABASE_URL` и приложение стартует в `dev` с хостом БД `mysql`.
+   - `VITE_MANIFEST_PATH` указывает на реальный `public_html/build/.vite/manifest.json`: в `APP_ENV=test`
+     по умолчанию используется фикстурный манифест (`tests/Fixtures/vite/manifest.json`), ассеты которого не существуют.
 6. Устанавливает Chromium (`npx playwright install --with-deps chromium`).
-7. Запускает `npm run test:e2e:smoke` (happy-path + mutation smoke + negative 422 contract check).
+7. Запускает `npm run test:e2e:smoke` (login -> pages -> builder -> preview, DnD-сортировка блоков в builder, negative 422 contract check).
 8. При падении публикует Playwright artifacts (`test-results`, `playwright-report`, app server log).
 
 ### `.github/workflows/deploy-staging-beget.yml`

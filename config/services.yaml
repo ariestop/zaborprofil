@@ -167,7 +167,9 @@ services:
 
 when@test:
     parameters:
-        app.vite.manifest_path: '%kernel.project_dir%/tests/Fixtures/vite/manifest.json'
+        app.vite.test_manifest_path: '%kernel.project_dir%/tests/Fixtures/vite/manifest.json'
+        # E2E (Playwright) поднимает приложение в APP_ENV=test и должен отдавать реальные ассеты из build/.
+        app.vite.manifest_path: '%env(default:app.vite.test_manifest_path:VITE_MANIFEST_PATH)%'
         app.vite.dev_server_url: ''
         app.sitemap_chunk_size: 2
 

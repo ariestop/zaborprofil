@@ -1,5 +1,3 @@
-export const RICH_TEXT_SMOKE_APPEND = ' smoke-update'
-
 export function buildSmokePagePayload(): Record<string, unknown> {
   const uniqueId = Date.now()
 
