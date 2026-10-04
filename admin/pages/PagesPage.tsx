@@ -4,6 +4,7 @@ import { useToast } from '../app/providers/toast-provider'
 import { useDuplicatePageMutation, usePagesQuery } from '../entities/page/api'
 import { pageStatusLabels, pageTypeLabels, statusTone } from '../features/page-editor/page-status'
 import { preloadPageEditorOnIntent } from '../routes/prefetch'
+import { useCan } from '../stores/auth'
 import { Badge, Button, Checkbox, EmptyState, ErrorState, Input, PageHeader, PageLoadingState, Table } from '../shared/ui'
 import { NativeSelect } from '../features/page-editor/fields'
 import { PagesBulkBar } from '../features/page-editor/PagesBulkBar'
@@ -16,6 +17,10 @@ export default function PagesPage() {
   const navigate = useNavigate()
   const { push } = useToast()
   const duplicate = useDuplicatePageMutation()
+  const canCreate = useCan('pages.create')
+  const canEditPages = useCan('pages.edit')
+  const canEditSeo = useCan('seo.edit')
+  const canBulk = canEditPages || canEditSeo
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<string>(ALL_STATUSES)
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set())
@@ -65,14 +70,14 @@ export default function PagesPage() {
       <PageHeader
         title="Страницы"
         description="Контент, SEO и публикация страниц сайта. Каждая страница редактируется на одном экране."
-        actions={(
+        actions={canCreate ? (
           <Link
             to="/admin/pages/new"
             className="inline-flex h-10 items-center rounded-lg bg-emerald-600 px-4 text-sm font-medium text-white hover:bg-emerald-700"
           >
             Создать страницу
           </Link>
-        )}
+        ) : undefined}
       />
 
       <div className="mb-4 flex flex-wrap items-end gap-3">
@@ -89,7 +94,7 @@ export default function PagesPage() {
         </label>
       </div>
 
-      {selectedIds.length > 0 ? (
+      {canBulk && selectedIds.length > 0 ? (
         <PagesBulkBar pages={pagesQuery.data ?? []} selectedIds={selectedIds} onClear={() => setSelected(new Set())} />
       ) : null}
 
@@ -103,7 +108,7 @@ export default function PagesPage() {
           head={(
             <tr>
               <th className="w-10 px-3 py-2 text-left">
-                <Checkbox checked={allSelected} onCheckedChange={toggleAll} ariaLabel="Выбрать все страницы" />
+                {canBulk ? <Checkbox checked={allSelected} onCheckedChange={toggleAll} ariaLabel="Выбрать все страницы" /> : null}
               </th>
               {['Страница', 'Адрес', 'Тип', 'Статус', ''].map((title) => (
                 <th key={title} className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</th>
@@ -113,7 +118,7 @@ export default function PagesPage() {
           body={pages.map((page) => (
             <tr key={page.id} data-testid="page-row">
               <td className="px-3 py-2">
-                <Checkbox checked={selected.has(page.id)} onCheckedChange={(checked) => toggle(page.id, checked)} ariaLabel={`Выбрать «${page.title}»`} />
+                {canBulk ? <Checkbox checked={selected.has(page.id)} onCheckedChange={(checked) => toggle(page.id, checked)} ariaLabel={`Выбрать «${page.title}»`} /> : null}
               </td>
               <td className="px-3 py-2 text-sm font-medium">
                 <Link to={`/admin/pages/${page.id}`} onMouseEnter={preloadPageEditorOnIntent} onFocus={preloadPageEditorOnIntent} className="text-emerald-800 hover:underline dark:text-emerald-300">{page.title}</Link>
@@ -126,9 +131,11 @@ export default function PagesPage() {
               </td>
               <td className="px-3 py-2 text-right text-sm">
                 <Link to={`/admin/pages/${page.id}`} className="underline">Редактировать</Link>
-                <Button type="button" size="sm" variant="ghost" className="ml-2" disabled={duplicate.isPending} onClick={() => duplicatePage(page.id)}>
-                  Дублировать
-                </Button>
+                {canCreate ? (
+                  <Button type="button" size="sm" variant="ghost" className="ml-2" disabled={duplicate.isPending} onClick={() => duplicatePage(page.id)}>
+                    Дублировать
+                  </Button>
+                ) : null}
                 {page.status === 'published' ? (
                   <a href={page.path} target="_blank" rel="noreferrer" className="ml-3 underline">Открыть на сайте</a>
                 ) : null}

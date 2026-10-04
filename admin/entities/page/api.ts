@@ -304,7 +304,14 @@ export function useCreatePageMutation() {
 export interface BuilderDocumentResponse {
   pageId: string
   updatedAt: string | null
+  /** Хэш содержимого блоков: отправляется при сохранении как `baseVersion` для оптимистичной блокировки. */
+  version: string
   blocks: BuilderBlock[]
+}
+
+export interface SavePageBuilderVariables {
+  blocks: BuilderBlock[]
+  baseVersion: string | null
 }
 
 export interface BuilderPreviewResponse {
@@ -335,10 +342,12 @@ export function useSavePageBuilderMutation(pageId: string) {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (blocks: BuilderBlock[]) => deserializeBuilderDocument(
+    mutationFn: async ({ blocks, baseVersion }: SavePageBuilderVariables) => deserializeBuilderDocument(
       await apiRequest<BuilderDocumentResponse>(`/admin/api/content/pages/${pageId}/builder`, {
         method: 'PUT',
-        body: { blocks: serializeBuilderBlocks(blocks) },
+        body: baseVersion === null
+          ? { blocks: serializeBuilderBlocks(blocks) }
+          : { blocks: serializeBuilderBlocks(blocks), baseVersion },
       }),
     ),
     onSuccess: async () => {
@@ -347,6 +356,28 @@ export function useSavePageBuilderMutation(pageId: string) {
         queryClient.invalidateQueries({ queryKey: pageQueryKey(pageId) }),
       ])
     },
+  })
+}
+
+export interface PageEditLockStatus {
+  locked: boolean
+  ownedByMe: boolean
+  holder: { label: string, isSelf: boolean, since: string, lastSeenAt: string } | null
+  ttlSeconds: number
+  heartbeatSeconds: number
+}
+
+export function acquirePageEditLock(pageId: string, sessionId: string, takeOver = false): Promise<PageEditLockStatus> {
+  return apiRequest<PageEditLockStatus>(`/admin/api/content/pages/${pageId}/edit-lock`, {
+    method: 'POST',
+    body: { sessionId, takeOver },
+  })
+}
+
+export function releasePageEditLock(pageId: string, sessionId: string): Promise<void> {
+  return apiRequest<void>(`/admin/api/content/pages/${pageId}/edit-lock`, {
+    method: 'DELETE',
+    body: { sessionId },
   })
 }
 

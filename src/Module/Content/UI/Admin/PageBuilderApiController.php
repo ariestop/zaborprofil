@@ -12,8 +12,11 @@ use App\Module\Content\Application\DTO\PageBuilderDocumentOutput;
 use App\Module\Content\Application\DTO\PageRevisionOutput;
 use App\Module\Content\Application\Handler\PublishPageHandler;
 use App\Module\Content\Application\Handler\RollbackPageRevisionHandler;
+use App\Module\Content\Application\Service\BuilderDocumentVersion;
 use App\Module\Content\Application\Service\ContentId;
+use App\Module\Content\Application\Service\CurrentAdminActor;
 use App\Module\Content\Application\Service\PageBlockView;
+use App\Module\Content\Application\Service\PageEditLockService;
 use App\Module\Content\Application\Service\PublicPageCacheInvalidator;
 use App\Module\Content\Application\Service\StructuredBlockDocumentService;
 use App\Module\Content\Domain\Entity\PageBlock;
@@ -24,6 +27,7 @@ use App\Module\Content\Domain\ValueObject\PageVisibility;
 use App\Module\Content\UI\Web\TwigBlockRenderer;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Throwable;
@@ -31,6 +35,8 @@ use Throwable;
 #[Route('/admin/api/content/pages')]
 final readonly class PageBuilderApiController
 {
+    public const string CODE_EDIT_CONFLICT = 'EDIT_CONFLICT';
+
     public function __construct(
         private JsonRequest $jsonRequest,
         private ContentApiResponder $responder,
@@ -44,6 +50,7 @@ final readonly class PageBuilderApiController
         ContentId $contentId,
         PageRepositoryInterface $pages,
         PageBlockRepositoryInterface $blocks,
+        BuilderDocumentVersion $versions,
     ): JsonResponse {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_VIEW)) {
             return $this->accessDenied();
@@ -54,7 +61,7 @@ final readonly class PageBuilderApiController
             $page = $pages->get($pageId);
             $items = array_map(BuilderBlockOutput::fromBlock(...), $blocks->findByPage($pageId));
 
-            return new JsonResponse(PageBuilderDocumentOutput::fromPage($page, $items)->toArray());
+            return new JsonResponse(PageBuilderDocumentOutput::fromPage($page, $items, $versions->fromBlocks($items))->toArray());
         } catch (Throwable $exception) {
             return $this->responder->error($exception);
         }
@@ -69,6 +76,7 @@ final readonly class PageBuilderApiController
         PageBlockRepositoryInterface $blocks,
         StructuredBlockDocumentService $documentService,
         PublicPageCacheInvalidator $cacheInvalidator,
+        BuilderDocumentVersion $versions,
     ): JsonResponse {
         if (!$this->authorizationChecker->isGranted(AdminPermission::BLOCKS_EDIT)) {
             return $this->accessDenied();
@@ -84,6 +92,26 @@ final readonly class PageBuilderApiController
             $pageId = $contentId->fromString($id);
             $page = $pages->get($pageId);
             $existing = $blocks->findByPage($pageId);
+
+            $baseVersion = $payload['baseVersion'] ?? null;
+            if ($baseVersion !== null && !\is_string($baseVersion)) {
+                throw new \InvalidArgumentException('Field "baseVersion" must be a string.');
+            }
+            if ($baseVersion !== null) {
+                $currentItems = array_map(BuilderBlockOutput::fromBlock(...), $existing);
+                $currentVersion = $versions->fromBlocks($currentItems);
+                if (!hash_equals($currentVersion, $baseVersion)) {
+                    return $this->responder->conflict(
+                        'Page blocks were changed by another editor.',
+                        self::CODE_EDIT_CONFLICT,
+                        [
+                            'version' => $currentVersion,
+                            'updatedAt' => $page->updatedAt()->format(DATE_ATOM),
+                        ],
+                    );
+                }
+            }
+
             $existingById = [];
             foreach ($existing as $block) {
                 $existingById[(string) $block->id()] = $block;
@@ -150,7 +178,7 @@ final readonly class PageBuilderApiController
             }
             $cacheInvalidator->invalidate($page->path());
 
-            return new JsonResponse(PageBuilderDocumentOutput::fromPage($page, $preparedBlocks)->toArray());
+            return new JsonResponse(PageBuilderDocumentOutput::fromPage($page, $preparedBlocks, $versions->fromBlocks($preparedBlocks))->toArray());
         } catch (Throwable $exception) {
             return $this->responder->error($exception);
         }
@@ -261,6 +289,72 @@ final readonly class PageBuilderApiController
         } catch (Throwable $exception) {
             return $this->responder->error($exception);
         }
+    }
+
+    #[Route('/{id}/edit-lock', name: 'admin_api_content_page_edit_lock_acquire', methods: ['POST'])]
+    public function acquireEditLock(
+        string $id,
+        Request $request,
+        ContentId $contentId,
+        PageRepositoryInterface $pages,
+        PageEditLockService $locks,
+        CurrentAdminActor $actor,
+    ): JsonResponse {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::BLOCKS_EDIT)) {
+            return $this->accessDenied();
+        }
+
+        try {
+            $payload = $this->jsonRequest->payload($request);
+            $sessionId = $this->editSessionId($payload);
+            $takeOver = ($payload['takeOver'] ?? false) === true;
+
+            $pageId = $contentId->fromString($id);
+            $pages->get($pageId);
+
+            return new JsonResponse($locks->acquire(
+                $pageId,
+                $actor->id() ?? '',
+                $actor->label() ?? '',
+                $sessionId,
+                $takeOver,
+            )->toArray());
+        } catch (Throwable $exception) {
+            return $this->responder->error($exception);
+        }
+    }
+
+    #[Route('/{id}/edit-lock', name: 'admin_api_content_page_edit_lock_release', methods: ['DELETE'])]
+    public function releaseEditLock(
+        string $id,
+        Request $request,
+        ContentId $contentId,
+        PageEditLockService $locks,
+    ): JsonResponse|Response {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::BLOCKS_EDIT)) {
+            return $this->accessDenied();
+        }
+
+        try {
+            $locks->release($contentId->fromString($id), $this->editSessionId($this->jsonRequest->payload($request)));
+
+            return new Response(status: 204);
+        } catch (Throwable $exception) {
+            return $this->responder->error($exception);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function editSessionId(array $payload): string
+    {
+        $sessionId = $payload['sessionId'] ?? null;
+        if (!\is_string($sessionId) || preg_match('/^[A-Za-z0-9-]{8,64}$/', $sessionId) !== 1) {
+            throw new \InvalidArgumentException('Field "sessionId" must be a string of 8-64 letters, digits or dashes.');
+        }
+
+        return $sessionId;
     }
 
     private function nameFromType(string $type): string

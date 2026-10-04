@@ -2,6 +2,7 @@ import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { makePageItem } from '../features/page-editor/fixtures'
 import { renderWithProviders } from '../features/seo/test-utils'
+import { loginAs } from '../shared/testing/roles'
 import PagesPage from './PagesPage'
 
 const apiRequest = vi.fn()
@@ -92,5 +93,23 @@ describe('PagesPage', () => {
       expect(apiRequest).toHaveBeenCalledWith('/admin/api/content/pages/page-1/duplicate', { method: 'POST', body: {} })
     })
     expect(await screen.findByText('Копия создана')).toBeTruthy()
+  })
+
+  it('hides duplication and bulk actions from a manager', async () => {
+    loginAs('ROLE_MANAGER')
+    renderWithProviders(<PagesPage />, '/admin/pages')
+
+    await screen.findAllByTestId('page-row')
+    expect(screen.queryByRole('button', { name: 'Дублировать' })).toBeNull()
+    expect(screen.queryByRole('checkbox', { name: 'Выбрать все страницы' })).toBeNull()
+  })
+
+  it('lets an SEO specialist select pages but not duplicate them', async () => {
+    loginAs('ROLE_SEO')
+    renderWithProviders(<PagesPage />, '/admin/pages')
+
+    await screen.findAllByTestId('page-row')
+    expect(screen.queryByRole('button', { name: 'Дублировать' })).toBeNull()
+    expect(screen.getByRole('checkbox', { name: 'Выбрать все страницы' })).toBeTruthy()
   })
 })
