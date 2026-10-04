@@ -13,17 +13,30 @@ export const ADMIN_LOGIN_SELECTORS = {
 } as const
 
 export const PAGES_SELECTORS = {
-  headingName: 'Редактор страниц',
+  headingName: 'Страницы',
+  createLinkName: 'Создать страницу',
+} as const
+
+export const PAGE_EDITOR_SELECTORS = {
+  tabContent: 'Контент и блоки',
+  tabSeo: 'SEO',
+  tabSettings: 'Настройки',
+  tabRevisions: 'Ревизии',
+  saveButtonName: 'Сохранить',
+  previewButtonName: 'Предпросмотр',
+  publishButtonName: 'Опубликовать',
+  leaveDialogTitle: 'Есть несохранённые изменения',
+  createTitleLabel: 'Название страницы',
+  createSubmitName: 'Создать страницу',
+  seoTitleLabel: 'SEO-заголовок (title)',
+  seoDescriptionLabel: 'Описание (meta description)',
 } as const
 
 export const BUILDER_SELECTORS = {
-  openBuilderLinkName: 'Перейти в Builder',
-  saveNowButtonName: 'Save now',
-  previewButtonName: 'Preview',
-  runtimeText: 'Structured Visual CMS Builder',
   blocksSectionTitle: 'Блоки страницы',
-  previewSectionTitle: 'Page preview',
-  previewPlaceholderText: 'Нажмите «Preview», чтобы получить HTML предпросмотра от backend.',
+  previewButtonName: 'Быстрый предпросмотр блоков',
+  previewSectionTitle: 'Быстрый предпросмотр блоков',
+  previewPlaceholderText: 'Нажмите «Быстрый предпросмотр блоков», чтобы получить HTML от backend без сохранения страницы.',
 } as const
 
 export const SEO_SELECTORS = {

@@ -24,7 +24,7 @@ interface PageEditorProps {
 }
 
 export const editorTabs: Array<{ value: EditorTab, label: string }> = [
-  { value: 'content', label: 'Контент' },
+  { value: 'content', label: 'Контент и блоки' },
   { value: 'seo', label: 'SEO' },
   { value: 'settings', label: 'Настройки' },
   { value: 'revisions', label: 'Ревизии' },

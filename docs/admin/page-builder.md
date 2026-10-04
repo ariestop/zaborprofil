@@ -10,16 +10,10 @@ Builder переведен на **structured block model**:
 
 ## Базовый UX
 
-Путь: `/admin/pages/:id/builder`.
+Builder — вкладка «Контент и блоки» [единого редактора страницы](page-editor.md): `/admin/pages/:id`
+(старый URL `/admin/pages/:id/builder` продолжает работать и открывает ту же вкладку).
 
-Как открыть:
-
-1. Перейти в список страниц `/admin/pages`.
-2. Выбрать нужную страницу.
-3. Нажать `Открыть Builder` в списке или перейти по прямому URL `/admin/pages/:id/builder`.
-
-Важно: экран `/admin/pages` содержит legacy-редактор страниц/блоков (JSON-first),
-а `Page Builder` — отдельный экран структурированного редактирования.
+Как открыть: список страниц `/admin/pages` → выбрать страницу.
 
 Доступные операции:
 
@@ -27,21 +21,20 @@ Builder переведен на **structured block model**:
 - выбрать блок и редактировать его `content/settings`;
 - дублировать/удалить/включить/выключить блок;
 - отсортировать блоки через drag & drop;
-- сохранить черновик (`PUT /builder`);
-- посмотреть preview (`POST /builder/preview`);
-- опубликовать (`POST /builder/publish`).
+- сохранить черновик (`PUT /builder`) — кнопкой «Сохранить» в шапке редактора или автосохранением;
+- посмотреть быстрый preview блоков (`POST /builder/preview`);
+- опубликовать страницу — кнопкой «Опубликовать» в шапке редактора.
 
-## Когда использовать Page Builder, а когда legacy
+## JSON-режим
 
-- `Page Builder` — основной режим для контент-редактирования (структурные блоки, меньше ручного JSON, удобнее для операторов).
-- Legacy-редактор в `/admin/pages` — экспертный/fallback режим для точечных правок JSON и низкоуровневой диагностики payload.
-- Для блока `slider` пресеты доступны в обоих интерфейсах:
-  - в `Page Builder` через `admin/modules/page-builder/blocks/slider/SliderEditor.tsx`;
-  - в legacy-модалке блока (`/admin/pages`) через секцию `Пресеты слайдера`.
+Builder — единственный интерфейс редактирования блоков (legacy-редактор в `/admin/pages` удалён).
+JSON-панель блока показывается в «Расширенном режиме» (переключатель в шапке редактора)
+и всегда — для блоков без собственной формы. Пресеты слайдера доступны в `SliderEditor`.
 
 ## Ключевые frontend-модули
 
-- `admin/pages/PageBuilderPage.tsx`
+- `admin/features/page-editor/*` (экран, вкладки, сохранение)
+- `admin/pages/PageEditorPage.tsx`
 - `admin/modules/page-builder/types.ts`
 - `admin/modules/page-builder/registry/blockCategories.ts`
 - `admin/modules/page-builder/registry/blockRegistry.ts`
