@@ -8,6 +8,8 @@ use App\Module\Lead\Application\AntiSpam\LeadAntiSpamChecker;
 use App\Module\Lead\Application\Notification\LeadNotifier;
 use App\Module\Lead\Domain\Entity\Lead;
 use App\Module\Lead\Domain\Repository\LeadRepositoryInterface;
+use App\Module\Lead\Domain\ValueObject\PhoneNumber;
+use App\Shared\Application\Logging\BusinessEventLogger;
 use App\Shared\UI\Http\AdminApiErrorResponder;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -21,6 +23,7 @@ final readonly class LeadApiController
         private LeadRepositoryInterface $leads,
         private LeadAntiSpamChecker $antiSpam,
         private LeadNotifier $notifier,
+        private BusinessEventLogger $businessEvents,
         private AdminApiErrorResponder $errors,
     ) {
     }
@@ -58,6 +61,12 @@ final readonly class LeadApiController
             }
 
             $this->leads->save($lead);
+            $this->businessEvents->log('lead.created', [
+                'leadId' => (string) $lead->id(),
+                'source' => $lead->toArray()['source'],
+                'status' => $lead->status(),
+                'maskedContact' => PhoneNumber::mask($lead->phone()),
+            ]);
             if (!$spamCheck->isSpam()) {
                 $this->notifier->notify($lead);
             }

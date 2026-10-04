@@ -46,6 +46,7 @@ final class AdminPermissionVoter extends Voter
         AdminPermission::MEDIA_DELETE => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
         AdminPermission::LEADS_VIEW => ['ROLE_MANAGER', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
         AdminPermission::LEADS_MANAGE => ['ROLE_MANAGER', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
+        AdminPermission::LEADS_EXPORT => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
         AdminPermission::CATALOG_VIEW => ['ROLE_EDITOR', 'ROLE_MANAGER', 'ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
         AdminPermission::CATALOG_MANAGE => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
         AdminPermission::SETTINGS_EDIT => ['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'],
