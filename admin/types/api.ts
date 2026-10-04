@@ -117,6 +117,7 @@ export interface ContentPageItem {
   status: 'draft' | 'review' | 'approved' | 'published' | 'scheduled' | 'unpublished' | 'archived' | 'deleted'
   template: string
   sortOrder: number
+  parentId?: string | null
   isIndexable: boolean
   visibility: 'public' | 'hidden' | 'unlisted'
   publishedAt: string | null

@@ -10,6 +10,7 @@ import {
   ADMIN_ROUTES,
   BUILDER_SELECTORS,
   MEDIA_SELECTORS,
+  PAGE_EDITOR_SELECTORS,
   PAGES_SELECTORS,
   SEO_SELECTORS,
 } from './helpers/selectors'
@@ -24,7 +25,7 @@ import {
 } from './helpers/admin'
 
 test.describe('Admin smoke flow', () => {
-  test('login -> pages -> detail -> builder -> preview', async ({ page }) => {
+  test('login -> pages -> unified editor (legacy builder route) -> save -> quick preview', async ({ page }) => {
     await loginToAdmin(page)
     await expect(page.locator('#admin-app')).toBeVisible()
 
@@ -33,27 +34,74 @@ test.describe('Admin smoke flow', () => {
     await page.goto(ADMIN_ROUTES.pages)
     await expect(page).toHaveURL(new RegExp(`${ADMIN_ROUTES.pages}$`))
     await expect(page.getByRole('heading', { name: PAGES_SELECTORS.headingName })).toBeVisible()
+    await expect(page.getByRole('link', { name: PAGES_SELECTORS.createLinkName })).toBeVisible()
 
-    await page.goto(`/admin/pages/${createdPage.id}`)
-    await expect(page).toHaveURL(new RegExp(`/admin/pages/${createdPage.id}$`))
-    await expect(page.getByRole('link', { name: BUILDER_SELECTORS.openBuilderLinkName })).toBeVisible()
-    await page.getByRole('link', { name: BUILDER_SELECTORS.openBuilderLinkName }).click()
-
-    await expect(page).toHaveURL(new RegExp(`/admin/pages/${createdPage.id}/builder$`))
-    await expect(page.getByText(BUILDER_SELECTORS.runtimeText)).toBeVisible()
-
-    await Promise.all([
-      waitForBuilderResponse(page, createdPage.id, 'PUT'),
-      page.getByRole('button', { name: BUILDER_SELECTORS.saveNowButtonName }).click(),
-    ])
+    // Старый URL билдера продолжает работать и открывает вкладку «Контент и блоки».
+    await page.goto(`/admin/pages/${createdPage.id}/builder`)
+    await expect(page.getByTestId('page-editor')).toBeVisible()
+    await expect(page.getByRole('tab', { name: PAGE_EDITOR_SELECTORS.tabContent })).toHaveAttribute('aria-selected', 'true')
+    await expect(page.getByRole('heading', { name: BUILDER_SELECTORS.catalogSectionTitle })).toBeVisible()
 
     await expect(page.getByText(BUILDER_SELECTORS.previewPlaceholderText)).toBeVisible()
     await Promise.all([
       waitForBuilderResponse(page, createdPage.id, 'POST', '/preview'),
       page.getByRole('button', { name: BUILDER_SELECTORS.previewButtonName, exact: true }).click(),
     ])
-    await expect(page.getByRole('heading', { name: BUILDER_SELECTORS.previewSectionTitle })).toBeVisible()
     await expect(page.getByText(BUILDER_SELECTORS.previewPlaceholderText)).toBeHidden()
+  })
+
+  test('create page -> edit settings and SEO -> save -> preview -> leave guard', async ({ page }) => {
+    await loginToAdmin(page)
+    const suffix = Date.now().toString(36)
+    const title = `E2E Editor ${suffix}`
+
+    await page.goto(ADMIN_ROUTES.pages)
+    await page.getByRole('link', { name: PAGES_SELECTORS.createLinkName }).click()
+    await expect(page).toHaveURL(/\/admin\/pages\/new$/)
+
+    await page.getByLabel(PAGE_EDITOR_SELECTORS.createTitleLabel).fill(title)
+    await page.getByRole('button', { name: PAGE_EDITOR_SELECTORS.createSubmitName }).click()
+
+    await expect(page).toHaveURL(/\/admin\/pages\/(?!new$)[0-9A-Za-z-]+$/)
+    const pageId = new URL(page.url()).pathname.split('/').pop() ?? ''
+    await expect(page.getByTestId('page-editor')).toBeVisible()
+    await expect(page.getByRole('heading', { name: title })).toBeVisible()
+    await expect(page.getByTestId('save-indicator')).toHaveAttribute('data-state', 'clean')
+
+    await page.getByRole('tab', { name: PAGE_EDITOR_SELECTORS.tabSeo }).click()
+    await expect(page).toHaveURL(new RegExp(`/admin/pages/${pageId}/seo$`))
+    await page.getByLabel(PAGE_EDITOR_SELECTORS.seoTitleLabel).fill(`SEO ${title}`)
+    await page.getByLabel(PAGE_EDITOR_SELECTORS.seoDescriptionLabel).fill(`Описание страницы ${suffix}`)
+    await expect(page.getByTestId('save-indicator')).toHaveAttribute('data-state', 'dirty')
+
+    // Переключение вкладок не теряет несохранённые правки и не вызывает предупреждения.
+    await page.getByRole('tab', { name: PAGE_EDITOR_SELECTORS.tabSettings }).click()
+    await page.getByRole('tab', { name: PAGE_EDITOR_SELECTORS.tabSeo }).click()
+    await expect(page.getByLabel(PAGE_EDITOR_SELECTORS.seoTitleLabel)).toHaveValue(`SEO ${title}`)
+
+    const [seoResponse] = await Promise.all([
+      page.waitForResponse((response) => response.request().method() === 'PUT' && response.url().endsWith(`/admin/api/content/pages/${pageId}/seo`)),
+      page.getByRole('button', { name: PAGE_EDITOR_SELECTORS.saveButtonName, exact: true }).click(),
+    ])
+    expect(seoResponse.status()).toBe(200)
+    await expect(page.getByTestId('save-indicator')).toHaveAttribute('data-state', 'saved')
+
+    await page.reload()
+    await page.getByRole('tab', { name: PAGE_EDITOR_SELECTORS.tabSeo }).click()
+    await expect(page.getByLabel(PAGE_EDITOR_SELECTORS.seoTitleLabel)).toHaveValue(`SEO ${title}`)
+
+    const [popup] = await Promise.all([
+      page.waitForEvent('popup'),
+      page.getByRole('button', { name: PAGE_EDITOR_SELECTORS.previewButtonName, exact: true }).click(),
+    ])
+    await popup.waitForURL(/preview/, { timeout: 15000 })
+    await popup.close()
+
+    await page.getByLabel(PAGE_EDITOR_SELECTORS.seoDescriptionLabel).fill(`Изменено ${suffix}`)
+    await page.getByRole('link', { name: 'К списку страниц' }).click()
+    await expect(page.getByRole('dialog', { name: PAGE_EDITOR_SELECTORS.leaveDialogTitle })).toBeVisible()
+    await page.getByRole('button', { name: 'Остаться' }).click()
+    await expect(page).toHaveURL(new RegExp(`/admin/pages/${pageId}/seo$`))
   })
 
   test('builder dnd reorders blocks and persists order after save', async ({ page }) => {
@@ -63,8 +111,7 @@ test.describe('Admin smoke flow', () => {
     await createBlockViaAdminApi(page, createdPage.id, buildHeroBlockPayload())
     await createBlockViaAdminApi(page, createdPage.id, buildTextBlockPayload())
 
-    await page.goto(`/admin/pages/${createdPage.id}/builder`)
-    await expect(page).toHaveURL(new RegExp(`/admin/pages/${createdPage.id}/builder$`))
+    await page.goto(`/admin/pages/${createdPage.id}`)
     await expect(page.getByRole('heading', { name: BUILDER_SELECTORS.blocksSectionTitle })).toBeVisible()
 
     const heroFirst = page.getByRole('button', { name: 'hero position: 0' })
@@ -80,11 +127,11 @@ test.describe('Admin smoke flow', () => {
     )
     await expect(page.getByRole('button', { name: 'hero position: 1' })).toBeVisible()
 
-    // dnd-kit подавляет click в течение ~50 мс после drop, поэтому слишком быстрый клик по «Save now» теряется.
+    // dnd-kit подавляет click в течение ~50 мс после drop, поэтому слишком быстрый клик по «Сохранить» теряется.
     await page.waitForTimeout(200)
     await Promise.all([
       waitForBuilderResponse(page, createdPage.id, 'PUT'),
-      page.getByRole('button', { name: BUILDER_SELECTORS.saveNowButtonName }).click(),
+      page.getByRole('button', { name: PAGE_EDITOR_SELECTORS.saveButtonName, exact: true }).click(),
     ])
 
     const savedBlocks = await fetchBuilderBlocks(page, createdPage.id)

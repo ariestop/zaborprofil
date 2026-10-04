@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { RichTextEditor } from '../../../features/rich-text/RichTextEditor'
 import { Button } from '../../../shared/ui'
 import { blockModules } from '../blocks'
+import { GenericBlockEditor } from '../blocks/shared/GenericBlockEditor'
 import { blockRegistryByType } from '../registry/blockRegistry'
 import type { BuilderBlock } from '../types'
 import { BlockMediaFields } from './BlockMediaFields'
@@ -20,9 +21,11 @@ interface BlockEditorPanelProps {
   onUpdate: (nextBlock: BuilderBlock) => void
   onDelete: (blockId: string) => void
   onDuplicate: (blockId: string) => void
+  /** Расширенный режим: JSON-формы доступны для любых блоков. */
+  showJson?: boolean
 }
 
-export function BlockEditorPanel({ block, onUpdate, onDelete, onDuplicate }: BlockEditorPanelProps) {
+export function BlockEditorPanel({ block, onUpdate, onDelete, onDuplicate, showJson = false }: BlockEditorPanelProps) {
   const form = useForm<z.infer<typeof editorSchema>>({
     resolver: zodResolver(editorSchema),
     defaultValues: {
@@ -57,6 +60,8 @@ export function BlockEditorPanel({ block, onUpdate, onDelete, onDuplicate }: Blo
     : typeof block.content.text === 'string'
       ? block.content.text
       : ''
+
+  const jsonVisible = showJson || ModuleEditor === undefined || ModuleEditor === GenericBlockEditor
 
   return (
     <section className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
@@ -95,43 +100,45 @@ export function BlockEditorPanel({ block, onUpdate, onDelete, onDuplicate }: Blo
 
       {ModuleEditor !== undefined ? <ModuleEditor block={block} onChange={onUpdate} /> : null}
 
-      <form
-        className="space-y-3"
-        onSubmit={form.handleSubmit((values) => {
-          let nextContent: Record<string, unknown>
-          let nextSettings: Record<string, unknown>
+      {jsonVisible ? (
+        <form
+          className="space-y-3"
+          onSubmit={form.handleSubmit((values) => {
+            let nextContent: Record<string, unknown>
+            let nextSettings: Record<string, unknown>
 
-          try {
-            nextContent = JSON.parse(values.contentJson) as Record<string, unknown>
-            nextSettings = JSON.parse(values.settingsJson) as Record<string, unknown>
-          } catch {
-            form.setError('contentJson', { message: 'Невалидный JSON' })
-            return
-          }
+            try {
+              nextContent = JSON.parse(values.contentJson) as Record<string, unknown>
+              nextSettings = JSON.parse(values.settingsJson) as Record<string, unknown>
+            } catch {
+              form.setError('contentJson', { message: 'Невалидный JSON' })
+              return
+            }
 
-          onUpdate({
-            ...block,
-            content: nextContent,
-            settings: nextSettings,
-            metadata: {
-              ...block.metadata,
-              updatedAt: new Date().toISOString(),
-            },
-          })
-        })}
-      >
-        <label className="block text-xs font-medium uppercase text-slate-500">Content JSON</label>
-        <textarea
-          className="min-h-36 w-full rounded-md border border-slate-300 bg-white p-2 font-mono text-xs dark:border-slate-700 dark:bg-slate-900"
-          {...form.register('contentJson')}
-        />
-        <label className="block text-xs font-medium uppercase text-slate-500">Settings JSON</label>
-        <textarea
-          className="min-h-32 w-full rounded-md border border-slate-300 bg-white p-2 font-mono text-xs dark:border-slate-700 dark:bg-slate-900"
-          {...form.register('settingsJson')}
-        />
-        <Button type="submit" size="sm">Применить JSON</Button>
-      </form>
+            onUpdate({
+              ...block,
+              content: nextContent,
+              settings: nextSettings,
+              metadata: {
+                ...block.metadata,
+                updatedAt: new Date().toISOString(),
+              },
+            })
+          })}
+        >
+          <label className="block text-xs font-medium uppercase text-slate-500">Content JSON</label>
+          <textarea
+            className="min-h-36 w-full rounded-md border border-slate-300 bg-white p-2 font-mono text-xs dark:border-slate-700 dark:bg-slate-900"
+            {...form.register('contentJson')}
+          />
+          <label className="block text-xs font-medium uppercase text-slate-500">Settings JSON</label>
+          <textarea
+            className="min-h-32 w-full rounded-md border border-slate-300 bg-white p-2 font-mono text-xs dark:border-slate-700 dark:bg-slate-900"
+            {...form.register('settingsJson')}
+          />
+          <Button type="submit" size="sm">Применить JSON</Button>
+        </form>
+      ) : null}
     </section>
   )
 }

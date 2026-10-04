@@ -50,7 +50,7 @@ Page Builder реализован как **Structured Visual CMS Builder** и н
 - каталог готовых блоков по категориям;
 - редактирование блока через формы/JSON панели;
 - drag & drop сортировка через `dnd-kit`;
-- dirty state, autosave foundation, unsaved changes guard;
+- dirty state, автосохранение SEO и блоков, предупреждение при уходе с несохранёнными правками (см. [admin/page-editor](admin/page-editor.md));
 - preview и publish через backend builder endpoints.
 
 Основные frontend-модули:
@@ -60,7 +60,7 @@ Page Builder реализован как **Structured Visual CMS Builder** и н
 - `admin/modules/page-builder/utils/pageBlocks.ts`
 - `admin/modules/page-builder/state/builderStore.ts`
 - `admin/modules/page-builder/components/*`
-- `admin/pages/PageBuilderPage.tsx`
+- `admin/features/page-editor/*` и `admin/pages/PageEditorPage.tsx` (единый редактор страницы, см. [admin/page-editor](admin/page-editor.md))
 
 ## Сборка и проверки
 

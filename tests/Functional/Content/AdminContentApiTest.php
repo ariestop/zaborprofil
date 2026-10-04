@@ -756,6 +756,48 @@ final class AdminContentApiTest extends WebTestCase
         self::assertResponseIsSuccessful();
     }
 
+    public function testPageApiExposesParentIdAndKeepsItOnRoundTrip(): void
+    {
+        $client = self::createClient();
+        $this->prepareDatabase();
+        $client->loginUser($this->createAdminUser('parent-id@example.test'));
+
+        $parentId = $this->createLandingPage($client, 'parent-page');
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/content/pages', [
+            'type' => 'landing',
+            'title' => 'Child page',
+            'slug' => 'child-page',
+            'path' => '/parent-page/child-page/',
+            'h1' => 'Child page',
+            'parentId' => $parentId,
+        ]);
+        self::assertResponseStatusCodeSame(201);
+        $childId = $this->stringFromResponse((string) $client->getResponse()->getContent(), 'id');
+
+        $this->jsonRequestWithCsrf($client, 'GET', \sprintf('/admin/api/content/pages/%s', $childId));
+        self::assertResponseIsSuccessful();
+        self::assertSame($parentId, $this->stringFromResponse((string) $client->getResponse()->getContent(), 'parentId'));
+
+        $this->jsonRequestWithCsrf($client, 'PUT', \sprintf('/admin/api/content/pages/%s', $childId), [
+            'type' => 'landing',
+            'title' => 'Child page renamed',
+            'slug' => 'child-page',
+            'path' => '/parent-page/child-page/',
+            'h1' => 'Child page',
+            'parentId' => $parentId,
+        ]);
+        self::assertResponseIsSuccessful();
+        self::assertSame($parentId, $this->stringFromResponse((string) $client->getResponse()->getContent(), 'parentId'));
+
+        $this->jsonRequestWithCsrf($client, 'GET', \sprintf('/admin/api/content/pages/%s', $parentId));
+        self::assertResponseIsSuccessful();
+        $parentPayload = json_decode((string) $client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($parentPayload);
+        self::assertArrayHasKey('parentId', $parentPayload);
+        self::assertNull($parentPayload['parentId']);
+    }
+
     public function testBuilderSaveWritesAuditLogEvent(): void
     {
         $client = self::createClient();

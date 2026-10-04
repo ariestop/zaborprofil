@@ -113,6 +113,8 @@ Admin API использует **double-submit CSRF**:
 
 См. [ADMIN_FRONTEND.md](ADMIN_FRONTEND.md). React + TypeScript + Tailwind + Vite, билдится в `public_html/build/`. Manifest рендерится в Twig через `ViteAssetExtension`.
 
+Редактирование страниц — единый экран с вкладками `/admin/pages/{id}[/seo|/settings|/revisions]`, создание — `/admin/pages/new`; все пути отдаёт catch-all `/admin/{path}`. Подробности: [admin/page-editor](admin/page-editor.md). `PageOutput` (`GET/PUT /admin/api/content/pages`) возвращает `parentId`.
+
 ## System разделы (фактическое состояние)
 
 - `/admin/system` + `GET /admin/api/system/overview` — обзор системы.
