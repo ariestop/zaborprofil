@@ -1,9 +1,15 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createMemoryRouter, Link, RouterProvider } from 'react-router-dom'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { LeaveGuard } from './LeaveGuard'
+import { stubRequestWithoutSignal } from './test-utils'
 
-afterEach(cleanup)
+beforeEach(stubRequestWithoutSignal)
+
+afterEach(() => {
+  cleanup()
+  vi.unstubAllGlobals()
+})
 
 function renderGuard(when: boolean, isAllowed?: (location: { pathname: string }) => boolean) {
   const router = createMemoryRouter(

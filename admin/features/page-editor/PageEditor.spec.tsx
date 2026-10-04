@@ -6,6 +6,7 @@ import { ToastProvider } from '../../app/providers/toast-provider'
 import { useBuilderStore } from '../../modules/page-builder/state/builderStore'
 import { makePage } from './fixtures'
 import { PageEditor } from './PageEditor'
+import { stubRequestWithoutSignal } from './test-utils'
 import type { EditorTab } from './form'
 import { resolveEditorTab } from './editor-tab'
 
@@ -60,6 +61,7 @@ function renderEditor(initialEntry: string) {
 }
 
 beforeEach(() => {
+  stubRequestWithoutSignal()
   apiRequest.mockReset()
   apiRequest.mockImplementation((url: string) => {
     if (url.endsWith('/admin/api/content/pages')) {
@@ -75,7 +77,10 @@ beforeEach(() => {
   useBuilderStore.getState().setBlocks([])
 })
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.unstubAllGlobals()
+})
 
 describe('PageEditor', () => {
   it('renders four tabs with the active one selected and quick actions in the header', async () => {
