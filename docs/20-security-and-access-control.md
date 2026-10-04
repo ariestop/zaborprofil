@@ -53,6 +53,7 @@ public function publish(...) {}
 | `seo.edit` | `ROLE_SEO`, `ROLE_ADMIN` |
 | `media.upload`, `media.delete` | `ROLE_EDITOR`, `ROLE_ADMIN` |
 | `leads.view`, `leads.manage` | `ROLE_MANAGER`, `ROLE_ADMIN` |
+| `leads.export` | `ROLE_ADMIN`, `ROLE_SUPER_ADMIN` (выгрузка персональных данных в CSV, каждый экспорт пишется в audit log) |
 | `settings.edit`, `users.manage`, `system.manage` | `ROLE_ADMIN` / `ROLE_SUPER_ADMIN` |
 
 При появлении сложных правил на конкретные сущности — выделить **resource voters** (например, `PageVoter::canEdit($page, $user)`).
@@ -83,6 +84,7 @@ public function publish(...) {}
 - `media.delete`
 - `leads.view`
 - `leads.manage`
+- `leads.export`
 - `settings.edit`
 - `users.manage`
 - `system.view`

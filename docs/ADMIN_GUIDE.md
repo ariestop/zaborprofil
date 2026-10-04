@@ -8,7 +8,7 @@
 - структурированный builder страницы `/admin/pages/{id}/builder`;
 - Media Library `/admin/media`: загрузка drag&drop с прогрессом, поиск, пагинация, alt/title, удаление с подтверждением, variants для изображений (см. [admin/media-library](admin/media-library.md));
 - управляемые меню `/admin/menu` для `header`, `footer`, `service`;
-- заявки `/admin/leads` со статусами `new`, `in_progress`, `done`, `spam` и spam score/reasons;
+- CRM заявок `/admin/crm` (список с серверной пагинацией, поиск, фильтры, карточка `/admin/crm/{id}`, заметки, ответственный, экспорт CSV; см. [admin/crm-leads](admin/crm-leads.md));
 - SEO-панель `/admin/seo`: редиректы, robots.txt, журнал 404 и SEO-аудит;
 - настройки, health center, maintenance mode и audit log.
 
@@ -78,7 +78,7 @@ API пока предназначен для будущего Vue-интерфе
 
 - `GET|POST /admin/api/media/assets` (список с `page`, `perPage`, `q`, `type`, `sort` и `pagination` в ответе), `PATCH|DELETE /admin/api/media/assets/{id}`;
 - `GET|POST /admin/api/menu/items`, `PUT|DELETE /admin/api/menu/items/{id}`;
-- `GET /admin/api/leads`, `PATCH /admin/api/leads/{id}/status`.
+- Lead CRM: `GET /admin/api/leads` (пагинация, поиск, фильтры, сортировка), `/summary`, `/assignees`, `/export`, `GET /admin/api/leads/{id}`, `PATCH /{id}/status`, `PATCH /{id}/assignee`, `POST /{id}/notes` — подробности в [admin/crm-leads](admin/crm-leads.md).
 
 Публичные заявки отправляются в `POST /api/leads` с обязательным `consent=true` и honeypot-полем `website`.
 
