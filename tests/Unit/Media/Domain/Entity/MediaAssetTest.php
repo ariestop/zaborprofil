@@ -50,4 +50,24 @@ final class MediaAssetTest extends TestCase
             [['type' => 'webp']],
         );
     }
+
+    public function testMetadataIsNormalizedAndExposed(): void
+    {
+        $asset = new MediaAsset('source.png', 'source.png', '/uploads/media/source.png', 'image/png', 123, 640, 480);
+        self::assertNull($asset->toArray()['alt']);
+
+        $asset->updateMetadata('  Забор из профнастила ', "\n");
+
+        self::assertSame('Забор из профнастила', $asset->toArray()['alt']);
+        self::assertNull($asset->toArray()['title']);
+    }
+
+    public function testRejectsTooLongMetadata(): void
+    {
+        $asset = new MediaAsset('source.png', 'source.png', '/uploads/media/source.png', 'image/png', 123, 640, 480);
+
+        $this->expectException(InvalidArgumentException::class);
+
+        $asset->updateMetadata(str_repeat('a', 256), null);
+    }
 }
