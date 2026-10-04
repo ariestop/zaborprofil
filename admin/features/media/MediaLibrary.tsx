@@ -18,6 +18,7 @@ import { Badge, Button, EmptyState, ErrorState, Input, Skeleton, Textarea } from
 import { cn } from '../../shared/lib/cn'
 import { ApiError } from '../../shared/api/client'
 import type { MediaAssetItem, MediaFolderItem } from '../../types/api'
+import { useCan } from '../../stores/auth'
 import { DeleteMediaDialog } from './DeleteMediaDialog'
 import { MediaUsageList } from './MediaUsageList'
 import { assetExtension, describeDuplicate, describeMediaError, formatFileSize, formatUsageCount, isImageAsset, MEDIA_ACCEPT, thumbnailPath, validateUploadFile } from './utils'
@@ -164,6 +165,7 @@ function AssetDetails({
 }) {
   const { push } = useToast()
   const updateMutation = useUpdateMediaAssetMutation()
+  const canDelete = useCan('media.delete')
   const [alt, setAlt] = useState(asset.alt ?? '')
   const [title, setTitle] = useState(asset.title ?? '')
   const [description, setDescription] = useState(asset.description ?? '')
@@ -268,7 +270,7 @@ function AssetDetails({
           {updateMutation.isPending ? 'Сохранение...' : 'Сохранить'}
         </Button>
         <Button type="button" size="sm" variant="outline" onClick={() => { void copyUrl() }}>Копировать ссылку</Button>
-        <Button type="button" size="sm" variant="danger" onClick={onDelete}>Удалить</Button>
+        {canDelete ? <Button type="button" size="sm" variant="danger" onClick={onDelete}>Удалить</Button> : null}
       </div>
     </aside>
   )

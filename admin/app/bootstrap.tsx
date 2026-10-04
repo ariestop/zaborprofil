@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { initializeAuthStore } from '../stores/auth'
+import { initializeAuthStore, parsePermissions, parseRoles } from '../stores/auth'
 import { AdminApp } from './AdminApp'
 
 export function bootstrapAdminApp(): void {
@@ -13,6 +13,8 @@ export function bootstrapAdminApp(): void {
     userEmail: root.dataset.userEmail ?? '',
     logoutUrl: root.dataset.logoutUrl ?? '/admin/logout',
     logoutToken: root.dataset.logoutToken ?? '',
+    roles: parseRoles(root.dataset.roles),
+    permissions: parsePermissions(root.dataset.permissions),
   })
 
   createRoot(root).render(

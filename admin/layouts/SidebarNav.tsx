@@ -4,6 +4,7 @@ import { useLeadSummaryQuery } from '../entities/lead/api'
 import { navGroups, routesInNavGroup, type AdminRouteDefinition } from '../routes/route-config'
 import { prefetchRouteByPath } from '../routes/prefetch'
 import { cn } from '../shared/lib/cn'
+import { useAuthStore } from '../stores/auth'
 import { NavIcon } from './nav-icons'
 
 const SERVER_OPEN_STORAGE_KEY = 'admin.nav.serverOpen'
@@ -36,7 +37,8 @@ export function SidebarNav({ collapsed = false, onNavigate }: SidebarNavProps) {
   const location = useLocation()
   const leadSummary = useLeadSummaryQuery()
   const newLeads = leadSummary.data?.new ?? 0
-  const serverRoutes = routesInNavGroup('server')
+  const permissions = useAuthStore((state) => state.permissions)
+  const serverRoutes = routesInNavGroup('server', permissions)
   const inServerSection = serverRoutes.some((route) => matchPath({ path: route.path, end: true }, location.pathname) !== null)
   const [serverOpen, setServerOpen] = useState(() => readServerOpen() || inServerSection)
   const [wasInServerSection, setWasInServerSection] = useState(inServerSection)
@@ -100,7 +102,7 @@ export function SidebarNav({ collapsed = false, onNavigate }: SidebarNavProps) {
   return (
     <nav aria-label="Разделы админки" className="flex flex-col gap-0.5">
       {navGroups.map((group) => {
-        const routes = routesInNavGroup(group.key)
+        const routes = routesInNavGroup(group.key, permissions)
         if (routes.length === 0) {
           return null
         }

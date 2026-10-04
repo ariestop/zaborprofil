@@ -7,5 +7,6 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['assets/**/*.spec.ts', 'assets/**/*.spec.tsx', 'admin/**/*.spec.ts', 'admin/**/*.spec.tsx'],
     globals: true,
+    setupFiles: ['admin/shared/testing/setup.ts'],
   },
 })

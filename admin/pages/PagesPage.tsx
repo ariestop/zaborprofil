@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { usePagesQuery } from '../entities/page/api'
 import { pageStatusLabels, pageTypeLabels, statusTone } from '../features/page-editor/page-status'
 import { preloadPageEditorOnIntent } from '../routes/prefetch'
+import { useCan } from '../stores/auth'
 import { Badge, EmptyState, ErrorState, Input, PageHeader, PageLoadingState, Table } from '../shared/ui'
 import { NativeSelect } from '../features/page-editor/fields'
 
@@ -10,6 +11,7 @@ const ALL_STATUSES = 'all'
 
 export default function PagesPage() {
   const pagesQuery = usePagesQuery()
+  const canCreate = useCan('pages.create')
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<string>(ALL_STATUSES)
 
@@ -26,14 +28,14 @@ export default function PagesPage() {
       <PageHeader
         title="Страницы"
         description="Контент, SEO и публикация страниц сайта. Каждая страница редактируется на одном экране."
-        actions={(
+        actions={canCreate ? (
           <Link
             to="/admin/pages/new"
             className="inline-flex h-10 items-center rounded-lg bg-emerald-600 px-4 text-sm font-medium text-white hover:bg-emerald-700"
           >
             Создать страницу
           </Link>
-        )}
+        ) : undefined}
       />
 
       <div className="mb-4 flex flex-wrap items-end gap-3">
