@@ -10,7 +10,7 @@ UI -> Application -> Domain
 Infrastructure ------|  (implements Domain/Application interfaces)
 ```
 
-- Domain — самый внутренний слой, ничего не знает о Symfony, Doctrine, HTTP, Twig, Redis, FS.
+- Domain — самый внутренний слой, ничего не знает о Symfony, Doctrine, HTTP, Twig, FS.
 - Application — оркестрация, оперирует только Domain и интерфейсами.
 - Infrastructure — реализует интерфейсы Domain/Application.
 - UI — адаптер транспорта, вызывает Application.
@@ -21,7 +21,7 @@ Infrastructure ------|  (implements Domain/Application interfaces)
 |---|---|
 | Domain | PHP stdlib, `Symfony\Component\Uid`, Doctrine ORM **attributes** (для маппинга), `App\Shared\Domain\*` |
 | Application | Domain (этого и shared), `Symfony\Component\Validator\Constraints`, PSR interfaces, чистые value-classes |
-| Infrastructure | Application + Domain + любые внешние библиотеки (Doctrine, Predis, Symfony HTTP, Mailer) |
+| Infrastructure | Application + Domain + любые внешние библиотеки (Doctrine, Symfony Cache, Symfony HTTP, Mailer) |
 | UI | Application + Domain (для type hints) + Symfony HTTP/Routing/Security/Twig |
 
 Доступ через DI: UI обычно не импортирует Infrastructure напрямую — только через интерфейс из Application/Domain. Исключение: тонкие admin-контроллеры в текущей реализации могут вызывать Application handler напрямую.
@@ -33,7 +33,7 @@ Infrastructure ------|  (implements Domain/Application interfaces)
 | Domain | `Symfony\Component\HttpFoundation\*` | Нельзя |
 | Domain | `Doctrine\ORM\EntityManagerInterface` (вызовы) | Нельзя (attributes можно) |
 | Domain | `Twig\*` | Нельзя |
-| Domain | `Predis\*` / `Redis` | Нельзя |
+| Domain | `Symfony\Component\Cache\*` | Нельзя |
 | Domain | Files / `fopen` / `file_get_contents` | Нельзя |
 | Domain | `Symfony\Component\Mailer\*` | Нельзя |
 | Application | `Symfony\Component\HttpFoundation\Request/Response` | Нельзя |

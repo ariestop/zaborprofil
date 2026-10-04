@@ -57,16 +57,16 @@ tests/
 В `phpunit.xml` (или через `.env.test`):
 
 - `DATABASE_URL` — отдельная БД.
-- Локальный PHPUnit запускается только против PostgreSQL service `postgres` из Docker Compose.
+- Локальный PHPUnit запускается только против MySQL service `mysql` из Docker Compose (БД `zaborprofil_test`, создаётся `make test-db`).
 - SQLite (`sqlite://...`) запрещён для агентов и локальных quality-прогонов.
-- В CI — Postgres-сервис (`.env.test.ci` подменяет `.env.test.local`).
+- В CI — сервис `mysql:8.4` (`.env.test.ci` подменяет `.env.test.local`).
 
 ## Schema setup
 
 `SchemaTestHelper`:
 
 - На старте functional/integration теста удаляет/создаёт схему и применяет миграции.
-- В Postgres — `dropDatabase()` тяжело; вместо этого — truncate + `migrations:migrate --allow-no-migration`.
+- В MySQL DDL неявно коммитится, поэтому откат теста транзакцией для схемы невозможен: хелпер удаляет все таблицы (`DROP TABLE IF EXISTS ...`) и создаёт схему заново через `SchemaTool`; `dropDatabase()` не используется. Guard: имя БД должно оканчиваться на `_test`.
 
 ## Fixtures
 

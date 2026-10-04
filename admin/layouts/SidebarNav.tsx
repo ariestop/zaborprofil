@@ -4,7 +4,7 @@ import { prefetchRouteByPath } from '../routes/prefetch'
 
 export function SidebarNav() {
   return (
-    <aside className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <aside className="rounded-2xl border border-slate-200 bg-white p-3 shadow-xs dark:border-slate-800 dark:bg-slate-900">
       <nav className="flex flex-wrap gap-2">
         {sidebarRoutes.map((route) => (
           <NavLink

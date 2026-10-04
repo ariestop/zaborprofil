@@ -43,7 +43,7 @@ final class MediaAsset
     /**
      * @var list<array{type: string, publicPath: string, width: int|null, height: int|null, mimeType: string, size: int}>
      */
-    #[ORM\Column(type: 'json', options: ['jsonb' => true])]
+    #[ORM\Column(type: 'json')]
     private array $variants;
 
     #[ORM\Column]

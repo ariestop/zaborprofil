@@ -4,6 +4,8 @@
 
 > Staging и production деплоятся **на VPS без Docker**. Docker — только для local dev.
 
+> Отдельный staging-стенд `https://dev.zaborprofil.ru` на хостинге Beget (ветка `dev`, деплой по SSH без release-структуры) описан в [49-beget-staging-deploy](49-beget-staging-deploy.md). Этот документ описывает release-схему VPS (`tools/deploy/deploy-staging.sh`, `deploy-production.sh`). Автозапуск VPS-деплоя из `.github/workflows/deploy.yml` по умолчанию выключен: включается repository variable `VPS_DEPLOY_ENABLED=true` (см. [35-cicd](35-cicd.md)).
+
 ## Release layout
 
 ```text
@@ -13,10 +15,10 @@
 │   ├── 20260501-150000/
 │   └── 20260502-090000/
 ├── shared/
-│   ├── .env.local                 # APP_SECRET, DB password, Redis password, ...
+│   ├── .env.local                 # APP_SECRET, DB password, ...
 │   ├── public_html/uploads/       # симлинкается из releases/<ts>/public_html/uploads
 │   ├── var/log/                   # симлинкается из releases/<ts>/var/log
-│   ├── backups/                   # дампы PostgreSQL, копии uploads
+│   ├── backups/                   # дампы MySQL (*.sql.gz), копии uploads
 │   └── deployments/               # deployments.jsonl, staging marker
 └── current -> releases/20260502-090000
 ```
@@ -29,25 +31,25 @@
 |---|---|---|
 | Nginx | ≥ 1.30.0 | пакеты Debian/Ubuntu |
 | PHP-FPM | ≥ 8.5 | `ondrej/php` или системный 8.5 |
-| PostgreSQL | ≥ 18 | apt PostgreSQL repository |
-| Redis | ≥ 8 | apt |
-| systemd | как ОС | управляет php-fpm, nginx, postgres, redis, messenger worker |
+| MySQL | ≥ 8.4 | apt MySQL repository (на managed-хостинге, например Beget, — сервер провайдера) |
+| systemd | как ОС | управляет php-fpm, nginx, mysql, messenger worker |
 | TLS | Let’s Encrypt / certbot | автоматическое продление |
 | Composer | 2.x | глобально |
-| Node.js | 25.9.0 | nvm / nodesource (для `npm ci` во время deploy) |
+| Node.js | не нужен | frontend собирается в GitHub Actions и приезжает на сервер архивом (`FRONTEND_BUILD_ARCHIVE`). Node 25.9.0 нужен на VPS только для ручного deploy без архива (fallback `npm ci && npm run build`) |
 
 ## Скрипты
 
 `tools/deploy/`:
 
 - `common.sh` — общие функции, переменные.
-- `deploy-staging.sh` — деплой staging.
+- `deploy-staging.sh` — деплой staging (VPS, release-схема).
+- `deploy-beget.sh` — деплой staging `dev.zaborprofil.ru` на Beget (git-клон на месте, см. [49-beget-staging-deploy](49-beget-staging-deploy.md)).
 - `deploy-production.sh` — деплой production (требует `CONFIRM_STAGING_DEPLOYED=yes` и `CONFIRM_DEPLOY_SAFETY_CHECKLIST=yes`).
 - `rollback.sh` — переключение `current` на предыдущий релиз или выбранный релиз.
 - `health-check.sh` — curl healthcheck с retry.
 - `staging-smoke.sh` — post-deploy smoke для staging.
-- `restore-rehearsal.sh` — проверка восстановления PostgreSQL dump и uploads archive.
-- `monitoring-check.sh` — health/readiness, disk, services, PostgreSQL, Redis и smoke для systemd timer.
+- `restore-rehearsal.sh` — проверка восстановления MySQL dump (`*.sql.gz`) и uploads archive.
+- `monitoring-check.sh` — health/readiness, disk, services, MySQL (`MYSQL_SERVICE`, `SELECT 1`) и smoke для systemd timer.
 - `shared-env-example.sh` — шаблон env переменных скриптов.
 - `templates/nginx-staging.conf`, `nginx-production.conf` — nginx vhost.
 - `templates/zaborprofil-messenger.service`, `zaborprofil-messenger-staging.service` — systemd unit для worker.
@@ -77,8 +79,8 @@ flowchart TB
     s4 --> s5[5. ln -s shared/public_html/uploads releases/<ts>/public_html/uploads]
     s5 --> s6[6. ln -s shared/var/log releases/<ts>/var/log]
     s6 --> s7[7. composer install --no-dev --optimize-autoloader]
-    s7 --> s8[8. npm ci && npm run build]
-    s8 --> s9[9. PROD only: pg_dump backup + copy uploads]
+    s7 --> s8[8. распаковать готовый build/ из CI-архива; fallback: npm ci && npm run build]
+    s8 --> s9[9. PROD only: mysqldump backup + copy uploads]
     s9 --> s10[10. doctrine:migrations:migrate --no-interaction]
     s10 --> s11[11. cache:clear --env=prod --no-warmup]
     s11 --> s12[12. cache:warmup --env=prod]
@@ -155,18 +157,23 @@ HEALTH_URL=https://zaborprofil.ru/health tools/deploy/rollback.sh 2026-05-03_142
 - `php.ini`: `memory_limit = 256M`, `max_execution_time = 60`, `date.timezone = Europe/Moscow`.
 - OPcache: `opcache.memory_consumption = 256`, `opcache.preload = false` (или preload script — целевое).
 
-## PostgreSQL
+## MySQL
 
-- Dedicated user `zaborprofil` с минимальными правами на одну БД.
-- `listen_addresses = 'localhost'`.
-- `pg_hba.conf` — `local` + `host 127.0.0.1/32` для приложения.
-- WAL архивирование — целевое для PITR.
+- Dedicated user `zaborprofil` с минимальными правами на одну БД (`GRANT ... ON zaborprofil.* TO 'zaborprofil'@'localhost'`).
+- `bind-address = 127.0.0.1`.
+- `character-set-server = utf8mb4`, `collation-server = utf8mb4_0900_ai_ci`, движок InnoDB.
+- `DATABASE_URL=mysql://user:pass@host:3306/db?serverVersion=8.4&charset=utf8mb4`.
+- Binary log (`log_bin`) и его архивирование — целевое для PITR.
+- DDL в MySQL не транзакционен: перед боевой миграцией backup обязателен (его делает `deploy-production.sh`).
 
-## Redis
+## Файловый кэш и сессии
 
-- `bind 127.0.0.1`, `requirepass`.
-- `appendonly yes`.
-- `maxmemory` + `maxmemory-policy allkeys-lru` (для cache роли).
+Redis не используется. Кэш приложения (`framework.cache.app: cache.adapter.filesystem`) лежит в `var/cache/prod/pools/`, нативные PHP-сессии — в `var/sessions/prod/`.
+
+- Каждый релиз имеет собственный `var/cache`, поэтому после переключения `current` кэш «холодный» — это штатно, `cache:warmup` выполняется в release-скрипте.
+- Каталоги `var/cache` и `var/sessions` должны принадлежать `www-data` (шаг `chown` release-скрипта).
+- Staging на Beget (`deploy-beget.sh`): `var/cache` и `var/sessions` — симлинки на `shared/cache` и `shared/sessions` внутри каталога сайта; сессии переживают деплой, кэш очищается и прогревается (`cache:warmup`) на каждом деплое. Подробнее: [49-beget-staging-deploy](49-beget-staging-deploy.md).
+- Файловый кэш не разделяется между серверами; для нескольких серверов потребуется общий FS либо возврат к Redis (см. [ADR-0007](adr/0007-filesystem-cache-and-doctrine-messenger.md)).
 
 ## systemd
 
@@ -187,7 +194,7 @@ Group=www-data
 - `app:seo:audit` — раз в сутки.
 - `app:cache:warmup` — после каждого деплоя (уже в release script).
 - `app:media:cleanup-orphans` — раз в неделю.
-- `pg_dump` через `tools/deploy/` или отдельный backup script — ежедневно.
+- `mysqldump` через `tools/deploy/` или отдельный backup script — ежедневно.
 
 ## Permissions
 
@@ -228,8 +235,8 @@ php bin/console cache:warmup --env=prod
 
 - `current` переключается атомарно через временный symlink и `mv`.
 - `tools/deploy/*.sh` используют lock directory `${APP_ROOT}/.deploy.lock`, чтобы не запускать deploy и rollback параллельно.
-- Production deploy перед миграциями создает PostgreSQL backup в `shared/backups/db/` и uploads archive в `shared/backups/uploads/`.
-- Backup проверяется сразу после создания: `pg_restore -l` для dump и `tar -tzf` для uploads archive.
+- Production deploy перед миграциями создает MySQL backup (`mysqldump --single-transaction | gzip -9`, файл `<release>_database.sql.gz`) в `shared/backups/db/` и uploads archive в `shared/backups/uploads/`.
+- Backup проверяется сразу после создания: `gzip -t` для dump и `tar -tzf` для uploads archive.
 - Старые backup-файлы удаляются по `BACKUP_RETENTION_DAYS` (по умолчанию 14 дней).
 - Deploy и rollback пишут JSONL-события в `shared/deployments/deployments.jsonl`; retention управляется `DEPLOY_LOG_RETENTION_DAYS` (по умолчанию 90 дней).
 - Production deploy требует `CONFIRM_STAGING_DEPLOYED=yes` и `CONFIRM_DEPLOY_SAFETY_CHECKLIST=yes`.
@@ -241,11 +248,11 @@ php bin/console cache:warmup --env=prod
 
 - [ ] Staging deploy прошёл.
 - [ ] CI зелёный на той же SHA.
-- [ ] Backup actual (pg_dump < 1ч).
+- [ ] Backup actual (mysqldump < 1ч).
 - [ ] Disk free > 20%.
 - [ ] Free RAM > 30%.
 - [ ] Migrations прорепетированы на staging.
-- [ ] Нет ALTER TABLE на больших таблицах в окно (или используется CONCURRENTLY).
+- [ ] Нет ALTER TABLE на больших таблицах в окно (или используется online DDL: `ALGORITHM=INPLACE, LOCK=NONE`).
 - [ ] План rollback сформулирован.
 - [ ] Stakeholder уведомлён.
 - [ ] Логи Telegram — мониторим в окне деплоя.
@@ -270,6 +277,7 @@ php bin/console cache:warmup --env=prod
 - [27-config-and-env](27-config-and-env.md)
 - [29-healthchecks](29-healthchecks.md)
 - [35-cicd](35-cicd.md)
+- [49-beget-staging-deploy](49-beget-staging-deploy.md)
 - [36-backup-restore](36-backup-restore.md)
 - [37-runbooks](37-runbooks.md)
 - [37-runbooks](37-runbooks.md)

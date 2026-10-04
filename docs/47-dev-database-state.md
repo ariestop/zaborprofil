@@ -12,7 +12,7 @@ make init
 make reset-db
 ```
 
-`make reset-db` удаляет локальную БД, создаёт её заново, применяет Doctrine migrations и запускает `make fixtures`. Если `doctrine/doctrine-fixtures-bundle` ещё не подключён, fixture-шаг является no-op и выводит информационное сообщение.
+`make reset-db` удаляет локальную БД MySQL (`doctrine:database:drop`), создаёт её заново (`utf8mb4` / `utf8mb4_0900_ai_ci`), применяет Doctrine migrations и запускает `make fixtures`. Начальная миграция `Version20261004000100` уже содержит seed системных шаблонов страниц (`content_page_templates`). Если `doctrine/doctrine-fixtures-bundle` ещё не подключён, fixture-шаг является no-op и выводит информационное сообщение.
 
 ## Что хранится в Git
 
@@ -24,7 +24,7 @@ make reset-db
 ## Что не хранится в Git
 
 - Docker images.
-- Docker volumes: `postgres_data`, `redis_data`, `uploads_data`.
+- Docker volumes: `mysql_data`, `uploads_data`.
 - Production/staging dumps и per-deploy backups.
 - Реальные uploads, кроме технических placeholders вроде `.gitkeep`.
 - `.env.local`, пароли, токены, приватные ключи.
@@ -39,7 +39,7 @@ make reset-db
 1. Разработчик готовит dev-данные локально.
 2. Данные обезличиваются: реальные контакты, токены, IP, email, телефоны и бизнес-чувствительные тексты заменяются тестовыми значениями.
 3. Предпочтительно эти данные оформляются как fixtures в коде.
-4. Если fixtures недостаточно, создаётся маленький SQL/JSON/YAML snapshot только для dev.
+4. Если fixtures недостаточно, создаётся маленький SQL/JSON/YAML snapshot только для dev (SQL-snapshot — текстовый `mysqldump --no-create-info --skip-extended-insert` только нужных таблиц; бинарные ULID при этом попадают как hex-литералы `0x...`, поэтому предпочтительнее fixtures).
 5. Snapshot проверяется вручную перед commit: размер, отсутствие секретов, отсутствие персональных данных.
 6. Другой разработчик получает состояние через `git pull` и `make reset-db`.
 
@@ -63,7 +63,7 @@ make reset-db
 
 Текущее baseline-состояние после миграций включает dev-страницу главной (`path=/`)
 с блоком `slider`, чтобы публичный фронт сразу демонстрировал работу блочного SSR
-и интерактивного Swiper-слайдера.
+и интерактивного Swiper-слайдера. Главная со слайдером создаётся миграцией `Version20261004000200` (идемпотентно: если страница с `path=/` уже есть, вставка пропускается).
 
 SQL snapshot допустим только как временная мера для небольшого demo-набора. Он должен быть текстовым или сжатым только при реальной необходимости; перед commit обязательно проверять содержимое.
 

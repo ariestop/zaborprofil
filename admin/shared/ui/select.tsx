@@ -24,7 +24,7 @@ export function Select({ value, onValueChange, options }: SelectProps) {
               <SelectPrimitive.Item
                 key={option.value}
                 value={option.value}
-                className="cursor-pointer rounded px-2 py-1.5 text-sm text-slate-700 outline-none hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-800"
+                className="cursor-pointer rounded-sm px-2 py-1.5 text-sm text-slate-700 outline-hidden hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-800"
               >
                 <SelectPrimitive.ItemText>{option.label}</SelectPrimitive.ItemText>
               </SelectPrimitive.Item>

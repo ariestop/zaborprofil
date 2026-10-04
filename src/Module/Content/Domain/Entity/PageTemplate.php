@@ -35,19 +35,19 @@ final class PageTemplate
     /**
      * @var list<array<string, mixed>>
      */
-    #[ORM\Column(name: 'blocks_schema', type: 'json', options: ['jsonb' => true])]
+    #[ORM\Column(name: 'blocks_schema', type: 'json')]
     private array $blocksSchema;
 
     /**
      * @var array<string, mixed>
      */
-    #[ORM\Column(name: 'default_seo', type: 'json', options: ['jsonb' => true])]
+    #[ORM\Column(name: 'default_seo', type: 'json')]
     private array $defaultSeo;
 
     /**
      * @var array<string, mixed>
      */
-    #[ORM\Column(name: 'default_settings', type: 'json', options: ['jsonb' => true])]
+    #[ORM\Column(name: 'default_settings', type: 'json')]
     private array $defaultSettings;
 
     #[ORM\Column(name: 'is_system')]

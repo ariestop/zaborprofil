@@ -52,14 +52,14 @@
 
 Эти правила нарушать **нельзя**. Они спасают данные и стабильность.
 
-- Не удалять данные (`rm -rf`, `DROP`, `TRUNCATE`, `dropdb`) без свежего backup и подтверждения, что backup читается (`pg_restore --list`).
+- Не удалять данные (`rm -rf`, `DROP`, `TRUNCATE`, `dropdb`) без свежего backup и подтверждения, что backup читается (`gzip -t <file>.sql.gz`).
 - Не запускать миграции вслепую. Сначала — `php bin/console doctrine:migrations:status`, `doctrine:migrations:list`, проверка SQL миграции в файле `migrations/`.
 - Не делать `composer update` на production. Только `composer install --no-dev --optimize-autoloader`.
 - Не менять `APP_ENV` на `dev` в production.
 - Не включать `APP_DEBUG=true` в production. Это раскрывает stacktrace, конфиги и переменные окружения посетителям сайта.
 - Сначала смотреть логи (раздел 5), потом перезапускать сервисы. Перезапуск без понимания причины маскирует проблему.
-- Перед изменениями фиксировать состояние: `git rev-parse HEAD`, `php bin/console doctrine:migrations:status`, `systemctl status ...`, `df -h`, `free -m`, `redis-cli info`.
-- При серьёзной аварии — **снять snapshot**: `pg_dump`, `tar` для `public_html/uploads/`, копия `shared/.env.local`, копия `var/log/`. См. [36-backup-restore](36-backup-restore.md).
+- Перед изменениями фиксировать состояние: `git rev-parse HEAD`, `php bin/console doctrine:migrations:status`, `systemctl status ...`, `df -h`, `free -m`, `du -sh var/cache/prod/pools`.
+- При серьёзной аварии — **снять snapshot**: `mysqldump`, `tar` для `public_html/uploads/`, копия `shared/.env.local`, копия `var/log/`. См. [36-backup-restore](36-backup-restore.md).
 - Все деструктивные команды (отмеченные **ВНИМАНИЕ**) выполнять только после двойной проверки путей и параметров.
 - Любое изменение фиксировать в incident report (раздел 9 ниже / шаблон в конце документа).
 
@@ -139,8 +139,7 @@ npm run build
 |---|---|---|
 | `nginx` | TLS termination, статика, FastCGI к PHP | `nginx` |
 | `php-fpm` | PHP worker для Symfony | `php8.5-fpm` (или `php-fpm`) |
-| `postgresql` | Основная БД | `postgresql` |
-| `redis-server` | Кэш Symfony, опц. сессии | `redis-server` |
+| `mysql` | Основная БД (MySQL 8.4+; на managed-хостинге — сервис провайдера) | `mysql` (или `mysqld`) |
 | Messenger worker | Очереди (Doctrine transport) | `<project>-messenger` |
 | `cron` / systemd timers | Backups, sitemap, cleanup, certbot | `cron` / `*.timer` |
 | `certbot` | Автообновление TLS (через timer) | `certbot.timer` |
@@ -151,9 +150,8 @@ npm run build
 systemctl status nginx --no-pager
 systemctl status php8.5-fpm --no-pager
 systemctl status php-fpm --no-pager           # альтернативное имя
-systemctl status postgresql --no-pager
-systemctl status redis-server --no-pager
-systemctl status redis --no-pager             # альтернативное имя
+systemctl status mysql --no-pager
+systemctl status mysqld --no-pager            # альтернативное имя
 systemctl status <project>-messenger --no-pager
 systemctl status certbot.timer --no-pager
 
@@ -161,14 +159,12 @@ systemctl restart nginx
 systemctl reload nginx
 systemctl restart php8.5-fpm
 systemctl reload php8.5-fpm
-systemctl restart postgresql
-systemctl restart redis-server
+systemctl restart mysql
 systemctl restart <project>-messenger
 
 journalctl -u nginx -n 100 --no-pager
 journalctl -u php8.5-fpm -n 100 --no-pager
-journalctl -u postgresql -n 100 --no-pager
-journalctl -u redis-server -n 100 --no-pager
+journalctl -u mysql -n 100 --no-pager
 journalctl -u <project>-messenger -n 200 --no-pager
 journalctl -xe --no-pager
 ```
@@ -211,20 +207,13 @@ tail -n 100 /var/log/php-fpm/error.log
 journalctl -u php8.5-fpm -n 200 --no-pager
 ```
 
-### Логи PostgreSQL
+### Логи MySQL
 
 ```bash
-ls /var/log/postgresql/
-tail -n 200 /var/log/postgresql/postgresql-18-main.log
-journalctl -u postgresql -n 200 --no-pager
-```
-
-### Логи Redis
-
-```bash
-ls /var/log/redis/
-tail -n 200 /var/log/redis/redis-server.log
-journalctl -u redis-server -n 200 --no-pager
+ls /var/log/mysql/
+tail -n 200 /var/log/mysql/error.log
+journalctl -u mysql -n 200 --no-pager
+mysql -e "SHOW VARIABLES LIKE 'log_error'; SHOW VARIABLES LIKE 'slow_query_log%';"
 ```
 
 ### Системные логи
@@ -316,7 +305,7 @@ curl -s -o /dev/null -w '%{http_code}\n' https://<domain>/
 
 - Внешний uptime monitor (UptimeRobot, Better Stack) с алертами.
 - Healthcheck `/health` (см. [29-healthchecks](29-healthchecks.md)).
-- `systemd Restart=on-failure` для nginx, php-fpm, postgresql, redis, messenger worker.
+- `systemd Restart=on-failure` для nginx, php-fpm, mysql, messenger worker.
 - Snapshot-резерв VPS у провайдера.
 - Документированный план миграции на резервный VPS.
 
@@ -610,7 +599,7 @@ ls -l /run/php/php8.5-fpm.sock
 
 1. Свежий релиз с багом.
 2. Несовместимая миграция (поле удалено в БД, но код ещё его читает, или наоборот).
-3. Недоступны зависимости: PostgreSQL, Redis, внешние HTTP API, SMTP.
+3. Недоступны зависимости: MySQL, файловый кэш (нет прав/места на `var/cache`), внешние HTTP API, SMTP.
 4. Сломан `.env.local` / отсутствует обязательная переменная.
 5. Permissions: `var/cache`, `var/log` не writable.
 6. Неверно собран prod cache (`cache:warmup` упал).
@@ -622,15 +611,16 @@ tail -n 200 /var/www/<project>/current/var/log/prod.log
 grep -E 'ERROR|CRITICAL' /var/www/<project>/current/var/log/prod.log | tail -n 50
 php bin/console about
 php bin/console doctrine:query:sql "SELECT 1"
-redis-cli ping
+curl -s https://<domain>/health
 ls -ld /var/www/<project>/current/var/cache /var/www/<project>/current/var/log
+df -h /var/www/<project>
 ```
 
 #### Пошаговое решение
 
 1. По stacktrace в `prod.log` определить класс/файл.
 2. Если связано с БД — проверить миграции (`doctrine:migrations:status`) и инцидент 14.
-3. Если связано с Redis — инцидент 16.
+3. Если связано с файловым кэшем (`cache.app`, `var/cache/prod/pools`) — инцидент 16.
 4. Если связано с FS — инцидент 32.
 5. Если ошибка появилась после deploy — откат (инцидент 42).
 6. Не включать `APP_DEBUG=true` на production. Вместо этого — поднять полный stacktrace из `prod.log` или воспроизвести проблему на staging.
@@ -687,7 +677,7 @@ awk '/ERROR/{print $0}' /var/www/<project>/current/var/log/prod.log | sort | uni
    grep 'request_id=<id>' /var/www/<project>/current/var/log/prod.log
    ```
 
-3. Если ошибка — `Connection refused` к Redis/PG/SMTP — переходить к соответствующему инциденту (16, 11, 59).
+3. Если ошибка — `Connection refused` к MySQL/SMTP или ошибки записи в файловый кэш — переходить к соответствующему инциденту (11, 16, 59).
 4. Если кэш «битый» — безопасно очистить:
 
    ```bash
@@ -827,62 +817,65 @@ curl -s https://<domain>/health
 
 ---
 
-### 11. PostgreSQL недоступен
+### 11. MySQL недоступен
 
 #### Симптомы
 
-- 500 на сайте, в `prod.log`: `SQLSTATE[08006]` / `could not connect to server`.
-- `systemctl status postgresql` → `failed` или `inactive`.
+- 500 на сайте, в `prod.log`: `SQLSTATE[HY000] [2002] Connection refused` / `MySQL server has gone away` / `SQLSTATE[HY000] [2006]`.
+- `systemctl status mysql` → `failed` или `inactive`.
 
 #### Возможные причины
 
-1. Сервис упал / OOM.
-2. Кончилось место на диске под `pg_wal`.
-3. Сломан `postgresql.conf` / `pg_hba.conf` после правки.
-4. Закончились коннекты (`max_connections`).
+1. Сервис упал / OOM (InnoDB buffer pool слишком большой для VPS).
+2. Кончилось место на диске под datadir / binlog (`/var/lib/mysql`).
+3. Сломан `my.cnf` / `mysqld.cnf` после правки.
+4. Закончились коннекты (`max_connections`, `Too many connections`).
+5. На managed-хостинге (Beget) — недоступность MySQL-сервера провайдера или исчерпан лимит пользователя на соединения/запросы.
 
 #### Быстрая диагностика
 
 ```bash
-systemctl status postgresql --no-pager
-journalctl -u postgresql -n 200 --no-pager
-sudo -u postgres psql -c "SELECT version();"
-sudo -u postgres psql -c "SELECT count(*) FROM pg_stat_activity;"
-df -h
-ls /var/lib/postgresql/18/main/pg_wal | wc -l
-psql --version
+systemctl status mysql --no-pager
+journalctl -u mysql -n 200 --no-pager
+tail -n 200 /var/log/mysql/error.log
+mysql -e "SELECT VERSION();"
+mysql -e "SHOW GLOBAL STATUS LIKE 'Threads_connected'; SHOW VARIABLES LIKE 'max_connections';"
+df -h /var/lib/mysql
+ls -lh /var/lib/mysql | head
+mysql --version
 ```
 
 #### Пошаговое решение
 
-1. Если сервис не запущен — `systemctl start postgresql`.
-2. Если стартует и падает — `journalctl -u postgresql`.
-3. Если диск полон — освободить место (см. инцидент 46), **только потом** старт PG.
-4. Если `too many connections` — найти приложение, открывшее сотни коннектов:
+1. Если сервис не запущен — `systemctl start mysql`.
+2. Если стартует и падает — `journalctl -u mysql` и `/var/log/mysql/error.log` (InnoDB recovery, права на datadir, ошибки конфига).
+3. Если диск полон — освободить место (см. инцидент 46), **только потом** старт MySQL.
+4. Если `Too many connections` — найти приложение, открывшее сотни коннектов:
 
    ```bash
-   sudo -u postgres psql -c "SELECT pid, state, application_name, query FROM pg_stat_activity ORDER BY query_start;"
+   mysql -e "SHOW FULL PROCESSLIST;"
+   mysql -e "SELECT user, host, db, command, time, state, LEFT(info, 120) AS query FROM information_schema.PROCESSLIST ORDER BY time DESC LIMIT 50;"
    ```
 
-   Перезапустить виновника (php-fpm / messenger), не перезагружать PG, если можно избежать.
+   Перезапустить виновника (php-fpm / messenger), не перезагружать MySQL, если можно избежать.
 
-> **ВНИМАНИЕ.** Не запускать `pg_resetwal`, `--drop-database`, никаких `rm -rf /var/lib/postgresql` без участия DBA и подтверждённого свежего бэкапа.
+> **ВНИМАНИЕ.** Не использовать `innodb_force_recovery`, `DROP DATABASE`, никаких `rm -rf /var/lib/mysql` без участия DBA и подтверждённого свежего бэкапа.
 
 #### Проверка
 
 ```bash
-systemctl status postgresql --no-pager
-sudo -u postgres psql -c "SELECT 1;"
+systemctl status mysql --no-pager
+mysql -e "SELECT 1;"
 php bin/console doctrine:query:sql "SELECT 1"
 curl -s https://<domain>/health
 ```
 
 #### Профилактика
 
-- Алерт на `postgresql` down.
+- Алерт на `mysql` down (`tools/deploy/monitoring-check.sh` проверяет сервис `MYSQL_SERVICE` и `SELECT 1`).
 - Мониторинг свободного места (≥ 20%).
-- Мониторинг `pg_stat_activity.count` и долгих запросов.
-- Корректные `max_connections` и pool settings в Doctrine.
+- Мониторинг `Threads_connected` и долгих запросов.
+- Корректные `max_connections` и `innodb_buffer_pool_size` под память VPS.
 
 ---
 
@@ -890,37 +883,42 @@ curl -s https://<domain>/health
 
 #### Симптомы
 
-- В `prod.log`: `Connection refused`, `password authentication failed`, `database "..." does not exist`.
-- 500 на сайте, при этом `systemctl status postgresql` — `active (running)`.
+- В `prod.log`: `Connection refused`, `Access denied for user`, `Unknown database '...'`.
+- 500 на сайте, при этом `systemctl status mysql` — `active (running)`.
 
 #### Возможные причины
 
-1. Неверный `DATABASE_URL` в `shared/.env.local` (host, port, user, password, db).
+1. Неверный `DATABASE_URL` в `shared/.env.local` (host, port, user, password, db, `serverVersion`, `charset`).
 2. После ротации пароля БД старый пароль остался в env.
-3. `pg_hba.conf` не разрешает доступ с `127.0.0.1` для нашего user.
+3. У пользователя нет прав на БД или он создан для другого host (`'user'@'localhost'` vs `'user'@'127.0.0.1'`).
 4. БД переименована / удалена.
 
 #### Быстрая диагностика
 
 ```bash
 grep DATABASE_URL /var/www/<project>/shared/.env.local
-php bin/console doctrine:query:sql "SELECT current_database(), current_user, version();"
-sudo -u postgres psql -c "\l"
-sudo -u postgres psql -c "\du"
-sudo cat /etc/postgresql/18/main/pg_hba.conf | grep -v '^#'
+php bin/console doctrine:query:sql "SELECT DATABASE(), CURRENT_USER(), VERSION();"
+sudo mysql -e "SHOW DATABASES;"
+sudo mysql -e "SELECT user, host FROM mysql.user;"
+sudo mysql -e "SHOW GRANTS FOR '<user>'@'localhost';"
 ```
 
 #### Пошаговое решение
 
-1. Проверить, что `DATABASE_URL` соответствует реальной БД и user.
-2. Проверить пароль: `psql "postgresql://<user>:<pass>@127.0.0.1:5432/<db_name>" -c "SELECT 1"`.
+1. Проверить, что `DATABASE_URL` (формат `mysql://user:pass@host:3306/db?serverVersion=8.4&charset=utf8mb4`) соответствует реальной БД и user.
+2. Проверить пароль: `mysql -h 127.0.0.1 -P 3306 -u <user> -p <db_name> -e "SELECT 1"`.
 3. Если пароль нужно сбросить:
 
    ```bash
-   sudo -u postgres psql -c "ALTER USER <user> WITH PASSWORD '<new_pass>';"
+   sudo mysql -e "ALTER USER '<user>'@'localhost' IDENTIFIED BY '<new_pass>';"
    ```
 
    обновить `DATABASE_URL`, очистить кэш, reload php-fpm.
+4. Если не хватает прав:
+
+   ```bash
+   sudo mysql -e "GRANT ALL PRIVILEGES ON <db_name>.* TO '<user>'@'localhost'; FLUSH PRIVILEGES;"
+   ```
 
 #### Проверка
 
@@ -940,27 +938,30 @@ curl -s https://<domain>/health
 
 #### Симптомы
 
-- Растущее место на диске в `/var/lib/postgresql/`.
+- Растущее место на диске в `/var/lib/mysql/`.
 - Запросы становятся медленнее.
-- Алерт «PostgreSQL data dir > X GB».
+- Алерт «MySQL data dir > X GB».
 
 #### Возможные причины
 
-1. Не настроен `autovacuum` или таблицы заброшены.
-2. Большие таблицы без архивации (логи, события, временные данные).
-3. Накапливаются записи в `messenger_messages` / `failed`.
-4. Огромные индексы / битые индексы.
+1. Большие таблицы без архивации (логи, события, временные данные).
+2. Накапливаются записи в `messenger_messages` / `failed`.
+3. Фрагментация таблиц после массовых удалений.
+4. Огромные индексы / неиспользуемые индексы.
+5. Разросшиеся binary logs (`binlog_expire_logs_seconds` слишком большой).
 
 #### Быстрая диагностика
 
 ```bash
 df -h
-sudo du -sh /var/lib/postgresql/18/main/
-sudo -u postgres psql -d <db_name> -c "
-SELECT relname, pg_size_pretty(pg_total_relation_size(relid)) AS size
-FROM pg_catalog.pg_statio_user_tables
-ORDER BY pg_total_relation_size(relid) DESC LIMIT 20;"
-sudo -u postgres psql -d <db_name> -c "SELECT count(*) FROM messenger_messages;"
+sudo du -sh /var/lib/mysql/
+mysql -e "
+SELECT table_name, ROUND((data_length + index_length) / 1024 / 1024, 1) AS size_mb
+FROM information_schema.tables
+WHERE table_schema = '<db_name>'
+ORDER BY (data_length + index_length) DESC LIMIT 20;"
+mysql <db_name> -e "SELECT count(*) FROM messenger_messages;"
+mysql -e "SHOW BINARY LOGS;"
 ```
 
 #### Пошаговое решение
@@ -972,28 +973,29 @@ sudo -u postgres psql -d <db_name> -c "SELECT count(*) FROM messenger_messages;"
    php bin/console messenger:failed:remove --force <id>
    ```
 
-3. Запустить `VACUUM FULL` на конкретной таблице **только в окно обслуживания** (он блокирует таблицу):
+3. Освободить место после массового удаления: `OPTIMIZE TABLE` (InnoDB пересоздаёт таблицу) **только в окно обслуживания**:
 
-   > **ВНИМАНИЕ.** `VACUUM FULL` блокирует таблицу. Делать только в maintenance window и со свежим бэкапом.
+   > **ВНИМАНИЕ.** `OPTIMIZE TABLE` пересоздаёт таблицу (online DDL, но требует свободного места под копию и нагружает диск). Делать только в maintenance window и со свежим бэкапом.
 
    ```bash
-   sudo -u postgres psql -d <db_name> -c "VACUUM (VERBOSE, ANALYZE) <table>;"
+   mysql <db_name> -e "OPTIMIZE TABLE <table>;"
    ```
 
-4. Если индексы раздулись — `REINDEX TABLE CONCURRENTLY <table>;`.
+4. Если индексы раздулись или статистика устарела — `ALTER TABLE <table> ENGINE=InnoDB, ALGORITHM=INPLACE, LOCK=NONE;` и `ANALYZE TABLE <table>;`.
+5. Если разрослись binlog — `PURGE BINARY LOGS BEFORE NOW() - INTERVAL 3 DAY;` (только если не используется репликация).
 
 #### Проверка
 
 ```bash
 df -h
-sudo du -sh /var/lib/postgresql/18/main/
+sudo du -sh /var/lib/mysql/
 ```
 
 #### Профилактика
 
-- Включён `autovacuum` (по умолчанию).
 - Регулярная архивация старых логов/событий.
 - Мониторинг размера БД и роста.
+- Разумный `binlog_expire_logs_seconds`.
 
 ---
 
@@ -1009,8 +1011,8 @@ sudo du -sh /var/lib/postgresql/18/main/
 
 1. Конфликт изменений (одна и та же колонка в нескольких миграциях).
 2. SQL ошибка (синтаксис, FK, NOT NULL без default на непустой таблице).
-3. Lock на таблицу длительной транзакцией.
-4. Превышен `lock_timeout` / `statement_timeout`.
+3. Lock на таблицу (metadata lock) длительной транзакцией или запросом.
+4. Превышен `innodb_lock_wait_timeout` / `lock_wait_timeout` / `max_execution_time`.
 
 #### Быстрая диагностика
 
@@ -1018,17 +1020,19 @@ sudo du -sh /var/lib/postgresql/18/main/
 php bin/console doctrine:migrations:status
 php bin/console doctrine:migrations:list
 php bin/console doctrine:migrations:status --show-versions | head -n 50
-sudo -u postgres psql -d <db_name> -c "SELECT * FROM doctrine_migration_versions ORDER BY executed_at DESC LIMIT 20;"
-sudo -u postgres psql -d <db_name> -c "SELECT pid, query, state, wait_event FROM pg_stat_activity WHERE state <> 'idle';"
+mysql <db_name> -e "SELECT * FROM doctrine_migration_versions ORDER BY executed_at DESC LIMIT 20;"
+mysql -e "SHOW FULL PROCESSLIST;"
+mysql -e "SELECT * FROM performance_schema.metadata_locks WHERE OBJECT_SCHEMA = '<db_name>';"
+mysql -e "SELECT * FROM sys.innodb_lock_waits\G"
 ```
 
 #### Пошаговое решение
 
 1. Прочитать SQL миграции в `migrations/Version<TS>.php`.
-2. Если есть зависшая транзакция — найти `pid` и аккуратно завершить:
+2. Если есть зависшая транзакция/запрос — найти `Id` в `SHOW FULL PROCESSLIST` и аккуратно завершить:
 
    ```bash
-   sudo -u postgres psql -c "SELECT pg_terminate_backend(<pid>);"
+   mysql -e "KILL <id>;"
    ```
 
 3. Если SQL миграции явно неверен — НЕ применять «вручную», поправить миграцию и собрать новый release. Перейти к инциденту 15 (частичное применение).
@@ -1038,7 +1042,7 @@ sudo -u postgres psql -d <db_name> -c "SELECT pid, query, state, wait_event FROM
    php bin/console doctrine:migrations:migrate --no-interaction
    ```
 
-> **ВНИМАНИЕ.** Любые ручные SQL правки на production делать только после `pg_dump` и только если миграция не применится повторно.
+> **ВНИМАНИЕ.** В MySQL DDL не транзакционен (неявный commit): упавшая миграция может остаться применённой частично. Любые ручные SQL правки на production делать только после `mysqldump` и только если миграция не применится повторно.
 
 #### Проверка
 
@@ -1051,7 +1055,8 @@ curl -s https://<domain>/health
 #### Профилактика
 
 - Прогон миграций на staging перед production.
-- Чек на `lock_timeout` / `statement_timeout` в Doctrine конфиге.
+- Обязательный `mysqldump` перед боевой миграцией (DDL не откатывается).
+- Проверка `innodb_lock_wait_timeout` / `lock_wait_timeout` и использование online DDL (`ALGORITHM=INPLACE, LOCK=NONE`) для тяжёлых изменений.
 - Не делать deploy в час пик.
 - См. [18-migrations](18-migrations.md).
 
@@ -1067,16 +1072,17 @@ curl -s https://<domain>/health
 
 #### Возможные причины
 
-1. Не транзакционная миграция упала посередине (часть DDL/DML уже применена).
+1. Миграция упала посередине (часть DDL/DML уже применена).
 2. Соединение с БД оборвалось во время `migrations:migrate`.
-3. PostgreSQL не поддерживает транзакционный DDL для конкретных операций (например, `CREATE INDEX CONCURRENTLY`).
+3. MySQL не поддерживает транзакционный DDL: каждый `CREATE/ALTER/DROP TABLE` делает неявный commit, и откатить уже выполненные statement’ы невозможно.
 
 #### Быстрая диагностика
 
 ```bash
 php bin/console doctrine:migrations:status
-sudo -u postgres psql -d <db_name> -c "SELECT version, executed_at FROM doctrine_migration_versions ORDER BY executed_at DESC LIMIT 20;"
-sudo -u postgres psql -d <db_name> -c "\d <table_with_changes>"
+mysql <db_name> -e "SELECT version, executed_at FROM doctrine_migration_versions ORDER BY executed_at DESC LIMIT 20;"
+mysql <db_name> -e "SHOW CREATE TABLE <table_with_changes>\G"
+mysql <db_name> -e "DESCRIBE <table_with_changes>;"
 ```
 
 #### Пошаговое решение
@@ -1086,8 +1092,10 @@ sudo -u postgres psql -d <db_name> -c "\d <table_with_changes>"
 1. Снять полный бэкап БД немедленно:
 
    ```bash
-   PGPASSWORD=... pg_dump -h 127.0.0.1 -U <user> -d <db_name> --format=custom --file=/var/www/<project>/shared/backups/db/<db_name>-pre-fix-$(date +%Y%m%d-%H%M%S).dump
+   mysqldump --single-transaction --routines --triggers --no-tablespaces --default-character-set=utf8mb4 -h 127.0.0.1 -u <user> -p <db_name> | gzip -9 > /var/www/<project>/shared/backups/db/<db_name>-pre-fix-$(date +%Y%m%d-%H%M%S).sql.gz
    ```
+
+   Пароль лучше не передавать в argv: использовать `~/.my.cnf` / `--defaults-extra-file` с правами `600`.
 
 2. Включить maintenance mode (см. инциденты 62/63), остановить worker.
 3. Выбрать стратегию:
@@ -1112,63 +1120,83 @@ curl -s https://<domain>/health
 
 #### Профилактика
 
-- Все миграции — с явными транзакциями там, где PG это позволяет.
-- Долгие операции — отдельные миграции (`CREATE INDEX CONCURRENTLY`).
+- Один логический шаг схемы — одна миграция (DDL неоткатываем, частичное применение ограничивается одним шагом).
+- Долгие операции — отдельные миграции с online DDL (`ALGORITHM=INPLACE, LOCK=NONE`).
 - Смотри [18-migrations](18-migrations.md), правила «zero-downtime migrations».
 
 ---
 
-### 16. Redis недоступен
+### 16. Файловый кэш недоступен или повреждён
+
+Redis в проекте не используется: кэш приложения (`cache.app` и производные пулы `cache.public_page`, `cache.settings`, `cache.menu`, `cache.seo`) хранится в файлах `var/cache/<env>/pools/`, сессии — в `var/sessions/<env>/`. См. [23-cache](23-cache.md).
 
 #### Симптомы
 
-- В `prod.log`: `Connection refused`, `RedisException: Connection lost`.
+- В `prod.log`: `Failed to create/write cache file`, `Unable to write in the "pools" directory`, `CacheException`, `Permission denied`.
+- `/health` показывает `cache` в статусе `down`/`degraded` (проверка `CacheCheck`, «Filesystem cache»).
 - Просел latency, кэш-промахи 100%.
-- `systemctl status redis-server` → `failed`.
+- Пользователей «разлогинивает» / не сохраняются сессии (если `var/sessions` недоступен).
 
 #### Возможные причины
 
-1. Сервис упал / OOM.
-2. Превышен `maxmemory`, eviction policy не настроена.
-3. Сломан `redis.conf`.
-4. Неверный `REDIS_URL`/`REDIS_PASSWORD` в env.
-5. AOF файл повреждён.
+1. Нет прав на запись в `var/cache/prod/pools` или `var/sessions/prod` (владелец после deploy — не `www-data`).
+2. Кончилось место на диске или inode (много мелких файлов кэша).
+3. Каталог кэша удалён или смонтирован read-only.
+4. Битые файлы пула после некорректного релиза/прерванного прогрева.
+5. Каждый релиз имеет собственный `var/cache` (файловый кэш не разделяется между релизами/серверами): после deploy кэш «холодный» — это штатно, не авария.
 
 #### Быстрая диагностика
 
 ```bash
-systemctl status redis-server --no-pager
-journalctl -u redis-server -n 200 --no-pager
-redis-cli ping
-redis-cli info server
-redis-cli info memory
-redis-cli info clients
-grep REDIS /var/www/<project>/shared/.env.local
+curl -s https://<domain>/health
+ls -ld /var/www/<project>/current/var/cache/prod/pools /var/www/<project>/current/var/sessions
+df -h /var/www/<project>
+df -i /var/www/<project>
+du -sh /var/www/<project>/current/var/cache/prod/pools
+php bin/console cache:pool:list
+sudo -u www-data test -w /var/www/<project>/current/var/cache/prod/pools && echo OK || echo NO_WRITE
+tail -n 100 /var/www/<project>/current/var/log/prod.log | grep -i cache
 ```
 
 #### Пошаговое решение
 
-1. Если Redis не отвечает — `systemctl restart redis-server`.
-2. Если падает на старте по AOF — посмотреть `journalctl`. В крайнем случае выключить AOF в `redis.conf` (`appendonly no`) и перезапустить, затем восстановить из RDB.
+1. Если проблема в правах — исправить владельца:
 
-   > **ВНИМАНИЕ.** Отключение AOF теряет последние записи между snapshot’ами. В нашем стеке Redis — это кэш и Doctrine messenger не использует Redis, поэтому потеря допустима, но фиксируйте инцидент.
+   ```bash
+   chown -R www-data:www-data /var/www/<project>/current/var
+   chmod -R u+rwX,g+rwX /var/www/<project>/current/var
+   ```
 
-3. Если `REDIS_URL` неверен — поправить `shared/.env.local`, очистить cache, reload php-fpm.
+2. Если диск/inode заполнены — освободить место (инцидент 46), затем очистить пулы.
+3. Если файлы кэша повреждены — очистить пул приложения (кэш — вторичные данные, он пересоберётся из БД):
+
+   ```bash
+   php bin/console cache:pool:clear cache.app
+   # либо, если команда не работает, из каталога current:
+   cd /var/www/<project>/current && rm -rf var/cache/prod/pools
+   php bin/console cache:warmup --env=prod
+   chown -R www-data:www-data var/cache
+   systemctl reload php8.5-fpm
+   ```
+
+   > **ВНИМАНИЕ.** `rm -rf` выполнять только из `/var/www/<project>/current/` и только для `var/cache/prod/pools`. Не трогать `var/sessions` (иначе все пользователи потеряют сессии) и `shared/`.
+
+4. После очистки ожидаем кратковременный рост нагрузки на БД («холодный» кэш публичных страниц, TTL `cache.public_page` — 3600 с).
 
 #### Проверка
 
 ```bash
-redis-cli ping             # PONG
-redis-cli info clients
-curl -s https://<domain>/health
+curl -s https://<domain>/health        # cache: up
+php bin/console cache:pool:list
 tail -n 50 /var/www/<project>/current/var/log/prod.log
 ```
 
 #### Профилактика
 
-- `Restart=on-failure`.
-- `maxmemory` + `maxmemory-policy allkeys-lru` (см. [23-cache-and-redis](23-cache-and-redis.md)).
-- Алерт на Redis down.
+- `cache:warmup` и `chown` в каждом релизе (deploy-скрипты).
+- Мониторинг свободного места и inode.
+- Права на `var/` выставлять при deploy.
+- При горизонтальном масштабировании файловый кэш не подходит: потребуется общий FS либо возврат к Redis (см. [ADR-0007](adr/0007-filesystem-cache-and-doctrine-messenger.md)).
 
 ---
 
@@ -1182,7 +1210,7 @@ tail -n 50 /var/www/<project>/current/var/log/prod.log
 
 #### Возможные причины
 
-1. Pool настроен на Redis, а Redis недоступен (см. инцидент 16).
+1. Каталог пулов (`var/cache/prod/pools`) недоступен для записи или повреждён (см. инцидент 16).
 2. Permissions на `var/cache/`.
 3. Битые файлы кэша после некорректного релиза.
 4. Отсутствует `cache:warmup` после deploy.
@@ -1193,12 +1221,12 @@ tail -n 50 /var/www/<project>/current/var/log/prod.log
 ls -ld /var/www/<project>/current/var/cache /var/www/<project>/current/var/cache/prod
 php bin/console cache:pool:list
 php bin/console cache:pool:prune
-redis-cli ping
+curl -s https://<domain>/health
 ```
 
 #### Пошаговое решение
 
-1. Если проблема в Redis — инцидент 16.
+1. Если проблема в файловом кэше (права, место, повреждённые файлы) — инцидент 16.
 2. Если проблема в FS — права:
 
    ```bash
@@ -1219,7 +1247,7 @@ tail -n 50 /var/www/<project>/current/var/log/prod.log
 #### Профилактика
 
 - `cache:warmup` в каждом релизе.
-- Мониторинг hit-rate Redis.
+- Мониторинг свободного места и inode под `var/cache`.
 
 ---
 
@@ -1254,14 +1282,21 @@ php bin/console cache:pool:list
    systemctl reload php8.5-fpm
    ```
 
-2. Очистить cache pool в Redis:
+2. Очистить cache pool приложения (файловый кэш `var/cache/prod/pools`):
 
    ```bash
    php bin/console cache:pool:clear cache.app
    php bin/console cache:pool:clear cache.system
    ```
 
-3. Никогда не делать `rm -rf var/cache/*` под `www-data`/без проверки путей.
+   Либо, при невозможности запуска консоли, удалить каталог пулов (только из `current/`):
+
+   ```bash
+   rm -rf var/cache/prod/pools
+   php bin/console cache:warmup --env=prod
+   ```
+
+3. Никогда не делать `rm -rf var/cache/*` (кроме точечного `var/cache/prod/pools` из шага 2) под `www-data`/без проверки путей.
 
    > **ВНИМАНИЕ.** `rm -rf var/cache` опасно, если случайно выполнено в `/`, в shared, или вне current. Только из `/var/www/<project>/current/`.
 
@@ -1300,7 +1335,7 @@ tail -n 50 /var/www/<project>/current/var/log/prod.log
 systemctl status <project>-messenger --no-pager
 journalctl -u <project>-messenger -n 200 --no-pager
 php bin/console messenger:stats
-sudo -u postgres psql -d <db_name> -c "SELECT queue_name, count(*) FROM messenger_messages GROUP BY queue_name;"
+mysql <db_name> -e "SELECT queue_name, count(*) FROM messenger_messages GROUP BY queue_name;"
 ```
 
 #### Пошаговое решение
@@ -1342,7 +1377,7 @@ journalctl -u <project>-messenger -n 50 --no-pager
 ```bash
 ps -ef | grep messenger:consume
 journalctl -u <project>-messenger -n 200 --no-pager
-sudo -u postgres psql -c "SELECT pid, state, wait_event, query FROM pg_stat_activity WHERE application_name LIKE '%consume%';"
+mysql -e "SELECT id, user, command, time, state, LEFT(info, 120) AS query FROM information_schema.PROCESSLIST WHERE command <> 'Sleep' ORDER BY time DESC;"
 ```
 
 #### Пошаговое решение
@@ -1387,7 +1422,7 @@ php bin/console messenger:stats
 
 ```bash
 php bin/console messenger:stats
-sudo -u postgres psql -d <db_name> -c "SELECT queue_name, count(*) FROM messenger_messages GROUP BY queue_name;"
+mysql <db_name> -e "SELECT queue_name, count(*) FROM messenger_messages GROUP BY queue_name;"
 journalctl -u <project>-messenger -n 200 --no-pager
 ```
 
@@ -1666,7 +1701,7 @@ curl -s https://<domain>/ | grep build/
 1. Не загружены роуты / не сделан `cache:warmup`.
 2. Сломан Vue admin entrypoint (manifest, см. инцидент 25).
 3. Security firewall неверно сконфигурен.
-4. Cookies/сессия в Redis недоступна.
+4. Каталог сессий (`var/sessions/<env>`) недоступен на запись.
 
 #### Быстрая диагностика
 
@@ -1710,7 +1745,7 @@ curl -I https://<domain>/admin/login
 4. CSRF-токен (см. инцидент 29).
 5. Изменился `password_hashers` алгоритм или migrate-on-login завершился ошибкой.
 6. `login_throttling` заблокировал IP/identifier (5 попыток / 15 минут).
-7. Сессии планово вынесены в Redis (целевое, см. [ADR-0007](../adr/0007-redis-cache-and-messenger.md) и [20-security-and-access-control](../20-security-and-access-control.md#session)) и Redis недоступен — на текущем стеке **не применимо**, фактически сессии хранятся в файлах.
+7. Сессии хранятся в файлах (нативные PHP-сессии, `framework.session.save_path: var/sessions/<env>`; см. [ADR-0007](adr/0007-filesystem-cache-and-doctrine-messenger.md) и [20-security-and-access-control](20-security-and-access-control.md#session)): если `var/sessions` очищен или не вынесен в `shared/`, при смене релиза пользователи разлогиниваются.
 
 #### Быстрая диагностика
 
@@ -1730,7 +1765,7 @@ grep -n "Admin login rejected" /var/www/<project>/current/var/log/security.log |
 
 1. `timedatectl` — проверить, что время синхронизировано (`NTP=active`).
 2. Проверить, что `APP_SECRET` стабилен между релизами.
-3. Проверить, что каталог сессий writable и не переполнен.
+3. Проверить, что каталог сессий (`var/sessions/<env>`) существует и доступен на запись, сессии не теряются между релизами.
 4. Если сменили алгоритм password hash — потребуется ре-хэш паролей при следующем входе (Symfony Security умеет авто-rehash).
 5. Если в `security.log` есть `Admin login rejected: invalid CSRF token...`:
    - проверить `Origin`/`Referer` в запросе `POST /admin/login`;
@@ -1772,7 +1807,7 @@ curl -I https://<domain>/admin/login
 
 #### Пошаговое решение
 
-1. Если массово — проверить session storage (файлы сессий) и доступность/права каталога сессий.
+1. Если массово — проверить session storage (права и место в `var/sessions/<env>`).
 2. Если у одного пользователя — попросить почистить cookies / hard-refresh.
 3. Для `POST /admin/login` дополнительно проверить:
    - в DevTools есть ли `Origin` и/или `Referer`;
@@ -2549,7 +2584,7 @@ ls -la public_html/build/
 
 - `df -h` показывает 100% или > 95%.
 - Любые операции записи падают.
-- PostgreSQL переходит в read-only.
+- MySQL падает или не может писать (`ERROR 1114: The table is full`, `No space left on device`).
 
 #### Возможные причины
 
@@ -2557,7 +2592,7 @@ ls -la public_html/build/
 2. Старые backup’ы не удаляются (см. инцидент 55).
 3. Старые `releases/` накопились.
 4. `var/cache` в множестве релизов.
-5. PG WAL не ротирует.
+5. Разрослись binary logs MySQL (`SHOW BINARY LOGS`) или файловый кэш `var/cache/*/pools`.
 
 #### Быстрая диагностика
 
@@ -2566,7 +2601,7 @@ df -h
 du -sh /var/www/<project>/releases/* | sort -h | tail
 du -sh /var/www/<project>/shared/backups/*
 du -sh /var/log/* | sort -h | tail
-du -sh /var/lib/postgresql/* | sort -h | tail
+du -sh /var/lib/mysql/* | sort -h | tail
 du -sh /var/www/<project>/shared/public_html/uploads
 ```
 
@@ -2585,7 +2620,7 @@ du -sh /var/www/<project>/shared/public_html/uploads
 2. Удалить старые backup’ы по retention (см. [36-backup-restore](36-backup-restore.md)).
 3. Запустить logrotate (инцидент 56).
 4. `apt clean`, `journalctl --vacuum-time=14d`.
-5. Если PG в read-only — освободить место и `systemctl restart postgresql`.
+5. Если MySQL остановился из-за нехватки места — освободить место (в т.ч. `PURGE BINARY LOGS BEFORE NOW() - INTERVAL 3 DAY;`, если нет репликации) и `systemctl restart mysql`.
 
 #### Проверка
 
@@ -2607,7 +2642,7 @@ du -sh /var/www/<project>/releases/
 #### Симптомы
 
 - Случайные падения процессов.
-- В `dmesg` / `syslog`: `Out of memory: Killed process ... php-fpm/postgres/redis`.
+- В `dmesg` / `syslog`: `Out of memory: Killed process ... php-fpm/mysqld`.
 
 #### Быстрая диагностика
 
@@ -2638,7 +2673,7 @@ top
 
 ```bash
 free -m
-systemctl status php8.5-fpm postgresql redis-server <project>-messenger --no-pager
+systemctl status php8.5-fpm mysql <project>-messenger --no-pager
 ```
 
 #### Профилактика
@@ -2663,15 +2698,15 @@ uptime
 top
 htop
 ps aux --sort=-%cpu | head
-sudo -u postgres psql -c "SELECT pid, state, query FROM pg_stat_activity WHERE state <> 'idle' ORDER BY query_start;"
+mysql -e "SHOW FULL PROCESSLIST;"
 ```
 
 #### Пошаговое решение
 
 1. Найти процесса-виновника.
-2. Если PostgreSQL — слать `EXPLAIN`, смотреть медленные запросы (инцидент 50).
+2. Если MySQL (`mysqld` в топе) — слать `EXPLAIN`, смотреть медленные запросы (инцидент 50).
 3. Если PHP-FPM — найти долгий запрос (slow log), профилировать.
-4. Если Redis — `redis-cli --latency`, `redis-cli slowlog get`.
+4. Если нагрузка от регенерации файлового кэша (холодный кэш после deploy/очистки) — дождаться прогрева, проверить `cache:warmup` (инциденты 16–18).
 
 #### Проверка
 
@@ -2682,7 +2717,7 @@ top
 
 #### Профилактика
 
-- Slow log в FPM, в PG (`log_min_duration_statement`).
+- Slow log в FPM, в MySQL (`slow_query_log`, `long_query_time`).
 - Метрики CPU / load в мониторинге.
 
 ---
@@ -2697,7 +2732,7 @@ top
 #### Возможные причины
 
 1. Медленный SQL.
-2. Кэш не работает (Redis недоступен).
+2. Кэш не работает (файловый кэш недоступен или холодный, см. инцидент 16).
 3. Нет OPcache / cache:warmup.
 4. CPU/RAM (инциденты 47, 48).
 5. Внешние API без таймаутов.
@@ -2706,14 +2741,14 @@ top
 
 ```bash
 curl -o /dev/null -s -w 'http_code=%{http_code} ttfb=%{time_starttransfer}s total=%{time_total}s\n' https://<domain>/
-redis-cli ping
+curl -s https://<domain>/health
 tail -n 200 /var/www/<project>/current/var/log/prod.log
-sudo -u postgres psql -c "SELECT pid, query, state, now()-query_start AS dur FROM pg_stat_activity WHERE state <> 'idle' ORDER BY dur DESC LIMIT 10;"
+mysql -e "SELECT id, user, time, state, LEFT(info, 120) AS query FROM information_schema.PROCESSLIST WHERE command <> 'Sleep' ORDER BY time DESC LIMIT 10;"
 ```
 
 #### Пошаговое решение
 
-1. Проверить cache (инцидент 17), Redis (16), DB (50).
+1. Проверить cache (инциденты 16, 17), DB (50).
 2. Прогреть Symfony cache: `cache:clear && cache:warmup`.
 3. Проверить OPcache: `php -i | grep opcache.enable`.
 
@@ -2734,34 +2769,35 @@ curl -o /dev/null -s -w 'ttfb=%{time_starttransfer}s\n' https://<domain>/
 
 #### Симптомы
 
-- В PG логе — `duration: ... ms statement: ...`.
+- В slow query log MySQL — записи `Query_time: ...` (или в `performance_schema`).
 - Сайт тормозит.
 
 #### Быстрая диагностика
 
 ```bash
-sudo -u postgres psql -d <db_name> -c "SELECT pid, now()-query_start AS dur, state, query FROM pg_stat_activity WHERE state <> 'idle' ORDER BY dur DESC LIMIT 20;"
-sudo -u postgres psql -d <db_name> -c "SELECT * FROM pg_stat_statements ORDER BY total_exec_time DESC LIMIT 20;"
-tail -n 500 /var/log/postgresql/postgresql-18-main.log | grep -i duration
+mysql -e "SELECT id, user, time, state, LEFT(info, 200) AS query FROM information_schema.PROCESSLIST WHERE command <> 'Sleep' ORDER BY time DESC LIMIT 20;"
+mysql -e "SELECT DIGEST_TEXT, COUNT_STAR, ROUND(SUM_TIMER_WAIT/1e12, 2) AS total_s, ROUND(AVG_TIMER_WAIT/1e9, 1) AS avg_ms FROM performance_schema.events_statements_summary_by_digest WHERE SCHEMA_NAME = '<db_name>' ORDER BY SUM_TIMER_WAIT DESC LIMIT 20\G"
+mysql -e "SHOW VARIABLES LIKE 'slow_query_log%'; SHOW VARIABLES LIKE 'long_query_time';"
+tail -n 200 /var/lib/mysql/*-slow.log
 ```
 
 #### Пошаговое решение
 
-1. Снять `EXPLAIN (ANALYZE, BUFFERS)` для подозрительного запроса.
-2. Создать индекс (через миграцию, в production — `CREATE INDEX CONCURRENTLY`).
+1. Снять `EXPLAIN ANALYZE` (MySQL 8.4) для подозрительного запроса: `mysql <db_name> -e "EXPLAIN ANALYZE SELECT ..."`.
+2. Создать индекс (через миграцию, в production — online DDL: `ALTER TABLE ... ADD INDEX ..., ALGORITHM=INPLACE, LOCK=NONE`).
 
-   > **ВНИМАНИЕ.** Не запускать `CREATE INDEX` на больших таблицах в часы пик без `CONCURRENTLY`.
+   > **ВНИМАНИЕ.** Не запускать `CREATE INDEX` / `ALTER TABLE` на больших таблицах в часы пик без явных `ALGORITHM=INPLACE, LOCK=NONE` (если операция не поддерживает online-режим, MySQL вернёт ошибку вместо блокировки таблицы).
 
 3. Если виноват N+1 в коде — фиксить в коде, релиз.
 
 #### Проверка
 
-- Запрос быстрее, среднее время в `pg_stat_statements` упало.
+- Запрос быстрее, среднее время в `performance_schema.events_statements_summary_by_digest` упало.
 
 #### Профилактика
 
-- Включён `pg_stat_statements`.
-- `log_min_duration_statement = 500ms` (или подобное).
+- Включён `performance_schema` (по умолчанию в MySQL 8.4).
+- `slow_query_log = ON`, `long_query_time = 0.5` (или подобное).
 - Code review с обращением внимания на N+1.
 
 ---
@@ -2776,7 +2812,7 @@ tail -n 500 /var/log/postgresql/postgresql-18-main.log | grep -i duration
 #### Возможные причины
 
 1. Cron / timer не запустился.
-2. `pg_dump` упал.
+2. `mysqldump` упал (нет прав, `Access denied`, обрыв соединения).
 3. Кончилось место.
 
 #### Быстрая диагностика
@@ -2793,7 +2829,7 @@ df -h
 1. Запустить backup вручную:
 
    ```bash
-   PGPASSWORD=... pg_dump -h 127.0.0.1 -U <user> -d <db_name> --format=custom --file=/var/www/<project>/shared/backups/db/<db_name>-manual-$(date +%Y%m%d-%H%M%S).dump
+   mysqldump --single-transaction --routines --triggers --no-tablespaces --default-character-set=utf8mb4 -h 127.0.0.1 -u <user> -p <db_name> | gzip -9 > /var/www/<project>/shared/backups/db/<db_name>-manual-$(date +%Y%m%d-%H%M%S).sql.gz
    ```
 
 2. Починить timer/cron, проверить путь и права.
@@ -2802,7 +2838,7 @@ df -h
 
 ```bash
 ls -lat /var/www/<project>/shared/backups/db/ | head
-pg_restore --list /var/www/<project>/shared/backups/db/<file>.dump | head
+gzip -t /var/www/<project>/shared/backups/db/<file>.sql.gz && echo OK
 ```
 
 #### Профилактика
@@ -2816,15 +2852,15 @@ pg_restore --list /var/www/<project>/shared/backups/db/<file>.dump | head
 
 См. инцидент 51 + проверить:
 
-- Права user’а БД на `pg_dump`.
+- Права user’а БД на `mysqldump` (`SELECT`, `SHOW VIEW`, `TRIGGER`, `EVENT`; при `--no-tablespaces` привилегия `PROCESS` не нужна).
 - Свободное место на диске.
-- Корректный пароль (`PGPASSWORD` или `~/.pgpass`).
-- Доступность хоста PG.
+- Корректный пароль (`~/.my.cnf` / `--defaults-extra-file` с правами `600`; deploy-скрипты используют временный defaults-extra-file из `DATABASE_URL`).
+- Доступность хоста MySQL.
 
 #### Быстрая диагностика
 
 ```bash
-PGPASSWORD=... psql -h 127.0.0.1 -U <user> -d <db_name> -c "SELECT 1;"
+mysql -h 127.0.0.1 -u <user> -p <db_name> -e "SELECT 1;"
 df -h
 ls -ld /var/www/<project>/shared/backups/db/
 ```
@@ -2874,35 +2910,35 @@ rclone ls <remote>:<bucket>/db/ | head
 
 #### Симптомы
 
-- `pg_restore` падает.
+- `gzip -dc <file>.sql.gz | mysql <db>` падает.
 - Восстановленная БД пустая или с ошибками.
 
 #### Возможные причины
 
 1. Битый файл backup.
-2. Несовместимость версий PG.
+2. Несовместимость версий/коллаций MySQL (дамп из другой версии, `utf8mb4_0900_ai_ci` недоступна на MariaDB/MySQL 5.7), либо `max_allowed_packet` слишком мал.
 3. Не та БД / не тот user.
-4. FK не создаются из-за `--no-owner` без правильной схемы.
+4. FK не создаются из-за порядка загрузки (дамп без `SET FOREIGN_KEY_CHECKS=0`) или несовместимых типов/коллаций.
 
 #### Быстрая диагностика
 
 ```bash
-pg_restore --list /var/www/<project>/shared/backups/db/<file>.dump | head
-file /var/www/<project>/shared/backups/db/<file>.dump
-sudo -u postgres psql -c "SELECT version();"
+gzip -t /var/www/<project>/shared/backups/db/<file>.sql.gz
+gzip -dc /var/www/<project>/shared/backups/db/<file>.sql.gz | head -n 40
+mysql -e "SELECT VERSION(); SHOW VARIABLES LIKE 'max_allowed_packet';"
 ```
 
 #### Пошаговое решение
 
-1. Проверить, что бэкап целый (`--list` показывает таблицы).
+1. Проверить, что бэкап целый (`gzip -t` без ошибок, в начале дампа есть `CREATE TABLE`).
 2. Восстанавливать в **отдельную** БД, не поверх production:
 
    ```bash
-   createdb -h 127.0.0.1 -U <user> <db_name>_restored
-   pg_restore -h 127.0.0.1 -U <user> --dbname=<db_name>_restored --no-owner --no-privileges /var/www/<project>/shared/backups/db/<file>.dump
+   mysql -h 127.0.0.1 -u <user> -p -e "CREATE DATABASE <db_name>_restored CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;"
+   gzip -dc /var/www/<project>/shared/backups/db/<file>.sql.gz | mysql -h 127.0.0.1 -u <user> -p <db_name>_restored
    ```
 
-3. Затем — переключение приложения через смену `DATABASE_URL` / переименование БД.
+3. Затем — переключение приложения через смену `DATABASE_URL` (в MySQL нет `RENAME DATABASE`: переименование делается только повторной заливкой дампа в БД с нужным именем).
 
 > **ВНИМАНИЕ.** Не восстанавливать поверх production-БД без явного решения и резерва текущего состояния.
 
@@ -3020,7 +3056,7 @@ df -h
 #### Возможные причины
 
 1. БД недоступна (см. инцидент 11/12).
-2. Redis недоступен (16).
+2. Файловый кэш недоступен (16).
 3. Миграции не применены.
 4. `var/cache` / `var/log` не writable.
 
@@ -3030,7 +3066,6 @@ df -h
 curl -s https://<domain>/health
 curl -s https://<domain>/health/ready    # если разделено
 php bin/console doctrine:migrations:status
-redis-cli ping
 ls -ld /var/www/<project>/current/var/cache /var/www/<project>/current/var/log
 ```
 
@@ -3355,7 +3390,7 @@ hostname
 uptime
 df -h
 free -m
-systemctl status nginx php8.5-fpm postgresql redis-server <project>-messenger --no-pager
+systemctl status nginx php8.5-fpm mysql <project>-messenger --no-pager
 readlink /var/www/<project>/current
 git -C /var/www/<project>/current log --oneline -n 10
 tail -n 500 /var/www/<project>/current/var/log/prod.log > /tmp/incident-prod.log
@@ -3400,18 +3435,20 @@ journalctl --since '-2h' --no-pager > /tmp/incident-journal.log
    tail -n 50 /var/log/php8.5-fpm.log
    ```
 
-5. **Проверить PostgreSQL.**
+5. **Проверить MySQL.**
 
    ```bash
-   systemctl status postgresql --no-pager
-   sudo -u postgres psql -c "SELECT 1;"
+   systemctl status mysql --no-pager
+   mysql -e "SELECT 1;"
    ```
 
-6. **Проверить Redis.**
+6. **Проверить файловый кэш и сессии.**
 
    ```bash
-   systemctl status redis-server --no-pager
-   redis-cli ping
+   df -h /var/www/<project>
+   df -i /var/www/<project>
+   sudo -u www-data test -w /var/www/<project>/current/var/cache && echo OK || echo NO_WRITE
+   sudo -u www-data test -w /var/www/<project>/current/var/sessions && echo OK || echo NO_WRITE
    ```
 
 7. **Проверить ресурсы.**
@@ -3512,28 +3549,29 @@ php bin/console cache:pool:list
 php bin/console cache:pool:clear cache.app
 ```
 
-### PostgreSQL
+### MySQL
 
 ```bash
-systemctl status postgresql --no-pager
-psql --version
-sudo -u postgres psql -c "SELECT version();"
-sudo -u postgres psql -c "\l"
-sudo -u postgres psql -c "\du"
-sudo -u postgres psql -d <db_name> -c "SELECT count(*) FROM pg_stat_activity;"
-sudo -u postgres psql -d <db_name> -c "SELECT pid, state, query FROM pg_stat_activity WHERE state <> 'idle' ORDER BY query_start;"
+systemctl status mysql --no-pager
+mysql --version
+mysql -e "SELECT VERSION();"
+mysql -e "SHOW DATABASES;"
+mysql -e "SELECT user, host FROM mysql.user;"
+mysql -e "SHOW GLOBAL STATUS LIKE 'Threads_connected';"
+mysql -e "SHOW FULL PROCESSLIST;"
+mysql -e "SELECT id, user, time, state, LEFT(info, 120) AS query FROM information_schema.PROCESSLIST WHERE command <> 'Sleep' ORDER BY time DESC;"
 ```
 
-### Redis
+### Файловый кэш
 
 ```bash
-systemctl status redis-server --no-pager
-redis-cli ping
-redis-cli info
-redis-cli info memory
-redis-cli info clients
-redis-cli slowlog get 20
-redis-cli --latency
+php bin/console cache:pool:list
+php bin/console cache:pool:clear cache.app
+du -sh /var/www/<project>/current/var/cache/prod/pools
+rm -rf /var/www/<project>/current/var/cache/prod/pools   # только из current/, затем cache:warmup
+df -h /var/www/<project>
+df -i /var/www/<project>
+curl -s https://<domain>/health
 ```
 
 ### Messenger
@@ -3602,10 +3640,10 @@ systemctl status certbot.timer --no-pager
 
 ```bash
 ls -lat /var/www/<project>/shared/backups/db/ | head
-PGPASSWORD=... pg_dump -h 127.0.0.1 -U <user> -d <db_name> --format=custom --file=/var/www/<project>/shared/backups/db/<db_name>-$(date +%Y%m%d-%H%M%S).dump
-pg_restore --list /var/www/<project>/shared/backups/db/<file>.dump | head
-createdb -h 127.0.0.1 -U <user> <db_name>_restored
-pg_restore -h 127.0.0.1 -U <user> --dbname=<db_name>_restored --no-owner --no-privileges /var/www/<project>/shared/backups/db/<file>.dump
+mysqldump --single-transaction --routines --triggers --no-tablespaces --default-character-set=utf8mb4 -h 127.0.0.1 -u <user> -p <db_name> | gzip -9 > /var/www/<project>/shared/backups/db/<db_name>-$(date +%Y%m%d-%H%M%S).sql.gz
+gzip -t /var/www/<project>/shared/backups/db/<file>.sql.gz && echo OK
+mysql -h 127.0.0.1 -u <user> -p -e "CREATE DATABASE <db_name>_restored CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;"
+gzip -dc /var/www/<project>/shared/backups/db/<file>.sql.gz | mysql -h 127.0.0.1 -u <user> -p <db_name>_restored
 rsync -av /var/www/<project>/shared/backups/uploads/<date>/ /var/www/<project>/shared/public_html/uploads/
 ```
 
@@ -3700,7 +3738,7 @@ Follow-up задачи:
 
 В таких случаях:
 
-1. Зафиксировать текущее состояние: `pg_dump`, `tar` критичных директорий, `journalctl` за период, `iptables-save`, список процессов.
+1. Зафиксировать текущее состояние: `mysqldump`, `tar` критичных директорий, `journalctl` за период, `iptables-save`, список процессов.
 2. Перевести сайт в maintenance mode (инцидент 62).
 3. Эскалировать.
 4. Не запускать новые миграции / restore / deploy до решения.

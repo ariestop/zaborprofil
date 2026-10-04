@@ -19,7 +19,7 @@ zaborprofil/
 │   ├── routes.yaml
 │   ├── services.yaml
 │   └── bundles.php
-├── docker/                    # Dockerfiles + nginx/postgres/php config (dev only)
+├── docker/                    # Dockerfiles + nginx/mysql/php config (dev only)
 ├── docs/                      # Эта документация (русская)
 ├── migrations/                # Doctrine migrations
 ├── public_html/               # Web root (NOT public/)
@@ -198,7 +198,7 @@ src/Shared/
 | `packages/security.yaml` | Firewalls, role hierarchy, password hashers |
 | `packages/doctrine.yaml` | DBAL/ORM, naming strategy, prod cache pools |
 | `packages/messenger.yaml` | Doctrine transport `async` + `failed` |
-| `packages/cache.yaml` | Redis app/system cache + пулы `cache.public_page`, `cache.settings`, `cache.menu`, `cache.seo` |
+| `packages/cache.yaml` | Filesystem app cache (`cache.adapter.filesystem`), `cache.adapter.system` + пулы `cache.public_page`, `cache.settings`, `cache.menu`, `cache.seo` |
 | `packages/monolog.yaml` | Каналы (audit, admin, seo, lead, media, deploy, business, critical) и handlers |
 | `packages/twig.yaml` | Twig глобалы и extensions |
 | `packages/framework.yaml` | Базовые настройки framework bundle |
@@ -285,14 +285,16 @@ docker/
 │   ├── Dockerfile
 │   ├── php.ini
 │   └── xdebug.ini
-└── postgres/init.sql
+└── mysql/
+    ├── init.sh
+    └── my.cnf
 ```
 
 Только для local dev. На production не используется.
 
 ## `var/` и `vendor/` и `node_modules/`
 
-Игнорируются Git. На VPS `var/log/` и `var/cache/` — внутри release; `var/share/` — целевое (shared между релизами для долгоживущих данных).
+Игнорируются Git. На VPS `var/log/` и `var/cache/` — внутри release (файловый кэш приложения лежит в `var/cache/<env>/pools/app`, поэтому у каждого релиза свой кэш и после деплоя требуется прогрев); `var/sessions/<env>` — файловые PHP-сессии; `var/share/` — целевое (shared между релизами для долгоживущих данных).
 
 ## `public_html/`
 

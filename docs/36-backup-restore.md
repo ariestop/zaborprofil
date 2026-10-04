@@ -4,49 +4,58 @@
 
 | Объект | Способ | Частота | Retention | Где |
 |---|---|---|---|---|
-| PostgreSQL (full) | `pg_dump --format=custom` | ежедневно | 30 дней | `/var/www/zaborprofil/shared/backups/db/` |
-| PostgreSQL (per-deploy) | `pg_dump` перед миграцией | per deploy | `BACKUP_RETENTION_DAYS` (по умолчанию 14 дней) | `shared/backups/db/` |
+| MySQL (full) | `mysqldump --single-transaction` + `gzip -9` | ежедневно | 30 дней | `/var/www/zaborprofil/shared/backups/db/` |
+| MySQL (per-deploy) | `mysqldump` перед миграцией | per deploy | `BACKUP_RETENTION_DAYS` (по умолчанию 14 дней) | `shared/backups/db/` |
 | `public_html/uploads/` | `rsync` или `tar` | ежедневно / per deploy | `BACKUP_RETENTION_DAYS` для per-deploy архивов | `shared/backups/uploads/` |
 | `.env.local` (зашифрованный) | копия в безопасное хранилище | при изменении | бессрочно | offline / vault |
-| Redis | RDB снапшот | (опционально) ежечасно | 7 дней | `shared/backups/redis/` |
 
-> Redis в этом проекте — **cache + очередь сообщений**. Терять данные можно с минимальным ущербом (cache rebuild + retry messages из failed). Backup не критичен; целевое — RDB на всякий случай.
+> Redis в проекте не используется. Кэш приложения хранится в файлах (`var/cache/<env>/pools/`) и **не бэкапится**: он полностью пересобирается из БД. Очередь сообщений (Doctrine transport, таблица `messenger_messages`) и failed-сообщения находятся в MySQL и входят в обычный дамп БД. Сессии (`var/sessions/<env>/`) тоже не бэкапятся: потеря означает только повторный вход администраторов.
 
 Git не является хранилищем backup'ов. В Git можно хранить только воспроизводимое dev-состояние: migrations, fixtures и при необходимости маленький обезличенный dev snapshot/seed. Production/staging dumps, per-deploy backups, Docker volumes, uploads с реальными файлами, секреты и персональные данные в Git не коммитятся. Правила для dev-состояния описаны в [47-dev-database-state](47-dev-database-state.md).
 
-## PostgreSQL backup
+## MySQL backup
 
 ```bash
-PGPASSWORD=... pg_dump \
+mysqldump \
+    --single-transaction \
+    --routines \
+    --triggers \
+    --no-tablespaces \
+    --default-character-set=utf8mb4 \
     -h 127.0.0.1 \
-    -U zaborprofil \
-    -d zaborprofil \
-    --format=custom \
-    --compress=9 \
-    --file=/var/www/zaborprofil/shared/backups/db/zaborprofil-$(date +%Y%m%d-%H%M%S).dump
+    -u zaborprofil -p \
+    zaborprofil \
+    | gzip -9 > /var/www/zaborprofil/shared/backups/db/zaborprofil-$(date +%Y%m%d-%H%M%S).sql.gz
+
+# Проверка архива
+gzip -t /var/www/zaborprofil/shared/backups/db/zaborprofil-20260502-090000.sql.gz
 ```
 
-Внутри `tools/deploy/deploy-production.sh` это уже выполняется перед `migrations:migrate`. Per-deploy dump сохраняется в `shared/backups/db/<release>_database.dump` и проверяется через `pg_restore -l`.
+`--single-transaction` даёт консистентный снимок InnoDB без блокировки таблиц. Пароль не следует передавать в argv: использовать `~/.my.cnf` или `--defaults-extra-file` с правами `600`.
 
-## PostgreSQL restore
+Внутри `tools/deploy/deploy-production.sh` это уже выполняется перед `migrations:migrate`: `tools/deploy/common.sh` строит временный defaults-extra-file из `DATABASE_URL` (пароль не попадает в argv) и вызывает `mysqldump_cli`. Per-deploy dump сохраняется в `shared/backups/db/<release>_database.sql.gz` и проверяется через `gzip -t`.
+
+> DDL в MySQL не транзакционен (неявный commit), поэтому неудачная миграция может примениться частично и откатить её нельзя. Backup перед боевой миграцией обязателен.
+
+## MySQL restore
 
 ```bash
 # Создать пустую БД (если нужно)
-createdb -h 127.0.0.1 -U zaborprofil zaborprofil_restored
+mysql -h 127.0.0.1 -u zaborprofil -p -e \
+    "CREATE DATABASE zaborprofil_restored CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci"
 
 # Восстановить
-pg_restore -h 127.0.0.1 -U zaborprofil \
-    --dbname=zaborprofil_restored \
-    --no-owner --no-privileges \
-    /var/www/zaborprofil/shared/backups/db/zaborprofil-20260502-090000.dump
+gzip -dc /var/www/zaborprofil/shared/backups/db/zaborprofil-20260502-090000.sql.gz \
+    | mysql -h 127.0.0.1 -u zaborprofil -p --default-character-set=utf8mb4 zaborprofil_restored
 ```
 
 Затем — переключение приложения:
 
 1. Остановить worker: `systemctl stop zaborprofil-messenger`.
-2. Изменить `DATABASE_URL` в `shared/.env.local` на восстановленную БД (или переименовать БД).
+2. Изменить `DATABASE_URL` в `shared/.env.local` на восстановленную БД (в MySQL нет `RENAME DATABASE`, поэтому БД «переименовывается» только повторной заливкой дампа под нужным именем).
 3. `systemctl reload php8.5-fpm`.
-4. Smoke test, затем worker on.
+4. Очистить файловый кэш приложения: `php bin/console cache:pool:clear cache.app` (кэш мог содержать данные до восстановления).
+5. Smoke test, затем worker on.
 
 ## Uploads backup
 
@@ -72,7 +81,7 @@ rsync -av \
 
 Любой бэкап вне VPS — должен быть зашифрован:
 
-- `gpg --symmetric --cipher-algo AES256 backup.dump` или
+- `gpg --symmetric --cipher-algo AES256 backup.sql.gz` или
 - AWS S3 SSE / hetzner object storage SSE-C.
 
 Ключ — отдельно от backups, в менеджере паролей команды.
@@ -82,7 +91,8 @@ rsync -av \
 Бэкап без проверки = нет бэкапа. Минимум:
 
 - ежедневный smoke restore на отдельный сервер / docker;
-- проверка `pg_restore -l backup.dump` (читает headers).
+- проверка `gzip -t backup.sql.gz` и просмотр начала дампа (`gzip -dc backup.sql.gz | head`);
+- восстановление во временную БД и проверка количества записей (так делает `tools/deploy/restore-rehearsal.sh`).
 
 ## Disaster recovery
 
@@ -90,11 +100,11 @@ rsync -av \
 
 | Случай | Действия |
 |---|---|
-| Удалена строка/таблица | `pg_restore` нужной таблицы из последнего dump в `_restored` БД, копия данных в основную |
-| Полный crash БД | Поднять Postgres на резервной машине, восстановить latest dump, переключить `DATABASE_URL` |
+| Удалена строка/таблица | Залить последний dump в `_restored` БД, перенести нужные данные в основную (`INSERT ... SELECT` между БД либо `mysqldump <db> <table>` из восстановленной) |
+| Полный crash БД | Поднять MySQL 8.4 на резервной машине, восстановить latest dump, переключить `DATABASE_URL` |
 | Crash uploads | rsync из shared/backups/ |
 | Crash сервера | Подготовленный playbook (Ansible — целевое); восстановление из off-site backup |
-| Утечка секретов | rotate `APP_SECRET`, DB password, Redis password, Telegram token; logout всех админов |
+| Утечка секретов | rotate `APP_SECRET`, DB password, Telegram token; logout всех админов |
 
 ## Restore drill
 
@@ -111,11 +121,11 @@ rsync -av \
 CONFIRM_RESTORE_REHEARSAL=yes \
 APP_ROOT=/var/www/zaborprofil \
 tools/deploy/restore-rehearsal.sh \
-    --db-backup /var/www/zaborprofil/shared/backups/db/<backup>.dump \
+    --db-backup /var/www/zaborprofil/shared/backups/db/<backup>.sql.gz \
     --uploads-backup /var/www/zaborprofil/shared/backups/uploads/<backup>.tar.gz
 ```
 
-Скрипт восстанавливает dump во временную БД, проверяет наличие public tables,
+Скрипт проверяет архив через `gzip -t`, восстанавливает dump во временную БД `<db>_restore_rehearsal_<timestamp>`, проверяет наличие public tables,
 распаковывает uploads archive во временную директорию и удаляет временные данные
 после успешного rehearsal.
 
@@ -129,7 +139,7 @@ tools/deploy/restore-rehearsal.sh \
 
 ## Чек-лист настройки backup
 
-- [ ] cron / systemd timer для ежедневного `pg_dump`.
+- [ ] cron / systemd timer для ежедневного `mysqldump`.
 - [ ] cron / systemd timer для ежедневного rsync uploads.
 - [ ] Off-site копирование (S3 / Hetzner / B2).
 - [ ] Encryption.

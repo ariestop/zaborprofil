@@ -8,8 +8,11 @@ use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 use Symfony\Component\Uid\Ulid;
 
-final class Version20260511211500 extends AbstractMigration
+final class Version20261004000200 extends AbstractMigration
 {
+    private const string HOME_PAGE_ULID = '01JV6Q5X5H3Q8Q1F6H2T4M7N8P';
+    private const string SLIDER_BLOCK_ULID = '01JV6Q5X5H3Q8Q1F6H2T4M7N8Q';
+
     public function getDescription(): string
     {
         return 'Seed default homepage (/) with slider block for local/dev bootstrap.';
@@ -19,9 +22,8 @@ final class Version20260511211500 extends AbstractMigration
     {
         unset($schema);
 
-        $identifierSqlType = $this->contentIdentifierSqlType();
-        $pageId = $this->identifierValue('01JV6Q5X5H3Q8Q1F6H2T4M7N8P', $identifierSqlType);
-        $sliderBlockId = $this->identifierValue('01JV6Q5X5H3Q8Q1F6H2T4M7N8Q', $identifierSqlType);
+        $pageId = bin2hex(Ulid::fromString(self::HOME_PAGE_ULID)->toBinary());
+        $sliderBlockId = bin2hex(Ulid::fromString(self::SLIDER_BLOCK_ULID)->toBinary());
         $now = '2026-05-11 21:15:00';
         $sliderContent = json_encode([
             'items' => [
@@ -42,7 +44,7 @@ final class Version20260511211500 extends AbstractMigration
                     'buttonHref' => '/portfolio/',
                 ],
             ],
-        ], \JSON_THROW_ON_ERROR);
+        ], \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_UNICODE);
         $sliderSettings = json_encode([
             'className' => '',
             'autoplay' => true,
@@ -54,7 +56,8 @@ final class Version20260511211500 extends AbstractMigration
 
         $this->addSql(
             'INSERT INTO content_pages (id, parent_id, type, title, slug, path, h1, status, template, sort_order, indexable, visibility, published_at, scheduled_publish_at, scheduled_unpublish_at, created_by, updated_by, published_by, created_at, updated_at, deleted_at)
-             SELECT ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, NULL, ?, ?, NULL
+             SELECT UNHEX(?), NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, NULL, ?, ?, NULL
+             FROM DUAL
              WHERE NOT EXISTS (
                 SELECT 1 FROM content_pages existing
                 WHERE existing.path = ? AND existing.deleted_at IS NULL
@@ -69,7 +72,7 @@ final class Version20260511211500 extends AbstractMigration
                 'published',
                 'default',
                 0,
-                true,
+                1,
                 'public',
                 $now,
                 $now,
@@ -80,9 +83,9 @@ final class Version20260511211500 extends AbstractMigration
 
         $this->addSql(
             'INSERT INTO content_page_blocks (id, page_id, type, name, position, is_enabled, visibility, content, settings, created_at, updated_at)
-             SELECT ?, page.id, ?, ?, ?, ?, ?, ?::jsonb, ?::jsonb, ?, ?
+             SELECT UNHEX(?), page.id, ?, ?, ?, ?, ?, ?, ?, ?, ?
              FROM content_pages page
-             WHERE page.id = ?
+             WHERE page.id = UNHEX(?)
                AND NOT EXISTS (
                     SELECT 1
                     FROM content_page_blocks existing
@@ -94,7 +97,7 @@ final class Version20260511211500 extends AbstractMigration
                 'slider',
                 'Главный слайдер',
                 0,
-                true,
+                1,
                 'public',
                 $sliderContent,
                 $sliderSettings,
@@ -110,24 +113,9 @@ final class Version20260511211500 extends AbstractMigration
     {
         unset($schema);
 
-        $identifierSqlType = $this->contentIdentifierSqlType();
-        $pageId = $this->identifierValue('01JV6Q5X5H3Q8Q1F6H2T4M7N8P', $identifierSqlType);
+        $pageId = bin2hex(Ulid::fromString(self::HOME_PAGE_ULID)->toBinary());
 
-        $this->addSql('DELETE FROM content_page_blocks WHERE page_id = ?', [$pageId]);
-        $this->addSql('DELETE FROM content_pages WHERE id = ?', [$pageId]);
-    }
-
-    private function contentIdentifierSqlType(): string
-    {
-        $dataType = $this->connection->fetchOne(
-            "SELECT data_type FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'content_pages' AND column_name = 'id'",
-        );
-
-        return $dataType === 'uuid' ? 'UUID' : 'VARCHAR(26)';
-    }
-
-    private function identifierValue(string $ulid, string $identifierSqlType): string
-    {
-        return $identifierSqlType === 'UUID' ? Ulid::fromString($ulid)->toRfc4122() : $ulid;
+        $this->addSql('DELETE FROM content_page_blocks WHERE page_id = UNHEX(?)', [$pageId]);
+        $this->addSql('DELETE FROM content_pages WHERE id = UNHEX(?)', [$pageId]);
     }
 }

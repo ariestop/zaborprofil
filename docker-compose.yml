@@ -12,16 +12,13 @@ services:
       APP_DEBUG: ${APP_DEBUG:-1}
       APP_SECRET: ${APP_SECRET}
       DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: ${REDIS_URL}
       MESSENGER_TRANSPORT_DSN: ${MESSENGER_TRANSPORT_DSN}
       MAILER_DSN: ${MAILER_DSN}
       SITE_URL: ${SITE_URL:-http://localhost}
       DEFAULT_URI: ${DEFAULT_URI:-http://localhost}
       XDEBUG_MODE: ${XDEBUG_MODE:-off}
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
+      mysql:
         condition: service_healthy
     volumes:
       - ./:/var/www/html
@@ -39,41 +36,26 @@ services:
       - uploads_data:/var/www/html/public_html/uploads:ro
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
 
-  postgres:
-    image: postgres:18
+  mysql:
+    image: mysql:8.4
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-zaborprofil}
-      POSTGRES_USER: ${POSTGRES_USER:-zaborprofil}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-zaborprofil}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-zaborprofil}
+      MYSQL_USER: ${MYSQL_USER:-zaborprofil}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-zaborprofil}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
     volumes:
-      - postgres_data:/var/lib/postgresql
-      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/10-init.sql:ro
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/zaborprofil.cnf:ro
+      - ./docker/mysql/init.sh:/docker-entrypoint-initdb.d/10-init.sh:ro
     healthcheck:
       test:
         - CMD-SHELL
-        - pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}
+        - mysqladmin ping -h 127.0.0.1 -uroot -p"$${MYSQL_ROOT_PASSWORD}" --silent
       interval: 10s
       timeout: 5s
       retries: 10
-
-  redis:
-    image: redis:8-alpine
-    restart: unless-stopped
-    command:
-      - redis-server
-      - --appendonly
-      - "yes"
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test:
-        - CMD
-        - redis-cli
-        - ping
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      start_period: 30s
 
   node:
     build:
@@ -92,12 +74,13 @@ services:
   adminer:
     image: adminer:latest
     restart: unless-stopped
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql
     depends_on:
-      - postgres
+      - mysql
     ports:
       - ${ADMINER_PORT:-8080}:8080
 
 volumes:
-  postgres_data:
-  redis_data:
+  mysql_data:
   uploads_data:

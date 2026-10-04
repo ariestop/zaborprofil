@@ -43,7 +43,7 @@
                                     loading="lazy"
                                 >
                             {% else %}
-                                <div class="absolute inset-0 bg-gradient-to-br from-slate-900 to-slate-700"></div>
+                                <div class="absolute inset-0 bg-linear-to-br from-slate-900 to-slate-700"></div>
                             {% endif %}
 
                             <div class="absolute inset-0 bg-black/30"></div>
@@ -78,14 +78,14 @@
             <div class="pointer-events-none absolute inset-x-0 top-1/2 z-20 hidden -translate-y-1/2 justify-between px-3 md:flex lg:px-6">
                 <button
                     type="button"
-                    class="js-site-slider-prev pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-800 shadow transition hover:bg-white"
+                    class="js-site-slider-prev pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-800 shadow-sm transition hover:bg-white"
                     aria-label="{{ sliderSettings.a11yLabels.prevSlide }}"
                 >
                     <span aria-hidden="true">←</span>
                 </button>
                 <button
                     type="button"
-                    class="js-site-slider-next pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-800 shadow transition hover:bg-white"
+                    class="js-site-slider-next pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-800 shadow-sm transition hover:bg-white"
                     aria-label="{{ sliderSettings.a11yLabels.nextSlide }}"
                 >
                     <span aria-hidden="true">→</span>

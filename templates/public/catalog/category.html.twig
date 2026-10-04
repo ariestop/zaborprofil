@@ -17,7 +17,7 @@
             {% if products %}
                 <div class="mt-5 grid gap-4 md:grid-cols-3">
                     {% for product in products %}
-                        <a class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-emerald-300 hover:shadow-md" href="{{ product.path }}">
+                        <a class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition hover:border-emerald-300 hover:shadow-md" href="{{ product.path }}">
                             <h3 class="text-lg font-semibold text-slate-950">{{ product.name }}</h3>
                             {% if product.summary %}
                                 <p class="mt-2 text-sm leading-6 text-slate-600">{{ product.summary }}</p>

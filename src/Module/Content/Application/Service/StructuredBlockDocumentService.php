@@ -8,14 +8,14 @@ use App\Module\Content\Domain\Enum\BlockType;
 use InvalidArgumentException;
 use Symfony\Component\Uid\Ulid;
 
-final class StructuredBlockDocumentService
+final readonly class StructuredBlockDocumentService
 {
-    private const RICH_TEXT_KEYS = ['html', 'text', 'answer', 'description'];
+    private const array RICH_TEXT_KEYS = ['html', 'text', 'answer', 'description'];
 
     public function __construct(
-        private readonly BlockSchemaRegistry $blockSchemas,
-        private readonly StructuredBlockPayloadValidator $payloadValidator,
-        private readonly StructuredRichTextSanitizer $richTextSanitizer,
+        private BlockSchemaRegistry $blockSchemas,
+        private StructuredBlockPayloadValidator $payloadValidator,
+        private StructuredRichTextSanitizer $richTextSanitizer,
     ) {
     }
 

@@ -19,7 +19,7 @@ export default function SystemDatabasePage() {
 
   return (
     <div>
-      <PageHeader title="База данных" description="Диагностика подключения и версии PostgreSQL." />
+      <PageHeader title="База данных" description="Диагностика подключения и версии MySQL." />
       <Card title="Состояние подключения">
         <div className="flex items-center gap-2">
           <Badge tone={databaseQuery.data.connected ? 'success' : 'warning'}>

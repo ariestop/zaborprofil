@@ -66,7 +66,7 @@
 
 ### Идемпотентность
 
-POST-эндпоинты для side-effect операций должны принимать `Idempotency-Key` header. Сервер кеширует ответ на ключ + endpoint в Redis на 24ч.
+POST-эндпоинты для side-effect операций должны принимать `Idempotency-Key` header. Сервер кеширует ответ на ключ + endpoint в файловом кэше (`cache.app`) на 24ч.
 
 ### Ошибки
 

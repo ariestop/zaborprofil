@@ -389,7 +389,7 @@ export default function AssetBuildWidget() {
                   <label key={target.id} className="flex cursor-pointer items-start gap-2.5">
                     <input
                       type="checkbox"
-                      className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                      className="mt-0.5 h-4 w-4 rounded-sm border-slate-300 text-emerald-600 focus:ring-emerald-500"
                       checked={selectedTargets.includes(target.id)}
                       disabled={isRunning || isLoading}
                       onChange={() => { toggleTarget(target.id) }}
@@ -438,7 +438,7 @@ export default function AssetBuildWidget() {
               </div>
               <pre
                 ref={logContainer}
-                className="max-h-56 overflow-auto whitespace-pre-wrap break-words p-3 text-xs leading-5 text-slate-100"
+                className="max-h-56 overflow-auto whitespace-pre-wrap wrap-break-word p-3 text-xs leading-5 text-slate-100"
               >{hasLogs ? status.logs : 'Лог появится после запуска сборки.'}</pre>
             </div>
           </div>

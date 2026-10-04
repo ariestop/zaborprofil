@@ -6,8 +6,8 @@
 
 Триггеры:
 
-- push в `main`/`develop`/`feature/**`/`fix/**`;
-- pull_request в `main`/`develop`.
+- push в `main`/`develop`/`dev`/`feature/**`/`fix/**`;
+- pull_request в `main`/`develop`/`dev`.
 
 Концепт `concurrency: ci-${{ github.ref }}; cancel-in-progress: true` — отменяет старый CI при пуше нового коммита.
 
@@ -15,13 +15,12 @@
 
 Сервисы:
 
-- `postgres:18`
-- `redis:8`
+- `mysql:8.4` (БД `zaborprofil_test`; Redis-сервиса нет)
 
 Шаги:
 
 1. Checkout.
-2. Setup PHP 8.5 (`shivammathur/setup-php@v2`) + extensions `ctype, iconv, intl, mbstring, opcache, pdo_pgsql, redis`.
+2. Setup PHP 8.5 (`shivammathur/setup-php@v2`) + extensions `ctype, iconv, intl, mbstring, opcache, pdo_mysql`.
 3. `composer validate --strict`.
 4. `composer install --prefer-dist`.
 5. `composer audit`.
@@ -29,13 +28,13 @@
 7. `composer check:cs` (php-cs-fixer dry-run).
 8. `composer check:phpstan`.
 9. `composer check:rector` (dry-run).
-10. `cp .env.test.ci .env.test.local` — переключает тесты на Postgres.
+10. `cp .env.test.ci .env.test.local` — переключает тесты на MySQL.
 11. `doctrine:migrations:status --env=test`.
 12. `doctrine:migrations:migrate --env=test --allow-no-migration`.
 13. `doctrine:schema:validate --env=test --skip-sync`.
 14. `lint:container --env=test`.
 15. `lint:twig templates --env=test`.
-16. Bash syntax check для `tools/deploy/*.sh`.
+16. Bash syntax check для `tools/deploy/*.sh`; ShellCheck и `tests/shell/deploy-beget.sh` для Beget-деплоя (проверка `mysql://`, симлинков `shared/`, прогрева кэша, отката).
 17. `php bin/console app:smoke:test --env=test`.
 18. `composer test` (PHPUnit).
 
@@ -55,7 +54,7 @@
 
 Дополнительно запускается `E2E Smoke` job:
 
-1. Поднимает Postgres/Redis services.
+1. Поднимает `mysql:8.4` service (Redis не используется).
 2. Применяет migrations в `test` env.
 3. Создаёт e2e admin user через `tools/testing/seed-e2e-admin.php`.
 4. Собирает frontend.
@@ -64,7 +63,21 @@
 7. Запускает `npm run test:e2e:smoke` (happy-path + mutation smoke + negative 422 contract check).
 8. При падении публикует Playwright artifacts (`test-results`, `playwright-report`, app server log).
 
+### `.github/workflows/deploy-staging-beget.yml`
+
+Быстрый деплой staging `https://dev.zaborprofil.ru` на Beget. Подробности, секреты и настройка сервера: [49-beget-staging-deploy](49-beget-staging-deploy.md).
+
+- Триггеры: push в ветку `dev` и `workflow_dispatch` (вход `ref`).
+- `concurrency: deploy-staging-beget` (`cancel-in-progress: false`), environment `staging`.
+- Шаги: проверка наличия секретов (`DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`; без них деплой пропускается с предупреждением), быстрые проверки (`php -l`, `bash -n`), сборка frontend (Node 25.9.0) в `frontend-build.tar.gz`, загрузка архива и запуск `tools/deploy/deploy-beget.sh` через SSH stdin, smoke-check (без пароля 401, с `STAGING_BASIC_AUTH` — 200 и `X-Robots-Tag: noindex`) и прогрев публичных страниц. На сервере: MySQL 8.4 (`pdo_mysql`), файловый кэш в `shared/cache`, сессии в `shared/sessions`, Redis не нужен.
+- Полный CI не ждёт: он запускается отдельным workflow `CI` (push в `dev` и PR в `dev` включены).
+- Production этим workflow не деплоится.
+
 ### `.github/workflows/deploy.yml`
+
+> **Статус: отключён по умолчанию (legacy, VPS).** Автозапуск по push в `main` выполняется только если задана repository variable `VPS_DEPLOY_ENABLED=true` (Settings -> Secrets and variables -> Actions -> Variables). Условие стоит на каждом job; при выключенной переменной run завершается со статусом skipped. Ручной запуск (`workflow_dispatch`) доступен всегда.
+>
+> Как включить обратно: создать переменную `VPS_DEPLOY_ENABLED` со значением `true` (или `gh variable set VPS_DEPLOY_ENABLED --body true`); для production нужны секреты `STAGING_SSH_*`/`PRODUCTION_SSH_*` (см. раздел Secrets). Как выключить: удалить переменную или задать любое значение, кроме `true`.
 
 Триггеры:
 
@@ -78,9 +91,19 @@ Concurrency: `deploy-${{ github.ref }}; cancel-in-progress: false`.
 
 Гейт: на текущем SHA должен быть успешный run workflow’а `CI`. Если нет — deploy отказывается.
 
+#### Job `build-frontend`
+
+- Зависит от `verify-ci`.
+- Setup Node 25.9.0, `npm ci`, `npm run build` (включает `tsc --noEmit`).
+- Упаковывает `public_html/build/` и файл `BUILD_COMMIT` (SHA сборки) в `frontend-build.tar.gz` и сохраняет как artifact `frontend-build`.
+- Один и тот же архив уходит и на staging, и на production: собирается один раз, на VPS Node.js не нужен.
+
+Deploy-скрипты получают архив через `FRONTEND_BUILD_ARCHIVE` и точный коммит через `DEPLOY_COMMIT`. Скрипт проверяет наличие `build/.vite/manifest.json` и совпадение `BUILD_COMMIT` с коммитом релиза; при несовпадении deploy останавливается до переключения `current`. Если `FRONTEND_BUILD_ARCHIVE` не задан (ручной deploy), скрипт собирает frontend на сервере через `npm ci && npm run build`, как раньше.
+
 #### Job `deploy-staging`
 
 - Environment: `staging`.
+- Зависит от `verify-ci` и `build-frontend`; перед запуском скрипта по SCP загружается `frontend-build.tar.gz`.
 - Срабатывает при push в `develop`/`staging`, а также как первый шаг tag-based production pipeline.
 - SCP заливает `tools/deploy/*` на staging-сервер в `/tmp/zaborprofil-deploy`.
 - SSH запускает `deploy-staging.sh` с переменными окружения из `secrets.STAGING_*`.
@@ -121,7 +144,7 @@ GitHub Environments дают:
 - Symfony container lint.
 - Twig lint.
 - Deploy scripts syntax.
-- PHPUnit (Postgres).
+- PHPUnit (MySQL).
 - `app:smoke:test` для базовой release readiness.
 - npm audit.
 - Frontend typecheck как отдельный quality gate.

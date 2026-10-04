@@ -29,7 +29,7 @@ final readonly class DeployInfoService
             $decoded = json_decode((string) file_get_contents($this->releaseInfoPath), true);
             if (\is_array($decoded)) {
                 foreach ($payload as $key => $value) {
-                    if (array_key_exists($key, $decoded)) {
+                    if (\array_key_exists($key, $decoded)) {
                         $payload[$key] = $decoded[$key];
                     }
                 }

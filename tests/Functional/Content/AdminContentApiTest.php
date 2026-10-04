@@ -663,7 +663,7 @@ final class AdminContentApiTest extends WebTestCase
             if (!\is_array($entry)) {
                 continue;
             }
-            if (($entry['entityType'] ?? null) === 'App\\Module\\Content\\Domain\\Entity\\PageBlock') {
+            if (($entry['entityType'] ?? null) === \App\Module\Content\Domain\Entity\PageBlock::class) {
                 $hasPageBlockEntry = true;
                 break;
             }

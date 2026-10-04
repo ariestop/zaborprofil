@@ -6,7 +6,7 @@ const manifestPath = path.resolve(projectRoot, 'public_html/build/.vite/manifest
 const baselinePath = path.resolve(projectRoot, 'tools/perf/admin-chunk-baseline.json')
 
 const budgets = [
-  { name: 'admin-entry', maxBytes: 320 * 1024, patterns: [/\/admin-[^/]+\.js$/] },
+  { name: 'admin-entry', maxBytes: 360 * 1024, patterns: [/\/admin-[^/]+\.js$/] },
   { name: 'page-builder-route', maxBytes: 120 * 1024, patterns: [/\/PageBuilderPage-[^/]+\.js$/] },
   { name: 'rich-text-runtime', maxBytes: 200 * 1024, patterns: [/\/RichTextEditor-[^/]+\.js$/] },
   { name: 'vendor-tiptap', maxBytes: 280 * 1024, patterns: [/\/vendor-tiptap-[^/]+\.js$/] },

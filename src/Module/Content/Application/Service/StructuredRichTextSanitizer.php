@@ -6,7 +6,7 @@ namespace App\Module\Content\Application\Service;
 
 final class StructuredRichTextSanitizer
 {
-    private const ALLOWED_TAGS = '<p><br><strong><b><em><i><u><ul><ol><li><h2><h3><h4><blockquote><a><span>';
+    private const string ALLOWED_TAGS = '<p><br><strong><b><em><i><u><ul><ol><li><h2><h3><h4><blockquote><a><span>';
 
     public function sanitize(string $html): string
     {

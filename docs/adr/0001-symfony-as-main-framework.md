@@ -40,8 +40,8 @@ ORM — Doctrine 3 / DBAL 4 (см. [ADR-0004](0004-doctrine-orm-usage.md)).
 
 - **Зрелая архитектура.** Все нужные компоненты уже есть (`Security`, `Messenger`, `Validator`, `Serializer`, `Mailer`, `Cache`, `Console`, `Form`, `Twig`).
 - **Modular monolith friendly.** DI и autowire дают чистую сборку без bundle’ов на каждый модуль.
-- **Doctrine.** Лучшая ORM для PHP с поддержкой PostgreSQL JSONB, Migrations, attribute-based mapping.
-- **Производительность.** OPcache + AOT cache (`cache:warmup`) + Doctrine result cache на Redis дают TTFB ≤ 200 мс для warm public_page cache.
+- **Doctrine.** Лучшая ORM для PHP с поддержкой MySQL (JSON-тип), Migrations, attribute-based mapping.
+- **Производительность.** OPcache + AOT cache (`cache:warmup`) + Doctrine result cache на filesystem-кэше дают TTFB ≤ 200 мс для warm public_page cache.
 - **LTS / upgrade.** Symfony LTS даёт долгий support; semver-совместимые upgrades с rector-рецептами.
 - **Экосистема для AI-агентов.** Symfony — мейнстрим, обширная официальная документация, AI-агенты быстро ориентируются.
 - **Безопасность.** Symfony Security даёт voters, firewall, CSRF, password hashing, login throttling — без необходимости писать «свой auth».
@@ -90,7 +90,7 @@ ORM — Doctrine 3 / DBAL 4 (см. [ADR-0004](0004-doctrine-orm-usage.md)).
 | DI-контейнер замусоривается | Средняя | Средний | Ревью + правило «один сервис = одна способность» (см. [02-architecture](../02-architecture.md) §«Почему Service layer должен быть осмысленным») |
 | Symfony EOL и переход на 9 LTS дороже ожидаемого | Низкая | Высокий | Application/Domain без Symfony — облегчает миграцию; следить за upgrade path |
 | Зависимость от bundle-экосистемы (3rd party bundles перестают развиваться) | Низкая | Средний | Минимум 3rd party bundles; всё критичное — официальные symfony/* и doctrine/* |
-| Performance issue под нагрузкой | Низкая | Средний | OPcache + preload (целевое) + Redis cache + Doctrine result cache; profiling в случае инцидента |
+| Performance issue под нагрузкой | Низкая | Средний | OPcache + preload (целевое) + filesystem cache + Doctrine result cache; profiling в случае инцидента |
 
 ## Когда пересмотреть решение
 

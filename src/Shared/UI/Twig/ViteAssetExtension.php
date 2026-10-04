@@ -13,8 +13,11 @@ use Twig\TwigFunction;
  * render fingerprinted `<link>` and `<script>` tags for a given Vite entry
  * (for example `assets/site/app.ts` or `admin/app.ts`).
  *
- * Production-only manifest mode is supported — running the Vite dev server
- * is intentionally out of scope here; local workflow is `npm run build`.
+ * Two modes:
+ *  - manifest mode (default, production): fingerprinted files from `manifest.json`;
+ *  - dev-server mode: when `$devServerUrl` is set (env `VITE_DEV_SERVER_URL`, local
+ *    development only) the entries are loaded straight from the running Vite dev
+ *    server with HMR, and neither `npm run build` nor the manifest is needed.
  */
 final class ViteAssetExtension extends AbstractExtension
 {
@@ -23,10 +26,25 @@ final class ViteAssetExtension extends AbstractExtension
      */
     private ?array $manifest = null;
 
+    /**
+     * Entries already rendered in dev-server mode (a dev entry is one module that
+     * pulls in its own CSS, so it must be emitted once per page).
+     *
+     * @var array<string, true>
+     */
+    private array $devEntriesRendered = [];
+
+    private bool $devClientRendered = false;
+
+    private readonly ?string $devServerUrl;
+
     public function __construct(
         private readonly string $manifestPath,
         private readonly string $publicBuildPath,
+        ?string $devServerUrl = null,
     ) {
+        $url = null === $devServerUrl ? '' : rtrim(trim($devServerUrl), '/');
+        $this->devServerUrl = '' === $url ? null : $url;
     }
 
     public function getFunctions(): array
@@ -39,6 +57,12 @@ final class ViteAssetExtension extends AbstractExtension
 
     public function renderLinkTags(string $entry): Markup
     {
+        if (null !== $this->devServerUrl) {
+            // In dev the CSS arrives through the entry module itself (injected by Vite),
+            // so the entry is emitted here too: the public layout only calls this helper.
+            return $this->renderDevEntry($entry);
+        }
+
         $entryData = $this->resolveEntry($entry);
         $cssFiles = $this->collectCssFiles($entryData);
 
@@ -55,6 +79,10 @@ final class ViteAssetExtension extends AbstractExtension
 
     public function renderScriptTags(string $entry): Markup
     {
+        if (null !== $this->devServerUrl) {
+            return $this->renderDevEntry($entry);
+        }
+
         $entryData = $this->resolveEntry($entry);
         $file = $entryData['file'] ?? null;
 
@@ -71,6 +99,44 @@ final class ViteAssetExtension extends AbstractExtension
             ),
             'UTF-8',
         );
+    }
+
+    /**
+     * Emits the Vite HMR client (plus the React Fast Refresh preamble, once per
+     * page) and the entry module served by the dev server. Repeated calls for the
+     * same entry return an empty string so a page that asks for both link and
+     * script tags does not load the module twice.
+     */
+    private function renderDevEntry(string $entry): Markup
+    {
+        if (isset($this->devEntriesRendered[$entry])) {
+            return new Markup('', 'UTF-8');
+        }
+
+        $this->devEntriesRendered[$entry] = true;
+        $base = (string) $this->devServerUrl;
+        $tags = '';
+
+        if (!$this->devClientRendered) {
+            $this->devClientRendered = true;
+
+            // Required by @vitejs/plugin-react when the HTML is not served by Vite itself.
+            $tags .= \sprintf(
+                '<script type="module">import RefreshRuntime from %s;RefreshRuntime.injectIntoGlobalHook(window);window.$RefreshReg$=()=>{};window.$RefreshSig$=()=>(type)=>type;window.__vite_plugin_react_preamble_installed__=true;</script>',
+                json_encode($base.'/@react-refresh', \JSON_UNESCAPED_SLASHES | \JSON_HEX_TAG | \JSON_THROW_ON_ERROR),
+            );
+            $tags .= \sprintf(
+                '<script type="module" src="%s"></script>',
+                htmlspecialchars($base.'/@vite/client', \ENT_QUOTES | \ENT_HTML5, 'UTF-8'),
+            );
+        }
+
+        $tags .= \sprintf(
+            '<script type="module" src="%s"></script>',
+            htmlspecialchars($base.'/'.ltrim($entry, '/'), \ENT_QUOTES | \ENT_HTML5, 'UTF-8'),
+        );
+
+        return new Markup($tags, 'UTF-8');
     }
 
     /**

@@ -70,13 +70,7 @@ final class SystemCenterDangerousActionsTest extends WebTestCase
      */
     private function containsAuditAction(array $entries, string $expectedAction): bool
     {
-        foreach ($entries as $entry) {
-            if (($entry['action'] ?? null) === $expectedAction) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($entries, fn ($entry) => ($entry['action'] ?? null) === $expectedAction);
     }
 
     /**

@@ -20,7 +20,7 @@ export function BlockPreview({ block }: BlockPreviewProps) {
     <div className="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
       <div className="mb-2 text-xs uppercase text-slate-500">{block.type}</div>
       {ModulePreview !== undefined ? <ModulePreview block={block} /> : (
-        <pre className="max-h-56 overflow-auto rounded bg-slate-50 p-3 text-xs dark:bg-slate-900">
+        <pre className="max-h-56 overflow-auto rounded-sm bg-slate-50 p-3 text-xs dark:bg-slate-900">
           {JSON.stringify(block.content, null, 2)}
         </pre>
       )}

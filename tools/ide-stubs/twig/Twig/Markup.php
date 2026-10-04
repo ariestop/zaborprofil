@@ -7,8 +7,8 @@ namespace Twig;
 class Markup implements \Countable, \JsonSerializable, \Stringable
 {
     public function __construct(
-        private string $content,
-        private ?string $charset,
+        private readonly string $content,
+        private readonly ?string $charset,
     ) {
     }
 

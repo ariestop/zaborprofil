@@ -12,8 +12,8 @@
 - Node.js `>=25.9.0`
 - npm `>=11.12.1` (входит в состав Node.js 25.9.0)
 - nginx `>=1.30.0`
-- PostgreSQL `>=18`
-- Redis `>=8`
+- MySQL `>=8.4`
+- Redis не нужен: кэш приложения — файловый (Symfony filesystem cache)
 
 Прочее:
 
@@ -26,9 +26,9 @@
 - React + TypeScript для админ-панели
 - PHPUnit, PHPStan, PHP-CS-Fixer, Rector
 
-Docker используется только для локальной разработки. Staging и production разворачиваются на VPS без Docker: Nginx, PHP-FPM, PostgreSQL, Redis, systemd и Git-based release deploy.
+Docker используется только для локальной разработки. Staging и production разворачиваются на VPS без Docker: Nginx, PHP-FPM, MySQL, systemd и Git-based release deploy.
 
-В локальной разработке PostgreSQL должен использоваться из Docker-контейнера `postgres`. Локально установленный на хосте PostgreSQL не используется для миграций, fixtures, тестов и `make quality`.
+В локальной разработке MySQL должен использоваться из Docker-контейнера `mysql`. Локально установленный на хосте MySQL не используется для миграций, fixtures, тестов и `make quality`.
 
 ## Структура
 
@@ -115,7 +115,7 @@ make health
 
 Новый ПК разработки должен получать одинаковую структуру и базовые данные через Git: Doctrine migrations + dev fixtures/seed data. Docker images, Docker volumes и реальные backup-файлы БД в Git не хранятся.
 
-Локальная dev/test БД живёт в Docker. Команды `make migrate`, `make reset-db`, `make test-db`, `make test` и `make quality` выполняются через контейнеры и подключаются к PostgreSQL по `postgres:5432` внутри Docker-сети. С хоста к этой же БД можно подключаться через `127.0.0.1:15432`.
+Локальная dev/test БД живёт в Docker. Команды `make migrate`, `make reset-db`, `make test-db`, `make test` и `make quality` выполняются через контейнеры и подключаются к MySQL по `mysql:3306` внутри Docker-сети. С хоста к этой же БД можно подключаться через `127.0.0.1:13306`.
 
 Для пересоздания локальной БД используйте:
 
@@ -161,6 +161,8 @@ Staging и production деплоятся без Docker через release-based 
 ```
 
 Production deploy разрешен только после успешного staging deploy, с backup перед миграциями и health-check после переключения релиза.
+
+Staging-стенд `https://dev.zaborprofil.ru` на хостинге Beget деплоится автоматически из ветки `dev` (GitHub Actions по SSH, без Docker; MySQL 8.4, файловый кэш и сессии в `shared/`, Redis не нужен): `docs/49-beget-staging-deploy.md`.
 
 Документация:
 

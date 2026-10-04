@@ -21,13 +21,9 @@ services:
     volumes:
       - node_modules:/var/www/html/node_modules
 
-  postgres:
+  mysql:
     ports:
-      - ${POSTGRES_PORT:-15432}:5432
-
-  redis:
-    ports:
-      - ${REDIS_PORT:-16379}:6379
+      - ${MYSQL_PORT:-13306}:3306
 
 volumes:
   php_cache:

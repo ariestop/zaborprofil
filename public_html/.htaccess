@@ -1,0 +1,22 @@
+# Front controller для Apache (Beget и любой Apache-хостинг). Nginx этот файл игнорирует.
+# Директивы AuthType/AuthUserFile/Require в .htaccess не использовать: на Beget они ломают PHP (500).
+# Basic Auth на staging проверяет приложение (StagingAccessSubscriber).
+
+DirectoryIndex index.php
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # PHP как CGI не получает заголовок Authorization сам: пробрасываем в окружение.
+    # Правило обязано стоять до перенаправления на index.php.
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Загруженные файлы никогда не исполняются как PHP.
+    RewriteRule ^uploads/.*\.(php[0-9]?|phtml|phar)$ - [F,L]
+
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>

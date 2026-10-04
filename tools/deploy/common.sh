@@ -9,6 +9,12 @@ KEEP_RELEASES="${KEEP_RELEASES:-5}"
 PHP_BIN="${PHP_BIN:-php}"
 COMPOSER_BIN="${COMPOSER_BIN:-composer}"
 NPM_BIN="${NPM_BIN:-npm}"
+# Prebuilt frontend (tar.gz made in GitHub Actions, see .github/workflows/deploy.yml).
+# When set, the server does not need Node.js: no `npm ci` / `npm run build`.
+# When empty, deploy falls back to building on the server (manual deploys).
+FRONTEND_BUILD_ARCHIVE="${FRONTEND_BUILD_ARCHIVE:-}"
+# Exact commit to deploy. Keeps the code in sync with the prebuilt frontend.
+DEPLOY_COMMIT="${DEPLOY_COMMIT:-}"
 PHP_FPM_SERVICE="${PHP_FPM_SERVICE:-php8.5-fpm}"
 NGINX_SERVICE="${NGINX_SERVICE:-nginx}"
 WORKER_SERVICE="${WORKER_SERVICE:-zaborprofil-messenger}"
@@ -143,6 +149,17 @@ clone_release() {
   local release_dir="$2"
 
   git clone --depth=1 --branch "$branch" "$REPOSITORY" "$release_dir"
+
+  if [[ -n "$DEPLOY_COMMIT" ]]; then
+    local head_commit
+    head_commit="$(git -C "$release_dir" rev-parse HEAD)"
+
+    if [[ "$head_commit" != "$DEPLOY_COMMIT" ]]; then
+      log "Branch $branch moved to $head_commit, checkout requested commit $DEPLOY_COMMIT"
+      git -C "$release_dir" fetch --depth=1 origin "$DEPLOY_COMMIT"
+      git -C "$release_dir" checkout --detach FETCH_HEAD
+    fi
+  fi
 }
 
 link_shared_paths() {
@@ -155,12 +172,53 @@ link_shared_paths() {
   ln -sfn "$SHARED_DIR/var/log" "$release_dir/var/log"
 }
 
-install_release_dependencies() {
+install_prebuilt_frontend() {
+  local release_dir="$1"
+  local commit="$2"
+  local extract_dir="$release_dir/.frontend-extract"
+
+  [[ -f "$FRONTEND_BUILD_ARCHIVE" ]] || fail "Frontend build archive not found: $FRONTEND_BUILD_ARCHIVE"
+
+  log "Install prebuilt frontend from $FRONTEND_BUILD_ARCHIVE"
+  rm -rf "$extract_dir"
+  mkdir -p "$extract_dir"
+  tar -xzf "$FRONTEND_BUILD_ARCHIVE" --no-same-owner -C "$extract_dir"
+
+  [[ -f "$extract_dir/build/.vite/manifest.json" ]] || fail "Prebuilt frontend has no Vite manifest (build/.vite/manifest.json)"
+
+  # The archive must be built from the same commit that is being deployed,
+  # otherwise templates and asset hashes could disagree.
+  local built_commit
+  built_commit="$(tr -d '[:space:]' <"$extract_dir/BUILD_COMMIT" 2>/dev/null || true)"
+  if [[ -n "$commit" && "$built_commit" != "$commit" ]]; then
+    fail "Prebuilt frontend commit (${built_commit:-unknown}) does not match release commit ($commit)"
+  fi
+
+  rm -rf "$release_dir/public_html/build"
+  mkdir -p "$release_dir/public_html"
+  mv "$extract_dir/build" "$release_dir/public_html/build"
+  rm -rf "$extract_dir"
+}
+
+build_frontend_on_server() {
   local release_dir="$1"
 
-  (cd "$release_dir" && "$COMPOSER_BIN" install --no-dev --prefer-dist --no-interaction --optimize-autoloader)
+  log "No prebuilt frontend provided, build on server with $NPM_BIN"
   (cd "$release_dir" && "$NPM_BIN" ci)
   (cd "$release_dir" && "$NPM_BIN" run build)
+}
+
+install_release_dependencies() {
+  local release_dir="$1"
+  local commit="${2:-}"
+
+  (cd "$release_dir" && "$COMPOSER_BIN" install --no-dev --prefer-dist --no-interaction --optimize-autoloader)
+
+  if [[ -n "$FRONTEND_BUILD_ARCHIVE" ]]; then
+    install_prebuilt_frontend "$release_dir" "$commit"
+  else
+    build_frontend_on_server "$release_dir"
+  fi
 }
 
 run_release_console_tasks() {
@@ -208,7 +266,7 @@ cleanup_old_releases() {
 }
 
 cleanup_old_backups() {
-  find "$DB_BACKUP_DIR" -type f -name '*.dump' -mtime +"$BACKUP_RETENTION_DAYS" -delete 2>/dev/null || true
+  find "$DB_BACKUP_DIR" -type f -name '*.sql.gz' -mtime +"$BACKUP_RETENTION_DAYS" -delete 2>/dev/null || true
   find "$UPLOADS_BACKUP_DIR" -type f -name '*.tar.gz' -mtime +"$BACKUP_RETENTION_DAYS" -delete 2>/dev/null || true
 }
 
@@ -219,36 +277,61 @@ load_shared_env() {
   set +a
 }
 
-export_pg_env_from_database_url() {
+MYSQL_DEFAULTS_FILE=""
+MYSQL_DB_NAME=""
+
+# Разбирает DATABASE_URL (mysql://user:pass@host:port/db) и создаёт временный
+# defaults-файл для клиентов mysql/mysqldump, чтобы пароль не попадал в argv.
+prepare_mysql_client_from_database_url() {
   local database_url="${1:-${DATABASE_URL:-}}"
 
   [[ -n "$database_url" ]] || fail "DATABASE_URL is not set"
 
-  local pg_env_file
-  pg_env_file="$(mktemp)"
+  cleanup_mysql_client_files
 
-  DATABASE_URL_TO_PARSE="$database_url" "$PHP_BIN" <<'PHP' >"$pg_env_file"
+  MYSQL_DEFAULTS_FILE="$(mktemp)"
+  chmod 600 "$MYSQL_DEFAULTS_FILE"
+
+  local db_name_file
+  db_name_file="$(mktemp)"
+
+  DATABASE_URL_TO_PARSE="$database_url" DB_NAME_FILE="$db_name_file" "$PHP_BIN" <<'PHP' >"$MYSQL_DEFAULTS_FILE"
 <?php
 $url = getenv('DATABASE_URL_TO_PARSE') ?: '';
 $parts = parse_url($url);
-if ($parts === false || ($parts['scheme'] ?? '') === '') {
-    fwrite(STDERR, "DATABASE_URL is not parseable\n");
+if ($parts === false || !in_array($parts['scheme'] ?? '', ['mysql', 'mariadb'], true)) {
+    fwrite(STDERR, "DATABASE_URL must use mysql:// scheme\n");
     exit(1);
 }
-foreach ([
-    'PGHOST' => $parts['host'] ?? '127.0.0.1',
-    'PGPORT' => (string) ($parts['port'] ?? 5432),
-    'PGDATABASE' => isset($parts['path']) ? ltrim($parts['path'], '/') : '',
-    'PGUSER' => $parts['user'] ?? '',
-    'PGPASSWORD' => $parts['pass'] ?? '',
-] as $key => $value) {
-    echo 'export ', $key, '=', escapeshellarg($value), PHP_EOL;
-}
+$quote = static fn (string $value): string => '"'.addcslashes($value, "\"\\").'"';
+echo "[client]\n";
+echo 'host=', $quote($parts['host'] ?? '127.0.0.1'), "\n";
+echo 'port=', (int) ($parts['port'] ?? 3306), "\n";
+echo 'user=', $quote(rawurldecode($parts['user'] ?? '')), "\n";
+echo 'password=', $quote(rawurldecode($parts['pass'] ?? '')), "\n";
+echo "default-character-set=utf8mb4\n";
+file_put_contents((string) getenv('DB_NAME_FILE'), rawurldecode(ltrim($parts['path'] ?? '', '/')));
 PHP
 
-  # shellcheck disable=SC1091
-  source "$pg_env_file"
-  rm -f "$pg_env_file"
+  MYSQL_DB_NAME="$(cat "$db_name_file")"
+  rm -f "$db_name_file"
+
+  [[ -n "$MYSQL_DB_NAME" ]] || fail "Database name is missing in DATABASE_URL"
+}
+
+cleanup_mysql_client_files() {
+  if [[ -n "${MYSQL_DEFAULTS_FILE:-}" ]]; then
+    rm -f "$MYSQL_DEFAULTS_FILE"
+    MYSQL_DEFAULTS_FILE=""
+  fi
+}
+
+mysql_cli() {
+  mysql --defaults-extra-file="$MYSQL_DEFAULTS_FILE" "$@"
+}
+
+mysqldump_cli() {
+  mysqldump --defaults-extra-file="$MYSQL_DEFAULTS_FILE" "$@"
 }
 
 backup_database() {
@@ -260,19 +343,19 @@ backup_database() {
     return
   fi
 
-  require_command pg_dump
+  require_command mysqldump
+  require_command gzip
   load_shared_env
 
   mkdir -p "$DB_BACKUP_DIR"
 
-  local backup_file="$DB_BACKUP_DIR/${release_name}_database.dump"
-  export_pg_env_from_database_url "$DATABASE_URL"
+  local backup_file="$DB_BACKUP_DIR/${release_name}_database.sql.gz"
+  prepare_mysql_client_from_database_url "$DATABASE_URL"
 
-  pg_dump --format=custom --file="$backup_file"
+  mysqldump_cli --single-transaction --routines --triggers --no-tablespaces --default-character-set=utf8mb4 "$MYSQL_DB_NAME" | gzip -9 >"$backup_file"
+  cleanup_mysql_client_files
 
-  if command -v pg_restore >/dev/null 2>&1; then
-    pg_restore -l "$backup_file" >/dev/null
-  fi
+  gzip -t "$backup_file"
 
   log "Database backup created: $backup_file"
 }
@@ -358,7 +441,10 @@ deploy_release() {
   require_command git
   require_command "$PHP_BIN"
   require_command "$COMPOSER_BIN"
-  require_command "$NPM_BIN"
+  if [[ -z "$FRONTEND_BUILD_ARCHIVE" ]]; then
+    require_command "$NPM_BIN"
+  fi
+  require_command tar
   require_command curl
 
   prepare_shared_layout
@@ -375,7 +461,7 @@ deploy_release() {
   local commit
   commit="$(git -C "$release_dir" rev-parse HEAD 2>/dev/null || true)"
   link_shared_paths "$release_dir"
-  install_release_dependencies "$release_dir"
+  install_release_dependencies "$release_dir" "$commit"
 
   if [[ "$with_backup" == "yes" ]]; then
     backup_database "$release_name"

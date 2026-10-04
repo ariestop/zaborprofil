@@ -120,4 +120,52 @@ final class ViteAssetExtensionTest extends TestCase
             }
         }
     }
+
+    public function testDevServerModeDoesNotNeedManifest(): void
+    {
+        $ext = new ViteAssetExtension('/tmp/nonexistent-vite-manifest.json', '/build', 'http://localhost:5173/');
+
+        $html = (string) $ext->renderLinkTags('assets/site/app.ts');
+
+        self::assertStringContainsString('<script type="module" src="http://localhost:5173/@vite/client"></script>', $html);
+        self::assertStringContainsString('<script type="module" src="http://localhost:5173/assets/site/app.ts"></script>', $html);
+        self::assertStringContainsString('"http://localhost:5173/@react-refresh"', $html);
+        self::assertStringNotContainsString('/build/', $html);
+    }
+
+    public function testDevServerModeRendersEntryOnlyOncePerPage(): void
+    {
+        $ext = new ViteAssetExtension($this->manifestFile, '/build', 'http://localhost:5173');
+
+        $first = (string) $ext->renderLinkTags('assets/admin/app.ts');
+        $second = (string) $ext->renderScriptTags('assets/admin/app.ts');
+
+        self::assertSame(1, substr_count($first, 'assets/admin/app.ts'));
+        self::assertSame('', $second);
+    }
+
+    public function testDevServerModeLoadsClientOnceAcrossEntries(): void
+    {
+        $ext = new ViteAssetExtension($this->manifestFile, '/build', 'http://localhost:5173');
+
+        $first = (string) $ext->renderScriptTags('assets/site/app.ts');
+        $second = (string) $ext->renderScriptTags('assets/admin/app.ts');
+
+        self::assertStringContainsString('@vite/client', $first);
+        self::assertStringNotContainsString('@vite/client', $second);
+        self::assertSame(
+            '<script type="module" src="http://localhost:5173/assets/admin/app.ts"></script>',
+            $second,
+        );
+    }
+
+    public function testEmptyDevServerUrlKeepsManifestMode(): void
+    {
+        $ext = new ViteAssetExtension($this->manifestFile, '/build', '');
+
+        self::assertSame(
+            '<script type="module" src="/build/assets/site-CLweJMmL.js"></script>',
+            (string) $ext->renderScriptTags('assets/site/app.ts'),
+        );
+    }
 }

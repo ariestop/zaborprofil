@@ -47,8 +47,8 @@
 - `createdAt`
 - `updatedAt`
 
-`content` и `settings` хранятся как JSONB в PostgreSQL. Тестовое окружение также
-использует PostgreSQL из Docker Compose; SQLite для тестов запрещён.
+`content` и `settings` хранятся как нативный тип `JSON` в MySQL 8.4. MySQL нормализует JSON-объекты (порядок ключей объекта не сохраняется), порядок элементов массивов сохраняется. Тестовое окружение также
+использует MySQL из Docker Compose; SQLite для тестов запрещён.
 
 ### PageRevision
 
@@ -195,7 +195,7 @@ API защищен admin firewall и используется React + TypeScript
 состав/порядок/включенность блоков страницы атомарно.
 
 Для block type `text` и `text_image` в админке предусмотрен визуальный режим редактирования на базе Vue TipTap.
-Он работает поверх тех же полей `content/settings` и сохраняет HTML в `content.text` (JSONB) без изменения API-контракта.
+Он работает поверх тех же полей `content/settings` и сохраняет HTML в `content.text` (JSON) без изменения API-контракта.
 Для сложных кейсов доступен fallback-режим ручного JSON.
 
 Для `text_image` выбор изображения выполняется через существующий Media API:

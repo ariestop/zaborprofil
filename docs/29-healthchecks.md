@@ -16,8 +16,8 @@
 ## Что проверяется в readiness
 
 - приложение;
-- подключение к PostgreSQL;
-- Redis-backed cache;
+- подключение к MySQL;
+- файловый кэш (`CacheCheck`, label «Filesystem cache», ключ `cache` в JSON `/health`);
 - writable storage (`var/cache`, `var/log`, `public_html/uploads`);
 - таблица Doctrine migrations (если уже создана).
 
@@ -40,8 +40,8 @@ php bin/console app:system:diagnostics
 | Проверка | `/health/live` | `/health/ready` | Diagnostics CLI |
 |---|---|---|---|
 | HTTP отвечает | да | да | да |
-| PostgreSQL connect | нет | да | да |
-| Redis ping | нет | да | да |
+| MySQL connect | нет | да | да |
+| Filesystem cache (`cache`) | нет | да | да |
 | Миграции применены | нет | да | да |
 | `var/cache` writable | нет | да | да |
 | `var/log` writable | нет | да | да |

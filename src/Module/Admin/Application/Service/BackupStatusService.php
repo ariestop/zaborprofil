@@ -54,7 +54,7 @@ final readonly class BackupStatusService
         return [
             'backupDirectory' => $backupDir,
             'latestBackup' => $latestBackup,
-            'files' => array_slice($files, 0, 20),
+            'files' => \array_slice($files, 0, 20),
             'checkedAt' => (new DateTimeImmutable())->format(DATE_ATOM),
         ];
     }
