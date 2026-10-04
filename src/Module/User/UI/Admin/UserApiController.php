@@ -7,6 +7,7 @@ namespace App\Module\User\UI\Admin;
 use App\Module\Auth\Domain\Security\AdminPermission;
 use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
 use App\Module\User\Infrastructure\Repository\AdminUserRepository;
+use App\Shared\UI\Http\AdminApiErrorResponder;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -19,6 +20,7 @@ final readonly class UserApiController
     public function __construct(
         private AuthorizationCheckerInterface $authorizationChecker,
         private AdminUserRepository $users,
+        private AdminApiErrorResponder $errors,
     ) {
     }
 
@@ -91,7 +93,7 @@ final readonly class UserApiController
 
             return new JsonResponse(self::serializeUser($user));
         } catch (Throwable $exception) {
-            return new JsonResponse(['error' => $exception->getMessage()], 400);
+            return $this->errors->fromThrowable($exception, 'Admin User API');
         }
     }
 

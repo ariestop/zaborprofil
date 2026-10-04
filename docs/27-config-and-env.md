@@ -50,6 +50,7 @@
 | `TRUSTED_HOSTS` | regex hostname | Symfony framework |
 | `STAGING_AUTH_ENABLED` | `1` включает Basic Auth на `APP_ENV=staging` (по умолчанию выключено) | `StagingAccessSubscriber` |
 | `STAGING_AUTH_USER` / `STAGING_AUTH_HASH` | логин и bcrypt-хеш пароля; хеш в `.env.local` в **одинарных кавычках**. При `STAGING_AUTH_ENABLED=1` и неверных значениях доступ закрыт для всех | `StagingAccessSubscriber` |
+| `ADMIN_WEB_MIGRATIONS_ENABLED` | `0` (по умолчанию) / `1` — разрешить apply/rollback Doctrine-миграций из веб-админки (только `ROLE_SUPER_ADMIN` + confirm-token). На staging/production держать `0` | `MigrationsApiController` |
 | `XDEBUG_MODE` | `off` / `develop,debug` | Docker PHP-FPM |
 | `MYSQL_DATABASE`/`MYSQL_USER`/`MYSQL_PASSWORD`/`MYSQL_ROOT_PASSWORD`/`MYSQL_PORT` | для Docker Compose | Compose |
 | `HTTP_PORT` | хост-порт nginx для проброса `host:container` (Compose). Можно задать привязку к интерфейсу: `8081` (все интерфейсы) или `127.0.0.1:8081` (только loopback хоста; удобно на сервере, для доступа с ноутбука — SSH `-L` / Remote Ports) | Compose |

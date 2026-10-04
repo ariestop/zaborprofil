@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiRequest } from '../../shared/api/client'
+import { issueDangerousActionToken } from '../../shared/api/dangerous-action'
 import type { MigrationItem, SettingItem } from '../../types/api'
 
 function settingsQueryKey(scope?: string) {
@@ -54,18 +55,27 @@ export function useSettingsMigrationsQuery() {
   })
 }
 
-interface MigrationActionResponse {
+export interface MigrationActionResponse {
   status: 'applied' | 'rolled_back'
   executedCount: number
+}
+
+export type MigrationAction = 'apply' | 'rollback'
+
+export async function requestMigrationAction(action: MigrationAction, version: string) {
+  const { confirmToken } = await issueDangerousActionToken(`migration.${action}:${version}`)
+
+  return apiRequest<MigrationActionResponse>(`/admin/api/settings/migrations/${encodeURIComponent(version)}/${action}`, {
+    method: 'POST',
+    body: { confirmToken },
+  })
 }
 
 export function useApplyMigrationMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (version: string) => apiRequest<MigrationActionResponse>(`/admin/api/settings/migrations/${encodeURIComponent(version)}/apply`, {
-      method: 'POST',
-    }),
+    mutationFn: (version: string) => requestMigrationAction('apply', version),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: settingsMigrationsQueryKey() })
     },
@@ -76,9 +86,7 @@ export function useRollbackMigrationMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (version: string) => apiRequest<MigrationActionResponse>(`/admin/api/settings/migrations/${encodeURIComponent(version)}/rollback`, {
-      method: 'POST',
-    }),
+    mutationFn: (version: string) => requestMigrationAction('rollback', version),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: settingsMigrationsQueryKey() })
     },

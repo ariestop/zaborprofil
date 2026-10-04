@@ -93,7 +93,7 @@ try {
 
 - Public/Front 5xx — отдаётся стандартный `error500.html.twig` без stack trace.
 - Public 404 — `error404.html.twig` с полезным навигационным предложением.
-- Admin API 5xx — `ContentApiResponder` отдаёт generic `Internal server error`, оригинал — в логе.
+- Admin API 5xx — `AdminApiErrorResponder` (в модуле Content — `ContentApiResponder`) отдаёт generic `Internal server error`, оригинал — в логе канала `admin`.
 
 ## Retryable vs non-retryable
 
@@ -122,6 +122,12 @@ try {
 - Содержимое `.env`.
 - Текст SQL.
 - Имена файлов с absolute path.
+
+## Централизованная обработка Admin API (фактическое)
+
+- `App\Shared\UI\Http\AdminApiErrorResponder` — единая точка превращения `\Throwable` в JSON `{error, code}` (422 `VALIDATION`, 404 `NOT_FOUND`, 400 `BAD_REQUEST`, 500 `INTERNAL`).
+- `App\Module\Admin\Infrastructure\Http\AdminApiExceptionSubscriber` на `kernel.exception` для `^/admin/api` перехватывает всё необработанное и отдаёт тот же формат без текста исключения.
+- Подробности и таблица статусов: [12-admin-area](12-admin-area.md#единый-формат-ошибок-admin-api).
 
 ## Централизованный exception listener (целевое)
 

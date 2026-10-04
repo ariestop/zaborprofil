@@ -16,6 +16,7 @@ export interface MigrationItem {
   executionTime: number | null
   canApply: boolean
   canRollback: boolean
+  actionsAllowed: boolean
 }
 
 export interface RedirectItem {

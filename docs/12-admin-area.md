@@ -64,6 +64,24 @@ Admin API использует **double-submit CSRF**:
 - Ответ — JSON через `ContentApiResponder` (унифицированный success/error).
 - Ошибки 500 — заменяются на `Internal server error` с логированием оригинала в канал `admin`.
 
+### Единый формат ошибок Admin API
+
+Все ошибки `/admin/api/*` имеют форму `{"error": "<текст>", "code": "<КОД>"}` (поле `error` читает `apiRequest` во фронтенде).
+
+| Ситуация | Статус | `code` | Текст в `error` |
+|---|---|---|---|
+| `InvalidArgumentException`, `ValueError`, `ClientSafeExceptionInterface` (в т.ч. `UploadSecurityException`) | 422 | `VALIDATION` | сообщение исключения (написано для пользователя) |
+| `NotFoundExceptionInterface` (`ContentNotFoundException`, `CatalogNotFoundException`) | 404 | `NOT_FOUND` | сообщение исключения |
+| Битое тело запроса (`RequestExceptionInterface`, `JsonException`) | 400 | `BAD_REQUEST` | `Request body is invalid.` |
+| Нет прав / CSRF / Origin | 403 | `ACCESS_DENIED` | `Access denied.` или текст проверки |
+| Любое другое исключение | 500 | `INTERNAL` | `Internal server error` |
+
+Правила:
+
+- Контроллеры не пишут `$exception->getMessage()` в ответ. В `catch (Throwable $exception)` они вызывают `AdminApiErrorResponder::fromThrowable()` (в модуле Content — через `ContentApiResponder`); оригинал исключения логируется в канал `admin`.
+- Тексты доменных исключений, которые можно показывать клиенту, помечаются `InvalidArgumentException` либо маркерами `ClientSafeExceptionInterface` / `NotFoundExceptionInterface` из `App\Shared\Domain\Exception`.
+- `AdminApiExceptionSubscriber` — последний рубеж для `^/admin/api`: необработанные исключения (SQL, пути, ошибки драйвера) превращаются в тот же JSON, а `HttpException` 404/405/5xx получают нейтральный текст.
+- Публичный `POST /api/leads` использует тот же responder.
 Пример: см. [14-api-area](14-api-area.md).
 
 ### Маршруты Content (фактическое)
@@ -106,6 +124,16 @@ Legacy endpoint аудита сохранён по `GET /admin/api/system/audit/
 3. Полученный `confirmToken` отправляется в dangerous endpoint.
 4. Backend валидирует токен (одноразовый, TTL, привязка к actor/action), проверяет `system.dangerous`, выполняет только whitelist-команду и пишет audit `attempt/success/failure`.
 
+### Миграции БД из веб-админки
+
+`POST /admin/api/settings/migrations/{version}/apply|rollback` — опасная операция (меняет схему БД), поэтому:
+
+- по умолчанию выключена: переменная `ADMIN_WEB_MIGRATIONS_ENABLED` (по умолчанию `0`) должна быть `1`, иначе ответ `403` с `code: MIGRATIONS_DISABLED`. На production и staging оставляем `0`: миграции выполняет CLI при деплое (`doctrine:migrations:migrate`);
+- нужны права `settings.edit` + `system.manage` + `system.dangerous` (фактически `ROLE_SUPER_ADMIN`); `ROLE_ADMIN` получает `403`;
+- нужен одноразовый `confirmToken`, выданный через `POST /admin/api/system/security/confirm-token` для действия `migration.apply:{version}` или `migration.rollback:{version}`; токен привязан к пользователю и версии;
+- каждая попытка пишет audit `system.migration.attempt` → `system.migration.success` / `system.migration.failure` (`entityType = system.migration`, `entityId = apply:{version}`);
+- ошибки не раскрывают SQL и пути: доменные ограничения («уже применена», «откатывается только последняя») → `422`, неизвестная версия → `404`, остальное → `500 Internal server error` + лог в канал `admin`;
+- `GET /admin/api/settings/migrations` остаётся под `settings.edit`, но `canApply` / `canRollback` равны `false`, а `actionsAllowed = false`, если действия недоступны (флаг выключен или не хватает прав); UI показывает подсказку про CLI.
 ## Что НЕЛЬЗЯ в admin area
 
 - Открыть admin без CSRF и без Origin-check — это уязвимость.

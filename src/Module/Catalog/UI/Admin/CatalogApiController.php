@@ -9,20 +9,17 @@ use App\Module\Catalog\Domain\Entity\Category;
 use App\Module\Catalog\Domain\Entity\Product;
 use App\Module\Catalog\Domain\Entity\Variant;
 use App\Module\Catalog\Domain\Enum\ProductStatus;
-use App\Module\Catalog\Domain\Exception\CatalogNotFoundException;
 use App\Module\Catalog\Domain\Repository\CategoryRepositoryInterface;
 use App\Module\Catalog\Domain\Repository\ProductRepositoryInterface;
 use App\Module\Catalog\Domain\Repository\VariantRepositoryInterface;
 use App\Module\Content\UI\Admin\JsonRequest;
 use App\Module\Seo\Application\Service\CanonicalUrlGuard;
-use InvalidArgumentException;
-use Psr\Log\LoggerInterface;
+use App\Shared\UI\Http\AdminApiErrorResponder;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Throwable;
-use ValueError;
 
 #[Route('/admin/api/catalog')]
 final readonly class CatalogApiController
@@ -34,7 +31,7 @@ final readonly class CatalogApiController
         private JsonRequest $jsonRequest,
         private AuthorizationCheckerInterface $authorizationChecker,
         private CanonicalUrlGuard $canonicalUrlGuard,
-        private LoggerInterface $logger,
+        private AdminApiErrorResponder $errors,
     ) {
     }
 
@@ -307,27 +304,6 @@ final readonly class CatalogApiController
 
     private function error(Throwable $exception): JsonResponse
     {
-        if ($exception instanceof CatalogNotFoundException) {
-            return new JsonResponse([
-                'error' => $exception->getMessage(),
-                'code' => 'NOT_FOUND',
-            ], 404);
-        }
-
-        if ($exception instanceof InvalidArgumentException || $exception instanceof ValueError) {
-            return new JsonResponse([
-                'error' => $exception->getMessage(),
-                'code' => 'VALIDATION',
-            ], 422);
-        }
-
-        $this->logger->error('Admin Catalog API failed with an unexpected exception.', [
-            'exception' => $exception,
-        ]);
-
-        return new JsonResponse([
-            'error' => 'Internal server error',
-            'code' => 'INTERNAL',
-        ], 500);
+        return $this->errors->fromThrowable($exception, 'Admin Catalog API');
     }
 }
