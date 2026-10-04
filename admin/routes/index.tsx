@@ -6,6 +6,7 @@ import { PageLoadingState } from '../shared/ui/page-loading-state'
 import {
   loadCrmPage,
   loadDashboardPage,
+  loadLeadDetailPage,
   loadMediaPage,
   loadPageBuilderPage,
   loadPageDetailPage,
@@ -34,6 +35,7 @@ const PageBuilderPage = lazy(loadPageBuilderPage)
 const MediaPage = lazy(loadMediaPage)
 const SeoPage = lazy(loadSeoPage)
 const CrmPage = lazy(loadCrmPage)
+const LeadDetailPage = lazy(loadLeadDetailPage)
 const SettingsPage = lazy(loadSettingsPage)
 const SettingsMigrationsPage = lazy(loadSettingsMigrationsPage)
 const UsersPage = lazy(loadUsersPage)
@@ -67,6 +69,7 @@ export function AdminRouter() {
               <Route path="/admin/media" element={<MediaPage />} />
               <Route path="/admin/seo" element={<SeoPage />} />
               <Route path="/admin/crm" element={<CrmPage />} />
+              <Route path="/admin/crm/:leadId" element={<LeadDetailPage />} />
               <Route path="/admin/settings" element={<SettingsPage />} />
               <Route path="/admin/settings/migrations" element={<SettingsMigrationsPage />} />
               <Route path="/admin/users" element={<UsersPage />} />
