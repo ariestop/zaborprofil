@@ -10,14 +10,24 @@ namespace PHPUnit\Framework;
  */
 abstract class TestCase
 {
-    protected function setUp(): void {}
+    protected function setUp(): void
+    {
+    }
 
-    protected function tearDown(): void {}
+    protected function tearDown(): void
+    {
+    }
 
-    public static function assertSame(mixed $expected, mixed $actual, string $message = ''): void {}
+    public static function assertSame(mixed $expected, mixed $actual, string $message = ''): void
+    {
+    }
 
-    public static function assertStringContainsString(string $needle, string $haystack, string $message = ''): void {}
+    public static function assertStringContainsString(string $needle, string $haystack, string $message = ''): void
+    {
+    }
 
     /** @return never */
-    public static function fail(string $message = ''): void {}
+    public static function fail(string $message = ''): void
+    {
+    }
 }

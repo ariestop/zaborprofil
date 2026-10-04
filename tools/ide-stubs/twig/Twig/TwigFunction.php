@@ -15,8 +15,8 @@ final class TwigFunction
      */
     public function __construct(
         private readonly string $name,
-        private mixed $callable = null,
-        private array $options = [],
+        private readonly mixed $callable = null,
+        private readonly array $options = [],
     ) {
     }
 }

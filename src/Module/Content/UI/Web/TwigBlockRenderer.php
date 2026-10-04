@@ -13,7 +13,7 @@ final readonly class TwigBlockRenderer
     /**
      * @var array<string, string>
      */
-    private const TEMPLATE_ALIASES = [
+    private const array TEMPLATE_ALIASES = [
         'hero.classic' => 'hero',
         'rich-text' => 'text',
         'features' => 'feature_grid',

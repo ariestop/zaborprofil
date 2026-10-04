@@ -7,7 +7,7 @@ namespace App\Module\Admin\Application\Service;
 use DateTimeImmutable;
 use InvalidArgumentException;
 
-final class WhitelistCommandRunner
+final readonly class WhitelistCommandRunner
 {
     /**
      * @var array<string, array{command: list<string>, timeoutSeconds: int}>
@@ -36,8 +36,8 @@ final class WhitelistCommandRunner
     ];
 
     public function __construct(
-        private readonly string $projectDir,
-        private readonly string $environment,
+        private string $projectDir,
+        private string $environment,
     ) {
     }
 
@@ -107,6 +107,6 @@ final class WhitelistCommandRunner
      */
     private function buildCommandString(array $command): string
     {
-        return implode(' ', array_map(static fn (string $part): string => escapeshellarg($part), $command));
+        return implode(' ', array_map(escapeshellarg(...), $command));
     }
 }

@@ -125,7 +125,7 @@ final class AdminUser implements UserInterface, PasswordAuthenticatedUserInterfa
             throw new InvalidArgumentException('At least one role is required.');
         }
 
-        $normalizedRoles = array_values(array_unique(array_map(static fn (string $role): string => trim($role), $roles)));
+        $normalizedRoles = array_values(array_unique(array_map(trim(...), $roles)));
         $normalizedRoles = array_values(array_filter($normalizedRoles, static fn (string $role): bool => $role !== ''));
 
         if ($normalizedRoles === []) {

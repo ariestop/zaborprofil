@@ -31,7 +31,7 @@ final readonly class UserApiController
 
         return new JsonResponse([
             'users' => array_map(
-                static fn (AdminUser $user): array => self::serializeUser($user),
+                self::serializeUser(...),
                 $this->users->findBy([], ['createdAt' => 'DESC']),
             ),
         ]);

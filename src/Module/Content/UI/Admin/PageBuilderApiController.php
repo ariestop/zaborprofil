@@ -8,14 +8,14 @@ use App\Module\Auth\Domain\Security\AdminPermission;
 use App\Module\Content\Application\Command\PublishPageCommand;
 use App\Module\Content\Application\Command\RollbackPageRevisionCommand;
 use App\Module\Content\Application\DTO\BuilderBlockOutput;
-use App\Module\Content\Application\DTO\PageRevisionOutput;
 use App\Module\Content\Application\DTO\PageBuilderDocumentOutput;
+use App\Module\Content\Application\DTO\PageRevisionOutput;
 use App\Module\Content\Application\Handler\PublishPageHandler;
 use App\Module\Content\Application\Handler\RollbackPageRevisionHandler;
 use App\Module\Content\Application\Service\ContentId;
+use App\Module\Content\Application\Service\PageBlockView;
 use App\Module\Content\Application\Service\PublicPageCacheInvalidator;
 use App\Module\Content\Application\Service\StructuredBlockDocumentService;
-use App\Module\Content\Application\Service\PageBlockView;
 use App\Module\Content\Domain\Entity\PageBlock;
 use App\Module\Content\Domain\Repository\PageBlockRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
@@ -52,7 +52,7 @@ final readonly class PageBuilderApiController
         try {
             $pageId = $contentId->fromString($id);
             $page = $pages->get($pageId);
-            $items = array_map(static fn (PageBlock $block): BuilderBlockOutput => BuilderBlockOutput::fromBlock($block), $blocks->findByPage($pageId));
+            $items = array_map(BuilderBlockOutput::fromBlock(...), $blocks->findByPage($pageId));
 
             return new JsonResponse(PageBuilderDocumentOutput::fromPage($page, $items)->toArray());
         } catch (Throwable $exception) {
