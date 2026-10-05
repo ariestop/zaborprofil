@@ -35,6 +35,7 @@ final readonly class PageOutput
         public ?array $jsonLd = null,
         public ?string $metaTitle = null,
         public ?string $parentId = null,
+        public ?string $updatedAt = null,
     ) {
     }
 
@@ -64,6 +65,7 @@ final readonly class PageOutput
             $page->jsonLd(),
             $page->metaTitle(),
             $page->parent() === null ? null : (string) $page->parent()->id(),
+            $page->updatedAt()->format(DATE_ATOM),
         );
     }
 
@@ -88,6 +90,7 @@ final readonly class PageOutput
             'publishedAt' => $this->publishedAt,
             'scheduledPublishAt' => $this->scheduledPublishAt,
             'scheduledUnpublishAt' => $this->scheduledUnpublishAt,
+            'updatedAt' => $this->updatedAt,
             'seo' => [
                 'metaTitle' => $this->metaTitle,
                 'metaDescription' => $this->metaDescription,

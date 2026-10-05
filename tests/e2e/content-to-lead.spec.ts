@@ -22,6 +22,8 @@ test.describe('Content to lead flow', () => {
     await page.goto(ADMIN_ROUTES.pages)
     await page.getByRole('link', { name: 'Создать страницу' }).click()
     await page.getByLabel(PAGE_EDITOR_SELECTORS.createTitleLabel).fill(title)
+    // Пустая страница: сценарий проверяет свои блоки, а не стартовые из шаблона.
+    await page.getByRole('radio', { name: PAGE_EDITOR_SELECTORS.createEmptyTemplateName }).click()
     await page.getByRole('button', { name: PAGE_EDITOR_SELECTORS.createSubmitName }).click()
     await expect(page).toHaveURL(/\/admin\/pages\/(?!new$)[0-9A-Za-z-]+$/)
     const pageId = new URL(page.url()).pathname.split('/').pop() ?? ''

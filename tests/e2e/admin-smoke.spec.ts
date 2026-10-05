@@ -79,6 +79,8 @@ test.describe('Admin smoke flow', () => {
     await expect(page).toHaveURL(/\/admin\/pages\/new$/)
 
     await page.getByLabel(PAGE_EDITOR_SELECTORS.createTitleLabel).fill(title)
+    // Пустая страница: сценарий проверяет свои блоки, а не стартовые из шаблона.
+    await page.getByRole('radio', { name: PAGE_EDITOR_SELECTORS.createEmptyTemplateName }).click()
     await page.getByRole('button', { name: PAGE_EDITOR_SELECTORS.createSubmitName }).click()
 
     await expect(page).toHaveURL(/\/admin\/pages\/(?!new$)[0-9A-Za-z-]+$/)
