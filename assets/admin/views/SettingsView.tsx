@@ -27,7 +27,7 @@ export default function SettingsView() {
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700">Settings</p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-brand-700">Settings</p>
           <h2 className="mt-2 text-2xl font-bold text-slate-950">Настройки проекта</h2>
         </div>
         <div className="flex items-center gap-2">
@@ -38,7 +38,7 @@ export default function SettingsView() {
           >
             Миграции
           </button>
-          <button className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">
+          <button className="rounded-lg bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800">
             Добавить настройку
           </button>
         </div>

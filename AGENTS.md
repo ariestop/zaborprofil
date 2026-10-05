@@ -68,6 +68,18 @@ make health
 - Документация пишется на русском языке.
 - Единое dev-состояние БД должно воспроизводиться из Doctrine migrations + fixtures/seed data. Не коммитить Docker images, Docker volumes, реальные MySQL backups/dumps, production/staging dumps, uploads или секреты; в Git допустим только маленький обезличенный dev snapshot после ручной проверки.
 
+## Бренд и дизайн: брендбук 2026, вариант E «Периметр» (обязательно)
+
+Утверждённая бренд-система — вариант E «Периметр». Все текущие и новые агенты используют только её при любых изменениях публичного сайта, админки, Twig-шаблонов, стилей, иконок, текстов интерфейса и полиграфии.
+
+- Главный источник правил: `docs/50-brand-system.md`. Визуальная версия: `docs/brand/brandbook-2026.pdf`. При расхождении верен `.md`, PDF обновить.
+- Логотипы — только SVG из `docs/brand/logo/` (`logo-horizontal`, `logo-compact` для телефона и мест уже 200 px, `mark`, `favicon`, версии `-white`/`-mono`). Не перерисовывать и не перенабирать.
+- Цвета — только токены из раздела 11 `docs/50-brand-system.md`: действие `#2D7F27`, бренд `#45A63D` (не для текста), текст `#23272D`, подписи `#575C63`, фон `#F3F5F2`, тёмный `#2A2F35`, бейдж `#F2B13B`. Цвета RAL — только для выбора цвета товара, не для интерфейса.
+- Шрифты — Onest (текст, заголовки, UI) и Sofia Sans Condensed (цены, телефоны, характеристики), локально через `@fontsource*`, без CDN. Open Sans и Cuprum в интерфейсе запрещены.
+- Стиль — flat 2.0: плоско, но кнопки и поля от 48 px, скругление 10/12 px, видимый `:focus-visible`, текст от 17 px, контраст WCAG 2.2 AA.
+- Перед сдачей UI-изменений пройти чек-лист из раздела 13 `docs/50-brand-system.md`.
+- Этап 1 выполнен: токены в `assets/shared/styles/app.css`, шрифты в `assets/shared/styles/fonts.css`, компоненты `.btn`, `.field-*`, `.price`, `.chip`, `.badge`, `.mobile-bar`. Классы `emerald-*` запрещены. Телефон и кнопки нижней панели берутся из настроек `contacts.phone`, `contacts.messenger_url`, `contacts.calculator_url`.
+
 ## Staging на Beget (dev.zaborprofil.ru)
 
 - Push в ветку `dev` запускает workflow `Deploy staging (Beget)` (`.github/workflows/deploy-staging-beget.yml`, скрипт `tools/deploy/deploy-beget.sh`). Описание, секреты и настройка сервера: `docs/49-beget-staging-deploy.md`.

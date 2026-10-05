@@ -30,7 +30,8 @@
 | Доменная модель / Entity | [05-domain-model](05-domain-model.md), [10-domain-layer](10-domain-layer.md), [17-doctrine-and-database](17-doctrine-and-database.md), [18-migrations](18-migrations.md) |
 | Application / use case | [09-application-layer](09-application-layer.md), [19-forms-dto-validation](19-forms-dto-validation.md), [30-error-handling](30-error-handling.md) |
 | Контроллеры / роуты | [08-controller-architecture](08-controller-architecture.md), [16-routing](16-routing.md), [12-admin-area](12-admin-area.md), [13-front-area](13-front-area.md), [14-api-area](14-api-area.md) |
-| Шаблоны / SSR | [21-templates-and-twig](21-templates-and-twig.md), [22-frontend-assets](22-frontend-assets.md), [26-seo-architecture](26-seo-architecture.md) |
+| Шаблоны / SSR | [21-templates-and-twig](21-templates-and-twig.md), [22-frontend-assets](22-frontend-assets.md), [26-seo-architecture](26-seo-architecture.md), [50-brand-system](50-brand-system.md) |
+| Дизайн, стили, иконки, тексты интерфейса, полиграфия | [50-brand-system](50-brand-system.md), [brand/brandbook-2026.pdf](brand/brandbook-2026.pdf) |
 | Безопасность | [20-security-and-access-control](20-security-and-access-control.md), [25-files-and-uploads](25-files-and-uploads.md) |
 | Кеш (filesystem) | [23-cache](23-cache.md) |
 | Очереди / Messenger | [24-messenger-and-queues](24-messenger-and-queues.md) |
@@ -107,6 +108,7 @@
 - [47-dev-database-state](47-dev-database-state.md) — единое dev-состояние БД, fixtures и правила для dev snapshots в Git.
 - [48-documentation-normalization](48-documentation-normalization.md) — матрица перехода `docs/*.md -> docs/NN-*.md` и кандидаты на удаление дублей.
 - [49-beget-staging-deploy](49-beget-staging-deploy.md) — автодеплой staging `dev.zaborprofil.ru` на Beget (ветка `dev`, GitHub Actions, SSH).
+- [50-brand-system](50-brand-system.md) — **бренд-система «Периметр» (брендбук 2026, вариант E)**: логотип, цвета, шрифты, компоненты, тексты. Обязательна для любых изменений UI. PDF: [brand/brandbook-2026.pdf](brand/brandbook-2026.pdf).
 
 ### ADR
 

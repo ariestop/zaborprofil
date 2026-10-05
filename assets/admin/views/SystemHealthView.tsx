@@ -22,7 +22,7 @@ export default function SystemHealthView() {
 
   const statusClass = (status: string): string => {
     if (status === 'ok') {
-      return 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+      return 'bg-brand-50 text-brand-700 ring-brand-200'
     }
     if (status === 'warning') {
       return 'bg-amber-50 text-amber-700 ring-amber-200'
@@ -39,7 +39,7 @@ export default function SystemHealthView() {
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700">System</p>
+            <p className="text-sm font-semibold uppercase tracking-wide text-brand-700">System</p>
             <h2 className="mt-2 text-2xl font-bold text-slate-950">Health Center</h2>
             <p className="mt-2 text-sm text-slate-600">
               Проверка приложения, БД, файлового кэша, storage, миграций и диска.
@@ -61,7 +61,7 @@ export default function SystemHealthView() {
           <div className="mt-6 grid gap-4 md:grid-cols-4">
             <div className="rounded-xl bg-slate-50 p-4">
               <p className="text-xs uppercase tracking-wide text-slate-500">Status</p>
-              <p className={['mt-1 text-lg font-bold', health.status === 'ok' ? 'text-emerald-700' : 'text-red-700'].join(' ')}>
+              <p className={['mt-1 text-lg font-bold', health.status === 'ok' ? 'text-brand-700' : 'text-red-700'].join(' ')}>
                 {health.status}
               </p>
             </div>

@@ -46,7 +46,7 @@ export default function MaintenanceView() {
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
-      <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700">System</p>
+      <p className="text-sm font-semibold uppercase tracking-wide text-brand-700">System</p>
       <h2 className="mt-2 text-2xl font-bold text-slate-950">Maintenance Mode</h2>
 
       {error && <p className="mt-6 rounded-lg bg-red-50 p-4 text-sm text-red-700">{error}</p>}
@@ -54,7 +54,7 @@ export default function MaintenanceView() {
       {status && (
         <div className="mt-6 rounded-xl bg-slate-50 p-4">
           <p className="text-sm text-slate-500">Текущий статус</p>
-          <p className={['mt-1 text-lg font-bold', status.enabled ? 'text-red-700' : 'text-emerald-700'].join(' ')}>
+          <p className={['mt-1 text-lg font-bold', status.enabled ? 'text-red-700' : 'text-brand-700'].join(' ')}>
             {status.enabled ? 'Включен' : 'Выключен'}
           </p>
           {status.enabledAt && <p className="mt-1 text-sm text-slate-500">С {status.enabledAt}</p>}

@@ -2,7 +2,10 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import { fileURLToPath, URL } from 'node:url'
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  // Сборка раздаётся из public_html/build (app.vite.public_build_path), поэтому ссылки
+  // внутри CSS/JS (шрифты, картинки, чанки) должны начинаться с /build/, а не с /.
+  base: command === 'build' ? '/build/' : '/',
   plugins: [react()],
   resolve: {
     alias: [
@@ -31,4 +34,4 @@ export default defineConfig({
       },
     },
   },
-})
+}))

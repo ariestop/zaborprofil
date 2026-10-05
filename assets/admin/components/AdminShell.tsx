@@ -89,7 +89,7 @@ export default function AdminShell() {
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700">Zaborprofil CMS</p>
+            <p className="text-sm font-semibold uppercase tracking-wide text-brand-700">Zaborprofil CMS</p>
             <h1 className="text-xl font-bold text-slate-950">{pageTitle}</h1>
           </div>
           <div className="flex items-center gap-4">
@@ -117,7 +117,7 @@ export default function AdminShell() {
                 className={[
                   'flex w-full rounded-lg py-2 text-left font-medium transition',
                   route.parentName ? 'px-6 text-xs' : 'px-3 text-sm',
-                  isRouteActive(route.name) ? 'bg-emerald-50 text-emerald-800' : 'text-slate-700 hover:bg-slate-50',
+                  isRouteActive(route.name) ? 'bg-brand-50 text-brand-800' : 'text-slate-700 hover:bg-slate-50',
                 ].join(' ')}
                 onClick={() => navigateTo(route.path)}
               >
