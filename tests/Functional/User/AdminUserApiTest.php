@@ -228,11 +228,14 @@ final class AdminUserApiTest extends WebTestCase
 
         $this->jsonRequestWithCsrf($client, 'PATCH', '/admin/api/users/'.$id.'/name', ['name' => '   ']);
         self::assertResponseIsSuccessful();
-        self::assertNull($this->decode($client)['name'] ?? 'missing');
+        $cleared = $this->decode($client);
+        self::assertArrayHasKey('name', $cleared);
+        self::assertSame('', (string) $cleared['name']);
 
         $client->request('GET', '/admin/api/users');
         $users = $this->decode($client)['users'] ?? null;
         self::assertIsArray($users);
+        self::assertIsArray($users[0]);
         self::assertArrayHasKey('name', $users[0]);
     }
 
