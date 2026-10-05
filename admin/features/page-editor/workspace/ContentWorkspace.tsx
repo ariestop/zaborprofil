@@ -179,18 +179,18 @@ export default function ContentWorkspace({ pageType, pageH1, pagePath, metaDescr
 
   const afterBlock = addAfter === null ? null : blocks.find((block) => block.id === addAfter) ?? null
   const placement = afterBlock === null ? 'Вставим в конец страницы' : `Вставим после блока «${blockTitle(afterBlock)}»`
-  const panel = 'min-w-0 rounded-[14px] border border-[#E4E7EC] bg-white p-4 dark:border-slate-800 dark:bg-slate-900'
+  const panel = 'min-w-0 rounded-[14px] border border-line bg-white p-4 dark:border-slate-800 dark:bg-slate-900'
 
   return (
     <div className="flex flex-col gap-4">
-      <div role="group" aria-label="Что показать" className="flex gap-0.5 rounded-xl bg-[#EAECF0] p-[3px] xl:hidden dark:bg-slate-800">
+      <div role="group" aria-label="Что показать" className="flex gap-0.5 rounded-xl bg-line p-[3px] xl:hidden dark:bg-slate-800">
         {MOBILE_PANES.map((item) => (
           <button
             key={item.id}
             type="button"
             aria-pressed={pane === item.id}
             onClick={() => setPane(item.id)}
-            className={cn('h-10 flex-1 rounded-[10px] text-sm font-semibold', pane === item.id ? 'bg-white text-[#101828] shadow-xs dark:bg-slate-900 dark:text-slate-100' : 'text-[#475467] dark:text-slate-400')}
+            className={cn('h-10 flex-1 rounded-[10px] text-sm font-semibold', pane === item.id ? 'bg-white text-ink shadow-xs dark:bg-slate-900 dark:text-slate-100' : 'text-graphite dark:text-slate-400')}
           >
             {item.label}
           </button>

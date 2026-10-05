@@ -8,7 +8,7 @@ import type { ObservabilityTile, ObservabilityTone } from './observability'
 import { buildDailyBars, CHART_HEIGHT, shortDate, type PublicationCount, type SiteStateRow, type SiteTone } from './summary'
 import { dashCard, dashHeading, dashMuted } from './styles'
 
-const kpiBox = cn(dashCard, 'block p-4 text-inherit no-underline transition hover:border-[#A6D8C4] dark:hover:border-emerald-800')
+const kpiBox = cn(dashCard, 'block p-4 text-inherit no-underline transition hover:border-brand-200 dark:hover:border-brand-800')
 
 interface KpiProps {
   label: string
@@ -45,7 +45,7 @@ export function KpiGrid({ newCount, inProgress, publications, doneLastWeek, canV
       {canViewLeads ? (
         <>
           <Kpi label="Новые" to="/admin/crm?status=new">
-            <span className={newCount !== undefined && newCount > 0 ? 'text-[#9A3412] dark:text-orange-400' : undefined}>{number(newCount)}</span>
+            <span className={newCount !== undefined && newCount > 0 ? 'text-orange-800 dark:text-orange-400' : undefined}>{number(newCount)}</span>
           </Kpi>
           <Kpi label="В работе" to="/admin/crm?status=in_progress">{number(inProgress)}</Kpi>
         </>
@@ -62,9 +62,9 @@ export function KpiGrid({ newCount, inProgress, publications, doneLastWeek, canV
 }
 
 const tileTone: Record<ObservabilityTone, string> = {
-  ok: 'text-[#101828] dark:text-slate-100',
-  warning: 'text-[#9A3412] dark:text-orange-400',
-  critical: 'text-[#B42318] dark:text-red-400',
+  ok: 'text-ink dark:text-slate-100',
+  warning: 'text-orange-800 dark:text-orange-400',
+  critical: 'text-danger dark:text-red-400',
 }
 
 interface MonitoringCardProps {
@@ -77,13 +77,13 @@ export function MonitoringCard({ tiles }: MonitoringCardProps) {
     <section className={cn(dashCard, 'overflow-hidden')} aria-label="Мониторинг сервера">
       <ul className="m-0 flex list-none flex-col p-0">
         {tiles.map((tile) => (
-          <li key={tile.id} className="border-t border-[#F0F2F5] first:border-t-0 dark:border-slate-800">
+          <li key={tile.id} className="border-t border-surface-strong first:border-t-0 dark:border-slate-800">
             <Link
               to={tile.href}
-              className="flex items-center justify-between gap-3 px-4 py-2 text-inherit no-underline transition hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-500 dark:hover:bg-slate-800/60"
+              className="flex items-center justify-between gap-3 px-4 py-2 text-inherit no-underline transition hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500 dark:hover:bg-slate-800/60"
             >
               <span className="min-w-0">
-                <span className="block truncate text-[13px] text-[#344054] dark:text-slate-300">{tile.label}</span>
+                <span className="block truncate text-[13px] text-graphite dark:text-slate-300">{tile.label}</span>
                 <span className={cn('block truncate text-xs', dashMuted)}>{tile.hint}</span>
               </span>
               <span className={cn('shrink-0 text-lg font-bold', tileTone[tile.tone])}>{tile.value}</span>
@@ -122,14 +122,14 @@ export function LeadsChartCard({ data, loading, error }: LeadsChartCardProps) {
           <div
             role="img"
             aria-label={`Столбчатая диаграмма заявок по дням за ${bars.length} дней, сегодня ${today?.count ?? 0}`}
-            className="mt-3.5 flex items-end gap-[5px] border-b border-[#E4E7EC] dark:border-slate-700"
+            className="mt-3.5 flex items-end gap-[5px] border-b border-line dark:border-slate-700"
             style={{ height: CHART_HEIGHT }}
           >
             {bars.map((bar) => (
               <div
                 key={bar.date}
                 title={`${shortDate(bar.date)}: ${bar.count}`}
-                className={cn('flex-1 rounded-t-[4px]', bar.today ? 'bg-[#047857]' : 'bg-[#047857]/25')}
+                className={cn('flex-1 rounded-t-[4px]', bar.today ? 'bg-brand-700' : 'bg-brand-700/25')}
                 style={{ height: bar.height }}
               />
             ))}
@@ -145,17 +145,17 @@ export function LeadsChartCard({ data, loading, error }: LeadsChartCardProps) {
 }
 
 const dotTone: Record<SiteTone, string> = {
-  ok: 'rounded-full bg-[#16A34A]',
-  warning: 'rounded-[2px] bg-[#DC8A05]',
-  critical: 'rounded-[2px] bg-[#B42318]',
-  neutral: 'rounded-full bg-[#98A2B3]',
+  ok: 'rounded-full bg-brand-600',
+  warning: 'rounded-[2px] bg-amber-600',
+  critical: 'rounded-[2px] bg-danger',
+  neutral: 'rounded-full bg-graphite/60',
 }
 
 const valueTone: Record<SiteTone, string> = {
-  ok: 'text-[#166534] dark:text-emerald-400',
-  warning: 'text-[#7A4A00] dark:text-amber-300',
-  critical: 'text-[#B42318] dark:text-red-400',
-  neutral: 'text-[#101828] dark:text-slate-100',
+  ok: 'text-brand-800 dark:text-brand-400',
+  warning: 'text-amber-800 dark:text-amber-300',
+  critical: 'text-danger dark:text-red-400',
+  neutral: 'text-ink dark:text-slate-100',
 }
 
 interface SiteStateCardProps {
@@ -171,9 +171,9 @@ export function SiteStateCard({ rows, loading }: SiteStateCardProps) {
       {loading && rows.length === 0 ? <Skeleton className="mt-3 h-24 w-full" /> : null}
       <dl className="m-0 mt-3 flex flex-col text-[13px]">
         {rows.map((row) => (
-          <div key={row.id} className="flex items-center gap-2.5 border-t border-[#F0F2F5] py-2.5 dark:border-slate-800">
+          <div key={row.id} className="flex items-center gap-2.5 border-t border-surface-strong py-2.5 dark:border-slate-800">
             <span aria-hidden="true" className={cn('h-2 w-2 shrink-0', dotTone[row.tone])} />
-            <dt className="flex-1 text-[#344054] dark:text-slate-300">{row.label}</dt>
+            <dt className="flex-1 text-graphite dark:text-slate-300">{row.label}</dt>
             <dd className={cn('m-0 font-semibold', valueTone[row.tone])}>{row.value}</dd>
           </div>
         ))}

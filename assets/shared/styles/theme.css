@@ -2,7 +2,7 @@
   Токены дизайна, общие для публичного сайта и админки.
   Бренд-система «Периметр» (брендбук 2026, вариант E) — источник значений: docs/50-brand-system.md, раздел 11.
 */
-@theme {
+@theme static {
     --font-sans: 'Onest Variable', 'Onest', system-ui, -apple-system, 'Segoe UI', sans-serif;
     /* Цены, телефоны, характеристики. В Sofia Sans Condensed нет знака ₽ — он берётся из Onest. */
     --font-cond: 'Sofia Sans Condensed', 'Onest Variable', 'Onest', 'Arial Narrow', sans-serif;
@@ -12,6 +12,7 @@
     --color-brand-100: #d9edd5;
     --color-brand-200: #b6dcaf;
     --color-brand-300: #8cc783;
+    --color-brand-400: #66b65e;
     --color-brand-500: #45a63d;
     --color-brand-600: #37922f;
     --color-brand-700: #2d7f27;
@@ -29,6 +30,7 @@
     --color-badge: #f2b13b; /* только бейджи «Хит» / «Акция», текст на нём — ink */
     --color-focus: #9ad38f; /* обводка :focus-visible */
     --color-danger: #b3261e; /* ошибки полей */
+    --color-danger-50: #fce8e6; /* фон сообщений об ошибке */
 
     /* Цвета продукции — только выбор цвета товара, не интерфейс. */
     --color-ral-6005: #0f4336;

@@ -39,11 +39,11 @@ function JsonEditor({ block, onChange }: { block: BuilderBlock, onChange: (block
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-[10px] border border-dashed border-[#D0D5DD] p-3 dark:border-slate-700">
-      <p className="text-xs font-semibold uppercase tracking-wide text-[#5D6679]">Режим JSON для разработчика</p>
-      <label className="text-xs font-medium text-[#344054] dark:text-slate-300" htmlFor={`${block.id}-content-json`}>Content JSON</label>
+    <div className="flex flex-col gap-2 rounded-[10px] border border-dashed border-line-strong p-3 dark:border-slate-700">
+      <p className="text-xs font-semibold uppercase tracking-wide text-graphite">Режим JSON для разработчика</p>
+      <label className="text-xs font-medium text-graphite dark:text-slate-300" htmlFor={`${block.id}-content-json`}>Content JSON</label>
       <textarea id={`${block.id}-content-json`} value={content} onChange={(event) => setContent(event.target.value)} className="min-h-36 w-full rounded-md border border-slate-300 bg-white p-2 font-mono text-xs dark:border-slate-700 dark:bg-slate-900" />
-      <label className="text-xs font-medium text-[#344054] dark:text-slate-300" htmlFor={`${block.id}-settings-json`}>Settings JSON</label>
+      <label className="text-xs font-medium text-graphite dark:text-slate-300" htmlFor={`${block.id}-settings-json`}>Settings JSON</label>
       <textarea id={`${block.id}-settings-json`} value={settings} onChange={(event) => setSettings(event.target.value)} className="min-h-24 w-full rounded-md border border-slate-300 bg-white p-2 font-mono text-xs dark:border-slate-700 dark:bg-slate-900" />
       {error !== null ? <p className="text-xs text-red-600" role="alert">{error}</p> : null}
       <Button type="button" size="sm" onClick={apply}>Применить JSON</Button>
@@ -55,8 +55,8 @@ function JsonEditor({ block, onChange }: { block: BuilderBlock, onChange: (block
 export function BlockInspector({ block, issues, showJson, onChange, onDuplicate, onDelete, onSaveAsSection }: BlockInspectorProps) {
   if (block === null) {
     return (
-      <aside aria-label="Поля блока" className="rounded-[14px] border border-dashed border-[#D0D5DD] p-8 text-center text-[#5D6679] dark:border-slate-700 dark:text-slate-400">
-        <p className="font-semibold text-[#101828] dark:text-slate-100">Блок не выбран</p>
+      <aside aria-label="Поля блока" className="rounded-[14px] border border-dashed border-line-strong p-8 text-center text-graphite dark:border-slate-700 dark:text-slate-400">
+        <p className="font-semibold text-ink dark:text-slate-100">Блок не выбран</p>
         <p className="mt-1 text-sm">Выберите блок в структуре или кликните по секции на странице.</p>
       </aside>
     )
@@ -71,31 +71,31 @@ export function BlockInspector({ block, issues, showJson, onChange, onDuplicate,
 
   return (
     <aside aria-label="Поля блока" className="flex flex-col">
-      <div className="flex items-center gap-2.5 border-b border-[#E4E7EC] pb-3.5 dark:border-slate-800">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] bg-[#E7F5EF] text-[#065F46] dark:bg-emerald-950/50 dark:text-emerald-300">
+      <div className="flex items-center gap-2.5 border-b border-line pb-3.5 dark:border-slate-800">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] bg-brand-50 text-brand-800 dark:bg-brand-950/50 dark:text-brand-300">
           <BlockIcon name={blockIcon(block.type)} />
         </span>
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-base font-bold">{title}</h2>
-          <p className="truncate text-xs text-[#5D6679] dark:text-slate-400">{blockTypeLabel(block.type)}</p>
+          <p className="truncate text-xs text-graphite dark:text-slate-400">{blockTypeLabel(block.type)}</p>
         </div>
-        {isPlaceholderBlock(block) ? <span className="rounded-md bg-[#FFEDD5] px-2 py-0.5 text-[11px] font-bold text-[#9A3412]">заготовка</span> : null}
+        {isPlaceholderBlock(block) ? <span className="rounded-md bg-orange-100 px-2 py-0.5 text-[11px] font-bold text-orange-800">заготовка</span> : null}
       </div>
 
       <div className="flex flex-col gap-4 pt-4">
         <div className="flex flex-col gap-1.5">
-          <label htmlFor={`${block.id}-name`} className="text-[13px] font-semibold text-[#344054] dark:text-slate-200">Название в структуре</label>
+          <label htmlFor={`${block.id}-name`} className="text-[13px] font-semibold text-graphite dark:text-slate-200">Название в структуре</label>
           <input
             id={`${block.id}-name`}
             value={block.name === '' ? '' : title}
             onChange={(event) => touch({ name: event.target.value })}
             className="h-9 rounded-lg border border-slate-300 bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-900"
           />
-          <p className="text-xs text-[#5D6679] dark:text-slate-400">Видно только в редакторе, на сайт не выводится</p>
+          <p className="text-xs text-graphite dark:text-slate-400">Видно только в редакторе, на сайт не выводится</p>
         </div>
 
         {hint !== null ? (
-          <div className="flex gap-2.5 rounded-[10px] bg-[#F0F9F4] px-3 py-2.5 text-[13px] text-[#065F46] dark:bg-emerald-950/40 dark:text-emerald-200">
+          <div className="flex gap-2.5 rounded-[10px] bg-brand-50 px-3 py-2.5 text-[13px] text-brand-800 dark:bg-brand-950/40 dark:text-brand-200">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mt-px shrink-0"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z" /></svg>
             <span><b>Что заполнить.</b> {hint}</span>
           </div>
@@ -110,17 +110,17 @@ export function BlockInspector({ block, issues, showJson, onChange, onDuplicate,
         {specs.length > 0 ? (
           <BlockFields specs={specs} value={block.content} errors={errors} resetKey={block.id} onChange={(content) => touch({ content })} />
         ) : (
-          <p className="text-sm text-[#5D6679] dark:text-slate-400">У этого блока нет полей для заполнения.</p>
+          <p className="text-sm text-graphite dark:text-slate-400">У этого блока нет полей для заполнения.</p>
         )}
 
         {block.type === 'slider' ? <SliderEditor block={block} onChange={onChange} /> : null}
 
         {showJson ? <JsonEditor key={`${block.id}-${block.metadata.updatedAt}`} block={block} onChange={onChange} /> : null}
 
-        <div className="flex items-center justify-between gap-3 border-t border-[#F0F2F5] pt-3.5 dark:border-slate-800">
+        <div className="flex items-center justify-between gap-3 border-t border-surface-strong pt-3.5 dark:border-slate-800">
           <span className="flex flex-col">
             <span className="font-semibold">Показывать на сайте</span>
-            <span className="text-xs text-[#5D6679] dark:text-slate-400">Скрытый блок остаётся в странице, но посетители его не видят</span>
+            <span className="text-xs text-graphite dark:text-slate-400">Скрытый блок остаётся в странице, но посетители его не видят</span>
           </span>
           <button
             type="button"
@@ -128,23 +128,23 @@ export function BlockInspector({ block, issues, showJson, onChange, onDuplicate,
             aria-checked={block.enabled}
             aria-label="Показывать на сайте"
             onClick={() => touch({ enabled: !block.enabled })}
-            className={cn('flex h-[26px] w-11 shrink-0 rounded-full p-[3px] transition', block.enabled ? 'justify-end bg-[#047857]' : 'justify-start bg-[#D0D5DD] dark:bg-slate-700')}
+            className={cn('flex h-[26px] w-11 shrink-0 rounded-full p-[3px] transition', block.enabled ? 'justify-end bg-brand-700' : 'justify-start bg-line-strong dark:bg-slate-700')}
           >
             <span className="h-5 w-5 rounded-full bg-white" />
           </button>
         </div>
 
         <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={onDuplicate} className="inline-flex h-[38px] items-center gap-1.5 rounded-[9px] border border-[#D0D5DD] bg-white px-3 text-[13px] font-semibold text-[#344054] hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+          <button type="button" onClick={onDuplicate} className="inline-flex h-[38px] items-center gap-1.5 rounded-[9px] border border-line-strong bg-white px-3 text-[13px] font-semibold text-graphite hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="8.5" y="8.5" width="11" height="11" rx="2" /><path d="M15.5 8.5V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5" /></svg>
             Дублировать
           </button>
           {onSaveAsSection !== undefined ? (
-            <button type="button" onClick={onSaveAsSection} className="inline-flex h-[38px] items-center rounded-[9px] border border-[#D0D5DD] bg-white px-3 text-[13px] font-semibold text-[#344054] hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+            <button type="button" onClick={onSaveAsSection} className="inline-flex h-[38px] items-center rounded-[9px] border border-line-strong bg-white px-3 text-[13px] font-semibold text-graphite hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
               Сохранить как шаблон секции
             </button>
           ) : null}
-          <button type="button" onClick={onDelete} className="inline-flex h-[38px] items-center gap-1.5 rounded-[9px] px-3 text-[13px] font-semibold text-[#B42318] hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40">
+          <button type="button" onClick={onDelete} className="inline-flex h-[38px] items-center gap-1.5 rounded-[9px] px-3 text-[13px] font-semibold text-danger hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40">
             <NavIcon name="close" size={16} />
             Удалить блок
           </button>

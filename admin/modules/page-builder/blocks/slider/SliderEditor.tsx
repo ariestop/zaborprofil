@@ -89,7 +89,7 @@ export function SliderEditor({ block, onChange }: SliderEditorProps) {
         </div>
       </div>
 
-      <div className="rounded-md border border-emerald-200 bg-emerald-50 p-3 text-emerald-900 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-100">
+      <div className="rounded-md border border-brand-200 bg-brand-50 p-3 text-brand-900 dark:border-brand-900/40 dark:bg-brand-950/30 dark:text-brand-100">
         <p className="font-semibold">Рекомендации для эффективного слайдера</p>
         <ul className="mt-2 list-disc space-y-1 pl-4">
           <li>`effect`: `slide` для каталога, `fade` для hero.</li>

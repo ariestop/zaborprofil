@@ -2,10 +2,10 @@ import type { LeadStatus } from '../../types/api'
 
 /** Цвета плашки статуса из макета «Заявки»: фон и текст. */
 export const LEAD_PILL_STYLES: Record<LeadStatus, string> = {
-  new: 'bg-[#FFEDD5] text-[#9A3412] dark:bg-orange-900/40 dark:text-orange-200',
-  in_progress: 'bg-[#E0EAFF] text-[#1E40AF] dark:bg-blue-900/40 dark:text-blue-200',
-  done: 'bg-[#DCFCE7] text-[#166534] dark:bg-green-900/40 dark:text-green-200',
-  spam: 'bg-[#F2F4F7] text-[#475467] dark:bg-slate-800 dark:text-slate-300',
+  new: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200',
+  in_progress: 'bg-indigo-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200',
+  done: 'bg-brand-100 text-brand-800 dark:bg-green-900/40 dark:text-green-200',
+  spam: 'bg-surface-strong text-graphite dark:bg-slate-800 dark:text-slate-300',
 }
 
 const LEGAL_FORMS = new Set(['ооо', 'ип', 'ао', 'зао', 'пао', 'оао', 'тоо'])
@@ -142,17 +142,17 @@ export function describeSpam(score: number, reasons: string[]): SpamVerdict {
     return {
       title: 'Высокий риск спама',
       text: reasons.length > 0 ? `${base}: ${reasons.join(', ')}` : base,
-      color: 'text-[#B42318] dark:text-red-400',
-      barColor: 'bg-[#B42318]',
+      color: 'text-danger dark:text-red-400',
+      barColor: 'bg-danger',
       percent: Math.max(4, value * 10),
     }
   }
 
   if (value > 0) {
-    return { title: 'Низкий риск', text: base, color: 'text-[#B54708] dark:text-amber-400', barColor: 'bg-[#B54708]', percent: Math.max(4, value * 10) }
+    return { title: 'Низкий риск', text: base, color: 'text-amber-700 dark:text-amber-400', barColor: 'bg-amber-700', percent: Math.max(4, value * 10) }
   }
 
-  return { title: 'Чисто', text: base, color: 'text-[#166534] dark:text-green-400', barColor: 'bg-[#166534]', percent: 4 }
+  return { title: 'Чисто', text: base, color: 'text-brand-800 dark:text-green-400', barColor: 'bg-brand-800', percent: 4 }
 }
 
 /** Дата в формате YYYY-MM-DD в местном часовом поясе. */

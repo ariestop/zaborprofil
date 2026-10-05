@@ -41,9 +41,9 @@ function SidebarContent({ collapsed, onToggleCollapsed, onClose }: SidebarConten
           to="/admin/dashboard"
           onClick={onClose}
           aria-label="ЗаборПрофиль — сводка"
-          className="flex min-w-0 flex-1 items-center gap-3 rounded-lg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500"
+          className="flex min-w-0 flex-1 items-center gap-3 rounded-lg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500"
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-700 text-sm font-bold text-white">ЗП</span>
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-700 text-sm font-bold text-white">ЗП</span>
           {collapsed ? null : (
             <span className="min-w-0">
               <span className="block truncate text-[15px] font-bold">ЗаборПрофиль</span>
@@ -57,7 +57,7 @@ function SidebarContent({ collapsed, onToggleCollapsed, onClose }: SidebarConten
             onClick={onToggleCollapsed}
             aria-label={collapsed ? 'Развернуть меню' : 'Свернуть меню'}
             title={collapsed ? 'Развернуть меню' : 'Свернуть меню'}
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-slate-400 dark:hover:bg-slate-800"
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-slate-400 dark:hover:bg-slate-800"
           >
             <NavIcon name="sidebar" />
           </button>
@@ -99,7 +99,7 @@ function SidebarContent({ collapsed, onToggleCollapsed, onClose }: SidebarConten
               type="submit"
               aria-label="Выйти"
               title="Выйти"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-slate-400 dark:hover:bg-slate-800"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-slate-400 dark:hover:bg-slate-800"
             >
               <NavIcon name="logout" />
             </button>
@@ -145,7 +145,7 @@ export function AdminShellLayout() {
   }, [mobileNavOpen])
 
   return (
-    <div className="flex min-h-screen bg-[#F6F7F9] font-[Onest,system-ui,sans-serif] text-[14px] leading-[1.45] text-[#101828] dark:bg-slate-950 dark:text-slate-100">
+    <div className="flex min-h-screen bg-surface font-[Onest,system-ui,sans-serif] text-[14px] leading-[1.45] text-ink dark:bg-slate-950 dark:text-slate-100">
       <aside
         aria-label="Боковое меню"
         className={cn(

@@ -99,7 +99,7 @@ function RobotsEditor({ savedBody, defaultBody, environment }: RobotsEditorProps
             </Button>
             <Button type="button" variant="outline" onClick={() => setDraft(defaultBody)}>Подставить стандартный шаблон</Button>
             <Button type="button" variant="outline" disabled={savedBody.trim() === ''} onClick={() => setResetOpen(true)}>Сбросить к стандартному</Button>
-            <a className="text-sm text-emerald-700 underline dark:text-emerald-400" href="/robots.txt" target="_blank" rel="noreferrer">Открыть /robots.txt</a>
+            <a className="text-sm text-brand-700 underline dark:text-brand-400" href="/robots.txt" target="_blank" rel="noreferrer">Открыть /robots.txt</a>
           </div>
         </div>
       </Card>

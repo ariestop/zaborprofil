@@ -43,22 +43,22 @@ export function PagesBulkBar({ pages, selectedIds, onClear }: PagesBulkBarProps)
     })
   }
 
-  const darkButton = 'h-9 rounded-lg bg-[#344054] px-3 text-[13px] font-semibold text-white hover:bg-[#475467] disabled:opacity-60'
+  const darkButton = 'h-9 rounded-lg bg-graphite px-3 text-[13px] font-semibold text-white hover:bg-graphite disabled:opacity-60'
 
   return (
     <div
       role="region"
       aria-label="Массовые действия"
-      className="flex flex-wrap items-center gap-2.5 rounded-xl bg-[#101828] py-2.5 pl-4 pr-3 text-white dark:bg-slate-800"
+      className="flex flex-wrap items-center gap-2.5 rounded-xl bg-ink py-2.5 pl-4 pr-3 text-white dark:bg-slate-800"
     >
       <p className="font-semibold" data-testid="bulk-count">Выбрано страниц: {selectedIds.length}</p>
       <span className="hidden flex-1 sm:block" />
-      <label className="flex items-center gap-2 text-[13px] font-semibold text-[#D0D5DD]">
+      <label className="flex items-center gap-2 text-[13px] font-semibold text-line-strong">
         Статус
         <select
           value={status}
           onChange={(event) => setStatus(event.target.value as PageStatus)}
-          className="h-9 rounded-lg border-0 bg-[#344054] px-2.5 text-[13px] font-semibold text-white outline-hidden focus:ring-2 focus:ring-emerald-400"
+          className="h-9 rounded-lg border-0 bg-graphite px-2.5 text-[13px] font-semibold text-white outline-hidden focus:ring-2 focus:ring-brand-400"
         >
           {BULK_STATUSES.map((value) => <option key={value} value={value}>{pageStatusLabels[value]}</option>)}
         </select>
@@ -72,7 +72,7 @@ export function PagesBulkBar({ pages, selectedIds, onClear }: PagesBulkBarProps)
       <button type="button" className={darkButton} disabled={bulk.isPending} onClick={() => run({ ids: selectedIds, action: 'indexable', indexable: true }, 'Открыто для индексации')}>
         Открыть для индексации
       </button>
-      <button type="button" onClick={onClear} className="h-9 rounded-lg px-3 text-[13px] font-semibold text-[#D0D5DD] hover:text-white">Снять выделение</button>
+      <button type="button" onClick={onClear} className="h-9 rounded-lg px-3 text-[13px] font-semibold text-line-strong hover:text-white">Снять выделение</button>
     </div>
   )
 }

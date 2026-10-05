@@ -12,7 +12,7 @@ const dotClasses: Record<SaveState, string> = {
   clean: 'bg-slate-300 dark:bg-slate-600',
   dirty: 'bg-amber-500',
   saving: 'bg-sky-500 animate-pulse',
-  saved: 'bg-emerald-500',
+  saved: 'bg-brand-500',
   error: 'bg-red-500',
 }
 

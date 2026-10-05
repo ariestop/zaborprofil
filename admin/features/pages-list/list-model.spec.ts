@@ -56,7 +56,7 @@ describe('summary and templates', () => {
         { type: 'rich-text', name: 'Текст', position: 1, content: {}, settings: {}, isEnabled: true },
       ],
     } as unknown as PageTemplateItem
-    expect(templateBars(template).map((bar) => bar.color)).toEqual(['#344054', '#D0D5DD', '#667085'])
+    expect(templateBars(template).map((bar) => bar.color)).toEqual(['var(--color-graphite)', 'var(--color-line-strong)', 'var(--color-graphite)'])
     expect(blocksCount(0)).toBe('без блоков')
     expect(blocksCount(9)).toBe('9 блоков')
   })
