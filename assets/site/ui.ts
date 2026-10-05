@@ -411,3 +411,143 @@ export function initMapEmbeds(root: ParentNode = document): void {
         })
     })
 }
+
+/** Цена варианта для выбранной строки (профиля); `null` — такой комбинации не выпускают. */
+export function priceFor(prices: Record<string, number | null>, row: string): number | null {
+    const value = prices[row]
+
+    return typeof value === 'number' ? value : null
+}
+
+export function formatMoney(value: number): string {
+    return value.toLocaleString('ru-RU').replace(/\s/g, ' ')
+}
+
+function pluralizeOptions(count: number): string {
+    const mod10 = count % 10
+    const mod100 = count % 100
+    if (mod10 === 1 && mod100 !== 11) {
+        return `${count} вариант`
+    }
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+        return `${count} варианта`
+    }
+
+    return `${count} вариантов`
+}
+
+/**
+ * Прайс-лист с выбором: вкладки групп, выбор профиля и фильтр по классу. Цены берутся из data-prices,
+ * варианты без цены для выбранного профиля скрываются, счётчик озвучивается экранным диктором.
+ */
+export function initPriceMatrices(root: ParentNode = document): void {
+    root.querySelectorAll<HTMLElement>('[data-price-matrix]').forEach((matrix) => {
+        const tabs = Array.from(matrix.querySelectorAll<HTMLButtonElement>('[data-pm-tab]'))
+        const panels = Array.from(matrix.querySelectorAll<HTMLElement>('[data-pm-panel]'))
+
+        const selectTab = (index: number): void => {
+            tabs.forEach((tab, position) =>
+                tab.setAttribute('aria-selected', String(position === index)),
+            )
+            panels.forEach((panel, position) => {
+                panel.hidden = position !== index
+            })
+        }
+
+        if (tabs.length > 0) {
+            tabs.forEach((tab, position) =>
+                tab.addEventListener('click', () => selectTab(position)),
+            )
+            tabs.forEach((tab, position) =>
+                tab.addEventListener('keydown', (event) => {
+                    if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') {
+                        return
+                    }
+                    const next =
+                        (position + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) %
+                        tabs.length
+                    selectTab(next)
+                    tabs[next].focus()
+                }),
+            )
+            selectTab(0)
+        }
+
+        panels.forEach((panel) => {
+            const options = Array.from(panel.querySelectorAll<HTMLElement>('[data-pm-option]'))
+            const count = panel.querySelector<HTMLElement>('[data-pm-count]')
+            const empty = panel.querySelector<HTMLElement>('[data-pm-empty]')
+            const list = panel.querySelector<HTMLElement>('[data-pm-list]')
+            const more = panel.querySelector<HTMLButtonElement>('[data-pm-more]')
+            const moreWrap = panel.querySelector<HTMLElement>('[data-pm-more-wrap]')
+            const limit = Number(list?.dataset.pmLimit ?? 0)
+            let expanded = false
+
+            const render = (): void => {
+                const row =
+                    panel.querySelector<HTMLInputElement>('[data-pm-row]:checked')?.value ?? ''
+                const group =
+                    panel.querySelector<HTMLInputElement>('[data-pm-filter]:checked')?.value ?? ''
+                let shown = 0
+
+                options.forEach((option) => {
+                    let prices: Record<string, number | null> = {}
+                    try {
+                        prices = JSON.parse(option.dataset.prices ?? '{}') as Record<
+                            string,
+                            number | null
+                        >
+                    } catch {
+                        // Повреждённые данные — вариант просто не показываем.
+                    }
+                    const price = priceFor(prices, row)
+                    const matchesGroup = group === '' || option.dataset.group === group
+                    const visible = price !== null && matchesGroup
+                    if (!visible) {
+                        option.hidden = true
+                        return
+                    }
+                    shown += 1
+                    // Сначала показываем первые `limit` вариантов; остальные раскрывает кнопка «Показать ещё».
+                    option.hidden = limit > 0 && !expanded && shown > limit
+                    const target = option.querySelector<HTMLElement>('[data-pm-price]')
+                    if (target !== null) {
+                        target.textContent = formatMoney(price)
+                    }
+                    const order = option.querySelector<HTMLElement>('[data-pm-order]')
+                    if (order !== null) {
+                        const details = order.dataset.details ?? ''
+                        order.dataset.leadPlan = `${order.dataset.title ?? ''}${details !== '' ? ` (${details})` : ''}, профиль ${row}`
+                    }
+                })
+
+                if (count !== null) {
+                    count.textContent =
+                        shown > 0 ? `Профиль ${row}: ${pluralizeOptions(shown)}` : ''
+                }
+                if (moreWrap !== null && more !== null) {
+                    const hiddenCount = limit > 0 && !expanded ? Math.max(0, shown - limit) : 0
+                    moreWrap.hidden = hiddenCount === 0
+                    more.textContent = hiddenCount > 0 ? `Показать ещё ${hiddenCount}` : ''
+                }
+                if (empty !== null) {
+                    empty.hidden = shown > 0
+                }
+            }
+
+            panel
+                .querySelectorAll<HTMLInputElement>('[data-pm-row], [data-pm-filter]')
+                .forEach((input) =>
+                    input.addEventListener('change', () => {
+                        expanded = false
+                        render()
+                    }),
+                )
+            more?.addEventListener('click', () => {
+                expanded = true
+                render()
+            })
+            render()
+        })
+    })
+}

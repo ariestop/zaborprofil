@@ -1,0 +1,13 @@
+{# Быстрая навигация по странице: липкая строка «пилюль» под шапкой, на телефоне листается пальцем. #}
+{% set items = (block.content.items ?? [])|filter(item => (item.title ?? '') is not empty and (item.href ?? '') is not empty) %}
+{% if items|length > 0 %}
+    <nav class="zp-quicknav" aria-label="Разделы страницы" data-block-type="internal-links">
+        <div class="zp-container">
+            <ul class="zp-quicknav__list">
+                {% for item in items %}
+                    <li><a href="{{ item.href }}">{{ item.title }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </nav>
+{% endif %}

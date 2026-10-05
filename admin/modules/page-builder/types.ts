@@ -58,6 +58,7 @@ export const STRUCTURED_BLOCK_TYPES = [
   'advantages',
   'installation-steps',
   'price-table',
+  'price-matrix',
   'contacts-map',
   'partner-cta',
   'breadcrumbs',

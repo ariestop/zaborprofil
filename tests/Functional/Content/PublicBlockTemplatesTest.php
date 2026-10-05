@@ -128,6 +128,53 @@ final class PublicBlockTemplatesTest extends KernelTestCase
         self::assertSame(1, substr_count($html, 'aria-label="Скопировать: '), 'Реквизит без значения не выводится.');
     }
 
+    public function testPriceMatrixRendersFirstProfilePricesAndFullTable(): void
+    {
+        $html = $this->render('price-matrix', [
+            'title' => 'Прайс',
+            'unit' => '₽/м²',
+            'groups' => [
+                [
+                    'label' => 'С покрытием',
+                    'rows' => ['С8', 'МП18'],
+                    'filterLabel' => 'Класс',
+                    'options' => [
+                        ['title' => 'Полиэстер', 'group' => 'ECO', 'tone' => 'amber', 'specs' => [['label' => 'Гарантия', 'value' => '5 лет', 'chip' => 'гарантия 5 лет'], ['label' => 'Покрытие', 'value' => '—', 'chip' => '-']], 'prices' => ['С8' => 1455, 'МП18' => null]],
+                        ['title' => 'VALORY', 'group' => 'ПРЕМЬЕР', 'tone' => 'orange', 'prices' => ['С8' => null, 'МП18' => 960]],
+                    ],
+                ],
+                ['label' => 'Оцинкованный', 'compact' => true, 'rows' => ['С8'], 'options' => [['title' => '0.30 мм', 'prices' => ['С8' => 363]]]],
+            ],
+        ]);
+
+        self::assertStringContainsString('role="tablist"', $html);
+        self::assertStringContainsString("1\u{00A0}455", $html, 'Цена первого профиля показывается сразу, с неразрывным пробелом.');
+        self::assertMatchesRegularExpression('/data-prices="[^"]*1455[^"]*null[^"]*"/u', $html, 'Цены всех профилей лежат в data-prices для JS.');
+        self::assertStringContainsString('гарантия 5 лет', $html);
+        self::assertStringNotContainsString('покрытие —', $html, 'Характеристика с chip="-" не выводится на карточке.');
+        self::assertMatchesRegularExpression('/data-group="ПРЕМЬЕР"[^>]*hidden/u', $html, 'Вариант без цены для первого профиля скрыт.');
+        self::assertStringContainsString('name="pm-b1-filter-0"', $html);
+        self::assertStringContainsString('Показать полную таблицу цен', $html);
+        self::assertStringContainsString('<th scope="col" class="text-right">МП18</th>', $html);
+    }
+
+    public function testFenceTypesSplitsBulletsAndSubtitle(): void
+    {
+        $html = $this->render('fence-types', ['items' => [['title' => 'VALORY', 'text' => "Дизайнерское решение\nОписание покрытия\n– толщина 30 мкм\n– отличная стойкость"]]]);
+
+        self::assertStringContainsString('Дизайнерское решение', $html);
+        self::assertStringContainsString('<span>толщина 30 мкм</span>', $html);
+        self::assertSame(2, substr_count($html, '<li><svg'));
+    }
+
+    public function testInternalLinksRenderQuickNavigation(): void
+    {
+        $html = $this->render('internal-links', ['items' => [['title' => 'Прайс-лист', 'href' => '#prices'], ['title' => 'Пусто', 'href' => '']]]);
+
+        self::assertStringContainsString('<a href="#prices">Прайс-лист</a>', $html);
+        self::assertStringNotContainsString('Пусто', $html);
+    }
+
     public function testLegacyContactsBlockStillShowsSiteContacts(): void
     {
         $html = $this->render('contacts', ['items' => [['label' => 'Склад', 'value' => 'Саратов']]]);

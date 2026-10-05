@@ -8,6 +8,7 @@ import {
     initMapEmbeds,
     initMobileNav,
     initOfficeStatus,
+    initPriceMatrices,
     initVideoEmbeds,
 } from './ui'
 
@@ -127,6 +128,7 @@ initGalleries()
 initVideoEmbeds()
 initLeadPlans()
 initOfficeStatus()
+initPriceMatrices()
 initCopyButtons()
 initMapEmbeds()
 

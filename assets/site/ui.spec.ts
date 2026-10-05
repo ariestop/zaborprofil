@@ -6,6 +6,9 @@ import {
     initLeadPlans,
     initMobileNav,
     initOfficeStatus,
+    initPriceMatrices,
+    formatMoney,
+    priceFor,
     initVideoEmbeds,
     isAllowedEmbedUrl,
     isAllowedMapUrl,
@@ -233,5 +236,99 @@ describe('isAllowedMapUrl', () => {
         expect(isAllowedMapUrl('https://2gis.ru/saratov')).toBe(true)
         expect(isAllowedMapUrl('http://widgets.2gis.com/widget')).toBe(false)
         expect(isAllowedMapUrl('https://evil.example/2gis.com')).toBe(false)
+    })
+})
+
+describe('прайс-лист с выбором', () => {
+    const markup = `
+    <section data-price-matrix>
+      <button data-pm-tab="0" aria-selected="true"></button>
+      <button data-pm-tab="1" aria-selected="false"></button>
+      <div data-pm-panel="0">
+        <input type="radio" name="r" value="С8" data-pm-row checked>
+        <input type="radio" name="r" value="МП18" data-pm-row>
+        <input type="radio" name="f" value="" data-pm-filter checked>
+        <input type="radio" name="f" value="ECO" data-pm-filter>
+        <p data-pm-count></p>
+        <ul data-pm-list data-pm-limit="2">
+          <li data-pm-option data-group="ECO" data-prices='{"С8":480,"МП18":null}'><span data-pm-price></span><a data-pm-order data-title="Полиэстер" data-details="гладкий"></a></li>
+          <li data-pm-option data-group="ECO" data-prices='{"С8":565,"МП18":585}'><span data-pm-price></span></li>
+          <li data-pm-option data-group="ПРЕМЬЕР" data-prices='{"С8":910,"МП18":960}'><span data-pm-price></span></li>
+        </ul>
+        <div data-pm-more-wrap hidden><button data-pm-more></button></div>
+        <p data-pm-empty hidden></p>
+      </div>
+      <div data-pm-panel="1"><p>другая вкладка</p></div>
+    </section>`
+
+    function options(root: HTMLElement): HTMLElement[] {
+        return Array.from(root.querySelectorAll<HTMLElement>('[data-pm-option]'))
+    }
+
+    it('сразу обрезает список до лимита и раскрывает остальное по кнопке', () => {
+        const root = mount(markup)
+        initPriceMatrices(root)
+
+        expect(options(root).map((option) => option.hidden)).toEqual([false, false, true])
+        expect(root.querySelector('[data-pm-more]')!.textContent).toBe('Показать ещё 1')
+
+        root.querySelector<HTMLButtonElement>('[data-pm-more]')!.click()
+        expect(options(root).map((option) => option.hidden)).toEqual([false, false, false])
+        expect(root.querySelector<HTMLElement>('[data-pm-more-wrap]')!.hidden).toBe(true)
+    })
+
+    it('при смене профиля пересчитывает цены и прячет недоступные варианты', () => {
+        const root = mount(markup)
+        initPriceMatrices(root)
+        const profile = root.querySelectorAll<HTMLInputElement>('[data-pm-row]')[1]
+
+        profile.checked = true
+        profile.dispatchEvent(new Event('change', { bubbles: true }))
+
+        const [first, second, third] = options(root)
+        expect(first.hidden).toBe(true)
+        expect(second.querySelector('[data-pm-price]')!.textContent).toBe('585')
+        expect(third.querySelector('[data-pm-price]')!.textContent).toBe('960')
+        expect(root.querySelector('[data-pm-count]')!.textContent).toBe('Профиль МП18: 2 варианта')
+    })
+
+    it('фильтрует по классу и сообщает, если вариантов нет', () => {
+        const root = mount(markup)
+        initPriceMatrices(root)
+        const eco = root.querySelectorAll<HTMLInputElement>('[data-pm-filter]')[1]
+        eco.checked = true
+        eco.dispatchEvent(new Event('change', { bubbles: true }))
+
+        expect(options(root).map((option) => option.hidden)).toEqual([false, false, true])
+
+        const profile = root.querySelectorAll<HTMLInputElement>('[data-pm-row]')[1]
+        profile.checked = true
+        profile.dispatchEvent(new Event('change', { bubbles: true }))
+        expect(options(root).filter((option) => !option.hidden)).toHaveLength(1)
+    })
+
+    it('подставляет вариант и профиль в текст заявки', () => {
+        const root = mount(markup)
+        initPriceMatrices(root)
+
+        expect(root.querySelector<HTMLElement>('[data-pm-order]')!.dataset.leadPlan).toBe(
+            'Полиэстер (гладкий), профиль С8',
+        )
+    })
+
+    it('переключает вкладки', () => {
+        const root = mount(markup)
+        initPriceMatrices(root)
+        const panels = root.querySelectorAll<HTMLElement>('[data-pm-panel]')
+
+        expect([panels[0].hidden, panels[1].hidden]).toEqual([false, true])
+        root.querySelectorAll<HTMLButtonElement>('[data-pm-tab]')[1].click()
+        expect([panels[0].hidden, panels[1].hidden]).toEqual([true, false])
+    })
+
+    it('форматирует цены с неразрывным пробелом', () => {
+        expect(formatMoney(1455)).toBe('1 455')
+        expect(priceFor({ С8: 480, МП18: null }, 'МП18')).toBeNull()
+        expect(priceFor({ С8: 480 }, 'С8')).toBe(480)
     })
 })

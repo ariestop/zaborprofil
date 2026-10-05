@@ -5,9 +5,18 @@ declare(strict_types=1);
 namespace App\Module\Menu\Application\Service;
 
 use App\Module\Content\Application\Service\PublicPageView;
+use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 
 final readonly class BreadcrumbBuilder
 {
+    /**
+     * @param PageRepositoryInterface|null $pages если передан, промежуточные «крошки» строятся только по существующим
+     *                                            опубликованным страницам (без ссылок на несуществующие разделы)
+     */
+    public function __construct(private ?PageRepositoryInterface $pages = null)
+    {
+    }
+
     /**
      * @return list<BreadcrumbItem>
      */
@@ -23,11 +32,17 @@ final readonly class BreadcrumbBuilder
         foreach ($segments as $index => $segment) {
             $path .= '/'.$segment;
             $current = $index === \count($segments) - 1;
-            $breadcrumbs[] = new BreadcrumbItem(
-                $current ? $page->h1 : $this->labelFromSegment($segment),
-                $path.'/',
-                $current,
-            );
+            $label = $current ? $page->h1 : $this->labelFromSegment($segment);
+
+            if (!$current && $this->pages instanceof PageRepositoryInterface) {
+                $parent = $this->pages->findPublishedByPath($path.'/');
+                if ($parent === null) {
+                    continue;
+                }
+                $label = $parent->h1();
+            }
+
+            $breadcrumbs[] = new BreadcrumbItem($label, $path.'/', $current);
         }
 
         if (\count($breadcrumbs) === 1) {

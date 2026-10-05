@@ -48,6 +48,7 @@ enum BlockType: string
     case Advantages = 'advantages';
     case InstallationSteps = 'installation-steps';
     case PriceTable = 'price-table';
+    case PriceMatrix = 'price-matrix';
     case ContactsMap = 'contacts-map';
     case PartnerCta = 'partner-cta';
 

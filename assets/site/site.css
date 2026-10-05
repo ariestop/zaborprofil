@@ -33,7 +33,7 @@
 @layer base {
     html {
         scroll-behavior: smooth;
-        scroll-padding-top: 4.5rem;
+        scroll-padding-top: 7.5rem;
         -webkit-text-size-adjust: 100%;
     }
 
@@ -365,5 +365,86 @@
     .zp-video iframe,
     .zp-video video {
         @apply absolute inset-0 h-full w-full border-0;
+    }
+}
+
+@layer components {
+    /* ---------- Прайс-лист с выбором ---------- */
+    .zp-seg {
+        @apply inline-flex max-w-full rounded-2xl bg-slate-100 p-1.5;
+    }
+    .zp-seg__item {
+        @apply min-h-11 flex-1 rounded-xl px-5 text-base font-semibold whitespace-nowrap text-slate-600 transition-colors hover:text-slate-950 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
+    }
+    .zp-seg__item[aria-selected='true'] {
+        @apply bg-white text-slate-950;
+    }
+    .zp-pills {
+        @apply flex flex-wrap gap-2;
+    }
+    .zp-pill {
+        @apply relative cursor-pointer;
+    }
+    .zp-pill span {
+        @apply inline-flex min-h-11 min-w-14 items-center justify-center rounded-xl bg-slate-100 px-4 text-base font-semibold text-slate-700 transition-colors select-none hover:bg-brand-100 hover:text-brand-900;
+    }
+    .zp-pill input:checked + span {
+        @apply bg-brand-700 text-white;
+    }
+    .zp-pill input:focus-visible + span {
+        @apply outline-3 outline-offset-2 outline-brand-600;
+    }
+    .zp-option {
+        @apply rounded-2xl bg-slate-50 p-4 sm:p-5;
+    }
+    .zp-option--compact {
+        @apply p-4;
+    }
+    .zp-option[hidden] {
+        display: none;
+    }
+    .zp-fulltable > summary {
+        @apply inline-flex min-h-12 cursor-pointer list-none items-center gap-2 rounded-xl bg-slate-100 px-5 font-semibold text-slate-800 transition-colors select-none hover:bg-brand-100 hover:text-brand-900 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600 [&::-webkit-details-marker]:hidden;
+    }
+    .zp-fulltable > summary::before {
+        content: '+';
+        @apply text-xl leading-none font-bold text-brand-700;
+    }
+    .zp-fulltable[open] > summary::before {
+        content: '–';
+    }
+    .zp-scroll {
+        @apply max-w-full overflow-x-auto rounded-2xl ring-1 ring-slate-200;
+    }
+    .zp-ptable-full {
+        @apply w-full border-collapse text-sm;
+    }
+    .zp-ptable-full th,
+    .zp-ptable-full td {
+        @apply border-b border-slate-100 px-3 py-2.5 text-left whitespace-nowrap;
+    }
+    .zp-ptable-full thead th {
+        @apply sticky top-0 z-10 bg-slate-100 text-slate-700;
+    }
+    .zp-ptable-full tbody th {
+        @apply sticky left-0 bg-white font-semibold text-slate-950;
+    }
+    .zp-ptable-full tbody tr:hover > * {
+        @apply bg-brand-50;
+    }
+
+    /* ---------- Быстрая навигация по странице ---------- */
+    .zp-quicknav {
+        @apply sticky top-14 z-30 border-b border-slate-200 bg-white md:top-[4.5rem];
+    }
+    .zp-quicknav__list {
+        @apply -mx-4 flex gap-2 overflow-x-auto px-4 py-2.5 sm:mx-0 sm:px-0;
+        scrollbar-width: none;
+    }
+    .zp-quicknav__list::-webkit-scrollbar {
+        display: none;
+    }
+    .zp-quicknav__list a {
+        @apply inline-flex min-h-10 items-center rounded-full bg-slate-100 px-4 text-sm font-semibold whitespace-nowrap text-slate-700 transition-colors hover:bg-brand-100 hover:text-brand-900 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
     }
 }

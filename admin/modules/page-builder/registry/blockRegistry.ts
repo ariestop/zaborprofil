@@ -28,6 +28,34 @@ const simpleSettingsSchema = z.object({
   anchor: z.string().default(''),
 })
 
+const priceMatrixGroupSchema = z.object({
+  label: z.string(),
+  note: z.string().default(''),
+  /** Подпись выбора строк, например «Профиль». */
+  rowsLabel: z.string().default('Профиль'),
+  /** Компактные плитки вместо карточек (например, толщина металла: «0.30 мм — 363 ₽»). */
+  compact: z.boolean().default(false),
+  /** Сколько вариантов показывать сразу (остальные раскрывает кнопка); для компактных плиток ограничения нет. */
+  limit: z.number().int().min(1).max(100).default(6),
+  rows: z.array(z.string()).default([]),
+  /** Подпись фильтра по полю `group` вариантов, например «Класс покрытия» (пусто — фильтра нет). */
+  filterLabel: z.string().default(''),
+  options: z
+    .array(
+      z.object({
+        title: z.string(),
+        /** Метка группы варианта для фильтра и цветного бейджа, например «ECO». */
+        group: z.string().default(''),
+        tone: z.enum(['', 'peach', 'amber', 'blue', 'orange', 'green']).default(''),
+        /** `chip` — короткая подпись на карточке («гарантия 5 лет»); `-` — не показывать характеристику на карточке. */
+        specs: z.array(z.object({ label: z.string(), value: z.string(), chip: z.string().default('') })).default([]),
+        /** Цена по строкам (профилям); null — вариант для этого профиля не выпускается. */
+        prices: z.record(z.string(), z.number().nullable()).default({}),
+      }),
+    )
+    .default([]),
+})
+
 const contactOfficeSchema = z.object({
   city: z.string(),
   /** Подпись над названием: «Головной офис», «Дилер». */
@@ -214,6 +242,19 @@ const structuredBlockRegistry: BlockDefinition[] = [
   def('advantages', 'Преимущества компании', 'business', 60, 'Преимущества компании.', z.object({ items: z.array(z.object({ title: z.string(), text: z.string() })).default([]) })),
   def('installation-steps', 'Этапы монтажа', 'business', 70, 'Этапы монтажа.', z.object({ items: z.array(z.object({ title: z.string(), text: z.string() })).default([]) })),
   def('price-table', 'Таблица цен', 'business', 80, 'Таблица цен.', z.object({ title: z.string().default(''), columns: z.array(z.string()).default([]), rows: z.array(z.array(z.string())).default([]) })),
+  def(
+    'price-matrix',
+    'Прайс-лист с выбором',
+    'business',
+    85,
+    'Посетитель выбирает профиль и сразу видит цены по вариантам; полная таблица раскрывается ниже.',
+    z.object({
+      title: z.string().default(''),
+      subtitle: z.string().default(''),
+      unit: z.string().default('₽/м²'),
+      groups: z.array(priceMatrixGroupSchema).default([]),
+    }),
+  ),
   def(
     'contacts-map',
     'Контакты и карта',

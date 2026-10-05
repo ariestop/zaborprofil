@@ -26,6 +26,7 @@ final readonly class StructuredBlockPayloadValidator
             BlockType::Cta => $this->requireString($content, 'title'),
             BlockType::ContactForm => $this->requireString($content, 'title'),
             BlockType::PriceTable => $this->requirePriceTable($content),
+            BlockType::PriceMatrix => $this->requireObjectList($content, 'groups'),
             default => null,
         };
     }
