@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><title>Брендбук «Забор Профиль» 2026 · система «Периметр»</title>
+<style>
+/*FONTS*/
+@page{size:297mm 210mm;margin:0}
+:root{
+  --green:#45A63D; --act:#2D7F27; --act-h:#246C1F; --green-50:#EEF6EC;
+  --ink:#23272D; --graph:#575C63; --surface:#F3F5F2; --line:#DCE0DB; --night:#2A2F35; --badge:#F2B13B;
+  --f:'Onest',system-ui,sans-serif; --c:'Sofia Sans Condensed','Arial Narrow',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:#fff;color:var(--ink);font-family:var(--f);font-size:13px;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page{width:297mm;height:210mm;position:relative;overflow:hidden;padding:15mm 17mm 17mm;page-break-after:always;break-after:page;display:flex;flex-direction:column;gap:7mm}
+.page:last-child{page-break-after:auto}
+.foot{position:absolute;left:17mm;right:17mm;bottom:7mm;display:flex;justify-content:space-between;align-items:center;font:600 10.5px/1 var(--c);letter-spacing:.06em;text-transform:uppercase;color:var(--graph)}
+.foot .pn{font-size:13px;font-weight:800;color:var(--ink)}
+.foot .ln{flex:1;height:1px;background:var(--line);margin:0 12px}
+.eb{font:800 12px/1 var(--c);letter-spacing:.1em;text-transform:uppercase;color:var(--act)}
+h1{font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1.08;text-wrap:balance}
+h2{font-size:19px;font-weight:700;line-height:1.2}
+h3{font:800 12px/1.2 var(--c);letter-spacing:.08em;text-transform:uppercase;color:var(--graph)}
+p{max-width:72ch}
+.lead{font-size:14.5px;color:var(--graph);max-width:80ch}
+.hd{display:grid;gap:3mm}
+.row{display:flex;gap:6mm}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:6mm}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:5mm}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:5mm}
+.box{border:1px solid var(--line);border-radius:10px;padding:5mm}
+.sur{background:var(--surface);border-radius:10px;padding:5mm}
+.num{font-variant-numeric:tabular-nums}
+.cond{font-family:var(--c)}
+.small{font-size:11.5px;color:var(--graph)}
+ul.l{list-style:none;display:grid;gap:2mm}
+ul.l li{padding-left:16px;position:relative}
+ul.l li::before{content:"";position:absolute;left:0;top:.62em;width:9px;height:3px;background:var(--green)}
+ul.x li::before{background:#B3261E;height:2px;width:9px}
+svg.logo{display:block;height:auto}
+.night .w,.night .d,.green .w,.green .d{fill:#fff}
+.green .m{fill:#fff}
+.mono .m,.mono .w,.mono .d{fill:var(--ink)}
+.monow .m,.monow .w,.monow .d{fill:#fff}
+
+/* cover */
+.cover{padding:18mm 20mm;justify-content:space-between}
+.cover .stripes{position:absolute;right:0;top:34mm;width:46%;height:120mm}
+.cover .stripes i{position:absolute;right:0;height:9mm;background:var(--green);clip-path:polygon(9mm 0,100% 0,100% 100%,0 100%)}
+.cover h1{font-size:58px;max-width:15ch;margin-top:auto}
+.cover .meta{display:flex;gap:12mm;font:700 14px/1.3 var(--c);letter-spacing:.04em;color:var(--graph);text-transform:uppercase}
+.cover .meta b{display:block;color:var(--ink);font-size:20px;letter-spacing:0;text-transform:none}
+
+/* toc */
+.toc{columns:2;column-gap:10mm;list-style:none;font-size:14px}
+.toc li{display:flex;gap:4mm;padding:2.2mm 0;border-bottom:1px solid var(--line);break-inside:avoid}
+.toc b{font:800 15px/1.2 var(--c);color:var(--act);width:8mm}
+.toc span{flex:1}
+.toc i{font-style:normal;font:700 14px var(--c);color:var(--graph)}
+.pr{display:grid;grid-template-columns:repeat(5,1fr);gap:4mm}
+.pr div{border-top:3px solid var(--green);padding-top:3mm;display:grid;gap:1.5mm;align-content:start}
+.pr b{font-size:13.5px}
+.pr span{font-size:11.5px;color:var(--graph)}
+
+/* logo pages */
+.lgrid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:5mm;flex:1}
+.lcell{border:1px solid var(--line);border-radius:10px;padding:6mm;display:flex;flex-direction:column;justify-content:space-between;gap:4mm}
+.lcell .art{flex:1;display:flex;align-items:center;justify-content:center}
+.lcell .cap{display:grid;gap:1mm}
+.clear{position:relative;padding:14mm;border:1px dashed #9AA19A;display:inline-block;background:repeating-linear-gradient(45deg,#fff 0 6px,#F3F5F2 6px 12px)}
+.clear .in{background:#fff;outline:1px solid var(--act)}
+.clear .x{position:absolute;font:800 12px var(--c);color:var(--act)}
+.minis{display:flex;align-items:flex-end;gap:8mm}
+.minis div{display:grid;gap:2mm;justify-items:start}
+.vers{display:grid;grid-template-columns:repeat(4,1fr);gap:4mm}
+.vers>div{border-radius:10px;height:34mm;display:flex;align-items:center;justify-content:center;border:1px solid var(--line)}
+.dont{display:grid;grid-template-columns:repeat(5,1fr);gap:4mm}
+.dont>div{display:grid;gap:2mm}
+.dont .art{height:26mm;border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.dont .art::after{content:"";position:absolute;inset:0;background:linear-gradient(to top right,transparent calc(50% - 1px),#B3261E calc(50% - 1px) calc(50% + 1px),transparent calc(50% + 1px));opacity:.85}
+
+/* colors */
+.pal{display:grid;grid-template-columns:repeat(4,1fr);gap:4mm}
+.sw{border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.sw .c{height:24mm;padding:3mm 4mm;display:flex;align-items:flex-end;font:800 15px/1 var(--c);letter-spacing:.02em}
+.sw .d{padding:3mm 4mm;display:grid;gap:.6mm;font-size:11px}
+.sw .d b{font-size:12.5px}
+.sw .d code{font:600 11px/1.35 var(--c);letter-spacing:.03em;color:var(--graph)}
+.prop{display:flex;height:12mm;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.prop div{display:flex;align-items:center;padding:0 3mm;font:800 12px var(--c);white-space:nowrap}
+table{border-collapse:collapse;width:100%;font-size:12px}
+th,td{text-align:left;padding:2.2mm 3mm;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font:800 10.5px/1.2 var(--c);letter-spacing:.07em;text-transform:uppercase;color:var(--graph)}
+.chip{display:inline-flex;align-items:center;justify-content:center;min-width:24mm;height:8mm;border-radius:6px;font-weight:600;font-size:12px;padding:0 3mm}
+.ok{color:var(--act);font:800 12px var(--c);letter-spacing:.04em}
+.no{color:#B3261E;font:800 12px var(--c);letter-spacing:.04em}
+.ral{display:grid;grid-template-columns:repeat(7,1fr);gap:4mm}
+.ral div{display:grid;gap:2mm}
+.ral i{display:block;height:30mm;border-radius:8px;border:1px solid rgba(0,0,0,.12)}
+
+/* type */
+.spec{display:grid;grid-template-columns:1fr 1fr;gap:6mm;flex:1}
+.spec .box{display:flex;flex-direction:column;gap:3mm}
+.big{font-size:64px;line-height:1;font-weight:800;letter-spacing:-.02em}
+.alpha{font-size:17px;line-height:1.45;word-break:break-all}
+.weights{display:flex;gap:5mm;flex-wrap:wrap;font-size:18px}
+.scale td:first-child{width:30mm}
+.scale .s{color:var(--ink)}
+
+/* pattern */
+.pat{position:relative;height:56mm;background:var(--night);border-radius:10px;overflow:hidden}
+.pat i{position:absolute;left:0;height:5mm;background:var(--green);clip-path:polygon(0 0,100% 0,calc(100% - 5mm) 100%,0 100%)}
+.pat.r i{left:auto;right:0;clip-path:polygon(5mm 0,100% 0,100% 100%,0 100%)}
+.constr{position:relative;height:56mm;border:1px solid var(--line);border-radius:10px;background:#fff}
+.dim{position:absolute;font:800 12px var(--c);color:var(--act);white-space:nowrap}
+
+/* icons */
+.icons{display:grid;grid-template-columns:repeat(4,1fr);gap:5mm}
+.icons .box{display:grid;gap:3mm;justify-items:start}
+.icons svg{width:22mm;height:22mm}
+.grid32{width:56mm;height:56mm;background-image:linear-gradient(#E3E7E2 1px,transparent 1px),linear-gradient(90deg,#E3E7E2 1px,transparent 1px);background-size:calc(56mm/16) calc(56mm/16);border:1px solid var(--line);position:relative}
+.grid32 svg{width:100%;height:100%}
+
+/* UI */
+.btn{height:44px;padding:0 18px;border-radius:10px;border:0;font:600 15px/1 var(--f);display:inline-flex;align-items:center;gap:8px;justify-content:center;white-space:nowrap}
+.btn.p{background:var(--act);color:#fff}
+.btn.ph{background:var(--act-h);color:#fff;box-shadow:0 6px 14px rgba(45,127,39,.3)}
+.btn.pf{background:var(--act);color:#fff;outline:3px solid #9AD38F;outline-offset:2px}
+.btn.s{background:#fff;color:var(--ink);box-shadow:inset 0 0 0 1.5px #C9CEC8}
+.btn.dis{background:#E3E6E2;color:#8A9099}
+.field{display:grid;gap:4px;font-size:12.5px;color:var(--graph)}
+.field .in{height:44px;border:1.5px solid #C9CEC8;border-radius:10px;padding:0 12px;display:flex;align-items:center;color:var(--ink);font-size:15px;background:#fff}
+.field .in.f{border-color:var(--act);box-shadow:0 0 0 3px #CDE8C8}
+.field .in.e{border-color:#B3261E}
+.field .err{color:#B3261E;font-size:12px}
+.tag{display:inline-flex;align-items:center;height:24px;padding:0 8px;border-radius:6px;font:800 12px/1 var(--c);letter-spacing:.05em;text-transform:uppercase}
+.spc{display:inline-flex;align-items:center;height:26px;padding:0 9px;border-radius:6px;background:var(--surface);font:600 13px/1 var(--c);letter-spacing:.02em}
+.segc{display:inline-flex;background:var(--surface);border:1px solid #E3E6E2;border-radius:12px;padding:4px;gap:4px}
+.segc span{height:34px;padding:0 13px;border-radius:9px;display:flex;align-items:center;font:600 13.5px/1 var(--f);color:var(--graph)}
+.segc span.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+
+/* mock (E) */
+.m-photo{position:relative;overflow:hidden;background:linear-gradient(#CFE3F1,#EAF3F8 60%)}
+.m-photo::before{content:"";position:absolute;left:0;right:0;bottom:0;height:16%;background:#7FA86A}
+.m-photo::after{content:"";position:absolute;left:0;right:0;bottom:10%;top:26%;background:linear-gradient(90deg,#4B5056 0 6px,transparent 6px) 0 0/120px 100% repeat-x,repeating-linear-gradient(90deg,var(--ral) 0 9px,color-mix(in srgb,var(--ral),#fff 26%) 9px 12px,var(--ral) 12px 20px,color-mix(in srgb,var(--ral),#000 35%) 20px 23px)}
+.edesk{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 18px 40px -28px rgba(0,0,0,.45);--ic-line:#23272D;--ic-bar:#45A63D}
+.e-top{display:flex;align-items:center;gap:14px;padding:9px 18px;border-bottom:1px solid #E3E6E2}
+.e-top .ph{margin-left:auto;font:800 18px/1 var(--c);white-space:nowrap}
+.segc span{white-space:nowrap}
+.e-hero{display:grid;grid-template-columns:.9fr 1.1fr;gap:18px;padding:18px;background:var(--surface)}
+.e-hero h4{font-size:27px;font-weight:800;line-height:1.08;letter-spacing:-.02em;margin-bottom:10px}
+.e-hero ul{list-style:none;display:grid;gap:6px;font-size:13.5px;margin-bottom:14px}
+.e-hero li{display:flex;gap:8px;align-items:baseline}
+.e-hero li::before{content:"";width:14px;height:3px;background:var(--green);flex:none;transform:translateY(-3px)}
+.trust{display:flex;gap:14px;margin-top:14px}
+.trust b{display:block;font:800 22px/1 var(--c)}
+.trust span{font-size:11px;color:var(--graph)}
+.cfg{background:#fff;border:1px solid #E3E6E2;border-radius:12px;padding:10px;display:grid;gap:8px}
+.scene{position:relative;aspect-ratio:16/7;border-radius:9px;overflow:hidden;background:linear-gradient(#BCD9EE,#E6F1F8 70%)}
+.scene .house{position:absolute;left:50%;bottom:14%;width:34%;height:44%;background:#E4DED4}
+.scene .house::before{content:"";position:absolute;left:-10%;right:-10%;bottom:100%;height:60%;background:#7C838B;clip-path:polygon(50% 0,100% 100%,0 100%)}
+.scene .house::after{content:"";position:absolute;left:18%;top:22%;width:22%;height:30%;background:#9EC3DA;box-shadow:44px 0 0 0 #9EC3DA}
+.scene .tree{position:absolute;left:12%;bottom:14%;width:16%;aspect-ratio:1;border-radius:50%;background:#6E9A5B}
+.scene .ground{position:absolute;left:0;right:0;bottom:0;height:15%;background:#86AE70}
+.scene .fence{position:absolute;left:0;right:0;bottom:11%;height:var(--fh,46%);--l:color-mix(in srgb,var(--ral),#fff 26%);--d:color-mix(in srgb,var(--ral),#000 35%);background:linear-gradient(90deg,#4B5056 0 6px,transparent 6px) 24px 0/120px 100% repeat-x,repeating-linear-gradient(90deg,var(--ral) 0 8px,var(--l) 8px 11px,var(--ral) 11px 18px,var(--d) 18px 21px)}
+.scene.sh .fence{background:linear-gradient(90deg,#4B5056 0 6px,transparent 6px) 24px 0/120px 100% repeat-x,repeating-linear-gradient(90deg,var(--ral) 0 10px,var(--l) 10px 12px,var(--ral) 12px 19px,transparent 19px 27px),linear-gradient(#4B5056,#4B5056) 0 16%/100% 4px no-repeat,linear-gradient(#4B5056,#4B5056) 0 80%/100% 4px no-repeat}
+.scene .cap{position:absolute;left:8px;top:8px;background:rgba(255,255,255,.92);border-radius:6px;padding:4px 8px;font:700 11.5px/1.2 var(--c);letter-spacing:.02em}
+.ctl{display:grid;gap:4px}
+.ctl>span{font-size:11px;color:var(--graph)}
+.cfg .segc{display:flex}
+.cfg .segc span{flex:1;justify-content:center;height:28px;font-size:12px;padding:0 6px}
+.rals{display:flex;gap:6px}
+.rals i{width:24px;height:24px;border-radius:6px;border:1px solid rgba(0,0,0,.15)}
+.rals i.on{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--act)}
+.sum{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #E3E6E2;padding-top:8px}
+.sum b{font:800 30px/1 var(--c)}
+.sum small{display:block;font-size:10.5px;color:var(--graph)}
+.e-below{padding:14px 18px;display:grid;grid-template-columns:1.3fr 1fr;gap:16px;align-items:center}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;list-style:none;counter-reset:s}
+.steps li{display:grid;gap:3px;counter-increment:s}
+.steps svg{width:30px;height:30px}
+.steps b{font-size:12.5px}
+.steps b::before{content:counter(s) ". ";color:var(--act)}
+.steps span{font:600 11.5px/1.2 var(--c);color:var(--graph)}
+.review{display:grid;grid-template-columns:70px 1fr;gap:10px;background:var(--surface);border-radius:10px;padding:8px;align-items:center}
+.review .m-photo{height:52px;border-radius:7px}
+.review q{font-size:12px;font-weight:500;display:block}
+.review small{font:600 10.5px/1.3 var(--c);color:var(--graph)}
+.b2b td,.b2b th{padding:6px 9px;font-size:11.5px}
+.b2b td.n{font:700 13px var(--c)}
+
+.phone{width:62mm;border:6px solid #1A1D20;border-radius:22px;overflow:hidden;background:#fff;display:flex;flex-direction:column}
+.phone .top{display:flex;justify-content:space-between;align-items:center;padding:7px 9px;border-bottom:1px solid #E3E6E2}
+.phone .bd{padding:9px;display:grid;gap:7px}
+.phone .m-photo{height:26mm;border-radius:8px}
+.phone .t{font-size:15px;font-weight:800;line-height:1.12}
+.phone .ppr{font:800 22px/1 var(--c)}
+.phone .ppr small{font-size:11px;color:var(--graph);font-weight:600}
+.sbar{display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:5px;padding:6px;border-top:1px solid #E3E6E2}
+.sbar span{height:38px;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:600 9.5px/1 var(--f);background:var(--surface)}
+.sbar span.p{background:var(--act);color:#fff}
+.sbar svg{width:15px;height:15px}
+
+/* print */
+.bcard{width:90mm;height:50mm;border-radius:2mm;position:relative;overflow:hidden;padding:6mm 6.5mm;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 10px 24px -16px rgba(0,0,0,.5);border:1px solid var(--line)}
+.bcard .st{position:absolute;right:0;top:9mm;bottom:9mm;width:20mm;background:repeating-linear-gradient(var(--green) 0 2.2mm,transparent 2.2mm 4.6mm);clip-path:polygon(6mm 0,100% 0,100% 100%,0 100%)}
+.bcard .nm{font-size:17px;font-weight:800;letter-spacing:-.01em;line-height:1.1}
+.bcard .rl{font-size:10px;color:var(--graph)}
+.bcard .ct{font:600 10.5px/1.4 var(--c);letter-spacing:.02em;position:relative}
+.lh{width:74mm;height:105mm;border:1px solid var(--line);box-shadow:0 10px 24px -16px rgba(0,0,0,.5);padding:7mm 7mm;position:relative;display:flex;flex-direction:column;gap:4mm;background:#fff}
+.lh .req{font:600 7px/1.4 var(--c);color:var(--graph);letter-spacing:.02em}
+.lh .txt{display:grid;gap:1.6mm;margin-top:3mm}
+.lh .txt i{display:block;height:1.4mm;background:#E7EAE6;border-radius:1px}
+.lh .ft{position:absolute;left:7mm;right:7mm;bottom:7mm;display:grid;gap:1.2mm}
+.lh .ft b{font:800 7.5px/1 var(--f);letter-spacing:.02em;text-transform:uppercase}
+.banner{height:34mm;border-radius:4px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:6mm}
+.banner .s{position:absolute;top:5mm;bottom:5mm;width:30%;background:repeating-linear-gradient(var(--green) 0 2.4mm,transparent 2.4mm 5mm)}
+.banner .s.l{left:0;clip-path:polygon(0 0,100% 0,85% 100%,0 100%)}
+.banner .s.r{right:0;clip-path:polygon(0 0,100% 0,100% 100%,15% 100%)}
+.do{display:grid;grid-template-columns:1fr 1fr;gap:3mm 6mm;font-size:12.5px}
+.do div{padding:3mm 4mm;border-radius:8px}
+.do .y{background:var(--green-50)}
+.do .n{background:#FBECEA}
+.do b{display:block;font:800 11px/1.2 var(--c);letter-spacing:.06em;text-transform:uppercase;margin-bottom:1mm}
+.do .y b{color:var(--act)}
+.do .n b{color:#B3261E}
+pre{font:500 10.5px/1.5 'Sofia Sans Condensed',monospace;background:var(--night);color:#E6E8EA;border-radius:10px;padding:5mm;white-space:pre;overflow:hidden}
+code{font-family:var(--c);font-weight:600;letter-spacing:.02em}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="ic-measure" viewBox="0 0 32 32"><rect x="3" y="11" width="26" height="11" rx="2" style="fill:none;stroke:var(--ic-line,#23272D);stroke-width:2.2"/><rect x="7" y="11" width="2.6" height="4.5" style="fill:var(--ic-bar,#45A63D)"/><rect x="12" y="11" width="2.6" height="6.5" style="fill:var(--ic-bar,#45A63D)"/><rect x="17" y="11" width="2.6" height="4.5" style="fill:var(--ic-bar,#45A63D)"/><rect x="22" y="11" width="2.6" height="6.5" style="fill:var(--ic-bar,#45A63D)"/></symbol>
+  <symbol id="ic-truck" viewBox="0 0 32 32"><path d="M2.5 8.5h16v13h-16zM18.5 12.5h5.5l5 4.6v4.4h-10.5z" style="fill:none;stroke:var(--ic-line,#23272D);stroke-width:2.2;stroke-linejoin:round"/><polygon points="7,11 16,11 16,13.2 5,13.2" style="fill:var(--ic-bar,#45A63D)"/><polygon points="7,14.4 16,14.4 16,16.6 5,16.6" style="fill:var(--ic-bar,#45A63D)"/><polygon points="7,17.8 16,17.8 16,20 5,20" style="fill:var(--ic-bar,#45A63D)"/><circle cx="8.5" cy="24" r="2.6" style="fill:#fff;stroke:var(--ic-line,#23272D);stroke-width:2.2"/><circle cx="23.5" cy="24" r="2.6" style="fill:#fff;stroke:var(--ic-line,#23272D);stroke-width:2.2"/></symbol>
+  <symbol id="ic-fence" viewBox="0 0 32 32"><rect x="3.5" y="5" width="4" height="23" style="fill:none;stroke:var(--ic-line,#23272D);stroke-width:2.2"/><rect x="24.5" y="5" width="4" height="23" style="fill:none;stroke:var(--ic-line,#23272D);stroke-width:2.2"/><polygon points="12.5,8 23.5,8 23.5,11.5 9,11.5" style="fill:var(--ic-bar,#45A63D)"/><polygon points="12.5,14.5 23.5,14.5 23.5,18 9,18" style="fill:var(--ic-bar,#45A63D)"/><polygon points="12.5,21 23.5,21 23.5,24.5 9,24.5" style="fill:var(--ic-bar,#45A63D)"/></symbol>
+  <symbol id="ic-shield" viewBox="0 0 32 32"><path d="M16 3l11 4.2v8c0 7.2-4.7 11.6-11 14.3C9.7 26.8 5 22.4 5 15.2v-8z" style="fill:none;stroke:var(--ic-line,#23272D);stroke-width:2.2;stroke-linejoin:round"/><polygon points="12.5,10.5 21.5,10.5 21.5,12.9 10,12.9" style="fill:var(--ic-bar,#45A63D)"/><polygon points="12.5,15 21.5,15 21.5,17.4 10,17.4" style="fill:var(--ic-bar,#45A63D)"/><polygon points="14,19.5 20.5,19.5 20.5,21.9 11.5,21.9" style="fill:var(--ic-bar,#45A63D)"/></symbol>
+  <symbol id="ic-phone" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="ic-chat" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.6 8.6 0 0 1-3.8-.9L3 21l1.9-5.2a8.4 8.4 0 0 1-.9-3.8A8.5 8.5 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="ic-calc" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 6h8M8 11h2M14 11h2M8 15h2M14 15h2M8 19h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+</svg>
+
+<!-- 1. COVER -->
+<section class="page cover">
+  <div style="width:78mm">{{logo-horizontal}}</div>
+  <div class="stripes"><i style="top:0;width:100%"></i><i style="top:16mm;width:90%"></i><i style="top:32mm;width:80%"></i><i style="top:48mm;width:70%"></i><i style="top:64mm;width:60%"></i><i style="top:80mm;width:50%"></i><i style="top:96mm;width:40%"></i></div>
+  <div style="display:grid;gap:6mm">
+    <span class="eb" style="font-size:15px">Брендбук · система «Периметр»</span>
+    <h1>Надёжное начало периметра</h1>
+    <div class="meta"><div>Версия<b>1.0</b></div><div>Дата<b>октябрь 2026</b></div><div>Статус<b>утверждён</b></div><div>Заменяет<b>брендбук прежней версии</b></div></div>
+  </div>
+</section>
+
+<!-- 2. TOC + PRINCIPLES -->
+<section class="page">
+  <div class="hd"><span class="eb">О системе</span><h1>Один бренд для сайта, печати и вывесок</h1>
+  <p class="lead">«Периметр» — обновление бренда «Забор Профиль» 2026 года. Знак, логотип и полосы сохранены. Добавлены рабочие цвета для экрана, современные шрифты, иконки, компоненты интерфейса и правила для полиграфии. Документ обязателен для дизайнеров, подрядчиков, типографий и разработчиков сайта.</p></div>
+  <div class="pr">
+    <div><b>Заборы на первом плане</b><span>Интерфейс нейтральный: белый, светлый серо-зелёный, графит. Яркое — только товар и действие.</span></div>
+    <div><b>Цена и действие видны всегда</b><span>«от 1 290 ₽/п.м.» и кнопка с глаголом есть на каждом экране.</span></div>
+    <div><b>Читаемо в любом возрасте</b><span>Текст от 17 px, контраст от 4,5:1, кнопки от 48 px.</span></div>
+    <div><b>Полосы — подпись бренда</b><span>Полосы со скосом есть в логотипе, иконках, баннерах и визитках.</span></div>
+    <div><b>Одна система везде</b><span>Сайт, визитка и вывеска используют одни шрифты и цвета.</span></div>
+  </div>
+  <ol class="toc">
+    <li><b>03</b><span>Логотип: компоновки</span><i>3</i></li>
+    <li><b>04</b><span>Охранное поле, размеры, знак</span><i>4</i></li>
+    <li><b>05</b><span>Цветовые версии и ошибки</span><i>5</i></li>
+    <li><b>06</b><span>Фирменные цвета</span><i>6</i></li>
+    <li><b>07</b><span>Контраст и сочетания</span><i>7</i></li>
+    <li><b>08</b><span>Цвета продукции RAL</span><i>8</i></li>
+    <li><b>09</b><span>Шрифты</span><i>9</i></li>
+    <li><b>10</b><span>Шкала и правила набора</span><i>10</i></li>
+    <li><b>11</b><span>Полосы</span><i>11</i></li>
+    <li><b>12</b><span>Иконки</span><i>12</i></li>
+    <li><b>13</b><span>Компоненты интерфейса</span><i>13</i></li>
+    <li><b>14</b><span>Сайт: конфигуратор</span><i>14</i></li>
+    <li><b>15</b><span>Сайт: «Бизнесу» и телефон</span><i>15</i></li>
+    <li><b>16</b><span>Полиграфия</span><i>16</i></li>
+    <li><b>17</b><span>Тон и тексты</span><i>17</i></li>
+    <li><b>18</b><span>Файлы и токены для разработки</span><i>18</i></li>
+  </ol>
+  <div class="foot"><span>Брендбук «Забор Профиль» · 2026</span><span class="ln"></span><span class="pn">02</span></div>
+</section>
+
+<!-- 3. LOGO LAYOUTS -->
+<section class="page">
+  <div class="hd"><span class="eb">Логотип</span><h1>Четыре компоновки</h1><p class="lead">Знак и надпись не перерисовываются и не перенабираются. Используйте только файлы из комплекта <code>docs/brand/logo/</code>.</p></div>
+  <div class="lgrid">
+    <div class="lcell"><div class="art"><div style="width:92%">{{logo-horizontal}}</div></div><div class="cap"><h2>Горизонтальный · основной</h2><span class="small">Шапка сайта на десктопе, бланк, КП, вывески, баннеры.</span></div></div>
+    <div class="lcell"><div class="art"><div style="width:72%">{{logo-stacked}}</div></div><div class="cap"><h2>Двухстрочный</h2><span class="small">Узкие места: визитка, сувениры, боковые плашки.</span></div></div>
+    <div class="lcell"><div class="art"><div style="width:76%">{{logo-centered}}</div></div><div class="cap"><h2>Центрированный</h2><span class="small">Обложки, центрированные баннеры, оборот визитки.</span></div></div>
+  </div>
+  <div class="lcell" style="flex:none;flex-direction:row;align-items:center"><div style="width:70mm">{{logo-compact}}</div><div class="cap" style="flex:1"><h2>Компактный · без дескриптора</h2><span class="small">Шапка сайта на телефоне и любые места, где логотип уже 200 px (≈ 50 мм). Дескриптор «Ограждения и комплектующие» в таком размере нечитаем.</span></div></div>
+  <div class="foot"><span>Логотип</span><span class="ln"></span><span class="pn">03</span></div>
+</section>
+
+<!-- 4. CLEARSPACE -->
+<section class="page">
+  <div class="hd"><span class="eb">Логотип</span><h1>Охранное поле, размеры, знак</h1></div>
+  <div class="g2" style="flex:1">
+    <div class="box" style="display:flex;flex-direction:column;gap:5mm">
+      <h3>Охранное поле = высота знака × 0,5</h3>
+      <div style="display:flex;justify-content:center;flex:1;align-items:center"><div class="clear"><div class="in" style="width:110mm">{{logo-horizontal}}</div><span class="x" style="top:4mm;left:50%">½H</span><span class="x" style="left:4mm;top:45%">½H</span></div></div>
+      <span class="small">Внутри поля — никаких других элементов, текста и краёв носителя.</span>
+    </div>
+    <div style="display:grid;gap:5mm;align-content:start">
+      <div class="box" style="display:grid;gap:4mm"><h3>Минимальные размеры</h3>
+        <div class="minis">
+          <div><div style="width:30mm">{{logo-horizontal}}</div><span class="small">С дескриптором: от 30 мм / 200 px</span></div>
+          <div><div style="width:20mm">{{logo-compact}}</div><span class="small">Компактный: от 20 мм / 96 px</span></div>
+          <div><div style="width:8mm">{{mark}}</div><span class="small">Знак: от 8 мм / 24 px</span></div>
+        </div></div>
+      <div class="box" style="display:grid;gap:4mm"><h3>Знак и фавикон</h3>
+        <div class="minis">
+          <div><div style="width:24mm">{{mark}}</div><span class="small">Знак отдельно — аватар, водяной знак</span></div>
+          <div><div style="width:16mm">{{favicon}}</div><span class="small">Фавикон и иконка приложения</span></div>
+          <div><div style="width:6mm">{{favicon}}</div><span class="small">16 px</span></div>
+        </div>
+        <span class="small">В фавиконе нет двух точек: на 16 px они сливаются в пятно. Белый знак на зелёной плашке со скруглением 18%.</span></div>
+    </div>
+  </div>
+  <div class="foot"><span>Логотип</span><span class="ln"></span><span class="pn">04</span></div>
+</section>
+
+<!-- 5. VERSIONS + DONTS -->
+<section class="page">
+  <div class="hd"><span class="eb">Логотип</span><h1>Цветовые версии и ошибки</h1></div>
+  <div class="vers">
+    <div style="background:#fff"><div style="width:80%">{{logo-horizontal}}</div></div>
+    <div style="background:var(--surface)"><div style="width:80%">{{logo-horizontal}}</div></div>
+    <div class="night" style="background:var(--night)"><div style="width:80%">{{logo-horizontal}}</div></div>
+    <div class="green" style="background:var(--green)"><div style="width:80%">{{logo-horizontal}}</div></div>
+  </div>
+  <div class="g4 small" style="margin-top:-3mm"><span><b style="color:var(--ink)">Основная.</b> Знак зелёный, надпись графит. На белом и #F3F5F2.</span><span><b style="color:var(--ink)">На светлом фоне.</b> Без изменений.</span><span><b style="color:var(--ink)">На тёмном.</b> Знак зелёный, надпись белая. Фон #2A2F35 или фото с затемнением.</span><span><b style="color:var(--ink)">На зелёном.</b> Полностью белый. Одноцветные версии — <code>-white</code> и <code>-mono</code>.</span></div>
+  <h3>Нельзя</h3>
+  <div class="dont">
+    <div><div class="art"><div style="width:62%;transform:scaleX(1.35)">{{logo-compact}}</div></div><span class="small">Растягивать и сжимать</span></div>
+    <div><div class="art"><div style="width:80%;filter:hue-rotate(160deg)">{{logo-compact}}</div></div><span class="small">Менять цвета</span></div>
+    <div><div class="art" style="background:repeating-linear-gradient(90deg,#7FA86A 0 10px,#C9A36B 10px 22px,#6E8FB0 22px 30px)"><div style="width:80%">{{logo-compact}}</div></div><span class="small">Ставить на пёстрый фон</span></div>
+    <div><div class="art"><div style="width:80%;filter:drop-shadow(3px 3px 2px rgba(0,0,0,.5))">{{logo-compact}}</div></div><span class="small">Добавлять тени и эффекты</span></div>
+    <div><div class="art"><span style="font:800 17px 'Onest';color:var(--graph)"><span style="color:var(--green)">:Г</span> ЗАБОР ПРОФИЛЬ</span></div><span class="small">Перенабирать надпись шрифтом</span></div>
+  </div>
+  <div class="foot"><span>Логотип</span><span class="ln"></span><span class="pn">05</span></div>
+</section>
+
+<!-- 6. COLORS -->
+<section class="page">
+  <div class="hd"><span class="eb">Цвет</span><h1>Фирменные цвета</h1><p class="lead">Два фирменных цвета остаются прежними. Добавлены рабочие цвета для экрана: тёмный зелёный для кнопок, оттенки текста и фона, тёмный блок и цвет бейджей.</p></div>
+  <div class="pal">
+    <div class="sw"><div class="c" style="background:#45A63D;color:#fff">Зелёный · бренд</div><div class="d"><b>#45A63D</b><code>RGB 69 166 61 · CMYK 75 5 100 0<br>Pantone 2423 C · RAL 6018*</code><span>Знак, полосы, крупные акценты. Не для текста на белом.</span></div></div>
+    <div class="sw"><div class="c" style="background:#575C63;color:#fff">Графит · бренд</div><div class="d"><b>#575C63</b><code>RGB 87 92 99 · CMYK 66 53 45 35<br>Pantone 4402 · RAL 7015</code><span>Надпись логотипа, подписи, вторичный текст.</span></div></div>
+    <div class="sw"><div class="c" style="background:#2D7F27;color:#fff">Зелёный · действие</div><div class="d"><b>#2D7F27 · hover #246C1F</b><code>RGB 45 127 39 · CMYK ≈ 80 25 100 15</code><span>Кнопки, ссылки, выбранные элементы. 5,0:1 на белом.</span></div></div>
+    <div class="sw"><div class="c" style="background:#23272D;color:#fff">Чернила</div><div class="d"><b>#23272D</b><code>RGB 35 39 45 · CMYK ≈ 75 65 55 70</code><span>Основной текст и заголовки.</span></div></div>
+    <div class="sw"><div class="c" style="background:#F3F5F2;color:#575C63">Поверхность</div><div class="d"><b>#F3F5F2 · линии #DCE0DB</b><code>RGB 243 245 242 · CMYK ≈ 3 0 3 0</code><span>Фон секций и карточек, разделители.</span></div></div>
+    <div class="sw"><div class="c" style="background:#2A2F35;color:#fff">Ночь</div><div class="d"><b>#2A2F35</b><code>RGB 42 47 53 · CMYK ≈ 72 60 50 55</code><span>Подвал, тёмные плашки, фон под белым логотипом.</span></div></div>
+    <div class="sw"><div class="c" style="background:#F2B13B;color:#23272D">Бейдж</div><div class="d"><b>#F2B13B</b><code>RGB 242 177 59 · CMYK ≈ 0 30 85 0</code><span>Только «Хит», «Акция», «Новинка». Текст на нём — чернила.</span></div></div>
+    <div class="sw"><div class="c" style="background:#EEF6EC;color:#2D7F27">Зелёный 50</div><div class="d"><b>#EEF6EC</b><code>RGB 238 246 236</code><span>Подсказки, выбранные фильтры, успешные сообщения.</span></div></div>
+  </div>
+  <div style="display:grid;gap:2mm"><h3>Пропорции на странице</h3>
+  <div class="prop"><div style="flex:60;background:#fff;color:var(--graph)">60% белый и поверхность</div><div style="flex:22;background:#23272D;color:#fff">22% чернила, графит</div><div style="flex:12;background:#45A63D;color:#fff">12% зелёные</div><div style="flex:4;background:#2A2F35;color:#fff">4%</div><div style="flex:2;background:#F2B13B"></div></div></div>
+  <span class="small">* В прежнем брендбуке указан RAL 6038 — по каталогу это люминесцентный зелёный. Для вывесок и стендов сверяйте RAL 6018 по выкрасу. CMYK и Pantone для новых цветов расчётные: утвердить с типографией по пробному оттиску.</span>
+  <div class="foot"><span>Цвет</span><span class="ln"></span><span class="pn">06</span></div>
+</section>
+
+<!-- 7. CONTRAST -->
+<section class="page">
+  <div class="hd"><span class="eb">Цвет</span><h1>Контраст и сочетания</h1><p class="lead">Норма — WCAG 2.2 уровня AA: 4,5:1 для обычного текста, 3:1 для крупного (от 24 px или от 19 px жирным) и для графики. Таблица — разрешённые и запрещённые пары.</p></div>
+  <table class="num">
+    <thead><tr><th>Образец</th><th>Текст / фон</th><th>Контраст</th><th>Можно</th></tr></thead>
+    <tbody>
+      <tr><td><span class="chip" style="background:#fff;color:#23272D;border:1px solid var(--line)">Текст</span></td><td>#23272D на #FFFFFF</td><td>15,0 : 1</td><td class="ok">Любой текст</td></tr>
+      <tr><td><span class="chip" style="background:#F3F5F2;color:#575C63">Подпись</span></td><td>#575C63 на #F3F5F2</td><td>6,2 : 1</td><td class="ok">Любой текст</td></tr>
+      <tr><td><span class="chip" style="background:#2D7F27;color:#fff">Кнопка</span></td><td>#FFFFFF на #2D7F27</td><td>5,0 : 1</td><td class="ok">Кнопки, ссылки</td></tr>
+      <tr><td><span class="chip" style="background:#F3F5F2;color:#2D7F27">Ссылка</span></td><td>#2D7F27 на #F3F5F2</td><td>4,6 : 1</td><td class="ok">Ссылки, текст</td></tr>
+      <tr><td><span class="chip" style="background:#2A2F35;color:#fff">На тёмном</span></td><td>#FFFFFF на #2A2F35</td><td>13,5 : 1</td><td class="ok">Любой текст</td></tr>
+      <tr><td><span class="chip" style="background:#F2B13B;color:#23272D">ХИТ</span></td><td>#23272D на #F2B13B</td><td>8,0 : 1</td><td class="ok">Бейджи</td></tr>
+      <tr><td><span class="chip" style="background:#2A2F35;color:#45A63D">Акцент</span></td><td>#45A63D на #2A2F35</td><td>4,4 : 1</td><td class="ok">Крупный текст и графика</td></tr>
+      <tr><td><span class="chip" style="background:#45A63D;color:#fff">Плашка</span></td><td>#FFFFFF на #45A63D</td><td>3,1 : 1</td><td class="no">Только крупный текст и логотип</td></tr>
+      <tr><td><span class="chip" style="background:#fff;color:#45A63D;border:1px solid var(--line)">Зелёный текст</span></td><td>#45A63D на #FFFFFF</td><td>3,1 : 1</td><td class="no">Нельзя для текста и ссылок</td></tr>
+      <tr><td><span class="chip" style="background:#F2B13B;color:#fff">Акция</span></td><td>#FFFFFF на #F2B13B</td><td>1,9 : 1</td><td class="no">Нельзя</td></tr>
+    </tbody>
+  </table>
+  <div class="foot"><span>Цвет</span><span class="ln"></span><span class="pn">07</span></div>
+</section>
+
+<!-- 8. RAL -->
+<section class="page">
+  <div class="hd"><span class="eb">Цвет</span><h1>Цвета продукции RAL</h1><p class="lead">Это цвета товара, а не бренда. Они появляются только в выборе цвета, в конфигураторе и на фото. Интерфейс вокруг остаётся нейтральным, чтобы цвет забора было видно без искажений.</p></div>
+  <div class="ral">
+    <div><i style="background:#0F4336"></i><b>RAL 6005</b><span class="small">зелёный мох<br><code>#0F4336</code></span></div>
+    <div><i style="background:#45322E"></i><b>RAL 8017</b><span class="small">шоколад<br><code>#45322E</code></span></div>
+    <div><i style="background:#373F43"></i><b>RAL 7024</b><span class="small">графит<br><code>#373F43</code></span></div>
+    <div><i style="background:#5E2028"></i><b>RAL 3005</b><span class="small">вишня<br><code>#5E2028</code></span></div>
+    <div><i style="background:#1E4A84"></i><b>RAL 5005</b><span class="small">синий<br><code>#1E4A84</code></span></div>
+    <div><i style="background:#DDC49A"></i><b>RAL 1014</b><span class="small">слоновая кость<br><code>#DDC49A</code></span></div>
+    <div><i style="background:#F1F1EC"></i><b>RAL 9003</b><span class="small">белый<br><code>#F1F1EC</code></span></div>
+  </div>
+  <div class="g3">
+    <div class="sur"><h3>Формат подписи</h3><p style="margin-top:2mm">«RAL 6005 · зелёный мох». Номер и название всегда вместе.</p></div>
+    <div class="sur"><h3>Обязательная оговорка</h3><p style="margin-top:2mm">«Оттенок на экране может отличаться». Значения HEX — экранные приближения.</p></div>
+    <div class="sur"><h3>Нельзя</h3><p style="margin-top:2mm">Красить кнопки, фон и рамки интерфейса в цвета RAL. Зелёный мох 6005 ≠ зелёный бренда.</p></div>
+  </div>
+  <div class="foot"><span>Цвет</span><span class="ln"></span><span class="pn">08</span></div>
+</section>
+
+<!-- 9. FONTS -->
+<section class="page">
+  <div class="hd"><span class="eb">Типографика</span><h1>Два шрифта вместо Open Sans и Cuprum</h1></div>
+  <div class="spec">
+    <div class="box">
+      <h3>Onest · основной</h3>
+      <div class="big">Аа Бб 18</div>
+      <div class="weights"><span style="font-weight:400">Regular</span><span style="font-weight:500">Medium</span><span style="font-weight:700">Bold</span><span style="font-weight:800">ExtraBold</span></div>
+      <div class="alpha">АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ абвгдеёжзийклмнопрстуфхцчшщъыьэюя 0123456789 ₽ № « »</div>
+      <p class="small">Заголовки, текст, кнопки, поля. Российский шрифт 2023 года, отличная кириллица, вариативный (100–900). Лицензия OFL, бесплатно для сайта и печати. Заменяет Open Sans.</p>
+    </div>
+    <div class="box" style="font-family:var(--c)">
+      <h3>Sofia Sans Condensed · цифры и подписи</h3>
+      <div class="big num">1 290 ₽ · С8</div>
+      <div class="weights"><span style="font-weight:400">Regular</span><span style="font-weight:600">SemiBold</span><span style="font-weight:800">ExtraBold</span></div>
+      <div class="alpha" style="font-size:18px">АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ абвгдеёжзийклмнопрстуфхцчшщъыьэюя 0123456789 ₽ № ×</div>
+      <p class="small" style="font-family:var(--f)">Цены, телефоны, характеристики («С8 · 0,45 мм»), подписи заглавными. Узкий: экономит место на телефоне. Лицензия OFL. Заменяет Cuprum в той же роли.</p>
+    </div>
+  </div>
+  <div class="sur small" style="color:var(--ink)">В логотипе остаётся Open Sans ExtraBold — он переведён в кривые и не перенабирается. Шрифт логотипа не обязан совпадать со шрифтом текста. Резервные шрифты: <code>system-ui, -apple-system, 'Segoe UI', sans-serif</code> и <code>'Arial Narrow', sans-serif</code>.</div>
+  <div class="foot"><span>Типографика</span><span class="ln"></span><span class="pn">09</span></div>
+</section>
+
+<!-- 10. SCALE -->
+<section class="page">
+  <div class="hd"><span class="eb">Типографика</span><h1>Шкала и правила набора</h1></div>
+  <div class="g2" style="grid-template-columns:1.25fr 1fr;align-items:start">
+    <table class="scale num">
+      <thead><tr><th>Роль</th><th>Образец</th><th>Сайт, px</th></tr></thead>
+      <tbody>
+        <tr><td>H1</td><td class="s" style="font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1.05">Забор под ключ</td><td>40–56 / 1,08</td></tr>
+        <tr><td>H2</td><td class="s" style="font-size:25px;font-weight:800">Наши работы</td><td>30–36 / 1,15</td></tr>
+        <tr><td>H3</td><td class="s" style="font-size:19px;font-weight:700">Профнастил С8</td><td>21–24 / 1,2</td></tr>
+        <tr><td>Текст</td><td class="s" style="font-size:15px">Монтаж от 1 дня в Саратове</td><td>18 / 1,55</td></tr>
+        <tr><td>Мелкий</td><td class="s" style="font-size:12.5px;color:var(--graph)">Оттенок может отличаться</td><td>15 / 1,45</td></tr>
+        <tr><td>Цена</td><td class="s" style="font:800 28px/1 var(--c)">от 1 290 ₽</td><td>28–40, Sofia 800</td></tr>
+        <tr><td>Подпись</td><td class="s" style="font:800 12px/1 var(--c);letter-spacing:.08em;text-transform:uppercase;color:var(--act)">Как работаем</td><td>13–14, Sofia 800, +8%</td></tr>
+      </tbody>
+    </table>
+    <div style="display:grid;gap:4mm">
+      <div class="sur"><h3>Цифры</h3><ul class="l" style="margin-top:2mm"><li>Тысячи через неразрывный пробел: 1 290 ₽, 129 800 ₽</li><li>Знак ₽ через неразрывный пробел</li><li>Десятичная запятая: 0,45 мм; 1,8 м</li><li>Размеры через ×: 60×60 мм</li><li>В таблицах и ценах — моноширинные цифры (tabular-nums)</li></ul></div>
+      <div class="sur"><h3>Набор</h3><ul class="l" style="margin-top:2mm"><li>Строка текста — до 70 знаков</li><li>Заглавными — только короткие подписи Sofia Sans Condensed</li><li>Буква «ё» обязательна</li><li>Кавычки «ёлочки», тире —, без висячих предлогов в заголовках</li></ul></div>
+    </div>
+  </div>
+  <div class="foot"><span>Типографика</span><span class="ln"></span><span class="pn">10</span></div>
+</section>
+
+<!-- 11. STRIPES -->
+<section class="page">
+  <div class="hd"><span class="eb">Графика</span><h1>Полосы</h1><p class="lead">Полосы со скошенным концом — это листы профнастила и пролёты забора. Главный графический элемент после знака.</p></div>
+  <div class="g2">
+    <div class="constr">
+      <div style="position:absolute;left:12mm;top:12mm;width:70mm;height:7mm;background:var(--green);clip-path:polygon(7mm 0,100% 0,100% 100%,0 100%)"></div>
+      <div style="position:absolute;left:24mm;top:26mm;width:58mm;height:7mm;background:var(--green);clip-path:polygon(7mm 0,100% 0,100% 100%,0 100%)"></div>
+      <div style="position:absolute;left:36mm;top:40mm;width:46mm;height:7mm;background:var(--green);clip-path:polygon(7mm 0,100% 0,100% 100%,0 100%)"></div>
+      <span class="dim" style="left:86mm;top:13.5mm">h — толщина</span>
+      <span class="dim" style="left:86mm;top:27.5mm">шаг 2h</span>
+      <span class="dim" style="left:86mm;top:41.5mm">скос 45°, длина −h·1,7</span>
+    </div>
+    <div class="sur" style="display:grid;gap:2mm;align-content:start"><h3>Правила</h3><ul class="l">
+      <li>Шаг между полосами — 2h (на баннерах допустимо до 3h)</li>
+      <li>Скос 45° всегда к центру композиции</li>
+      <li>Длины уменьшаются равным шагом — «лестница»</li>
+      <li>Цвет — зелёный бренда; на зелёном фоне — белый</li>
+      <li>Полосы прижаты к краю носителя, не висят в воздухе</li>
+      <li>На сайте: разделители, фон акций, декор шапки (прозрачность от 14%)</li></ul></div>
+  </div>
+  <div class="g2">
+    <div class="pat"><i style="top:6mm;width:42%"></i><i style="top:16mm;width:37%"></i><i style="top:26mm;width:32%"></i><i style="top:36mm;width:27%"></i><i style="top:46mm;width:22%"></i>
+      <div class="night" style="position:absolute;right:10mm;top:50%;transform:translateY(-50%);width:42%">{{logo-horizontal}}</div></div>
+    <div class="pat r" style="background:var(--surface)"><i style="top:6mm;width:42%"></i><i style="top:16mm;width:37%"></i><i style="top:26mm;width:32%"></i><i style="top:36mm;width:27%"></i><i style="top:46mm;width:22%"></i>
+      <div style="position:absolute;left:10mm;top:50%;transform:translateY(-50%);width:42%">{{logo-horizontal}}</div></div>
+  </div>
+  <div class="foot"><span>Графика</span><span class="ln"></span><span class="pn">11</span></div>
+</section>
+
+<!-- 12. ICONS -->
+<section class="page">
+  <div class="hd"><span class="eb">Графика</span><h1>Иконки</h1><p class="lead">Своя система вместо стоковых наборов: контур предмета цветом чернил и три зелёные полосы со скосом, как в знаке.</p></div>
+  <div class="row" style="align-items:stretch">
+    <div class="grid32"><svg style="--ic-line:#23272D"><use href="#ic-fence"/></svg></div>
+    <div class="sur" style="flex:1;display:grid;gap:2mm;align-content:start"><h3>Построение</h3><ul class="l">
+      <li>Сетка 32×32, поле 2 единицы по краям</li>
+      <li>Контур 2,2 единицы, скругления стыков, цвет #23272D (на тёмном — белый)</li>
+      <li>Полосы — заливка #45A63D, скос 45° слева, всегда три (или ряд делений)</li>
+      <li>Размеры на сайте: 24, 32, 44 px; в печати — от 6 мм</li>
+      <li>Иконка всегда с подписью; иконка без подписи — только в нижней панели и кнопках с понятным контекстом</li></ul></div>
+  </div>
+  <div class="icons">
+    <div class="box"><svg><use href="#ic-measure"/></svg><b>Замер</b><span class="small">Линейка с делениями-полосами</span></div>
+    <div class="box"><svg><use href="#ic-truck"/></svg><b>Доставка</b><span class="small">Кузов с листами</span></div>
+    <div class="box"><svg><use href="#ic-fence"/></svg><b>Монтаж</b><span class="small">Пролёт забора, как в знаке</span></div>
+    <div class="box"><svg><use href="#ic-shield"/></svg><b>Гарантия</b><span class="small">Щит с полосами</span></div>
+  </div>
+  <div class="foot"><span>Графика</span><span class="ln"></span><span class="pn">12</span></div>
+</section>
+
+<!-- 13. UI -->
+<section class="page">
+  <div class="hd"><span class="eb">Интерфейс</span><h1>Компоненты: flat 2.0</h1><p class="lead">Плоские цвета и формы, но всё нажимаемое выглядит нажимаемым: высота от 48 px на сайте, скругление 10 px, реакция на наведение и заметная рамка фокуса.</p></div>
+  <div class="g2">
+    <div class="box" style="display:grid;gap:4mm"><h3>Кнопки</h3>
+      <div style="display:flex;gap:3mm;flex-wrap:wrap;align-items:center"><span class="btn p">Рассчитать стоимость</span><span class="btn ph">Наведение</span><span class="btn pf">Фокус</span></div>
+      <div style="display:flex;gap:3mm;flex-wrap:wrap"><span class="btn s">Вызвать замерщика</span><span class="btn dis">Недоступно</span></div>
+      <span class="small">Одна основная кнопка на экран. Надпись — глагол и результат. Ширина на телефоне — 100%.</span>
+    </div>
+    <div class="box" style="display:grid;gap:4mm"><h3>Поля</h3>
+      <div class="g3" style="gap:3mm"><label class="field">Имя<span class="in">Сергей</span></label><label class="field">Телефон<span class="in f">+7 (927) 1</span></label><label class="field">Длина, м<span class="in e">0</span><span class="err">Укажите от 1 м</span></label></div>
+      <span class="small">Подпись над полем, ошибка под полем: что не так и как исправить. Форма заявки — только имя и телефон.</span>
+    </div>
+  </div>
+  <div class="g3">
+    <div class="box" style="display:grid;gap:3mm"><h3>Чипы, бейджи, переключатель</h3>
+      <div style="display:flex;gap:2mm;flex-wrap:wrap"><span class="spc">С8 · 0,45 мм</span><span class="spc">1,8 м</span><span class="spc">60×60</span></div>
+      <div style="display:flex;gap:2mm"><span class="tag" style="background:var(--badge)">Хит</span><span class="tag" style="background:var(--badge)">Акция</span><span class="tag" style="background:var(--green-50);color:var(--act)">В наличии</span></div>
+      <span class="segc"><span class="on">Частным клиентам</span><span>Бизнесу</span></span>
+    </div>
+    <div class="box" style="display:grid;gap:2mm;padding:0;overflow:hidden">
+      <div class="m-photo" style="--ral:#0F4336;height:24mm"><span class="tag" style="position:absolute;left:7px;top:7px;background:var(--badge);z-index:2">Хит</span></div>
+      <div style="padding:0 4mm 4mm;display:grid;gap:1.5mm"><b style="font-size:15px">Профнастил С8</b><span class="cond small" style="font-weight:600">0,45 мм · 1,8 м · столбы 60×60</span><span style="font:800 22px/1 var(--c)">от 1 290 ₽ <small style="font-size:12px;color:var(--graph)">/п.м.</small></span></div>
+    </div>
+    <div class="box" style="display:grid;gap:3mm;align-content:start"><h3>Нижняя панель (телефон)</h3>
+      <div class="sbar" style="border:1px solid #E3E6E2;border-radius:12px"><span><svg><use href="#ic-phone"/></svg>Позвонить</span><span><svg><use href="#ic-chat"/></svg>Написать</span><span class="p"><svg><use href="#ic-calc"/></svg>Рассчитать</span></div>
+      <span class="small">Видна на всех страницах. Кнопки 52 px. Скругление карточек 12 px, кнопок 10 px.</span>
+    </div>
+  </div>
+  <div class="foot"><span>Интерфейс</span><span class="ln"></span><span class="pn">13</span></div>
+</section>
+
+<!-- 14. SITE B2C -->
+<section class="page">
+  <div class="hd"><span class="eb">Сайт</span><h1>Главная: конфигуратор на первом экране</h1></div>
+  <div class="edesk" style="zoom:.86">
+    <div class="e-top"><div style="width:44mm">{{logo-compact}}</div><span class="segc"><span class="on">Частным клиентам</span><span>Бизнесу</span></span><span class="ph num">8 (8452) 98‑88‑08</span></div>
+    <div class="e-hero">
+      <div><h4>Соберите забор и узнайте цену за минуту</h4>
+        <ul><li>Цвет, высота и материал сразу на картинке</li><li>Цена фиксируется после бесплатного замера</li><li>Монтаж от 1 дня, Саратов и область</li></ul>
+        <span class="btn s">Наши работы</span>
+        <div class="trust"><div><b>1 200+</b><span>заборов</span></div><div><b>4,9</b><span>на картах</span></div><div><b>1 день</b><span>монтаж 30 п.м.</span></div></div></div>
+      <div class="cfg">
+        <div class="scene" style="--ral:#0F4336"><div class="tree"></div><div class="house"></div><div class="ground"></div><div class="fence"></div><span class="cap">RAL 6005 · зелёный мох · 1,8 м</span></div>
+        <div class="ctl"><span>Материал</span><div class="segc"><span class="on">Профнастил С8</span><span>С20</span><span>Евроштакетник</span></div></div>
+        <div style="display:flex;justify-content:space-between;align-items:end;gap:10px"><div class="ctl"><span>Цвет: RAL 6005 · зелёный мох</span><div class="rals"><i class="on" style="background:#0F4336"></i><i style="background:#45322E"></i><i style="background:#373F43"></i><i style="background:#5E2028"></i><i style="background:#1E4A84"></i><i style="background:#DDC49A"></i><i style="background:#F1F1EC"></i></div></div>
+        <div class="ctl" style="flex:1"><span>Высота</span><div class="segc"><span>1,5</span><span class="on">1,8 м</span><span>2,0</span></div></div></div>
+        <div class="sum"><div><small>Примерно, 40 м, с воротами и монтажом</small><b class="num">≈ 89 600 ₽</b></div><span class="btn p">Зафиксировать цену</span></div>
+      </div>
+    </div>
+    <div class="e-below">
+      <ol class="steps"><li><svg><use href="#ic-measure"/></svg><b>Замер</b><span>в день обращения</span></li><li><svg><use href="#ic-truck"/></svg><b>Доставка</b><span>своим транспортом</span></li><li><svg><use href="#ic-fence"/></svg><b>Монтаж</b><span>от 1 дня</span></li><li><svg><use href="#ic-shield"/></svg><b>Гарантия</b><span>по договору</span></li></ol>
+      <div class="review"><div class="m-photo" style="--ral:#45322E"></div><div><q>Поставили 46 метров за день. Цвет вживую как в калькуляторе.</q><small>Пример · пос. Юбилейный · С8, RAL 8017, 46 п.м.</small></div></div>
+    </div>
+  </div>
+  <div class="foot"><span>Сайт · цены, отзыв и цифры в макете условные</span><span class="ln"></span><span class="pn">14</span></div>
+</section>
+
+<!-- 15. SITE B2B + MOBILE -->
+<section class="page">
+  <div class="hd"><span class="eb">Сайт</span><h1>Режим «Бизнесу» и телефон</h1></div>
+  <div class="row" style="flex:1;align-items:flex-start">
+    <div class="edesk" style="flex:1">
+      <div class="e-top"><div style="width:40mm">{{logo-compact}}</div><span class="segc"><span>Частным клиентам</span><span class="on">Бизнесу</span></span></div>
+      <div style="padding:16px 18px;background:var(--surface)"><h4 style="font-size:24px;font-weight:800;line-height:1.1;letter-spacing:-.02em;margin-bottom:8px">Ограждения для объектов, застройщиков и организаций</h4>
+        <ul class="l" style="font-size:13px"><li>Отгрузка от 100 п.м. со склада в Саратове</li><li>Договор, счёт с НДС, закрывающие документы</li><li>Персональный менеджер и цены для организаций</li></ul></div>
+      <div style="padding:12px 18px;display:grid;gap:10px">
+        <table class="b2b"><thead><tr><th>Профиль</th><th>Толщина</th><th>Покрытие</th><th>от 100 п.м.</th><th>от 500 п.м.</th></tr></thead>
+        <tbody><tr><td><b>С8</b></td><td class="n">0,45 мм</td><td>Полиэстер, 2 стороны</td><td class="n">1 090 ₽</td><td class="n">990 ₽</td></tr><tr><td><b>С20</b></td><td class="n">0,50 мм</td><td>Полиэстер</td><td class="n">1 260 ₽</td><td class="n">1 150 ₽</td></tr><tr><td><b>Евроштакетник</b></td><td class="n">0,50 мм</td><td>Полиэстер, 2 стороны</td><td class="n">1 790 ₽</td><td class="n">1 640 ₽</td></tr></tbody></table>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="btn p">Запросить КП</span><span class="btn s">Прайс, XLS</span><span class="btn s">Сертификаты</span><span class="btn s">Реквизиты</span></div>
+      </div>
+    </div>
+    <div class="phone">
+      <div class="top"><div style="width:30mm">{{logo-compact}}</div></div>
+      <div class="bd">
+        <div class="scene" style="--ral:#5E2028;aspect-ratio:16/10"><div class="tree"></div><div class="house"></div><div class="ground"></div><div class="fence" style="--fh:52%"></div></div>
+        <div class="t">Забор из профнастила под ключ</div>
+        <div class="ppr">от 1 290 ₽ <small>/п.м.</small></div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap"><span class="spc" style="height:22px;font-size:11px">С8 · 0,45 мм</span><span class="spc" style="height:22px;font-size:11px">2,0 м</span></div>
+        <span class="btn p" style="height:38px;font-size:12.5px;width:100%">Рассчитать стоимость</span>
+      </div>
+      <div class="sbar"><span><svg><use href="#ic-phone"/></svg>Позвонить</span><span><svg><use href="#ic-chat"/></svg>Написать</span><span class="p"><svg><use href="#ic-calc"/></svg>Рассчитать</span></div>
+    </div>
+    <div class="sur" style="width:62mm;display:grid;gap:2mm"><h3>Правила</h3><ul class="l small" style="color:var(--ink)">
+      <li>Переключатель в шапке, по умолчанию — «Частным клиентам»</li>
+      <li>Режим меняет заголовок, доводы и блок под первым экраном; цвета и компоненты те же</li>
+      <li>Цены и коэффициенты конфигуратора редактируются в админке</li>
+      <li>Режим «Бизнесу» публикуется только с реальным прайсом и документами</li>
+      <li>Телефон: компактный логотип, одна основная кнопка, нижняя панель</li></ul></div>
+  </div>
+  <div class="foot"><span>Сайт · цены в макете условные</span><span class="ln"></span><span class="pn">15</span></div>
+</section>
+
+<!-- 16. PRINT -->
+<section class="page">
+  <div class="hd"><span class="eb">Полиграфия</span><h1>Визитка, бланк, баннер</h1><p class="lead">Те же шрифты и цвета, что на сайте. Реквизиты — графитом, а не зелёным: зелёный мелкий текст плохо читается и в печати.</p></div>
+  <div class="row" style="align-items:flex-start;gap:8mm">
+    <div style="display:grid;gap:5mm">
+      <div class="bcard" style="background:#fff"><span class="st"></span><div style="width:38mm">{{logo-compact}}</div><div style="position:relative"><div class="nm">Имя Фамилия</div><div class="rl">должность</div></div><div class="ct num">8 (8452) 98‑88‑08<br>info@zaborprofil.ru<br>zaborprofil.ru · Саратов, Вешняя, 44/2</div></div>
+      <div class="bcard night" style="background:var(--night);align-items:center;justify-content:center;border:0"><div style="width:44mm">{{logo-centered}}</div></div>
+      <span class="small">Визитка 90×50 мм. Лицо — белое, оборот — «ночь» или зелёный бренда.</span>
+    </div>
+    <div style="display:grid;gap:3mm">
+      <div class="lh">
+        <div style="display:flex;justify-content:space-between;gap:4mm;align-items:flex-start"><div style="width:30mm">{{logo-horizontal}}</div><div class="req">ООО «Забор Профиль»<br>ИНН / КПП 6452128198 / 645201001<br>410035, г. Саратов, ул. Вешняя, 44/2<br>8 (8452) 98‑88‑08 · info@zaborprofil.ru</div></div>
+        <div class="txt"><i style="width:40%"></i><i></i><i></i><i style="width:85%"></i><i></i><i style="width:60%"></i></div>
+        <div class="ft"><div style="height:1.2mm;background:var(--green)"></div><div style="display:flex;justify-content:space-between;align-items:center;gap:2mm"><b>Надёжное начало периметра</b><div style="flex:1;display:grid;gap:.8mm"><i style="display:block;height:1mm;background:var(--green)"></i><i style="display:block;height:1mm;background:var(--green)"></i></div></div></div>
+      </div>
+      <span class="small">Бланк A4 (уменьшено)</span>
+    </div>
+    <div style="flex:1;display:grid;gap:4mm">
+      <div class="banner night" style="background:var(--night)"><span class="s l"></span><span class="s r"></span><div style="width:40%">{{logo-centered}}</div></div>
+      <div class="banner green" style="background:var(--green)"><span class="s l" style="background:repeating-linear-gradient(#fff 0 2.4mm,transparent 2.4mm 5mm)"></span><span class="s r" style="background:repeating-linear-gradient(#fff 0 2.4mm,transparent 2.4mm 5mm)"></span><div style="width:40%">{{logo-centered}}</div></div>
+      <div class="banner" style="background:#fff;border:1px solid var(--line);justify-content:flex-start;padding:0 6mm"><span class="s r" style="width:20%"></span><div style="display:grid;gap:1mm;position:relative;max-width:76%"><span style="font:800 17px/1.1 var(--f);letter-spacing:-.01em">Забор под ключ от 1 290 ₽/п.м.</span><span style="font:700 13px/1 var(--c);color:var(--graph)">Замер бесплатно · 8 (8452) 98‑88‑08</span></div></div>
+      <span class="small">Баннеры и растяжки: полосы по краям, логотип по центру; или предложение с ценой и телефоном.</span>
+    </div>
+  </div>
+  <div class="foot"><span>Полиграфия</span><span class="ln"></span><span class="pn">16</span></div>
+</section>
+
+<!-- 17. TONE -->
+<section class="page">
+  <div class="hd"><span class="eb">Тексты</span><h1>Тон: как мастер, а не как каталог</h1><p class="lead">Говорим просто, коротко и конкретно. Обращаемся на «вы» со строчной. Обещаем только то, что прописано в договоре.</p></div>
+  <div class="do">
+    <div class="y"><b>Так</b>Поставим забор за 1 день</div><div class="n"><b>Не так</b>Осуществляем монтаж ограждающих конструкций в кратчайшие сроки</div>
+    <div class="y"><b>Так</b>Рассчитать стоимость · Вызвать замерщика</div><div class="n"><b>Не так</b>Отправить · Подробнее · Нажмите здесь</div>
+    <div class="y"><b>Так</b>от 1 290 ₽/п.м. · ≈ 89 600 ₽ с монтажом</div><div class="n"><b>Не так</b>Цена по запросу · Звоните, всё расскажем</div>
+    <div class="y"><b>Так</b>Профнастил С8, 0,45 мм, RAL 6005 · зелёный мох</div><div class="n"><b>Не так</b>Профлист зелёный, толстый, хорошего качества</div>
+    <div class="y"><b>Так</b>Укажите длину от 1 м</div><div class="n"><b>Не так</b>Ошибка ввода данных!</div>
+    <div class="y"><b>Так</b>Гарантия по договору</div><div class="n"><b>Не так</b>Вечная гарантия · Лучшие цены в городе</div>
+  </div>
+  <div class="sur" style="display:grid;gap:2mm"><h3>Слоган</h3><p>«Надёжное начало периметра» сохраняется для полиграфии, вывесок и подписи бланка. На первом экране сайта вместо слогана — конкретное предложение: что, где, за сколько.</p></div>
+  <div class="foot"><span>Тексты</span><span class="ln"></span><span class="pn">17</span></div>
+</section>
+
+<!-- 18. DEV -->
+<section class="page">
+  <div class="hd"><span class="eb">Разработка</span><h1>Файлы и токены</h1></div>
+  <div class="g2" style="grid-template-columns:1fr 1.1fr;align-items:start">
+    <div style="display:grid;gap:4mm">
+      <div class="sur"><h3>Где лежит</h3><ul class="l" style="margin-top:2mm">
+        <li><code>docs/50-brand-system.md</code> — правила (главный источник)</li>
+        <li><code>docs/brand/brandbook-2026.pdf</code> — этот документ</li>
+        <li><code>docs/brand/logo/*.svg</code> — логотипы, знак, фавикон</li>
+        <li><code>assets/shared/styles/app.css</code> — токены Tailwind 4</li></ul></div>
+      <div class="sur"><h3>Шрифты на сайте</h3><ul class="l" style="margin-top:2mm">
+        <li><code>@fontsource-variable/onest</code></li>
+        <li><code>@fontsource/sofia-sans-condensed</code> (600, 800)</li>
+        <li>Только cyrillic + latin, woff2, с собственного домена. Без внешних CDN.</li></ul></div>
+      <div class="sur"><h3>Проверки</h3><ul class="l" style="margin-top:2mm">
+        <li>Контраст пар цветов — по таблице на стр. 07</li>
+        <li>Кнопки и поля от 48 px, видимый :focus-visible</li>
+        <li>Текст от 17 px, prefers-reduced-motion</li></ul></div>
+    </div>
+<pre>@theme {
+  --font-sans: 'Onest Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-cond: 'Sofia Sans Condensed', 'Arial Narrow', sans-serif;
+
+  --color-brand-50:  #EEF6EC;
+  --color-brand-500: #45A63D;   /* знак, полосы, не текст */
+  --color-brand-700: #2D7F27;   /* кнопки, ссылки 5,0:1 */
+  --color-brand-800: #246C1F;   /* hover */
+
+  --color-ink:      #23272D;
+  --color-graphite: #575C63;
+  --color-surface:  #F3F5F2;
+  --color-line:     #DCE0DB;
+  --color-night:    #2A2F35;
+  --color-badge:    #F2B13B;    /* только бейджи */
+
+  /* цвета продукции — только выбор цвета */
+  --color-ral-6005: #0F4336;  --color-ral-8017: #45322E;
+  --color-ral-7024: #373F43;  --color-ral-3005: #5E2028;
+  --color-ral-5005: #1E4A84;  --color-ral-1014: #DDC49A;
+  --color-ral-9003: #F1F1EC;
+
+  --radius-btn: 10px;  --radius-card: 12px;
+  --text-base: 1.125rem;  --text-base--line-height: 1.55;
+}</pre>
+  </div>
+  <div class="foot"><span>Брендбук «Забор Профиль» · система «Периметр» · v1.0 · октябрь 2026</span><span class="ln"></span><span class="pn">18</span></div>
+</section>
+</body></html>
