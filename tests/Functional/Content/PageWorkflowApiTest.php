@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional\Content;
 
+use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
 use App\Tests\Support\Admin\AdminApiTestCase;
 use DateTimeImmutable;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
@@ -43,6 +44,25 @@ final class PageWorkflowApiTest extends AdminApiTestCase
         $events = array_map(fn (array $entry): string => $this->text($entry['event']), $history);
         self::assertContains('published', $events);
         self::assertSame(2, \count(array_filter($events, static fn (string $event): bool => $event === 'status_changed')));
+    }
+
+    public function testPagesListShowsWhoChangedThePageLast(): void
+    {
+        $client = $this->adminClient('editor@example.test');
+        $editor = $this->entityManager()->getRepository(AdminUser::class)->findOneBy(['email' => 'editor@example.test']);
+        self::assertInstanceOf(AdminUser::class, $editor);
+        $editor->rename('Игорь');
+        $this->entityManager()->flush();
+
+        $pageId = $this->createPage($client, 'who-changed');
+
+        $listed = $this->listedPage($client, $pageId);
+        self::assertSame((string) $editor->id(), $listed['updatedBy']);
+        self::assertSame('Игорь', $listed['updatedByName']);
+
+        $this->api($client, 'PATCH', $this->url($pageId, 'status'), ['status' => 'review']);
+        self::assertResponseIsSuccessful();
+        self::assertSame('Игорь', $this->listedPage($client, $pageId)['updatedByName']);
     }
 
     public function testStatusPatchPublishesPageAndWorkflowListsTransitions(): void
@@ -161,6 +181,7 @@ final class PageWorkflowApiTest extends AdminApiTestCase
 
         $listed = $this->listedPage($client, $pageId);
         self::assertTrue($listed['hasUnpublishedChanges']);
+        self::assertSame('admin-api@example.test', $listed['updatedByName']);
         self::assertNotFalse(DateTimeImmutable::createFromFormat(DATE_ATOM, $this->text($listed['updatedAt'])));
 
         $this->api($client, 'GET', $this->url($pageId, 'revisions/diff').'?from='.$firstRevisionId);

@@ -88,7 +88,7 @@ Admin API использует **double-submit CSRF**:
 
 | Метод | URL | Действие |
 |---|---|---|
-| `GET` | `/admin/api/content/pages` | Список страниц целиком (у каждой `updatedAt`, у опубликованных — `hasUnpublishedChanges`: рабочая версия отличается от опубликованной); с `page`/`perPage` (до 100) и фильтрами `q` (название или адрес), `status` — страница списка и `meta` (`total`, `page`, `perPage`, `pages`) без `hasUnpublishedChanges` |
+| `GET` | `/admin/api/content/pages` | Список страниц целиком (у каждой `updatedAt`, `updatedBy` — id администратора и `updatedByName` — его имя или email, у опубликованных — `hasUnpublishedChanges`: рабочая версия отличается от опубликованной); с `page`/`perPage` (до 100) и фильтрами `q` (название или адрес), `status` — страница списка и `meta` (`total`, `page`, `perPage`, `pages`) без `hasUnpublishedChanges` |
 | `POST` | `/admin/api/content/pages` | Создать страницу |
 | `PUT` | `/admin/api/content/pages/{id}` | Обновить страницу |
 | `POST` | `/admin/api/content/pages/{id}/publish` | Опубликовать |

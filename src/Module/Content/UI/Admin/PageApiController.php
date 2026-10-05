@@ -27,6 +27,7 @@ use App\Module\Content\Application\Handler\PublishPageHandler;
 use App\Module\Content\Application\Handler\SchedulePageHandler;
 use App\Module\Content\Application\Handler\UpdatePageHandler;
 use App\Module\Content\Application\Handler\UpdatePageSeoMetadataHandler;
+use App\Module\Content\Application\Service\AdminDisplayNames;
 use App\Module\Content\Application\Service\ContentId;
 use App\Module\Content\Application\Service\PagePreviewToken;
 use App\Module\Content\Application\Service\PageRevisionComparison;
@@ -55,25 +56,44 @@ final readonly class PageApiController
     }
 
     #[Route('', name: 'admin_api_content_page_index', methods: ['GET'])]
-    public function index(Request $request, PageRepositoryInterface $pages, PageRevisionComparison $comparison): JsonResponse
+    public function index(Request $request, PageRepositoryInterface $pages, PageRevisionComparison $comparison, AdminDisplayNames $adminNames): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_VIEW)) {
             return $this->accessDenied();
         }
 
+        $names = $adminNames->all();
+
         if ($request->query->has('page') || $request->query->has('perPage')) {
-            return $this->paginatedIndex($request, $pages);
+            return $this->paginatedIndex($request, $pages, $names);
         }
 
         return new JsonResponse([
             'pages' => array_map(
                 fn (Page $page): array => [
-                    ...PageOutput::fromPage($page)->toArray(),
+                    ...$this->listItem($page, $names),
                     'hasUnpublishedChanges' => $this->hasUnpublishedChanges($page, $comparison),
                 ],
                 $pages->findAllForAdmin(),
             ),
         ]);
+    }
+
+    /**
+     * Строка списка страниц: данные страницы и подпись автора последней правки.
+     *
+     * @param array<string, string> $names
+     *
+     * @return array<string, mixed>
+     */
+    private function listItem(Page $page, array $names): array
+    {
+        $editor = $page->updatedBy();
+
+        return [
+            ...PageOutput::fromPage($page)->toArray(),
+            'updatedByName' => $editor === null ? null : ($names[$editor] ?? null),
+        ];
     }
 
     /**
@@ -93,7 +113,10 @@ final readonly class PageApiController
         }
     }
 
-    private function paginatedIndex(Request $request, PageRepositoryInterface $pages): JsonResponse
+    /**
+     * @param array<string, string> $names
+     */
+    private function paginatedIndex(Request $request, PageRepositoryInterface $pages, array $names): JsonResponse
     {
         $criteria = new PageSearchCriteria(
             $request->query->getString('q') ?: null,
@@ -105,7 +128,7 @@ final readonly class PageApiController
         $perPage = $criteria->normalizedPerPage();
 
         return new JsonResponse([
-            'pages' => array_map(static fn ($page): array => PageOutput::fromPage($page)->toArray(), $result->items),
+            'pages' => array_map(fn (Page $page): array => $this->listItem($page, $names), $result->items),
             'meta' => [
                 'total' => $result->total,
                 'page' => $criteria->normalizedPage(),

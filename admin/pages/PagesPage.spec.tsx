@@ -17,7 +17,7 @@ vi.mock('../shared/api/client', async (importOriginal) => {
 
 const pages = [
   makePageItem({ id: 'page-1', title: 'Забор из профнастила', path: '/zabor/', status: 'published', hasUnpublishedChanges: true, updatedAt: '2026-10-01T10:00:00+03:00' }),
-  makePageItem({ id: 'page-2', title: 'Ворота', path: '/vorota/', isIndexable: false, updatedAt: '2026-10-03T12:00:00+03:00' }),
+  makePageItem({ id: 'page-2', title: 'Ворота', path: '/vorota/', isIndexable: false, updatedAt: '2026-10-03T12:00:00+03:00', updatedBy: '01J0000000000000000000000A', updatedByName: 'Игорь' }),
   makePageItem({ id: 'page-3', title: 'Старая акция', path: '/akciya/', status: 'deleted', updatedAt: '2026-09-01T12:00:00+03:00' }),
 ]
 
@@ -87,6 +87,8 @@ describe('PagesPage: список', () => {
     expect(rows).toHaveLength(2)
     expect(rows[0]?.textContent).toContain('Ворота')
     expect(within(rows[0] as HTMLElement).getByText('noindex')).toBeTruthy()
+    expect(within(rows[0] as HTMLElement).getByText('Игорь')).toBeTruthy()
+    expect(screen.getAllByTestId('page-card')[0]?.textContent).toContain('· Игорь')
     expect(within(rows[1] as HTMLElement).getByText('есть неопубликованные правки')).toBeTruthy()
     expect(screen.getByText('2 страницы · опубликовано 1 · с неопубликованными правками 1')).toBeTruthy()
   })
