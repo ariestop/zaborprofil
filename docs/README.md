@@ -107,6 +107,7 @@
 - [47-dev-database-state](47-dev-database-state.md) — единое dev-состояние БД, fixtures и правила для dev snapshots в Git.
 - [48-documentation-normalization](48-documentation-normalization.md) — матрица перехода `docs/*.md -> docs/NN-*.md` и кандидаты на удаление дублей.
 - [49-beget-staging-deploy](49-beget-staging-deploy.md) — автодеплой staging `dev.zaborprofil.ru` на Beget (ветка `dev`, GitHub Actions, SSH).
+- [50-brand-system](50-brand-system.md) — **бренд-система «Периметр» (брендбук 2026, вариант E)**: логотип, цвета, шрифты, компоненты, тексты. Обязательна для любых изменений UI. PDF: [brand/brandbook-2026.pdf](brand/brandbook-2026.pdf).
 - [50-publishing-workflow](50-publishing-workflow.md) — workflow статусов страниц, планировщик публикации, diff ревизий и журнал событий.
 
 ### ADR

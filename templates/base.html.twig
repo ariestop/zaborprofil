@@ -38,7 +38,7 @@
                 <meta name="twitter:image" content="{{ og_image }}">
             {% endif %}
         {% endblock %}
-        <link rel="icon" href="/img/logo.webp" type="image/webp">
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <script type="application/ld+json">{{ {
             '@context': 'https://schema.org',
             '@type': 'Organization',
@@ -91,7 +91,11 @@
             <header class="zp-header" data-site-header>
                 <div class="zp-container zp-header__bar">
                     <a class="zp-logo" href="/" aria-label="{{ site.name }} — на главную">
-                        <img src="/img/logo.webp" width="230" height="35" alt="{{ site.name }}: {{ site.tagline|lower }}" decoding="async" fetchpriority="high">
+                        <picture>
+                            {# Брендбук «Периметр»: уже 200 px — компактный логотип без дескриптора. #}
+                            <source media="(max-width: 639px)" srcset="/img/logo-compact.svg" width="160" height="23">
+                            <img src="/img/logo.svg" width="230" height="34" alt="{{ site.name }}: {{ site.tagline|lower }}" decoding="async" fetchpriority="high">
+                        </picture>
                     </a>
 
                     {% if header_menu %}
@@ -144,7 +148,7 @@
                 <div class="zp-container zp-footer__grid">
                     <div class="space-y-4">
                         <a class="inline-block" href="/" aria-label="{{ site.name }}">
-                            <img class="zp-footer__logo" src="/img/logo.webp" width="230" height="35" alt="{{ site.name }}" loading="lazy" decoding="async">
+                            <img class="zp-footer__logo" src="/img/logo-white.svg" width="230" height="34" alt="{{ site.name }}" loading="lazy" decoding="async">
                         </a>
                         <p class="max-w-xs text-sm leading-6 text-slate-300">
                             Производство и монтаж заборов под ключ. {{ site.delivery }}.

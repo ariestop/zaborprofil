@@ -1,0 +1,16 @@
+---
+description: Brand system «Периметр» (brandbook 2026, variant E) — mandatory for any UI, styles, icons, copy and print work
+alwaysApply: true
+---
+
+# Brand System «Периметр» (variant E)
+
+The approved brand system is variant E «Периметр». Use it for every change to the public site, admin UI, Twig templates, styles, icons, interface copy and print materials.
+
+- Source of truth: `docs/50-brand-system.md` (Russian). Visual version: `docs/brand/brandbook-2026.pdf`. If they differ, the `.md` wins.
+- Logos: only SVG files from `docs/brand/logo/`. Use `logo-compact.svg` on mobile and anywhere narrower than 200 px. Never redraw, retype, recolor or stretch.
+- Colors: only tokens from section 11 of `docs/50-brand-system.md`. Action `#2D7F27`; brand green `#45A63D` is never used for text; text `#23272D`; secondary `#575C63`; surface `#F3F5F2`; night `#2A2F35`; badge `#F2B13B` with `#23272D` text only. RAL product colors are for product color selection only, never for UI chrome.
+- Fonts: Onest (UI, text, headings) and Sofia Sans Condensed (prices, phones, specs, uppercase labels), self-hosted via `@fontsource*` packages. No Google Fonts CDN. Open Sans and Cuprum are not allowed in UI.
+- Style: flat 2.0 — flat colors, but buttons/inputs ≥ 48 px, radius 10 px (buttons) / 12 px (cards), visible `:focus-visible`, body text ≥ 17 px, WCAG 2.2 AA contrast.
+- Copy: Russian, plain and specific; buttons are verb + result («Рассчитать стоимость»); prices as «от 1 290 ₽/п.м.» with non-breaking spaces.
+- Before finishing UI work, go through the checklist in section 13 of `docs/50-brand-system.md`.
