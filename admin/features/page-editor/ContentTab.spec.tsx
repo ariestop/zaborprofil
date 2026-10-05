@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useBuilderStore } from '../../modules/page-builder/state/builderStore'
 import type { BuilderBlock } from '../../modules/page-builder/types'
 import { loginAs } from '../../shared/testing/roles'
@@ -61,12 +61,17 @@ async function renderWorkspace() {
   renderWithProviders(
     <ContentTab pageType="service" pageH1="Забор из профнастила" pagePath="/zabor/" metaDescription="" ogImage="" onOpenSeo={onOpenSeo} />,
   )
-  await screen.findByRole('region', { name: 'Предпросмотр страницы' })
+  // Рабочее место грузится лениво (React.lazy): на медленном CI первый импорт дольше секунды.
+  await screen.findByRole('region', { name: 'Предпросмотр страницы' }, { timeout: 4000 })
 }
 
 function structure() {
   return within(screen.getByRole('list', { name: 'Блоки страницы' }))
 }
+
+beforeAll(async () => {
+  await import('./workspace/ContentWorkspace')
+}, 30000)
 
 beforeEach(() => {
   apiRequest.mockReset()
