@@ -1,18 +1,24 @@
-{% set items = block.content.items ?? [] %}
-{% if items is iterable and items|length > 0 %}
-    <section class="rounded-2xl bg-slate-50 p-6" data-block-type="features">
-        {% if (block.content.title ?? '') is not empty %}
-            <h2 class="mb-6 text-2xl font-semibold text-slate-950">{{ block.content.title }}</h2>
-        {% endif %}
-        <div class="grid gap-4 md:grid-cols-3">
-            {% for item in items %}
-                <article class="rounded-xl bg-white p-5 shadow-xs">
-                    <h3 class="font-semibold text-slate-950">{{ item.title ?? '' }}</h3>
-                    {% if (item.text ?? '') is not empty %}
-                        <p class="mt-2 text-sm leading-6 text-slate-600">{{ item.text }}</p>
-                    {% endif %}
-                </article>
-            {% endfor %}
+{% set items = (block.content.items ?? [])|filter(item => (item.title ?? '') is not empty) %}
+{% if items|length > 0 %}
+    {% set compact = items|filter(item => (item.text ?? '') is not empty)|length == 0 %}
+    <section class="zp-section zp-section--alt" data-block-type="features">
+        <div class="zp-container">
+            {% if (block.content.title ?? '') is not empty %}
+                <h2 class="zp-h2 mb-6 md:mb-8">{{ block.content.title }}</h2>
+            {% endif %}
+            <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {% for item in items %}
+                    <li class="zp-card flex {{ compact ? 'items-center gap-3 !p-3' : 'gap-3.5' }}">
+                        <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700"><svg class="size-5" aria-hidden="true"><use href="#i-check"/></svg></span>
+                        <div>
+                            <h3 class="text-base leading-snug font-semibold text-slate-950">{{ item.title }}</h3>
+                            {% if (item.text ?? '') is not empty %}
+                                <p class="mt-1.5 text-sm leading-6 text-slate-600">{{ item.text }}</p>
+                            {% endif %}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
         </div>
     </section>
 {% endif %}

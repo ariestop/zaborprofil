@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { collectUtm, initLeadFormContext } from './leadForm'
+import { applyLeadPlan, collectUtm, formatPhone, initLeadFormContext, validateLeadFields } from './leadForm'
 
 function buildForm(): HTMLFormElement {
   const form = document.createElement('form')
@@ -50,5 +50,48 @@ describe('collectUtm', () => {
 
   it('returns an empty object without tags', () => {
     expect(collectUtm('', memoryStorage())).toEqual({})
+  })
+})
+
+describe('formatPhone', () => {
+  it('приводит российские номера к маске +7', () => {
+    expect(formatPhone('89001234567')).toBe('+7 (900) 123-45-67')
+    expect(formatPhone('+7 900 123 45 67')).toBe('+7 (900) 123-45-67')
+    expect(formatPhone('9001234567')).toBe('+7 (900) 123-45-67')
+  })
+
+  it('держит частично введённую маску и не добавляет лишних цифр', () => {
+    expect(formatPhone('')).toBe('')
+    expect(formatPhone('8')).toBe('+7')
+    expect(formatPhone('89')).toBe('+7 (9')
+    expect(formatPhone('8900123')).toBe('+7 (900) 123')
+    expect(formatPhone('890012345678999')).toBe('+7 (900) 123-45-67')
+  })
+})
+
+describe('validateLeadFields', () => {
+  it('пропускает корректные данные', () => {
+    expect(validateLeadFields({ name: 'Иван', phone: '+7 (900) 123-45-67', consent: true })).toEqual({})
+  })
+
+  it('возвращает понятные подсказки по каждому полю', () => {
+    const errors = validateLeadFields({ name: ' ', phone: '+7 (900)', consent: false })
+
+    expect(errors.name).toBeDefined()
+    expect(errors.phone).toBeDefined()
+    expect(errors.consent).toBeDefined()
+  })
+})
+
+describe('applyLeadPlan', () => {
+  it('добавляет выбранный вариант и не затирает текст клиента', () => {
+    expect(applyLeadPlan('', 'Largo Премиум')).toBe('Интересует: Largo Премиум')
+    expect(applyLeadPlan('Нужно 40 метров', 'Largo Премиум')).toBe('Интересует: Largo Премиум\nНужно 40 метров')
+  })
+
+  it('заменяет ранее выбранный вариант', () => {
+    expect(applyLeadPlan('Интересует: Largo Стандарт\nНужно 40 метров', 'Doppio Премиум')).toBe(
+      'Интересует: Doppio Премиум\nНужно 40 метров',
+    )
   })
 })

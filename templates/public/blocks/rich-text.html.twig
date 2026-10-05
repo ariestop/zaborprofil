@@ -1,10 +1,14 @@
 {# Текст из конструктора: HTML уже очищен при сохранении (StructuredRichTextSanitizer). #}
 {% set html = block.content.html ?? block.content.text ?? '' %}
 {% if html is not empty or (block.content.title ?? '') is not empty %}
-    <section class="prose max-w-none" data-block-type="rich-text">
-        {% if (block.content.title ?? '') is not empty %}
-            <h2>{{ block.content.title }}</h2>
-        {% endif %}
-        {{ html|raw }}
+    <section class="zp-section" data-block-type="rich-text">
+        <div class="zp-container">
+            <div class="prose prose-slate max-w-3xl prose-headings:tracking-tight prose-headings:text-balance prose-a:text-brand-700 prose-li:marker:text-brand-600 md:prose-lg">
+                {% if (block.content.title ?? '') is not empty %}
+                    <h2>{{ block.content.title }}</h2>
+                {% endif %}
+                {{ html|raw }}
+            </div>
+        </div>
     </section>
 {% endif %}

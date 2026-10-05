@@ -1,6 +1,1 @@
-<section class="prose max-w-none" data-block-type="text">
-    <h2>{{ block.content.title|default(block.name) }}</h2>
-    {% if block.content.text is defined %}
-        <div>{{ block.content.text|raw }}</div>
-    {% endif %}
-</section>
+{% include 'public/blocks/rich-text.html.twig' %}

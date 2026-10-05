@@ -24,6 +24,16 @@ const sliderItemSchema = z.object({
 
 const simpleSettingsSchema = z.object({
   className: z.string().default(''),
+  /** Якорь секции для ссылок вида /#catalog (необязательно). */
+  anchor: z.string().default(''),
+})
+
+const gallerySettingsSchema = simpleSettingsSchema.extend({
+  /** Сколько кадров видно сразу; остальные раскрывает кнопка «Показать все фото». */
+  visible: z.number().int().min(1).max(200).default(8),
+  /** `portrait` — вертикальные кадры (документы, патенты), `contain` — показывать целиком без обрезки. */
+  aspect: z.enum(['landscape', 'portrait']).default('landscape'),
+  fit: z.enum(['cover', 'contain']).default('cover'),
 })
 
 const sliderSettingsSchema = simpleSettingsSchema.extend({
@@ -138,7 +148,7 @@ const structuredBlockRegistry: BlockDefinition[] = [
   def('icons-list', 'Список с иконками', 'content', 90, 'Список с иконками.', z.object({ items: z.array(z.object({ icon: z.string(), text: z.string() })).default([]) })),
 
   def('image', 'Изображение', 'media', 10, 'Одиночное изображение.', z.object({ src: z.string().default(''), alt: z.string().default(''), caption: z.string().default('') })),
-  def('gallery', 'Галерея', 'media', 20, 'Галерея изображений.', z.object({ title: z.string().default(''), items: z.array(z.object({ src: z.string(), alt: z.string().default('') })).default([]) })),
+  def('gallery', 'Галерея', 'media', 20, 'Галерея изображений.', z.object({ title: z.string().default(''), items: z.array(z.object({ src: z.string(), alt: z.string().default(''), caption: z.string().default('') })).default([]) }), gallerySettingsSchema),
   def('before-after', 'До/После', 'media', 30, 'Блок сравнения до/после.', z.object({ before: z.string().default(''), after: z.string().default('') })),
   def('video', 'Видео', 'media', 40, 'Видео-блок.', z.object({ url: z.string().default(''), title: z.string().default('') })),
   def(
@@ -167,7 +177,7 @@ const structuredBlockRegistry: BlockDefinition[] = [
   def('lead-form', 'Лид-форма', 'conversion', 30, 'Форма лида.', z.object({ title: z.string().default('Оставьте заявку') })),
   def('callback-form', 'Форма обратного звонка', 'conversion', 40, 'Форма обратного звонка.', z.object({ title: z.string().default('Заказать звонок') })),
   def('calculator-placeholder', 'Заглушка калькулятора', 'conversion', 50, 'Заглушка калькулятора.', z.object({ title: z.string().default('Калькулятор скоро будет доступен') })),
-  def('pricing', 'Тарифы', 'conversion', 60, 'Тарифы/пакеты.', z.object({ items: z.array(z.object({ title: z.string(), price: z.string(), features: z.array(z.string()) })).default([]) })),
+  def('pricing', 'Тарифы', 'conversion', 60, 'Тарифы/пакеты.', z.object({ title: z.string().default(''), subtitle: z.string().default(''), note: z.string().default(''), items: z.array(z.object({ title: z.string(), price: z.string(), features: z.array(z.string()) })).default([]) })),
   def('reviews', 'Отзывы', 'conversion', 70, 'Отзывы.', z.object({ items: z.array(z.object({ author: z.string(), text: z.string() })).default([]) })),
   def('trust-badges', 'Бейджи доверия', 'conversion', 80, 'Бейджи доверия.', z.object({ items: z.array(z.object({ title: z.string(), text: z.string().default('') })).default([]) })),
 

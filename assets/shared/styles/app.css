@@ -1,4 +1,5 @@
 @import 'tailwindcss' source(none);
+@import './theme.css';
 
 /*
   Tailwind 4 scans the whole project by default. Keep the same sources as the
@@ -14,16 +15,6 @@
 
 @plugin '@tailwindcss/typography';
 
-@theme {
-  /* Same default font stack as Tailwind 3, so typography does not change. */
-  --font-sans: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
-    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-
-  --color-brand-50: #ecfdf5;
-  --color-brand-500: #059669;
-  --color-brand-700: #047857;
-  --color-brand-900: #064e3b;
-}
 
 /*
   The default border color has changed to `currentcolor` in Tailwind CSS v4,

@@ -1,0 +1,24 @@
+{# Видео без тяжёлой загрузки: плеер подключается только по нажатию (mp4 — нативный <video preload="none">). #}
+{% set url = block.content.url ?? '' %}
+{% if url is not empty %}
+    {% set is_file = url matches '/\\.(mp4|webm)(\\?.*)?$/i' %}
+    <section class="zp-section" data-block-type="video">
+        <div class="zp-container max-w-3xl">
+            {% if (block.content.title ?? '') is not empty %}
+                <h2 class="zp-h2 mb-4">{{ block.content.title }}</h2>
+            {% endif %}
+            <div class="zp-video">
+                {% if is_file %}
+                    <video controls preload="none" playsinline src="{{ url }}">
+                        <a href="{{ url }}">Скачать видео</a>
+                    </video>
+                {% else %}
+                    <button type="button" class="absolute inset-0 flex h-full w-full flex-col items-center justify-center gap-3 bg-linear-to-br from-slate-800 to-slate-950" data-video-embed="{{ url }}" data-video-title="{{ block.content.title ?? 'Видео' }}">
+                        <span class="flex size-16 items-center justify-center rounded-full bg-brand-600 shadow-lg"><svg class="ml-1 size-7" aria-hidden="true"><use href="#i-play"/></svg></span>
+                        <span class="text-sm font-medium text-white/90">Смотреть видео</span>
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+{% endif %}

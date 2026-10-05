@@ -43,8 +43,13 @@ final class PagePreviewController extends AbstractController
         ]);
 
         $blocks = [];
+        $headingInFirstBlock = false;
         foreach ($page->enabledBlocks() as $index => $block) {
-            $blocks[] = $blockRenderer->render(PageBlockView::fromBlock($block), $index === 0);
+            $view = PageBlockView::fromBlock($block);
+            $blocks[] = $blockRenderer->render($view, $index === 0, $index === 0 ? $page->h1() : null);
+            if ($index === 0) {
+                $headingInFirstBlock = $blockRenderer->consumesPageHeading($view->type);
+            }
         }
 
         $canonical = $page->canonicalUrl()
@@ -53,6 +58,7 @@ final class PagePreviewController extends AbstractController
         $response = $this->render('public/page/show.html.twig', [
             'page' => PublicPageView::fromPage($page),
             'blocks' => $blocks,
+            'heading_in_first_block' => $headingInFirstBlock,
             'seo_title' => $seoTitle->resolve($page->title(), $page->h1(), $page->metaTitle()),
             'meta_description' => $page->metaDescription(),
             'meta_robots' => 'noindex, nofollow',

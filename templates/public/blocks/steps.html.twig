@@ -1,19 +1,22 @@
-{% set items = block.content.items ?? [] %}
-{% if items is iterable and items|length > 0 %}
-    <section class="rounded-2xl bg-slate-950 p-6 text-white" data-block-type="steps">
-        {% if (block.content.title ?? '') is not empty %}
-            <h2 class="mb-6 text-2xl font-semibold">{{ block.content.title }}</h2>
-        {% endif %}
-        <div class="grid gap-4 md:grid-cols-4">
-            {% for item in items %}
-                <article class="rounded-xl bg-white/10 p-5">
-                    <p class="text-sm font-semibold text-emerald-200">Шаг {{ loop.index }}</p>
-                    <h3 class="mt-2 font-semibold">{{ item.title ?? '' }}</h3>
-                    {% if (item.text ?? '') is not empty %}
-                        <p class="mt-2 text-sm leading-6 text-slate-200">{{ item.text }}</p>
-                    {% endif %}
-                </article>
-            {% endfor %}
+{% set items = (block.content.items ?? [])|filter(item => (item.title ?? '') is not empty) %}
+{% if items|length > 0 %}
+    <section class="zp-section" data-block-type="steps" {% if (block.settings.anchor ?? '') is not empty %}id="{{ block.settings.anchor }}"{% endif %}>
+        <div class="zp-container">
+            <h2 class="zp-h2 mb-6 md:mb-8">{{ (block.content.title ?? '') is not empty ? block.content.title : (block.name ?? 'Как мы работаем') }}</h2>
+            {% set cols = {1: 'md:grid-cols-1', 2: 'md:grid-cols-2', 3: 'md:grid-cols-3'}[items|length] ?? 'md:grid-cols-4' %}
+            <ol class="grid gap-3 {{ cols }} md:gap-4">
+                {% for item in items %}
+                    <li class="zp-card flex gap-3.5 md:block">
+                        <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-700 text-base font-bold text-white">{{ loop.index }}</span>
+                        <div>
+                            <h3 class="text-base font-semibold text-slate-950 md:mt-3">{{ item.title }}</h3>
+                            {% if (item.text ?? '') is not empty %}
+                                <p class="mt-1 text-sm leading-6 text-slate-600">{{ item.text }}</p>
+                            {% endif %}
+                        </div>
+                    </li>
+                {% endfor %}
+            </ol>
         </div>
     </section>
 {% endif %}

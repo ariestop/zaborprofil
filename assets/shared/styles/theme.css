@@ -1,0 +1,18 @@
+/* Токены дизайна, общие для публичного сайта и админки. */
+@theme {
+  /* Same default font stack as Tailwind 3, so typography does not change. */
+  --font-sans: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+  /* Зелёный из логотипа «Забор Профиль» (#43b115); тёмные ступени дают контраст ≥ 4.5:1 с белым текстом. */
+  --color-brand-50: #f2fbec;
+  --color-brand-100: #dff4d0;
+  --color-brand-200: #bfe8a2;
+  --color-brand-500: #43b115;
+  --color-brand-600: #37950f;
+  --color-brand-700: #2c780d;
+  --color-brand-800: #245f0f;
+  --color-brand-900: #1b490c;
+  --color-brand-950: #0e2a06;
+  --color-graphite: #3e3f46;
+}

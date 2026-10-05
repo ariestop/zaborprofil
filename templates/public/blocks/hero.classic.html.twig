@@ -1,29 +1,52 @@
-{# Первый экран из конструктора: заголовок, подзаголовок, текст, кнопка и необязательное фоновое фото. #}
-{% set content = block.content %}
-{% set image = content.image ?? '' %}
-{% set cta_label = content.cta.label ?? '' %}
-{% set cta_href = content.cta.href ?? '#lead-form' %}
-{% if cta_href == '#lead' or cta_href == '' %}{% set cta_href = '#lead-form' %}{% endif %}
-<section class="relative isolate overflow-hidden rounded-3xl bg-emerald-900 px-8 py-14 text-white" data-block-type="hero.classic">
+{# Первый экран. Если страница начинается с него, он выводит H1 страницы (page_h1); иначе — заголовок из поля title. #}
+{% set heading = page_h1 ?? (block.content.title ?? block.name) %}
+{% set eyebrow = page_h1 is not empty and (block.content.title ?? '') is not empty and block.content.title != page_h1 ? block.content.title : '' %}
+{% set lines = (block.content.text ?? '')|split("\n")|map(line => line|trim|trim('-•– '))|filter(line => line is not empty) %}
+{% set cta = block.content.cta ?? {} %}
+{% set cta_href = (cta.href ?? '') in ['', '#', '#lead'] ? '#lead-form' : cta.href %}
+{% set image = block.content.image ?? '' %}
+<section class="zp-hero" data-block-type="hero.classic">
     {% if image is not empty %}
         {{ responsive_image(image, {
-            decorative: true,
-            class: 'absolute inset-0 -z-10 h-full w-full object-cover',
-            sizes: '(min-width: 1152px) 1152px, 100vw',
+            alt: block.content.imageAlt ?? null,
+            decorative: (block.content.imageAlt ?? '') is empty,
+            class: 'zp-hero__media',
+            sizes: '100vw',
             priority: above_fold|default(false)
         }) }}
-        <div class="absolute inset-0 -z-10 bg-emerald-950/60"></div>
+        <div class="zp-hero__shade"></div>
     {% endif %}
-    {% if (content.title ?? '') is not empty %}
-        <h2 class="text-4xl font-bold">{{ content.title }}</h2>
-    {% endif %}
-    {% if (content.subtitle ?? '') is not empty %}
-        <p class="mt-4 max-w-3xl text-xl leading-8 text-emerald-50">{{ content.subtitle }}</p>
-    {% endif %}
-    {% if (content.text ?? '') is not empty %}
-        <p class="mt-4 max-w-3xl text-lg leading-8 text-emerald-50">{{ content.text }}</p>
-    {% endif %}
-    {% if cta_label is not empty %}
-        <a class="mt-8 inline-flex items-center rounded-xl bg-white px-6 py-3 font-semibold text-emerald-900 hover:bg-emerald-50" href="{{ cta_href }}">{{ cta_label }}</a>
-    {% endif %}
+    <div class="zp-container py-12 sm:py-16 md:py-24 lg:py-28">
+        <div class="max-w-2xl">
+            {% if page_h1 is not empty %}
+                <h1 class="text-3xl leading-tight font-bold tracking-tight text-balance sm:text-4xl lg:text-5xl">{{ heading }}</h1>
+            {% else %}
+                <h2 class="text-3xl leading-tight font-bold tracking-tight text-balance sm:text-4xl lg:text-5xl">{{ heading }}</h2>
+            {% endif %}
+            {# Заголовок блока при выводе H1 страницы идёт вторым уровнем под ним. #}
+            {% if eyebrow is not empty %}
+                <h2 class="mt-3 text-sm font-semibold tracking-wider text-brand-200 uppercase sm:text-base">{{ eyebrow }}</h2>
+            {% endif %}
+            {% if (block.content.subtitle ?? '') is not empty %}
+                <p class="mt-4 text-lg leading-7 text-white/90 sm:text-xl sm:leading-8">{{ block.content.subtitle }}</p>
+            {% endif %}
+            {% if lines|length == 1 %}
+                <p class="mt-3 text-base leading-7 text-white/80">{{ lines|first }}</p>
+            {% elseif lines|length > 1 %}
+                <ul class="zp-checklist mt-5 text-base text-white/90">
+                    {% for line in lines %}
+                        <li><svg aria-hidden="true" class="!text-brand-200"><use href="#i-check"/></svg><span>{{ line }}</span></li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            <div class="mt-7 flex flex-col gap-3 sm:flex-row">
+                {% if (cta.label ?? '') is not empty %}
+                    <a class="zp-btn zp-btn--primary bg-brand-500 hover:bg-brand-600" href="{{ cta_href }}" data-lead-cta>{{ cta.label }}</a>
+                {% endif %}
+                <a class="zp-btn zp-btn--outline-light" href="{{ site.phone_href }}">
+                    <svg class="size-5" aria-hidden="true"><use href="#i-phone"/></svg>{{ site.phone }}
+                </a>
+            </div>
+        </div>
+    </div>
 </section>

@@ -1,0 +1,39 @@
+{# Контакты: телефон, почта, мессенджеры, адрес и карта. Пустые поля берутся из общих контактов сайта. #}
+{% set phone = block.content.phone ?? site.phone %}
+{% set phone_href = block.content.phoneHref ?? site.phone_href %}
+{% set email = block.content.email ?? site.email %}
+{% set map_url = block.content.mapUrl ?? site.map_url %}
+{% set embed = block.content.embedUrl ?? '' %}
+<section class="zp-section" data-block-type="contacts-map">
+    <div class="zp-container">
+        <h2 class="zp-h2 mb-6">{{ (block.content.title ?? '') is not empty ? block.content.title : 'Контакты' }}</h2>
+        <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <a class="zp-card block transition hover:border-brand-500" href="{{ phone_href }}">
+                <p class="text-sm text-slate-500">Телефон</p>
+                <p class="mt-1 text-lg font-bold text-slate-950">{{ phone }}</p>
+            </a>
+            <a class="zp-card block transition hover:border-brand-500" href="mailto:{{ email }}">
+                <p class="text-sm text-slate-500">Почта</p>
+                <p class="mt-1 text-lg font-bold break-all text-slate-950">{{ email }}</p>
+            </a>
+            <a class="zp-card block transition hover:border-brand-500" href="{{ site.telegram }}" target="_blank" rel="noopener">
+                <p class="text-sm text-slate-500">Telegram</p>
+                <p class="mt-1 text-lg font-bold text-slate-950">@zabortop</p>
+            </a>
+            <a class="zp-card block transition hover:border-brand-500" href="{{ map_url }}" target="_blank" rel="noopener">
+                <p class="text-sm text-slate-500">Адрес</p>
+                <p class="mt-1 text-lg font-bold text-slate-950">{{ block.content.address ?? site.city }}</p>
+                <p class="mt-0.5 text-sm text-brand-700">Построить маршрут в 2ГИС</p>
+            </a>
+            {% for item in block.content.items ?? [] %}
+                <div class="zp-card">
+                    <p class="text-sm text-slate-500">{{ item.label ?? 'Контакт' }}</p>
+                    <p class="mt-1 text-lg font-bold text-slate-950">{{ item.value ?? '' }}</p>
+                </div>
+            {% endfor %}
+        </div>
+        {% if embed is not empty %}
+            <iframe class="mt-6 h-72 w-full rounded-2xl border-0 md:h-96" src="{{ embed }}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Карта: {{ block.content.address ?? site.city }}"></iframe>
+        {% endif %}
+    </div>
+</section>

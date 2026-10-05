@@ -1,25 +1,40 @@
-{# Фото из медиатеки: конструктор хранит src/alt, старые блоки — image/caption. Пустая галерея не выводится. #}
+{# Фото из медиатеки: конструктор хранит src/alt, старые блоки — image/caption. Первые N кадров видны сразу, остальные раскрывает кнопка (без JS видны все). #}
 {% set images = (block.content.items ?? [])|filter(item => (item.src ?? item.image ?? '') is not empty) %}
+{% set visible = block.settings.visible ?? 8 %}
+{% set portrait = (block.settings.aspect ?? 'landscape') == 'portrait' %}
+{% set contain = (block.settings.fit ?? 'cover') == 'contain' %}
+{% set grid_class = portrait ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' %}
+{% set img_class = (portrait ? 'aspect-3/4' : 'aspect-4/3') ~ ' w-full ' ~ (contain ? 'object-contain bg-slate-50' : 'object-cover') ~ ' transition duration-300 group-hover:scale-105' %}
 {% if images|length > 0 %}
-    <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs" data-block-type="gallery">
-        {% if (block.content.title ?? '') is not empty %}
-            <h2 class="mb-6 text-2xl font-semibold text-slate-950">{{ block.content.title }}</h2>
-        {% endif %}
-        <div class="grid gap-4 md:grid-cols-3">
-            {% for item in images %}
-                <figure>
-                    {{ responsive_image(item.src ?? item.image, {
-                        alt: item.alt ?? null,
-                        fallback_alt: item.caption ?? block.name,
-                        class: 'aspect-4/3 w-full rounded-xl object-cover',
-                        sizes: '(min-width: 1152px) 350px, (min-width: 768px) 33vw, 100vw',
-                        eager: above_fold|default(false) and loop.index <= 3
-                    }) }}
-                    {% if (item.caption ?? '') is not empty %}
-                        <figcaption class="mt-2 text-sm text-slate-500">{{ item.caption }}</figcaption>
-                    {% endif %}
-                </figure>
-            {% endfor %}
+    <section class="zp-section" data-block-type="gallery" data-gallery>
+        <div class="zp-container">
+            {% if (block.content.title ?? '') is not empty %}
+                <h2 class="zp-h2 mb-6 md:mb-8">{{ block.content.title }}</h2>
+            {% endif %}
+            <div class="grid {{ grid_class }} gap-2 sm:gap-3">
+                {% for item in images %}
+                    {% set src = item.src ?? item.image %}
+                    <figure {% if loop.index > visible %}data-gallery-extra{% endif %}>
+                        <a class="group block overflow-hidden rounded-xl bg-slate-100" href="{{ src }}" data-lightbox aria-label="Открыть фото {{ loop.index }} из {{ images|length }}">
+                            {{ responsive_image(src, {
+                                alt: item.alt ?? null,
+                                fallback_alt: item.caption ?? block.content.title ?? block.name,
+                                class: img_class,
+                                sizes: '(min-width: 1152px) 280px, (min-width: 768px) 33vw, 50vw',
+                                eager: above_fold|default(false) and loop.index <= 4
+                            }) }}
+                        </a>
+                        {% if (item.caption ?? '') is not empty %}
+                            <figcaption class="mt-1.5 text-sm text-slate-500">{{ item.caption }}</figcaption>
+                        {% endif %}
+                    </figure>
+                {% endfor %}
+            </div>
+            {% if images|length > visible %}
+                <div class="mt-5 text-center" data-gallery-more hidden>
+                    <button type="button" class="zp-btn zp-btn--ghost" data-gallery-toggle>Показать все фото ({{ images|length }})</button>
+                </div>
+            {% endif %}
         </div>
     </section>
 {% endif %}

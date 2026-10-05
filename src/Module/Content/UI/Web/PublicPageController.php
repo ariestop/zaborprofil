@@ -39,8 +39,9 @@ final class PublicPageController extends AbstractController
 
         $blocks = [];
         foreach ($page->blocks as $index => $block) {
-            $blocks[] = $blockRenderer->render($block, $index === 0);
+            $blocks[] = $blockRenderer->render($block, $index === 0, $index === 0 ? $page->h1 : null);
         }
+        $headingInFirstBlock = $page->blocks !== [] && $blockRenderer->consumesPageHeading($page->blocks[array_key_first($page->blocks)]->type);
 
         $canonical = $page->canonicalUrl
             ?? $urlGenerator->generate('content_public_page', ['path' => ltrim($page->path, '/')], UrlGeneratorInterface::ABSOLUTE_URL);
@@ -54,6 +55,7 @@ final class PublicPageController extends AbstractController
         $response = $this->render('public/page/show.html.twig', [
             'page' => $page,
             'blocks' => $blocks,
+            'heading_in_first_block' => $headingInFirstBlock,
             'seo_title' => $seoTitle->resolve($page->title, $page->h1, $page->metaTitle),
             'meta_description' => $page->metaDescription,
             'meta_robots' => $page->isIndexable ? 'index, follow' : 'noindex, nofollow',
