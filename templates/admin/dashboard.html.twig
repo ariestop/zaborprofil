@@ -21,6 +21,7 @@
         <div
             id="admin-app"
             data-user-email="{{ app.user ? app.user.userIdentifier : '' }}"
+            data-user-name="{{ app.user and app.user.name is defined ? app.user.name : '' }}"
             data-roles="{{ access.roles|join(',') }}"
             data-permissions="{{ access.permissions|join(',') }}"
             data-logout-url="{{ path('admin_logout') }}"

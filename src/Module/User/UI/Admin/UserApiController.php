@@ -64,6 +64,11 @@ final readonly class UserApiController
             ]);
         }
 
+        $name = $payload['name'] ?? null;
+        if ($name !== null && !\is_string($name)) {
+            return $this->validationError([['field' => 'name', 'message' => 'Имя должно быть строкой.']]);
+        }
+
         $roles = $this->parseRoles($payload['roles'] ?? [AdminRole::EDITOR]);
         if ($roles instanceof JsonResponse) {
             return $roles;
@@ -79,7 +84,7 @@ final readonly class UserApiController
         }
 
         try {
-            $user = $this->service->create($email, $password, $roles);
+            $user = $this->service->create($email, $password, $roles, $name);
         } catch (UserManagementException $exception) {
             return $this->domainError($exception);
         } catch (Throwable $exception) {
@@ -148,6 +153,34 @@ final readonly class UserApiController
 
         try {
             $this->service->updateRoles($actor, $target, $roles);
+        } catch (UserManagementException $exception) {
+            return $this->domainError($exception);
+        } catch (Throwable $exception) {
+            return $this->errors->fromThrowable($exception, 'Admin User API');
+        }
+
+        return new JsonResponse(self::serializeUser($target));
+    }
+
+    #[Route('/{id}/name', name: 'admin_api_users_name_update', methods: ['PATCH'])]
+    public function updateName(string $id, Request $request): JsonResponse
+    {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::USERS_MANAGE)) {
+            return $this->accessDenied();
+        }
+
+        $target = $this->findUser($id);
+        if (!$target instanceof AdminUser) {
+            return $this->notFound();
+        }
+
+        $name = $request->getPayload()->all()['name'] ?? null;
+        if ($name !== null && !\is_string($name)) {
+            return $this->validationError([['field' => 'name', 'message' => 'Имя должно быть строкой или null.']]);
+        }
+
+        try {
+            $this->service->rename($target, $name);
         } catch (UserManagementException $exception) {
             return $this->domainError($exception);
         } catch (Throwable $exception) {
@@ -329,13 +362,14 @@ final readonly class UserApiController
     }
 
     /**
-     * @return array{id: string, email: string, roles: list<string>, active: bool, createdAt: string, updatedAt: string}
+     * @return array{id: string, email: string, name: string|null, roles: list<string>, active: bool, createdAt: string, updatedAt: string}
      */
     private static function serializeUser(AdminUser $user): array
     {
         return [
             'id' => (string) $user->id(),
             'email' => $user->email(),
+            'name' => $user->name(),
             'roles' => $user->storedRoles(),
             'active' => $user->isActive(),
             'createdAt' => $user->createdAt()->format(\DateTimeInterface::ATOM),

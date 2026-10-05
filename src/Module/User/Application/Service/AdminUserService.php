@@ -17,6 +17,7 @@ final readonly class AdminUserService
 {
     public const int PASSWORD_MIN_LENGTH = 12;
     public const int PASSWORD_MAX_LENGTH = 128;
+    public const int NAME_MAX_LENGTH = 120;
 
     public function __construct(
         private AdminUserRepository $users,
@@ -28,7 +29,7 @@ final readonly class AdminUserService
     /**
      * @param list<string> $roles
      */
-    public function create(string $email, string $plainPassword, array $roles): AdminUser
+    public function create(string $email, string $plainPassword, array $roles, ?string $name = null): AdminUser
     {
         $email = mb_strtolower(trim($email));
         $roles = $this->normalizeRoles($roles);
@@ -36,6 +37,7 @@ final readonly class AdminUserService
         $this->assertValid([
             ...$this->emailErrors($email),
             ...$this->passwordErrors('password', $plainPassword, $email),
+            ...$this->nameErrors($name),
         ]);
 
         if ($this->users->findOneByEmail($email) instanceof AdminUser) {
@@ -44,9 +46,23 @@ final readonly class AdminUserService
 
         $user = new AdminUser($email, '', $roles);
         $user->changePasswordHash($this->passwordHasher->hashPassword($user, $plainPassword));
+        if ($name !== null) {
+            $user->rename($name);
+        }
         $this->users->save($user);
 
         return $user;
+    }
+
+    /**
+     * Пустое имя очищает поле.
+     */
+    public function rename(AdminUser $user, ?string $name): void
+    {
+        $this->assertValid($this->nameErrors($name));
+
+        $user->rename($name);
+        $this->users->save($user);
     }
 
     /**
@@ -251,6 +267,20 @@ final readonly class AdminUserService
             new Assert\NotBlank(message: 'Укажите email.'),
             new Assert\Email(message: 'Укажите корректный email.'),
             new Assert\Length(max: 180, maxMessage: 'Email не должен быть длиннее {{ limit }} символов.'),
+        ]);
+    }
+
+    /**
+     * @return list<array{field: string, message: string}>
+     */
+    private function nameErrors(?string $name): array
+    {
+        if ($name === null) {
+            return [];
+        }
+
+        return $this->violations('name', trim($name), [
+            new Assert\Length(max: self::NAME_MAX_LENGTH, maxMessage: 'Имя не должно быть длиннее {{ limit }} символов.'),
         ]);
     }
 

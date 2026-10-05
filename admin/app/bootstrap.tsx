@@ -12,6 +12,7 @@ export function bootstrapAdminApp(): void {
 
   initializeAuthStore({
     userEmail: root.dataset.userEmail ?? '',
+    userName: root.dataset.userName ?? '',
     logoutUrl: root.dataset.logoutUrl ?? '/admin/logout',
     logoutToken: root.dataset.logoutToken ?? '',
     roles: parseRoles(root.dataset.roles),

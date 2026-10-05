@@ -27,6 +27,9 @@ final class AdminUser implements UserInterface, PasswordAuthenticatedUserInterfa
     #[ORM\Column(length: 180)]
     private string $email;
 
+    #[ORM\Column(length: 120, nullable: true)]
+    private ?string $name = null;
+
     #[ORM\Column]
     private bool $active = true;
 
@@ -66,6 +69,21 @@ final class AdminUser implements UserInterface, PasswordAuthenticatedUserInterfa
     public function email(): string
     {
         return $this->email;
+    }
+
+    /**
+     * Отображаемое имя («Игорь»); не заполнено у учётных записей, созданных только по email.
+     */
+    public function name(): ?string
+    {
+        return $this->name;
+    }
+
+    public function rename(?string $name): void
+    {
+        $name = $name === null ? null : trim($name);
+        $this->name = $name === '' ? null : $name;
+        $this->touch();
     }
 
     public function isActive(): bool

@@ -28,9 +28,11 @@ interface SidebarContentProps {
 
 function SidebarContent({ collapsed, onToggleCollapsed, onClose }: SidebarContentProps) {
   const userEmail = useAuthStore((state) => state.userEmail)
+  const userName = useAuthStore((state) => state.userName).trim()
   const logoutUrl = useAuthStore((state) => state.logoutUrl)
   const logoutToken = useAuthStore((state) => state.logoutToken)
-  const userInitial = userEmail.trim() === '' ? '?' : userEmail.trim().charAt(0).toUpperCase()
+  const userLabel = userName === '' ? userEmail.trim() : userName
+  const userInitial = userLabel === '' ? '?' : userLabel.charAt(0).toUpperCase()
 
   return (
     <div className="flex h-full flex-col">
@@ -87,7 +89,8 @@ function SidebarContent({ collapsed, onToggleCollapsed, onClose }: SidebarConten
           </span>
           {collapsed ? null : (
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-medium">{userEmail}</span>
+              <span className="block truncate text-sm font-medium">{userLabel}</span>
+              {userName === '' ? null : <span className="block truncate text-xs text-slate-500 dark:text-slate-400">{userEmail}</span>}
             </span>
           )}
           <form method="post" action={logoutUrl}>
