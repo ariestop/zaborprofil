@@ -107,6 +107,7 @@ export async function dragWithRetries(
 
 export interface BuilderBlockSnapshot {
   type: string
+  name: string
   position: number
   contentIsObject: boolean
   settingsIsObject: boolean
@@ -130,6 +131,7 @@ export async function fetchBuilderBlocks(page: Page, pageId: string): Promise<Bu
 
   return response.payload.blocks.map((block) => ({
     type: String(block.type),
+    name: String(block.name ?? ''),
     position: Number(block.position),
     contentIsObject: isObject(block.content),
     settingsIsObject: isObject(block.settings),

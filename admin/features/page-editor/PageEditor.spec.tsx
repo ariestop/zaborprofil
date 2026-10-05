@@ -88,7 +88,7 @@ describe('PageEditor', () => {
     renderEditor('/admin/pages/page-1/seo')
 
     const tabs = await screen.findAllByRole('tab')
-    expect(tabs.map((tab) => tab.textContent)).toEqual(['Контент и блоки', 'SEO', 'Настройки', 'Ревизии'])
+    expect(tabs.map((tab) => tab.textContent)).toEqual(['Контент', 'SEO', 'Настройки', 'История'])
     expect(screen.getByRole('tab', { name: 'SEO' }).getAttribute('aria-selected')).toBe('true')
     expect(screen.getByRole('button', { name: 'Предпросмотр' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Опубликовать' })).toBeTruthy()
@@ -138,7 +138,7 @@ describe('PageEditor', () => {
     renderEditor('/admin/pages/page-1')
 
     const tabs = await screen.findAllByRole('tab')
-    expect(tabs.map((tab) => tab.textContent)).toEqual(['Контент и блоки', 'Настройки', 'Ревизии'])
+    expect(tabs.map((tab) => tab.textContent)).toEqual(['Контент', 'Настройки', 'История'])
     expect(screen.queryByRole('button', { name: 'Опубликовать' })).toBeNull()
   })
 
@@ -147,7 +147,7 @@ describe('PageEditor', () => {
     renderEditor('/admin/pages/page-1/seo')
 
     const tabs = await screen.findAllByRole('tab')
-    expect(tabs.map((tab) => tab.textContent)).toEqual(['Контент и блоки', 'SEO', 'Ревизии'])
+    expect(tabs.map((tab) => tab.textContent)).toEqual(['Контент', 'SEO', 'История'])
     expect(await screen.findByLabelText('SEO-заголовок (title)')).toBeTruthy()
   })
 

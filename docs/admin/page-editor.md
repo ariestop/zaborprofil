@@ -8,11 +8,11 @@
 | --- | --- |
 | `/admin/pages` | Список страниц: поиск, фильтр по статусу, кнопка «Создать страницу» |
 | `/admin/pages/new` | Создание страницы (название, тип, шаблон, slug/path, родитель). Страница создаётся черновиком, стартовые блоки берутся из шаблона |
-| `/admin/pages/:id` | Редактор, вкладка «Контент и блоки» |
+| `/admin/pages/:id` | Редактор, вкладка «Контент» |
 | `/admin/pages/:id/seo` | Вкладка «SEO» |
 | `/admin/pages/:id/settings` | Вкладка «Настройки» |
-| `/admin/pages/:id/revisions` | Вкладка «Ревизии» |
-| `/admin/pages/:id/builder` | Совместимость со старым URL: открывает вкладку «Контент и блоки» |
+| `/admin/pages/:id/revisions` | Вкладка «История» (ревизии) |
+| `/admin/pages/:id/builder` | Совместимость со старым URL: открывает вкладку «Контент» |
 
 Неизвестный сегмент после `:id` перенаправляет на `/admin/pages/:id`. Маршрут `/admin/pages/new` объявлен раньше `/admin/pages/:id`, поэтому `new` не воспринимается как идентификатор.
 
@@ -20,14 +20,14 @@
 
 ## Что на каких вкладках
 
-- **Контент и блоки** — Page Builder (каталог, список с drag&drop, редактор блока, быстрый предпросмотр блоков через `POST /builder/preview`).
+- **Контент** — рабочее место блоков: структура страницы, предпросмотр «как на сайте» и поля выбранного блока (подробно — [page-builder](page-builder.md)). Вкладка занимает всю ширину экрана (`fullBleed` в `route-config.ts`), остальные вкладки — карточка шириной до `max-w-5xl`.
 - **SEO** — `metaTitle`, `metaDescription` со счётчиками длины, превью сниппета (из B1), canonical, OG-заголовок/описание/изображение (MediaPicker из C1), JSON-LD (только в расширенном режиме) и SEO-аудит страницы.
 - **Настройки** — название, H1, тип, шаблон, slug, path, родитель, порядок, видимость, индексация и быстрые смены статуса (вернуть в черновик, снять с публикации, в архив, удалить).
-- **Ревизии** — история версий и восстановление выбранной версии.
+- **История** — ревизии, сравнение с текущей версией и восстановление выбранной версии.
 
-В шапке всегда видны: название, статус, индикатор сохранения, переключатель «Расширенный режим (JSON)», кнопки «Предпросмотр», «Сохранить» (также `Ctrl/Cmd+S`) и «Опубликовать».
+Шапка: название и статус страницы, адрес (`path`), ссылка «К списку страниц», индикатор сохранения, кнопки «Предпросмотр», «Сохранить» (также `Ctrl/Cmd+S`), «Опубликовать» и меню «Другие действия со страницей» (стрелка рядом с «Опубликовать»): «Публикация и расписание…», «Сохранить страницу как шаблон» (право `pages.manage_templates`) и «Режим JSON (для разработчика)».
 
-Слоты для публикационного workflow (D1) расположены в `admin/features/page-editor/slots.tsx`: `PagePublishingSlot` (шапка) и `PageRevisionsSlot` (вкладка «Ревизии»). Реализация D1 подключена в этих компонентах из `admin/features/publishing/`: кнопка «Публикация и расписание» открывает панель workflow (перед этим сохраняются правки), вкладка «Ревизии» дополнена сравнением ревизий с текущей версией. Подробности: [50-publishing-workflow](../50-publishing-workflow.md).
+Слоты для публикационного workflow (D1) расположены в `admin/features/page-editor/slots.tsx`: `PagePublishingSlot` (шапка) и `PageRevisionsSlot` (вкладка «История»). Реализация D1 подключена в этих компонентах из `admin/features/publishing/`: пункт меню «Публикация и расписание…» открывает панель workflow (`PagePublishingSlot` с `hideTrigger` и `openSignal`; перед открытием сохраняются правки), вкладка «История» дополнена сравнением ревизий с текущей версией. Подробности: [50-publishing-workflow](../50-publishing-workflow.md).
 
 ## Сохранение и автосохранение
 
@@ -67,7 +67,7 @@
 
 ## Расширенный режим
 
-Переключатель в шапке показывает JSON-редакторы блоков и поле JSON-LD. Состояние хранится в `localStorage`. Это именно переключатель интерфейса, а не проверка роли: SPA пока не получает роль пользователя, а серверные права (`pages.edit`, `pages.publish`, `seo.edit`) проверяются backend-ом независимо от режима. Для блоков без собственной формы JSON-панель показывается всегда.
+Пункт «Режим JSON (для разработчика)» в меню шапки показывает под полями блока JSON-редактор `content`/`settings` и поле JSON-LD на вкладке SEO. Состояние хранится в `localStorage`. Это переключатель интерфейса, а не проверка роли: серверные права (`pages.edit`, `pages.publish`, `seo.edit`) проверяются backend-ом независимо от режима. Блокам без собственной формы JSON больше не нужен: форма строится по их `content` (см. [page-builder](page-builder.md)).
 
 ## Исправление parentId
 
@@ -80,8 +80,8 @@
 
 ## Тесты
 
-- Vitest: `admin/features/page-editor/*.spec.ts(x)` (форма и схема, индикатор, автосохранение с fake timers, LeaveGuard, переключение вкладок), `admin/routes/route-config.spec.ts`.
-- Playwright (`tests/e2e/admin-smoke.spec.ts`): создание страницы → правка SEO → сохранение → предпросмотр → предупреждение при уходе; старый URL `/builder`; DnD блоков.
+- Vitest: `admin/features/page-editor/*.spec.ts(x)` (форма и схема, индикатор, автосохранение с fake timers, LeaveGuard, переключение вкладок, рабочее место блоков `ContentTab.spec.tsx`), `admin/features/page-editor/workspace/*.spec.ts`, `admin/routes/route-config.spec.ts`.
+- Playwright (`tests/e2e/admin-smoke.spec.ts`): создание страницы → правка SEO → сохранение → предпросмотр → предупреждение при уходе; старый URL `/builder` → «Добавить блок» → заполнение полей → сохранение; DnD блоков в структуре.
 - PHPUnit (MySQL 8.4): `tests/Functional/Content/AdminContentApiTest.php`, `tests/Functional/Content/PageEditConflictApiTest.php` (версия, `409 EDIT_CONFLICT`, edit-lock), `tests/Unit/Content/BuilderDocumentVersionTest.php`, `tests/Unit/Content/PageEditLockServiceTest.php`.
 
 Ключевые модули: `admin/features/page-editor/*`, `admin/pages/PageEditorPage.tsx`, `admin/pages/PageCreatePage.tsx`, `admin/pages/PagesPage.tsx`, `admin/entities/page/api.ts`.

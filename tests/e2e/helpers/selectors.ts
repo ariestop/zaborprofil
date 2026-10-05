@@ -19,10 +19,10 @@ export const PAGES_SELECTORS = {
 } as const
 
 export const PAGE_EDITOR_SELECTORS = {
-  tabContent: 'Контент и блоки',
+  tabContent: 'Контент',
   tabSeo: 'SEO',
   tabSettings: 'Настройки',
-  tabRevisions: 'Ревизии',
+  tabRevisions: 'История',
   saveButtonName: 'Сохранить',
   previewButtonName: 'Предпросмотр',
   publishButtonName: 'Опубликовать',
@@ -34,11 +34,12 @@ export const PAGE_EDITOR_SELECTORS = {
 } as const
 
 export const BUILDER_SELECTORS = {
-  blocksSectionTitle: 'Блоки страницы',
-  catalogSectionTitle: 'Каталог блоков',
-  previewButtonName: 'Быстрый предпросмотр блоков',
-  previewSectionTitle: 'Быстрый предпросмотр блоков',
-  previewPlaceholderText: 'Нажмите «Быстрый предпросмотр блоков», чтобы получить HTML от backend без сохранения страницы.',
+  structureHeading: 'Структура',
+  blocksListLabel: 'Блоки страницы',
+  structureRowTestId: 'structure-row',
+  canvasLabel: 'Предпросмотр страницы',
+  addBlockButtonName: 'Добавить блок',
+  addBlockDialogTitle: 'Добавить блок',
 } as const
 
 export const SEO_SELECTORS = {

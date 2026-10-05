@@ -25,7 +25,7 @@ import {
 } from './helpers/admin'
 
 test.describe('Admin smoke flow', () => {
-  test('login -> pages -> unified editor (legacy builder route) -> save -> quick preview', async ({ page }) => {
+  test('login -> pages -> editor (legacy builder route) -> add block from catalog -> save', async ({ page }) => {
     await loginToAdmin(page)
     await expect(page.locator('#admin-app')).toBeVisible()
 
@@ -36,18 +36,37 @@ test.describe('Admin smoke flow', () => {
     await expect(page.getByRole('heading', { name: PAGES_SELECTORS.headingName })).toBeVisible()
     await expect(page.getByRole('link', { name: PAGES_SELECTORS.createLinkName })).toBeVisible()
 
-    // Старый URL билдера продолжает работать и открывает вкладку «Контент и блоки».
+    // Старый URL билдера продолжает работать и открывает вкладку «Контент».
     await page.goto(`/admin/pages/${createdPage.id}/builder`)
     await expect(page.getByTestId('page-editor')).toBeVisible()
     await expect(page.getByRole('tab', { name: PAGE_EDITOR_SELECTORS.tabContent })).toHaveAttribute('aria-selected', 'true')
-    await expect(page.getByRole('heading', { name: BUILDER_SELECTORS.catalogSectionTitle })).toBeVisible()
+    await expect(page.getByRole('heading', { name: BUILDER_SELECTORS.structureHeading })).toBeVisible()
+    await expect(page.getByRole('region', { name: BUILDER_SELECTORS.canvasLabel })).toBeVisible()
 
-    await expect(page.getByText(BUILDER_SELECTORS.previewPlaceholderText)).toBeVisible()
+    // Плавающий виджет сборки ассетов может перекрыть правую колонку.
+    const assetWidgetToggle = page.getByRole('button', { name: SEO_SELECTORS.collapseAssetWidgetName })
+    if (await assetWidgetToggle.isVisible()) {
+      await assetWidgetToggle.click()
+    }
+
+    await page.getByRole('button', { name: BUILDER_SELECTORS.addBlockButtonName, exact: true }).first().click()
+    const dialog = page.getByRole('dialog', { name: BUILDER_SELECTORS.addBlockDialogTitle })
+    await dialog.getByRole('listitem').getByRole('button', { name: /^Цены/ }).click()
+    await expect(dialog).toBeHidden()
+
+    const rows = page.getByTestId(BUILDER_SELECTORS.structureRowTestId)
+    await expect(rows.last()).toContainText('Цены')
+    await expect(page.getByLabel('Позиция, строка 1')).toBeVisible()
+    await expect(page.getByTestId('save-indicator')).toHaveAttribute('data-state', 'dirty')
+
     await Promise.all([
-      waitForBuilderResponse(page, createdPage.id, 'POST', '/preview'),
-      page.getByRole('button', { name: BUILDER_SELECTORS.previewButtonName, exact: true }).click(),
+      waitForBuilderResponse(page, createdPage.id, 'PUT'),
+      page.getByRole('button', { name: PAGE_EDITOR_SELECTORS.saveButtonName, exact: true }).click(),
     ])
-    await expect(page.getByText(BUILDER_SELECTORS.previewPlaceholderText)).toBeHidden()
+
+    const savedBlocks = await fetchBuilderBlocks(page, createdPage.id)
+    expect(savedBlocks.map((block) => block.type)).toEqual(['price-table'])
+    expect(savedBlocks[0]?.name).toBe('Цены')
   })
 
   test('create page -> edit settings and SEO -> save -> preview -> leave guard', async ({ page }) => {
@@ -112,20 +131,17 @@ test.describe('Admin smoke flow', () => {
     await createBlockViaAdminApi(page, createdPage.id, buildTextBlockPayload())
 
     await page.goto(`/admin/pages/${createdPage.id}`)
-    await expect(page.getByRole('heading', { name: BUILDER_SELECTORS.blocksSectionTitle })).toBeVisible()
-
-    const heroFirst = page.getByRole('button', { name: 'hero position: 0' })
-    const textSecond = page.getByRole('button', { name: 'text position: 1' })
-    await expect(heroFirst).toBeVisible()
-    await expect(textSecond).toBeVisible()
+    const rows = page.getByTestId(BUILDER_SELECTORS.structureRowTestId)
+    await expect(rows.nth(0)).toContainText('Hero block')
+    await expect(rows.nth(1)).toContainText('Text block')
 
     await dragWithRetries(
       page,
-      textSecond,
-      heroFirst,
-      async () => page.getByRole('button', { name: 'text position: 0' }).isVisible(),
+      rows.nth(1).getByRole('button'),
+      rows.nth(0).getByRole('button'),
+      async () => ((await rows.nth(0).textContent()) ?? '').includes('Text block'),
     )
-    await expect(page.getByRole('button', { name: 'hero position: 1' })).toBeVisible()
+    await expect(rows.nth(1)).toContainText('Hero block')
 
     // dnd-kit подавляет click в течение ~50 мс после drop, поэтому слишком быстрый клик по «Сохранить» теряется.
     await page.waitForTimeout(200)
@@ -137,11 +153,12 @@ test.describe('Admin smoke flow', () => {
     const savedBlocks = await fetchBuilderBlocks(page, createdPage.id)
     expect(savedBlocks.map((block) => block.type)).toEqual(['text', 'hero'])
     expect(savedBlocks.map((block) => block.position)).toEqual([0, 1])
+    expect(savedBlocks.map((block) => block.name)).toEqual(['Text block', 'Hero block'])
     expect(savedBlocks.every((block) => block.contentIsObject && block.settingsIsObject)).toBe(true)
 
     await page.reload()
-    await expect(page.getByRole('button', { name: 'text position: 0' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'hero position: 1' })).toBeVisible()
+    await expect(rows.nth(0)).toContainText('Text block')
+    await expect(rows.nth(1)).toContainText('Hero block')
   })
 
   test('admin api returns 422 for invalid page payload', async ({ page }) => {

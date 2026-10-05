@@ -30,8 +30,15 @@
             {% endfor %}
         </div>
 
-        <div class="mt-12">
-            {% include 'public/partials/lead_form.html.twig' %}
-        </div>
+        {# Если форма заявки уже стоит среди блоков, вторая внизу страницы не нужна. #}
+        {% set has_inline_lead_form = false %}
+        {% for block in blocks %}
+            {% if 'id="lead-form"' in (block ~ '') %}{% set has_inline_lead_form = true %}{% endif %}
+        {% endfor %}
+        {% if not has_inline_lead_form %}
+            <div class="mt-12">
+                {% include 'public/partials/lead_form.html.twig' %}
+            </div>
+        {% endif %}
     </main>
 {% endblock %}

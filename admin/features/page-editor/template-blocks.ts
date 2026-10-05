@@ -10,6 +10,7 @@ export function templateToBlocks(template: Pick<PageTemplateItem, 'blocksSchema'
     .map((block, index) => ({
       id: crypto.randomUUID(),
       type: block.type as BuilderBlock['type'],
+      ...(typeof block.name === 'string' && block.name.trim() !== '' ? { name: block.name } : {}),
       enabled: block.isEnabled,
       position: startPosition + index,
       content: structuredClone(block.content),

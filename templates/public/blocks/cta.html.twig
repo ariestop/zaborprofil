@@ -1,1 +1,18 @@
-{% include 'public/blocks/cta_form.html.twig' with { block: block } only %}
+{# Призыв к действию: короткий текст и одна кнопка. #}
+{% set cta_label = block.content.cta.label ?? '' %}
+{% set cta_href = block.content.cta.href ?? '#lead-form' %}
+{% if cta_href == '#lead' or cta_href == '' %}{% set cta_href = '#lead-form' %}{% endif %}
+<section class="flex flex-wrap items-center justify-between gap-6 rounded-3xl bg-emerald-800 p-8 text-white" data-block-type="cta">
+    <div>
+        <h2 class="text-3xl font-bold">{{ block.content.title ?? '' }}</h2>
+        {% if (block.content.subtitle ?? '') is not empty %}
+            <p class="mt-3 text-lg leading-8 text-emerald-50">{{ block.content.subtitle }}</p>
+        {% endif %}
+        {% if (block.content.text ?? '') is not empty %}
+            <p class="mt-3 text-base leading-7 text-emerald-50">{{ block.content.text }}</p>
+        {% endif %}
+    </div>
+    {% if cta_label is not empty %}
+        <a class="inline-flex items-center rounded-xl bg-white px-6 py-3 font-semibold text-emerald-900 hover:bg-emerald-50" href="{{ cta_href }}">{{ cta_label }}</a>
+    {% endif %}
+</section>

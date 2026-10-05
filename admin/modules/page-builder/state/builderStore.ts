@@ -20,11 +20,12 @@ export const useBuilderStore = create<BuilderState>((set) => ({
   dirty: false,
   validationIssues: [],
   setBlocks: (blocks, markDirty = false) => {
-    set({
+    // Выделение сохраняется, если блок остался на странице (перестановка, вставка рядом).
+    set((state) => ({
       blocks,
       dirty: markDirty,
-      selectedBlockId: blocks[0]?.id ?? null,
-    })
+      selectedBlockId: blocks.some((block) => block.id === state.selectedBlockId) ? state.selectedBlockId : blocks[0]?.id ?? null,
+    }))
   },
   selectBlock: (selectedBlockId) => set({ selectedBlockId }),
   updateBlock: (blockId, updater) => {
@@ -35,14 +36,17 @@ export const useBuilderStore = create<BuilderState>((set) => ({
   },
   deleteBlock: (blockId) => {
     set((state) => {
-      const blocks = state.blocks.filter((block) => block.id !== blockId).map((block, index) => ({
+      const index = state.blocks.findIndex((block) => block.id === blockId)
+      const blocks = state.blocks.filter((block) => block.id !== blockId).map((block, position) => ({
         ...block,
-        position: index,
+        position,
       }))
+      // После удаления выделяется соседний блок, а не первый на странице.
+      const neighbour = blocks[Math.min(Math.max(index, 0), blocks.length - 1)]
 
       return {
         blocks,
-        selectedBlockId: blocks[0]?.id ?? null,
+        selectedBlockId: state.selectedBlockId === blockId ? neighbour?.id ?? null : state.selectedBlockId,
         dirty: true,
       }
     })

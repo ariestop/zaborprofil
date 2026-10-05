@@ -1,1 +1,31 @@
-{% include 'public/blocks/table.html.twig' with { block: block } only %}
+{# Таблица цен из конструктора: columns — строки, rows — списки ячеек по порядку колонок. #}
+{% set columns = block.content.columns ?? [] %}
+{% set rows = block.content.rows ?? [] %}
+{% if columns|length > 0 and rows|length > 0 %}
+    <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs" data-block-type="price-table">
+        {% if (block.content.title ?? '') is not empty %}
+            <h2 class="mb-6 text-2xl font-semibold text-slate-950">{{ block.content.title }}</h2>
+        {% endif %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-200 text-sm">
+                <thead>
+                    <tr>
+                        {% for column in columns %}
+                            <th class="px-4 py-3 text-left font-semibold text-slate-700" scope="col">{{ column.label ?? column }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for row in rows %}
+                        <tr>
+                            {% for column in columns %}
+                                {% set key = column.key ?? column %}
+                                <td class="px-4 py-3 text-slate-700">{{ row[loop.index0] ?? row[key] ?? '' }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+{% endif %}

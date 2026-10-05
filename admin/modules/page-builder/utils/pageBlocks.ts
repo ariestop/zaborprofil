@@ -62,6 +62,45 @@ export function reorderBlocks(blocks: BuilderBlock[], sourceIndex: number, targe
   }))
 }
 
+const REQUIRED_TEXT: Partial<Record<BuilderBlockType, Array<{ key: string, message: string }>>> = {
+  'hero.classic': [{ key: 'title', message: 'Укажите заголовок первого экрана.' }],
+  'rich-text': [{ key: 'html', message: 'Текст не может быть пустым.' }],
+  cta: [{ key: 'title', message: 'Укажите заголовок призыва.' }],
+  'contact-form': [{ key: 'title', message: 'Укажите заголовок формы.' }],
+}
+
+function isBlankText(value: unknown): boolean {
+  if (typeof value !== 'string') {
+    return true
+  }
+
+  return value.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim() === '' && !/<img\b/i.test(value)
+}
+
+/** Поля, без которых сервер не примет блок (StructuredBlockPayloadValidator): проверяем заранее, чтобы автосохранение не падало с 422. */
+export function requiredContentIssues(block: BuilderBlock): BuilderValidationIssue[] {
+  const issues: BuilderValidationIssue[] = []
+  for (const rule of REQUIRED_TEXT[block.type] ?? []) {
+    if (isBlankText(block.content[rule.key])) {
+      issues.push({ blockId: block.id, path: `content.${rule.key}`, message: rule.message })
+    }
+  }
+
+  if (block.type === 'faq' && Array.isArray(block.content.items)) {
+    block.content.items.forEach((item, index) => {
+      const record = (typeof item === 'object' && item !== null ? item : {}) as Record<string, unknown>
+      if (isBlankText(record.question)) {
+        issues.push({ blockId: block.id, path: `content.items.${index}.question`, message: `Вопрос ${index + 1}: укажите текст вопроса.` })
+      }
+      if (isBlankText(record.answer)) {
+        issues.push({ blockId: block.id, path: `content.items.${index}.answer`, message: `Вопрос ${index + 1}: укажите ответ.` })
+      }
+    })
+  }
+
+  return issues
+}
+
 export function validatePageBlocks(blocks: BuilderBlock[]): BuilderValidationResult {
   const issues: BuilderValidationIssue[] = []
 
@@ -97,6 +136,10 @@ export function validatePageBlocks(blocks: BuilderBlock[]): BuilderValidationRes
           message: issue.message,
         })
       })
+    }
+
+    for (const issue of requiredContentIssues(block)) {
+      issues.push(issue)
     }
 
     const settingsResult = definition.settingsSchema.safeParse(block.settings)

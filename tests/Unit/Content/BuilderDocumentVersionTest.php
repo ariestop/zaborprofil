@@ -38,6 +38,6 @@ final class BuilderDocumentVersionTest extends TestCase
      */
     private function block(string $id, int $position, array $content, array $metadata = [], bool $enabled = true): BuilderBlockOutput
     {
-        return new BuilderBlockOutput($id, 'hero.classic', $enabled, $position, $content, [], $metadata);
+        return new BuilderBlockOutput($id, 'hero.classic', 'Первый экран', $enabled, $position, $content, [], $metadata);
     }
 }

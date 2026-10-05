@@ -481,6 +481,57 @@ final class AdminContentApiTest extends WebTestCase
         self::assertSame('hero.classic', $firstBlock['type'] ?? null);
     }
 
+    public function testBuilderBlocksKeepNamesAndRenderOnPublicPage(): void
+    {
+        $client = self::createClient();
+        $this->prepareDatabase();
+        $client->loginUser($this->createAdminUser('builder-render@example.test'));
+        $pageId = $this->createLandingPage($client, 'builder-render');
+
+        $metadata = ['createdAt' => '2026-10-05T00:00:00+00:00', 'updatedAt' => '2026-10-05T00:00:00+00:00'];
+        $this->jsonRequestWithCsrf($client, 'PUT', \sprintf('/admin/api/content/pages/%s/builder', $pageId), [
+            'blocks' => [
+                ['type' => 'hero.classic', 'name' => 'Первый экран', 'enabled' => true, 'position' => 0, 'metadata' => $metadata, 'settings' => [], 'content' => [
+                    'title' => 'Забор под ключ', 'subtitle' => 'Производство и монтаж за три дня', 'text' => '', 'cta' => ['label' => 'Рассчитать стоимость', 'href' => '#lead'],
+                ]],
+                ['type' => 'rich-text', 'enabled' => true, 'position' => 1, 'metadata' => $metadata, 'settings' => [], 'content' => ['html' => '<h2>Почему мы</h2><p>Свой цех.</p>']],
+                ['type' => 'price-table', 'name' => 'Цены', 'enabled' => true, 'position' => 2, 'metadata' => $metadata, 'settings' => [], 'content' => [
+                    'columns' => ['Вариант', 'Высота', 'Цена'], 'rows' => [['Стандарт', '1,8 м', 'от 1 900']],
+                ]],
+                ['type' => 'gallery', 'name' => 'Фотогалерея', 'enabled' => true, 'position' => 3, 'metadata' => $metadata, 'settings' => [], 'content' => ['items' => []]],
+                ['type' => 'contact-form', 'name' => 'Форма заявки', 'enabled' => true, 'position' => 4, 'metadata' => $metadata, 'settings' => [], 'content' => ['title' => 'Оставьте заявку на расчёт']],
+            ],
+        ]);
+        self::assertResponseIsSuccessful();
+
+        $blocks = $this->decodeBlocks((string) $client->getResponse()->getContent());
+        self::assertSame(['Первый экран', 'Форматированный текст', 'Цены', 'Фотогалерея', 'Форма заявки'], array_map(static fn (\stdClass $block): mixed => $block->name ?? null, $blocks));
+
+        // Повторное сохранение без имени не затирает имя, заданное раньше.
+        $this->jsonRequestWithCsrf($client, 'PUT', \sprintf('/admin/api/content/pages/%s/builder', $pageId), [
+            'blocks' => array_map(static fn (\stdClass $block): array => [
+                'id' => $block->id ?? null, 'type' => $block->type ?? null, 'enabled' => true, 'content' => json_decode((string) json_encode($block->content), true), 'settings' => [],
+            ], $blocks),
+        ]);
+        self::assertResponseIsSuccessful();
+        self::assertSame('Первый экран', $this->decodeBlocks((string) $client->getResponse()->getContent())[0]->name ?? null);
+
+        $this->jsonRequestWithCsrf($client, 'POST', \sprintf('/admin/api/content/pages/%s/publish', $pageId));
+        self::assertResponseIsSuccessful();
+
+        $client->request('GET', '/builder-render/');
+        self::assertResponseIsSuccessful();
+        $html = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('Производство и монтаж за три дня', $html);
+        self::assertStringContainsString('href="#lead-form"', $html);
+        self::assertStringContainsString('<p>Свой цех.</p>', $html);
+        self::assertStringContainsString('от 1 900', $html);
+        self::assertStringContainsString('Оставьте заявку на расчёт', $html);
+        self::assertSame(1, substr_count($html, 'id="lead-form"'));
+        self::assertStringNotContainsString('hero classic', $html);
+        self::assertStringNotContainsString('data-block-type="gallery"', $html);
+    }
+
     public function testBuilderSerializesEmptyContentAndSettingsAsObjectsForBlocksCreatedViaContentApi(): void
     {
         $client = self::createClient();

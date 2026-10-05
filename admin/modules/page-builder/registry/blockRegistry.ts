@@ -120,7 +120,7 @@ const structuredBlockRegistry: BlockDefinition[] = [
   def('tabs', 'Табы', 'layout', 70, 'Табы с контентом.', z.object({ items: z.array(z.object({ title: z.string(), text: z.string() })).default([]) })),
   def('accordion', 'Аккордеон', 'layout', 80, 'Аккордеон секций.', z.object({ items: z.array(z.object({ title: z.string(), text: z.string() })).default([]) })),
 
-  def('hero.classic', 'Первый экран (классика)', 'hero', 10, 'Классический hero-блок.', z.object({ ...textSchema.shape, cta: ctaSchema.default({ label: 'Оставить заявку', href: '#lead' }) })),
+  def('hero.classic', 'Первый экран (классика)', 'hero', 10, 'Классический hero-блок.', z.object({ ...textSchema.shape, cta: ctaSchema.default({ label: 'Оставить заявку', href: '#lead-form' }), image: z.string().default(''), imageAlt: z.string().default('') })),
   def('hero.centered', 'Первый экран (центр)', 'hero', 20, 'Hero с центрированием.', z.object({ ...textSchema.shape, cta: ctaSchema.default({ label: 'Подробнее', href: '#content' }) })),
   def('hero.split', 'Первый экран (сплит)', 'hero', 30, 'Hero в две колонки.', z.object({ ...textSchema.shape, image: z.string().default('') })),
   def('hero.with-image', 'Первый экран с изображением', 'hero', 40, 'Hero с изображением.', z.object({ ...textSchema.shape, image: z.string().default(''), imageAlt: z.string().default('') })),
@@ -131,14 +131,14 @@ const structuredBlockRegistry: BlockDefinition[] = [
   def('text-with-image', 'Текст с изображением', 'content', 20, 'Текст с картинкой.', z.object({ ...textSchema.shape, image: z.string().default(''), imageAlt: z.string().default('') })),
   def('article-section', 'Секция статьи', 'content', 30, 'Секция статьи.', z.object({ ...textSchema.shape })),
   def('quote', 'Цитата', 'content', 40, 'Цитата.', z.object({ quote: z.string().default('Цитата'), author: z.string().default('') })),
-  def('faq', 'FAQ', 'content', 50, 'Список вопросов и ответов.', z.object({ items: z.array(z.object({ question: z.string(), answer: z.string() })).default([]) })),
-  def('steps', 'Шаги', 'content', 60, 'Пошаговый блок.', z.object({ items: z.array(z.object({ title: z.string(), text: z.string() })).default([]) })),
+  def('faq', 'FAQ', 'content', 50, 'Список вопросов и ответов.', z.object({ title: z.string().default(''), items: z.array(z.object({ question: z.string(), answer: z.string() })).default([]) })),
+  def('steps', 'Шаги', 'content', 60, 'Пошаговый блок.', z.object({ title: z.string().default(''), items: z.array(z.object({ title: z.string(), text: z.string() })).default([]) })),
   def('benefits', 'Преимущества', 'content', 70, 'Преимущества.', z.object({ items: z.array(z.object({ title: z.string(), text: z.string() })).default([]) })),
-  def('features', 'Особенности', 'content', 80, 'Фичи/особенности.', z.object({ items: z.array(z.object({ title: z.string(), text: z.string() })).default([]) })),
+  def('features', 'Особенности', 'content', 80, 'Фичи/особенности.', z.object({ title: z.string().default(''), items: z.array(z.object({ title: z.string(), text: z.string() })).default([]) })),
   def('icons-list', 'Список с иконками', 'content', 90, 'Список с иконками.', z.object({ items: z.array(z.object({ icon: z.string(), text: z.string() })).default([]) })),
 
   def('image', 'Изображение', 'media', 10, 'Одиночное изображение.', z.object({ src: z.string().default(''), alt: z.string().default(''), caption: z.string().default('') })),
-  def('gallery', 'Галерея', 'media', 20, 'Галерея изображений.', z.object({ items: z.array(z.object({ src: z.string(), alt: z.string().default('') })).default([]) })),
+  def('gallery', 'Галерея', 'media', 20, 'Галерея изображений.', z.object({ title: z.string().default(''), items: z.array(z.object({ src: z.string(), alt: z.string().default('') })).default([]) })),
   def('before-after', 'До/После', 'media', 30, 'Блок сравнения до/после.', z.object({ before: z.string().default(''), after: z.string().default('') })),
   def('video', 'Видео', 'media', 40, 'Видео-блок.', z.object({ url: z.string().default(''), title: z.string().default('') })),
   def(
@@ -173,12 +173,12 @@ const structuredBlockRegistry: BlockDefinition[] = [
 
   def('fence-types', 'Типы заборов', 'business', 10, 'Типы заборов.', z.object({ items: z.array(z.object({ title: z.string(), text: z.string(), image: z.string().default('') })).default([]) })),
   def('materials', 'Материалы', 'business', 20, 'Материалы.', z.object({ items: z.array(z.object({ title: z.string(), text: z.string() })).default([]) })),
-  def('portfolio', 'Портфолио', 'business', 30, 'Портфолио.', z.object({ items: z.array(z.object({ title: z.string(), image: z.string().default(''), href: z.string().default('#') })).default([]) })),
+  def('portfolio', 'Портфолио', 'business', 30, 'Портфолио.', z.object({ title: z.string().default(''), items: z.array(z.object({ title: z.string(), image: z.string().default(''), href: z.string().default('#') })).default([]) })),
   def('works-gallery', 'Галерея работ', 'business', 40, 'Галерея работ.', z.object({ items: z.array(z.object({ src: z.string(), alt: z.string().default('') })).default([]) })),
   def('service-cards', 'Карточки услуг', 'business', 50, 'Карточки услуг.', z.object({ items: z.array(z.object({ title: z.string(), text: z.string(), href: z.string().default('#') })).default([]) })),
   def('advantages', 'Преимущества компании', 'business', 60, 'Преимущества компании.', z.object({ items: z.array(z.object({ title: z.string(), text: z.string() })).default([]) })),
   def('installation-steps', 'Этапы монтажа', 'business', 70, 'Этапы монтажа.', z.object({ items: z.array(z.object({ title: z.string(), text: z.string() })).default([]) })),
-  def('price-table', 'Таблица цен', 'business', 80, 'Таблица цен.', z.object({ columns: z.array(z.string()).default([]), rows: z.array(z.array(z.string())).default([]) })),
+  def('price-table', 'Таблица цен', 'business', 80, 'Таблица цен.', z.object({ title: z.string().default(''), columns: z.array(z.string()).default([]), rows: z.array(z.array(z.string())).default([]) })),
   def('contacts-map', 'Карта контактов', 'business', 90, 'Карта контактов.', z.object({ address: z.string().default(''), embedUrl: z.string().default('') })),
   def('partner-cta', 'Партнерский CTA', 'business', 100, 'CTA для партнеров.', z.object({ ...textSchema.shape, cta: ctaSchema.default({ label: 'Стать партнером', href: '#partner' }) })),
 

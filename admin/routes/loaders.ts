@@ -20,5 +20,5 @@ export const loadSystemDeployPage = () => import('../pages/SystemDeployPage')
 export const loadSystemAuditPage = () => import('../pages/SystemAuditPage')
 
 // Heavy route-level dependencies prefetched on demand.
-export const loadBuilderRuntime = () => import('../modules/page-builder/components/PageBuilderContainer')
+export const loadBuilderRuntime = () => import('../features/page-editor/workspace/ContentWorkspace')
 export const loadRichTextRuntime = () => import('../features/rich-text/RichTextEditor')

@@ -11,7 +11,7 @@
 
 - Reusable rich text foundation: `admin/features/rich-text/*`.
 - Builder runtime-контейнер: `admin/modules/page-builder/*`.
-- Bridge для rich text в block settings реализован в `PageBuilderContainer`.
+- Rich text в полях блока подключается в `admin/features/page-editor/workspace/BlockFields.tsx`.
 
 ## Правила интеграции
 
