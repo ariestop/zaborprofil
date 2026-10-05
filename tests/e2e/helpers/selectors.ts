@@ -28,7 +28,8 @@ export const PAGE_EDITOR_SELECTORS = {
   publishButtonName: 'Опубликовать',
   leaveDialogTitle: 'Есть несохранённые изменения',
   createTitleLabel: 'Название страницы',
-  createSubmitName: 'Создать страницу',
+  createSubmitName: 'Создать и открыть',
+  createEmptyTemplateName: /Пустая страница/,
   seoTitleLabel: 'SEO-заголовок (title)',
   seoDescriptionLabel: 'Описание (meta description)',
 } as const

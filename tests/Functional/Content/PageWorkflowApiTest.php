@@ -159,6 +159,10 @@ final class PageWorkflowApiTest extends AdminApiTestCase
         $this->api($client, 'GET', $this->url($pageId, 'workflow'));
         self::assertTrue($this->json($client)['hasUnpublishedChanges']);
 
+        $listed = $this->listedPage($client, $pageId);
+        self::assertTrue($listed['hasUnpublishedChanges']);
+        self::assertNotFalse(DateTimeImmutable::createFromFormat(DATE_ATOM, $this->text($listed['updatedAt'])));
+
         $this->api($client, 'GET', $this->url($pageId, 'revisions/diff').'?from='.$firstRevisionId);
         self::assertResponseIsSuccessful();
         $diff = $this->json($client);
@@ -204,6 +208,23 @@ final class PageWorkflowApiTest extends AdminApiTestCase
         self::assertResponseStatusCodeSame(201);
 
         return $pageId;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function listedPage(KernelBrowser $client, string $pageId): array
+    {
+        $this->api($client, 'GET', '/admin/api/content/pages');
+        self::assertResponseIsSuccessful();
+
+        foreach ($this->rows($this->json($client)['pages']) as $page) {
+            if (($page['id'] ?? null) === $pageId) {
+                return $page;
+            }
+        }
+
+        self::fail('Page is missing in the admin list.');
     }
 
     private function url(string $pageId, string $suffix): string

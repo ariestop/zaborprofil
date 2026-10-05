@@ -123,6 +123,10 @@ export interface ContentPageItem {
   publishedAt: string | null
   scheduledPublishAt: string | null
   scheduledUnpublishAt: string | null
+  /** Время последней правки страницы или её блоков (список страниц). */
+  updatedAt?: string | null
+  /** Опубликованная страница отличается от рабочей версии (только в общем списке страниц). */
+  hasUnpublishedChanges?: boolean
   seo: PageSeoPayload
 }
 

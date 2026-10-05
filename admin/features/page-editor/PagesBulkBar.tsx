@@ -2,9 +2,7 @@ import { useState } from 'react'
 import { useToast } from '../../app/providers/toast-provider'
 import { useBulkPagesMutation, type BulkPagesPayload, type BulkPagesResponse, type PageStatus } from '../../entities/page/api'
 import type { ContentPageItem } from '../../types/api'
-import { Button } from '../../shared/ui'
 import { describeApiError } from '../seo/redirects/redirect-rules'
-import { NativeSelect } from './fields'
 import { pageStatusLabels } from './page-status'
 
 /** Публикация и планирование доступны только поштучно: перед публикацией нужна проверка SEO. */
@@ -45,46 +43,36 @@ export function PagesBulkBar({ pages, selectedIds, onClear }: PagesBulkBarProps)
     })
   }
 
+  const darkButton = 'h-9 rounded-lg bg-[#344054] px-3 text-[13px] font-semibold text-white hover:bg-[#475467] disabled:opacity-60'
+
   return (
     <div
       role="region"
       aria-label="Массовые действия"
-      className="mb-4 flex flex-wrap items-end gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-900 dark:bg-emerald-950/30"
+      className="flex flex-wrap items-center gap-2.5 rounded-xl bg-[#101828] py-2.5 pl-4 pr-3 text-white dark:bg-slate-800"
     >
-      <p className="text-sm font-medium" data-testid="bulk-count">Выбрано страниц: {selectedIds.length}</p>
-      <label className="grid gap-1 text-sm font-medium text-slate-700 dark:text-slate-200">
+      <p className="font-semibold" data-testid="bulk-count">Выбрано страниц: {selectedIds.length}</p>
+      <span className="hidden flex-1 sm:block" />
+      <label className="flex items-center gap-2 text-[13px] font-semibold text-[#D0D5DD]">
         Статус
-        <NativeSelect value={status} onChange={(event) => setStatus(event.target.value as PageStatus)}>
+        <select
+          value={status}
+          onChange={(event) => setStatus(event.target.value as PageStatus)}
+          className="h-9 rounded-lg border-0 bg-[#344054] px-2.5 text-[13px] font-semibold text-white outline-hidden focus:ring-2 focus:ring-emerald-400"
+        >
           {BULK_STATUSES.map((value) => <option key={value} value={value}>{pageStatusLabels[value]}</option>)}
-        </NativeSelect>
+        </select>
       </label>
-      <Button
-        type="button"
-        size="sm"
-        disabled={bulk.isPending}
-        onClick={() => run({ ids: selectedIds, action: 'status', status }, 'Статус изменён')}
-      >
+      <button type="button" className={darkButton} disabled={bulk.isPending} onClick={() => run({ ids: selectedIds, action: 'status', status }, 'Статус изменён')}>
         Сменить статус
-      </Button>
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        disabled={bulk.isPending}
-        onClick={() => run({ ids: selectedIds, action: 'indexable', indexable: false }, 'Закрыто от индексации')}
-      >
+      </button>
+      <button type="button" className={darkButton} disabled={bulk.isPending} onClick={() => run({ ids: selectedIds, action: 'indexable', indexable: false }, 'Закрыто от индексации')}>
         Закрыть от индексации
-      </Button>
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        disabled={bulk.isPending}
-        onClick={() => run({ ids: selectedIds, action: 'indexable', indexable: true }, 'Открыто для индексации')}
-      >
+      </button>
+      <button type="button" className={darkButton} disabled={bulk.isPending} onClick={() => run({ ids: selectedIds, action: 'indexable', indexable: true }, 'Открыто для индексации')}>
         Открыть для индексации
-      </Button>
-      <Button type="button" size="sm" variant="ghost" onClick={onClear}>Снять выделение</Button>
+      </button>
+      <button type="button" onClick={onClear} className="h-9 rounded-lg px-3 text-[13px] font-semibold text-[#D0D5DD] hover:text-white">Снять выделение</button>
     </div>
   )
 }

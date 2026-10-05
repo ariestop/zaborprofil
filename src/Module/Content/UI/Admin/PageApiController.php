@@ -29,7 +29,9 @@ use App\Module\Content\Application\Handler\UpdatePageHandler;
 use App\Module\Content\Application\Handler\UpdatePageSeoMetadataHandler;
 use App\Module\Content\Application\Service\ContentId;
 use App\Module\Content\Application\Service\PagePreviewToken;
+use App\Module\Content\Application\Service\PageRevisionComparison;
 use App\Module\Content\Application\Service\PageWorkflowState;
+use App\Module\Content\Domain\Entity\Page;
 use App\Module\Content\Domain\Enum\PageStatus;
 use App\Module\Content\Domain\Repository\PageBlockRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
@@ -53,7 +55,7 @@ final readonly class PageApiController
     }
 
     #[Route('', name: 'admin_api_content_page_index', methods: ['GET'])]
-    public function index(Request $request, PageRepositoryInterface $pages): JsonResponse
+    public function index(Request $request, PageRepositoryInterface $pages, PageRevisionComparison $comparison): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_VIEW)) {
             return $this->accessDenied();
@@ -64,8 +66,31 @@ final readonly class PageApiController
         }
 
         return new JsonResponse([
-            'pages' => array_map(static fn ($page): array => PageOutput::fromPage($page)->toArray(), $pages->findAllForAdmin()),
+            'pages' => array_map(
+                fn (Page $page): array => [
+                    ...PageOutput::fromPage($page)->toArray(),
+                    'hasUnpublishedChanges' => $this->hasUnpublishedChanges($page, $comparison),
+                ],
+                $pages->findAllForAdmin(),
+            ),
         ]);
+    }
+
+    /**
+     * Маркер «есть неопубликованные правки» для списка страниц: только у опубликованных,
+     * сбой сравнения одной страницы не ломает весь список.
+     */
+    private function hasUnpublishedChanges(Page $page, PageRevisionComparison $comparison): bool
+    {
+        if ($page->status() !== PageStatus::Published) {
+            return false;
+        }
+
+        try {
+            return $comparison->hasUnpublishedChanges($page);
+        } catch (Throwable) {
+            return false;
+        }
     }
 
     private function paginatedIndex(Request $request, PageRepositoryInterface $pages): JsonResponse
