@@ -1,18 +1,43 @@
-/* Токены дизайна, общие для публичного сайта и админки. */
+/*
+  Токены дизайна, общие для публичного сайта и админки.
+  Бренд-система «Периметр» (брендбук 2026, вариант E) — источник значений: docs/50-brand-system.md, раздел 11.
+*/
 @theme {
-  /* Same default font stack as Tailwind 3, so typography does not change. */
-  --font-sans: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
-    'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Onest Variable', 'Onest', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    /* Цены, телефоны, характеристики. В Sofia Sans Condensed нет знака ₽ — он берётся из Onest. */
+    --font-cond: 'Sofia Sans Condensed', 'Onest Variable', 'Onest', 'Arial Narrow', sans-serif;
 
-  /* Зелёный из логотипа «Забор Профиль» (#43b115); тёмные ступени дают контраст ≥ 4.5:1 с белым текстом. */
-  --color-brand-50: #f2fbec;
-  --color-brand-100: #dff4d0;
-  --color-brand-200: #bfe8a2;
-  --color-brand-500: #43b115;
-  --color-brand-600: #37950f;
-  --color-brand-700: #2c780d;
-  --color-brand-800: #245f0f;
-  --color-brand-900: #1b490c;
-  --color-brand-950: #0e2a06;
-  --color-graphite: #3e3f46;
+    /* Зелёный бренда #45a63d (знак и полосы, не для текста); ступени 700+ — для текста и кнопок, ≥ 4.5:1 с белым. */
+    --color-brand-50: #eef6ec;
+    --color-brand-100: #d9edd5;
+    --color-brand-200: #b6dcaf;
+    --color-brand-300: #8cc783;
+    --color-brand-500: #45a63d;
+    --color-brand-600: #37922f;
+    --color-brand-700: #2d7f27;
+    --color-brand-800: #246c1f;
+    --color-brand-900: #1a4f17;
+    --color-brand-950: #0f2e0d;
+
+    --color-ink: #23272d; /* основной текст */
+    --color-graphite: #575c63; /* графит бренда: подписи, вторичный текст */
+    --color-surface: #f3f5f2; /* фон секций и карточек */
+    --color-line: #dce0db; /* рамки, разделители */
+    --color-line-strong: #c9cec8; /* рамки полей и вторичных кнопок */
+    --color-night: #2a2f35; /* подвал, тёмные плашки */
+    --color-badge: #f2b13b; /* только бейджи «Хит» / «Акция», текст на нём — ink */
+    --color-focus: #9ad38f; /* обводка :focus-visible */
+    --color-danger: #b3261e; /* ошибки полей */
+
+    /* Цвета продукции — только выбор цвета товара, не интерфейс. */
+    --color-ral-6005: #0f4336;
+    --color-ral-8017: #45322e;
+    --color-ral-7024: #373f43;
+    --color-ral-3005: #5e2028;
+    --color-ral-5005: #1e4a84;
+    --color-ral-1014: #ddc49a;
+    --color-ral-9003: #f1f1ec;
+
+    --radius-btn: 10px;
+    --radius-card: 12px;
 }

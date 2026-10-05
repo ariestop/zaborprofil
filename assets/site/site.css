@@ -4,6 +4,7 @@
 */
 @import 'tailwindcss' source(none);
 @import '../shared/styles/theme.css';
+@import '../shared/styles/fonts.css';
 
 /* Публичный сайт собирает утилиты только из Twig-шаблонов и своих скриптов — без админского кода (так CSS в разы меньше). */
 @source '../../templates';
@@ -115,7 +116,7 @@
 
     /* ---------- Кнопки (flat): сплошные заливки, без теней и градиентов ---------- */
     .zp-btn {
-        @apply relative inline-flex min-h-12 items-center justify-center gap-2.5 rounded-xl border-2 border-transparent px-6 text-base leading-none font-semibold whitespace-nowrap transition-[background-color,border-color,color,transform] duration-150 select-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600 active:translate-y-px disabled:pointer-events-none disabled:opacity-50;
+        @apply relative inline-flex min-h-12 items-center justify-center gap-2.5 rounded-[var(--radius-btn)] border-2 border-transparent px-6 text-base leading-none font-semibold whitespace-nowrap transition-[background-color,border-color,color,transform] duration-150 select-none focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600 active:translate-y-px disabled:pointer-events-none disabled:opacity-50;
     }
     .zp-btn svg {
         @apply size-5 shrink-0;
@@ -282,7 +283,7 @@
         @apply grid gap-8 py-10 md:grid-cols-3 md:py-14;
     }
     .zp-footer__logo {
-        @apply h-8 w-auto brightness-0 invert;
+        @apply h-8 w-auto;
     }
     .zp-footer__phone {
         @apply block text-xl font-bold text-white hover:text-brand-200;
