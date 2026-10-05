@@ -230,7 +230,7 @@ final class AdminUserApiTest extends WebTestCase
         self::assertResponseIsSuccessful();
         $cleared = $this->decode($client);
         self::assertArrayHasKey('name', $cleared);
-        self::assertSame('', (string) $cleared['name']);
+        self::assertNull($cleared['name']);
 
         $client->request('GET', '/admin/api/users');
         $users = $this->decode($client)['users'] ?? null;
