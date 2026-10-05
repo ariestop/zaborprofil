@@ -49,14 +49,17 @@ function pageQueryKey(pageId: string) {
   return adminQueryKeys.pageById(pageId)
 }
 
-export function usePagesQuery() {
-  return useQuery(queryOptions(
-    pagesQueryKey(),
-    async () => {
-      const response = await apiRequest<PageListResponse>('/admin/api/content/pages')
-      return response.pages
-    },
-  ))
+export function usePagesQuery({ enabled = true }: { enabled?: boolean } = {}) {
+  return useQuery({
+    ...queryOptions(
+      pagesQueryKey(),
+      async () => {
+        const response = await apiRequest<PageListResponse>('/admin/api/content/pages')
+        return response.pages
+      },
+    ),
+    enabled,
+  })
 }
 
 export function fetchPageDetail(pageId: string): Promise<ContentPageDetail> {

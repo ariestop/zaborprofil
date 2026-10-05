@@ -1,217 +1,236 @@
-import { Suspense, lazy } from 'react'
-import { Link } from 'react-router-dom'
-import type { AdminPermission } from '../entities/user/permissions'
-import { useLeadSummaryQuery } from '../entities/lead/api'
-import { LEAD_STATUS_LABELS } from '../entities/lead/model'
-import { useSystemBackupsQuery, useSystemObservabilityQuery, useSystemOverviewQuery } from '../entities/system/api'
-import { buildAttentionItems, type AttentionTone } from '../features/dashboard/attention'
-import { buildObservabilityTiles, type ObservabilityTone } from '../features/dashboard/observability'
+import { useCallback, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useToast } from '../app/providers/toast-provider'
+import { useLeadDashboardQuery, useLeadStatusMutation, useLeadSummaryQuery, useLeadsQuery } from '../entities/lead/api'
+import type { LeadListParams } from '../entities/lead/model'
+import { usePagesQuery } from '../entities/page/api'
+import {
+  useAssetBuildRunMutation,
+  useAssetBuildStatusQuery,
+  useSystemBackupsQuery,
+  useSystemObservabilityQuery,
+  useSystemOverviewQuery,
+} from '../entities/system/api'
+import { AttentionCard } from '../features/dashboard/AttentionCard'
+import { buildAttentionItems } from '../features/dashboard/attention'
+import { NewLeadsCard } from '../features/dashboard/NewLeadsCard'
+import { buildObservabilityTiles } from '../features/dashboard/observability'
+import { KpiGrid, LeadsChartCard, MonitoringCard, SiteStateCard } from '../features/dashboard/RightColumn'
+import { dashMuted, dashOutlineButton } from '../features/dashboard/styles'
+import { buildSiteState, countPublications, greeting, todayLabel } from '../features/dashboard/summary'
+import { describeApiError } from '../features/seo/redirects/redirect-rules'
+import { CreateLeadDialog } from '../features/leads/CreateLeadDialog'
+import { UndoToast, type UndoToastState } from '../features/leads/UndoToast'
+import { NavIcon, type NavIconName } from '../layouts/nav-icons'
+import { TopbarActions } from '../layouts/topbar-slot'
 import { cn } from '../shared/lib/cn'
+import { Dropdown } from '../shared/ui'
 import { useAuthStore } from '../stores/auth'
-import { formatDateTime, formatNumber } from '../shared/lib/format'
-import { environmentName } from '../shared/lib/system-labels'
-import { Card, ErrorState, PageHeader, Skeleton } from '../shared/ui'
-import type { LeadStatus } from '../types/api'
+import type { AdminPermission } from '../entities/user/permissions'
+import type { LeadItem } from '../types/api'
 
-const LeadsStatusChart = lazy(() => import('../widgets/LeadsStatusChart'))
-
-const markerTone: Record<AttentionTone, string> = {
-  leads: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200',
-  critical: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
-  warning: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
+/** На сводке показываем четыре самые свежие неразобранные заявки. */
+const NEW_LEADS_PARAMS: LeadListParams = {
+  q: '',
+  status: 'new',
+  source: '',
+  from: '',
+  to: '',
+  assignee: 'all',
+  b2b: false,
+  waitingHours: 0,
+  sort: 'createdAt',
+  direction: 'desc',
+  page: 1,
+  perPage: 4,
 }
 
-const tileTone: Record<ObservabilityTone, string> = {
-  ok: '',
-  warning: 'text-amber-700 dark:text-amber-400',
-  critical: 'text-red-700 dark:text-red-400',
+interface QuickAction {
+  label: string
+  href: string
+  icon: NavIconName
+  permission: AdminPermission
 }
 
-const quickActions: Array<{ label: string, href: string, permission: AdminPermission }> = [
-  { label: 'Новая страница', href: '/admin/pages/new', permission: 'pages.create' },
-  { label: 'Загрузить фото', href: '/admin/media', permission: 'media.upload' },
-  { label: 'Добавить редирект', href: '/admin/seo', permission: 'seo.edit' },
-  { label: 'Все заявки', href: '/admin/crm', permission: 'leads.view' },
+const quickActions: QuickAction[] = [
+  { label: 'Новая страница', href: '/admin/pages/new', icon: 'pages', permission: 'pages.create' },
+  { label: 'Загрузить фото', href: '/admin/media', icon: 'media', permission: 'media.upload' },
+  { label: 'Редирект', href: '/admin/seo', icon: 'redirect', permission: 'seo.edit' },
 ]
 
-const KPI_STATUSES: LeadStatus[] = ['new', 'in_progress', 'done']
-
-function todayLabel(): string {
-  const label = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })
-
-  return label.charAt(0).toUpperCase() + label.slice(1)
-}
-
 export default function DashboardPage() {
+  const navigate = useNavigate()
+  const { push } = useToast()
   const permissions = useAuthStore((state) => state.permissions)
   const canViewLeads = permissions.includes('leads.view')
+  const canManageLeads = permissions.includes('leads.manage')
+  const canViewPages = permissions.includes('pages.view')
   const canViewSystem = permissions.includes('system.view')
-  const leadsQuery = useLeadSummaryQuery()
+
+  const summaryQuery = useLeadSummaryQuery()
+  const dashboardQuery = useLeadDashboardQuery()
+  const newLeadsQuery = useLeadsQuery(NEW_LEADS_PARAMS, canViewLeads)
+  const pagesQuery = usePagesQuery({ enabled: canViewPages })
   const overviewQuery = useSystemOverviewQuery()
   const backupsQuery = useSystemBackupsQuery()
   const observabilityQuery = useSystemObservabilityQuery()
+  const buildQuery = useAssetBuildStatusQuery()
+  const rebuild = useAssetBuildRunMutation()
+  const statusMutation = useLeadStatusMutation()
+
+  const [createOpen, setCreateOpen] = useState(false)
+  const [undo, setUndo] = useState<(UndoToastState & { leadId: string }) | null>(null)
+  const [busyLeadId, setBusyLeadId] = useState<string | null>(null)
+
+  const hasBackups = backupsQuery.data === undefined ? undefined : backupsQuery.data.latestBackup !== null
+  const buildStatus = buildQuery.data?.status
+  const oldestNewAt = dashboardQuery.data?.oldestNewAt ?? null
 
   const attention = buildAttentionItems({
-    newLeads: leadsQuery.data?.new,
+    newLeads: summaryQuery.data?.new,
+    oldestWaitMs: oldestNewAt === null ? null : dashboardQuery.dataUpdatedAt - Date.parse(oldestNewAt),
     warnings: overviewQuery.data?.warnings,
-    hasBackups: backupsQuery.data === undefined ? undefined : backupsQuery.data.latestBackup !== null,
+    hasBackups,
     failedMessages: observabilityQuery.data?.queue.failed,
     serverErrorsLastHour: observabilityQuery.data?.serverErrors.lastHour,
+    buildFailed: buildStatus === undefined ? undefined : buildStatus === 'failed',
   })
-  const attentionLoading = leadsQuery.isLoading || overviewQuery.isLoading || backupsQuery.isLoading
+  const attentionLoading = summaryQuery.isLoading || overviewQuery.isLoading || backupsQuery.isLoading
+
+  const siteRows = buildSiteState({
+    platformOk: overviewQuery.data === undefined ? undefined : overviewQuery.data.status === 'ok',
+    phpVersion: overviewQuery.data?.environment.phpVersion,
+    buildStatus,
+    hasBackups,
+    disk: observabilityQuery.data?.disk.status,
+    failedMessages: observabilityQuery.data?.queue.failed,
+  })
+
+  const takeLead = async (lead: LeadItem) => {
+    setBusyLeadId(lead.id)
+    try {
+      await statusMutation.mutateAsync({ leadId: lead.id, status: 'in_progress' })
+      setUndo({ id: Date.now(), leadId: lead.id, text: `Заявка «${lead.name}» взята в работу` })
+    } catch (error) {
+      push({ title: 'Не удалось взять заявку в работу', description: describeApiError(error, 'Повторите попытку.') })
+    } finally {
+      setBusyLeadId(null)
+    }
+  }
+
+  const undoTake = () => {
+    if (undo === null) {
+      return
+    }
+    const { leadId } = undo
+    setUndo(null)
+    statusMutation.mutate(
+      { leadId, status: 'new' },
+      { onError: (error) => push({ title: 'Не удалось отменить изменение', description: describeApiError(error, 'Повторите попытку.') }) },
+    )
+  }
+
+  const dismissUndo = useCallback(() => setUndo(null), [])
+
+  const startRebuild = () => {
+    rebuild.mutate(undefined, {
+      onSuccess: () => push({ title: 'Сборка запущена', description: 'Это займёт пару минут: страница обновится сама.' }),
+      onError: (error) => push({ title: 'Не удалось запустить сборку', description: describeApiError(error, 'Повторите попытку.') }),
+    })
+  }
+
+  const createItems = [
+    ...(permissions.includes('pages.create') ? [{ key: 'page', label: 'Новая страница', onSelect: () => navigate('/admin/pages/new') }] : []),
+    ...(permissions.includes('media.upload') ? [{ key: 'media', label: 'Загрузить фото', onSelect: () => navigate('/admin/media') }] : []),
+    ...(permissions.includes('seo.edit') ? [{ key: 'redirect', label: 'Добавить редирект', onSelect: () => navigate('/admin/seo') }] : []),
+    ...(canManageLeads ? [{ key: 'lead', label: 'Заявка после звонка', onSelect: () => setCreateOpen(true) }] : []),
+  ]
+
+  const newCount = summaryQuery.data?.new
+  const showAttention = canViewLeads || canViewSystem
+  const showMonitoring = canViewSystem && observabilityQuery.isSuccess
 
   return (
-    <div className="grid gap-5">
-      <PageHeader
-        title="Сводка"
-        description={todayLabel()}
-        actions={(
+    <>
+      <TopbarActions>
+        {createItems.length > 0 ? (
+          <Dropdown
+            items={createItems}
+            trigger={(
+              <button
+                type="button"
+                className="inline-flex h-10 items-center gap-1.5 rounded-[10px] bg-[#047857] px-3.5 text-sm font-semibold text-white transition hover:bg-[#065F46] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+              >
+                <NavIcon name="plus" size={16} strokeWidth={2} />
+                Создать
+              </button>
+            )}
+          />
+        ) : null}
+      </TopbarActions>
+
+      <div className="flex flex-col gap-5 p-4 sm:p-7">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="m-0 text-[26px] font-bold tracking-[-0.01em]">{greeting()}</h1>
+            <p className={cn('mt-1', dashMuted)}>
+              {todayLabel()}
+              {newCount === undefined ? '' : ` · новых заявок: ${newCount}`}
+            </p>
+          </div>
           <div className="flex flex-wrap gap-2">
             {quickActions.filter((action) => permissions.includes(action.permission)).map((action) => (
-              <Link
-                key={action.href + action.label}
-                to={action.href}
-                className="inline-flex h-9 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
-              >
+              <Link key={action.href} to={action.href} className={cn(dashOutlineButton, 'h-[38px] gap-1.5 rounded-[10px] bg-white px-3 text-[13px] dark:bg-slate-900')}>
+                <NavIcon name={action.icon} size={16} />
                 {action.label}
               </Link>
             ))}
           </div>
-        )}
-      />
-
-      <div className="grid gap-5 lg:grid-cols-3">
-        <div className="grid content-start gap-5 lg:col-span-2">
-          {canViewLeads || canViewSystem ? (
-            <Card title="Требует внимания">
-              {attentionLoading && attention.length === 0 ? <Skeleton className="h-16 w-full" /> : null}
-              {!attentionLoading && attention.length === 0 ? (
-                <p className="text-sm text-slate-600 dark:text-slate-300">Всё в порядке: новых заявок нет, сервер не сообщает о проблемах.</p>
-              ) : null}
-              {attention.length > 0 ? (
-                <ul className="divide-y divide-slate-100 dark:divide-slate-800" aria-label="Задачи, требующие внимания">
-                  {attention.map((item) => (
-                    <li key={item.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0">
-                      <span
-                        aria-hidden="true"
-                        className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-base font-bold', markerTone[item.tone])}
-                      >
-                        {item.marker}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-semibold">{item.title}</p>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">{item.description}</p>
-                      </div>
-                      <Link
-                        to={item.href}
-                        className="inline-flex h-9 items-center rounded-lg border border-slate-300 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
-                      >
-                        {item.actionLabel}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-            </Card>
-          ) : null}
-
-          {canViewLeads ? (
-            <Card title="Заявки по статусам">
-              <Suspense fallback={<Skeleton className="h-40 w-full" />}>
-                {leadsQuery.isPending ? <Skeleton className="h-40 w-full" /> : null}
-                {leadsQuery.isError ? (
-                  <ErrorState title="Не удалось загрузить данные по заявкам" description="Нет права leads.view или сервер недоступен." />
-                ) : null}
-                {leadsQuery.isSuccess ? <LeadsStatusChart byStatus={leadsQuery.data.byStatus} statuses={leadsQuery.data.statuses} /> : null}
-              </Suspense>
-            </Card>
-          ) : null}
         </div>
 
-        <div className="grid content-start gap-5">
-          {canViewLeads ? (
-            <div className="grid grid-cols-2 gap-3">
-              {KPI_STATUSES.map((status) => (
-                <Link
-                  key={status}
-                  to={`/admin/crm?status=${status}`}
-                  className="rounded-xl border border-slate-200 p-4 transition hover:border-emerald-300 dark:border-slate-800 dark:hover:border-emerald-800"
-                >
-                  <span className="block text-sm text-slate-500 dark:text-slate-400">{LEAD_STATUS_LABELS[status]}</span>
-                  <span className={cn('mt-1 block text-2xl font-bold', status === 'new' && (leadsQuery.data?.new ?? 0) > 0 && 'text-orange-700 dark:text-orange-400')}>
-                    {leadsQuery.data === undefined ? '—' : formatNumber(leadsQuery.data.byStatus[status] ?? 0)}
-                  </span>
-                </Link>
-              ))}
-              <Link
-                to="/admin/crm"
-                className="rounded-xl border border-slate-200 p-4 transition hover:border-emerald-300 dark:border-slate-800 dark:hover:border-emerald-800"
-              >
-                <span className="block text-sm text-slate-500 dark:text-slate-400">Всего</span>
-                <span className="mt-1 block text-2xl font-bold">{leadsQuery.data === undefined ? '—' : formatNumber(leadsQuery.data.total)}</span>
-              </Link>
-            </div>
-          ) : null}
+        <div className="flex flex-wrap items-start gap-5">
+          <div className="flex min-w-0 flex-[2_1_560px] flex-col gap-5">
+            {showAttention ? (
+              <AttentionCard items={attention} loading={attentionLoading} rebuilding={rebuild.isPending} onRebuild={startRebuild} />
+            ) : null}
+            {canViewLeads ? (
+              <NewLeadsCard
+                leads={newLeadsQuery.data?.items}
+                loading={newLeadsQuery.isPending}
+                error={newLeadsQuery.isError}
+                canManage={canManageLeads}
+                busyLeadId={busyLeadId}
+                onTake={(lead) => void takeLead(lead)}
+              />
+            ) : null}
+          </div>
 
-          {canViewSystem && observabilityQuery.isSuccess ? (
-            <div className="grid gap-3" aria-label="Мониторинг сервера">
-              {buildObservabilityTiles(observabilityQuery.data).map((tile) => (
-                <Link
-                  key={tile.id}
-                  to={tile.href}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 p-4 transition hover:border-emerald-300 dark:border-slate-800 dark:hover:border-emerald-800"
-                >
-                  <span>
-                    <span className="block text-sm text-slate-500 dark:text-slate-400">{tile.label}</span>
-                    <span className="block text-xs text-slate-500 dark:text-slate-400">{tile.hint}</span>
-                  </span>
-                  <span className={cn('text-2xl font-bold', tileTone[tile.tone])}>{tile.value}</span>
-                </Link>
-              ))}
-            </div>
-          ) : null}
-
-          {canViewSystem ? (
-            <Card title="Состояние сайта">
-              {overviewQuery.isPending ? <Skeleton className="h-20 w-full" /> : null}
-              {overviewQuery.isError ? (
-                <p className="text-sm text-slate-500 dark:text-slate-400">Нет доступа к состоянию сервера.</p>
-              ) : null}
-              {overviewQuery.isSuccess ? (
-                <dl className="grid gap-2 text-sm">
-                  <div className="flex items-center justify-between gap-3">
-                    <dt className="text-slate-500 dark:text-slate-400">Сайт</dt>
-                    <dd className={overviewQuery.data.status === 'ok' ? 'font-semibold text-emerald-700 dark:text-emerald-400' : 'font-semibold text-red-700 dark:text-red-400'}>
-                      {overviewQuery.data.status === 'ok' ? 'Работает' : 'Есть сбои'}
-                    </dd>
-                  </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <dt className="text-slate-500 dark:text-slate-400">Окружение</dt>
-                    <dd className="font-medium">{environmentName(overviewQuery.data.environment.appEnv)} · PHP {overviewQuery.data.environment.phpVersion}</dd>
-                  </div>
-                  <div className="flex items-center justify-between gap-3">
-                    <dt className="text-slate-500 dark:text-slate-400">Предупреждения</dt>
-                    <dd className={overviewQuery.data.warnings.length > 0 ? 'font-semibold text-amber-700 dark:text-amber-400' : 'font-medium'}>
-                      {overviewQuery.data.warnings.length > 0 ? formatNumber(overviewQuery.data.warnings.length) : 'нет'}
-                    </dd>
-                  </div>
-                  {backupsQuery.isSuccess ? (
-                    <div className="flex items-center justify-between gap-3">
-                      <dt className="text-slate-500 dark:text-slate-400">Последняя копия</dt>
-                      <dd className={backupsQuery.data.latestBackup === null ? 'font-semibold text-red-700 dark:text-red-400' : 'font-medium'}>
-                        {backupsQuery.data.latestBackup === null ? 'нет' : formatDateTime(backupsQuery.data.latestBackup.modifiedAt)}
-                      </dd>
-                    </div>
-                  ) : null}
-                </dl>
-              ) : null}
-              <Link to="/admin/system" className="mt-3 inline-block text-sm font-medium text-emerald-700 hover:underline dark:text-emerald-400">
-                Обзор системы →
-              </Link>
-            </Card>
-          ) : null}
+          <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-5">
+            <KpiGrid
+              newCount={summaryQuery.data?.new}
+              inProgress={summaryQuery.data?.byStatus.in_progress}
+              publications={pagesQuery.data === undefined ? undefined : countPublications(pagesQuery.data)}
+              doneLastWeek={dashboardQuery.data?.doneLastWeek}
+              canViewLeads={canViewLeads}
+              canViewPages={canViewPages}
+            />
+            {showMonitoring ? <MonitoringCard tiles={buildObservabilityTiles(observabilityQuery.data)} /> : null}
+            {canViewLeads ? <LeadsChartCard data={dashboardQuery.data} loading={dashboardQuery.isPending} error={dashboardQuery.isError} /> : null}
+            {canViewSystem ? <SiteStateCard rows={siteRows} loading={overviewQuery.isPending} /> : null}
+          </div>
         </div>
       </div>
-    </div>
+
+      <UndoToast toast={undo} onUndo={undoTake} onDismiss={dismissUndo} />
+      <CreateLeadDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={(id, name) => {
+          setCreateOpen(false)
+          push({ title: 'Заявка создана', description: name })
+          navigate(`/admin/crm/${id}`)
+        }}
+      />
+    </>
   )
 }

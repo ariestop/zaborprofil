@@ -30,6 +30,8 @@ final readonly class LeadApiController
 {
     public const int EXPORT_LIMIT = 10000;
 
+    private const int DASHBOARD_DAYS = 14;
+
     private const string ID_PATTERN = '[0-9A-Za-z]{26}';
 
     public function __construct(
@@ -114,6 +116,44 @@ final readonly class LeadApiController
                 'new' => $byStatus[LeadStatus::NEW],
                 'byStatus' => $byStatus,
                 'statuses' => LeadStatus::values(),
+            ]);
+        } catch (Throwable $exception) {
+            return $this->errors->fromThrowable($exception, 'Admin Lead API');
+        }
+    }
+
+    #[Route('/dashboard', name: 'admin_api_leads_dashboard', methods: ['GET'])]
+    public function dashboard(): JsonResponse
+    {
+        if (!$this->authorizationChecker->isGranted(AdminPermission::LEADS_VIEW)) {
+            return $this->accessDenied();
+        }
+
+        try {
+            $today = new \DateTimeImmutable('today');
+            $since = $today->modify('-13 days');
+            $daily = [];
+            for ($offset = 0; $offset < self::DASHBOARD_DAYS; ++$offset) {
+                $daily[$since->modify(\sprintf('+%d days', $offset))->format('Y-m-d')] = 0;
+            }
+            foreach ($this->leads->createdAtSince($since) as $createdAt) {
+                $key = $createdAt->format('Y-m-d');
+                if (isset($daily[$key])) {
+                    ++$daily[$key];
+                }
+            }
+
+            $oldestNew = $this->leads->search(new LeadSearchCriteria(status: LeadStatus::NEW, descending: false, perPage: 1))->items[0] ?? null;
+
+            return new JsonResponse([
+                'daily' => array_map(
+                    static fn (string $date, int $count): array => ['date' => $date, 'count' => $count],
+                    array_keys($daily),
+                    array_values($daily),
+                ),
+                'createdLast14Days' => array_sum($daily),
+                'doneLastWeek' => $this->leads->countDoneSince($today->modify('-6 days')),
+                'oldestNewAt' => $oldestNew?->toArray()['createdAt'],
             ]);
         } catch (Throwable $exception) {
             return $this->errors->fromThrowable($exception, 'Admin Lead API');

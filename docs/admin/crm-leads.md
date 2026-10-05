@@ -29,6 +29,7 @@
 |---|---|---|---|
 | GET | `/admin/api/leads` | `leads.view` | список: `items`, `total`, `page`, `perPage`, `pages`, `counts`, `statuses`, `sources` |
 | GET | `/admin/api/leads/summary` | `leads.view` | `total`, `new`, `byStatus` |
+| GET | `/admin/api/leads/dashboard` | `leads.view` | для «Сводки»: `daily` (14 дней, без спама), `createdLast14Days`, `doneLastWeek`, `oldestNewAt` |
 | GET | `/admin/api/leads/assignees` | `leads.view` | пользователи, которых можно назначить |
 | GET | `/admin/api/leads/export` | `leads.export` | CSV (`text/csv`, `Cache-Control: no-store, private`) |
 | GET | `/admin/api/leads/{id}` | `leads.view` | карточка с историей `events` |

@@ -24,6 +24,8 @@ export type NavIconName =
   | 'plus'
   | 'send'
   | 'calculator'
+  | 'bell'
+  | 'redirect'
 
 const paths: Record<NavIconName, ReactElement> = {
   dashboard: (
@@ -114,6 +116,18 @@ const paths: Record<NavIconName, ReactElement> = {
     <path d="M5.5 4h3.5l1.8 4.5-2.3 1.4a10.5 10.5 0 0 0 5.6 5.6l1.4-2.3L20 15v3.5a2 2 0 0 1-2 2A14.5 14.5 0 0 1 3.5 6a2 2 0 0 1 2-2z" />
   ),
   plus: <path d="M12 5v14M5 12h14" />,
+  bell: (
+    <>
+      <path d="M6.5 16.5V11a5.5 5.5 0 0 1 11 0v5.5l1.5 1.5H5z" />
+      <path d="M10 20.5h4" />
+    </>
+  ),
+  redirect: (
+    <>
+      <path d="M4.5 19.5v-7a4 4 0 0 1 4-4h11" />
+      <path d="M15.5 4.5l4 4-4 4" />
+    </>
+  ),
   send: (
     <>
       <path d="M20.5 3.5L3.5 10.5l7 2.5 2.5 7z" />

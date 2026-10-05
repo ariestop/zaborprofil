@@ -4,6 +4,7 @@ import { issueDangerousActionToken } from '../../shared/api/dangerous-action'
 import { adminQueryKeys } from '../../shared/api/query'
 import { useCan } from '../../stores/auth'
 import type {
+  AssetBuildStatus,
   AuditLogEntryItem,
   SystemBackupsResponse,
   SystemCacheResponse,
@@ -204,6 +205,32 @@ export function useCacheClearMutation() {
     },
     onSuccess: async () => {
       await invalidateSystemQueries(queryClient)
+    },
+  })
+}
+
+const assetBuildKey = ['admin', 'system', 'assets-build'] as const
+
+/** Статус последней сборки фронтенда; нужен сводке, чтобы показать «Сборка админки: ошибка». */
+export function useAssetBuildStatusQuery() {
+  const enabled = useCan('system.view')
+
+  return useQuery({
+    enabled,
+    queryKey: assetBuildKey,
+    queryFn: () => apiRequest<AssetBuildStatus>('/admin/api/system/assets/build'),
+    retry: false,
+  })
+}
+
+/** Полная пересборка site + admin: та же команда, что запускает плавающий виджет «Сборка». */
+export function useAssetBuildRunMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => apiRequest<AssetBuildStatus>('/admin/api/system/assets/build/run', { method: 'POST', body: { targets: ['all'] } }),
+    onSuccess: (status) => {
+      queryClient.setQueryData(assetBuildKey, status)
     },
   })
 }

@@ -40,6 +40,7 @@ final readonly class LeadPresenter
                 'assignee' => self::assignee($payload['assigneeId'], $labels),
                 'spamScore' => $payload['spamScore'],
                 'b2b' => $payload['b2b'],
+                'pageUrl' => $payload['pageUrl'],
                 'readAt' => $payload['readAt'],
                 'messagePreview' => $message === null ? null : mb_strimwidth($message, 0, self::PREVIEW_LENGTH, '…'),
                 'createdAt' => $payload['createdAt'],

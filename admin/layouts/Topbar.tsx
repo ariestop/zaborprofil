@@ -1,6 +1,8 @@
 import type { Ref } from 'react'
 import { useTheme } from '../app/providers/theme-provider'
 import { useCommandPalette } from '../app/providers/command-palette-provider'
+import { Link } from 'react-router-dom'
+import { useLeadSummaryQuery } from '../entities/lead/api'
 import { useSystemOverviewQuery } from '../entities/system/api'
 import { Breadcrumbs } from './Breadcrumbs'
 import { NavIcon } from './nav-icons'
@@ -32,6 +34,8 @@ export function Topbar({ onOpenNav, actionsRef }: TopbarProps) {
   const { theme, toggleTheme } = useTheme()
   const { open: openCommandPalette } = useCommandPalette()
   const overview = useSystemOverviewQuery()
+  const leadSummary = useLeadSummaryQuery()
+  const newLeads = leadSummary.data?.new ?? 0
   const envLabel = environmentLabel(overview.data?.environment.appEnv)
   const iconButton = 'inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
 
@@ -62,9 +66,16 @@ export function Topbar({ onOpenNav, actionsRef }: TopbarProps) {
               {envLabel}
             </span>
           ) : null}
-          <div ref={actionsRef} className="flex items-center gap-2 empty:hidden" />
-          <a href="/" target="_blank" rel="noreferrer" className={iconButton} aria-label="Открыть сайт в новой вкладке" title="Открыть сайт">
-            <NavIcon name="external" />
+          <a
+            href="/"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex h-10 items-center gap-1.5 rounded-[10px] px-3 font-medium text-[#344054] transition hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-slate-200 dark:hover:bg-slate-800"
+            aria-label="Открыть сайт в новой вкладке"
+            title="Открыть сайт"
+          >
+            <NavIcon name="external" size={16} />
+            <span className="hidden lg:inline">Открыть сайт</span>
           </a>
           <button
             type="button"
@@ -75,6 +86,20 @@ export function Topbar({ onOpenNav, actionsRef }: TopbarProps) {
           >
             <NavIcon name={theme === 'dark' ? 'sun' : 'moon'} />
           </button>
+          {leadSummary.isSuccess ? (
+            <Link
+              to="/admin/crm?status=new"
+              className={`${iconButton} relative`}
+              aria-label={newLeads > 0 ? `Уведомления: ${newLeads} новых` : 'Уведомления: новых нет'}
+              title={newLeads > 0 ? `Новых заявок: ${newLeads}` : 'Новых заявок нет'}
+            >
+              <NavIcon name="bell" />
+              {newLeads > 0 ? (
+                <span aria-hidden="true" className="absolute right-[9px] top-2 h-2 w-2 rounded-full border-2 border-white bg-[#C2410C] box-content dark:border-slate-900" />
+              ) : null}
+            </Link>
+          ) : null}
+          <div ref={actionsRef} className="flex items-center gap-2 empty:hidden" />
         </div>
       </div>
     </header>

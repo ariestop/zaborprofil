@@ -103,6 +103,32 @@ final class LeadAdminApiTest extends AdminApiTestCase
         self::assertSame(['new' => 3, 'in_progress' => 1, 'done' => 1, 'spam' => 0], $summary['byStatus']);
     }
 
+    public function testDashboardReturnsDailyCountsAndWaitingLead(): void
+    {
+        $client = $this->adminClient();
+        $this->seedLeads();
+        $this->entityManager()->getConnection()->executeStatement(
+            'UPDATE leads SET created_at = :now WHERE created_at >= :old',
+            ['now' => (new \DateTimeImmutable('-2 days'))->format('Y-m-d H:i:s'), 'old' => '2026-09-05 00:00:00'],
+        );
+
+        $this->api($client, 'GET', '/admin/api/leads/dashboard');
+        self::assertResponseIsSuccessful();
+        $dashboard = $this->json($client);
+        self::assertIsArray($dashboard['daily']);
+        self::assertCount(14, $dashboard['daily']);
+        $perDay = 0;
+        foreach ($dashboard['daily'] as $day) {
+            self::assertIsArray($day);
+            self::assertIsInt($day['count']);
+            $perDay += $day['count'];
+        }
+        self::assertSame($perDay, $dashboard['createdLast14Days']);
+        self::assertGreaterThan(0, $perDay);
+        self::assertIsInt($dashboard['doneLastWeek']);
+        self::assertIsString($dashboard['oldestNewAt']);
+    }
+
     public function testCardShowsDetailsAndWritesViewToAudit(): void
     {
         $client = $this->adminClient();
@@ -319,6 +345,7 @@ final class LeadAdminApiTest extends AdminApiTestCase
         $requests = [
             ['GET', '/admin/api/leads'],
             ['GET', '/admin/api/leads/summary'],
+            ['GET', '/admin/api/leads/dashboard'],
             ['GET', '/admin/api/leads/assignees'],
             ['GET', '/admin/api/leads/export'],
             ['GET', '/admin/api/leads/'.$lead->id()],

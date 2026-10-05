@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildAttentionItems } from './attention'
+import { buildAttentionItems, formatWaiting } from './attention'
 
 describe('buildAttentionItems', () => {
   it('returns nothing when there are no new leads, warnings or backup problems', () => {
@@ -32,6 +32,13 @@ describe('buildAttentionItems', () => {
     expect(items[0]?.tone).toBe('critical')
   })
 
+  it('names disk warnings in plain words', () => {
+    const items = buildAttentionItems({ warnings: [{ code: 'health_disk_warning', severity: 'warning', message: 'Диск: занято 97%.' }] })
+
+    expect(items[0]?.title).toBe('Заканчивается место на диске')
+    expect(items[0]?.description).toBe('Диск: занято 97%.')
+  })
+
   it('flags failed queue messages and recent server errors only when data is known', () => {
     expect(buildAttentionItems({ failedMessages: 0, serverErrorsLastHour: 0 })).toEqual([])
     expect(buildAttentionItems({})).toEqual([])
@@ -43,5 +50,31 @@ describe('buildAttentionItems', () => {
       ['server-errors', '2', 'warning'],
     ])
     expect(items[0]?.href).toBe('/admin/system/queues')
+  })
+
+  it('shows how long the oldest new lead has been waiting', () => {
+    const [item] = buildAttentionItems({ newLeads: 2, oldestWaitMs: (3 * 60 + 12) * 60_000 })
+
+    expect(item?.description).toBe('Самая ранняя ждёт 3 ч 12 мин')
+    expect(item?.marker).toBe('2')
+  })
+
+  it('puts the failed frontend build right after leads and lets the user rebuild in place', () => {
+    const items = buildAttentionItems({ newLeads: 1, hasBackups: false, buildFailed: true })
+
+    expect(items.map((item) => item.id)).toEqual(['leads-new', 'build-failed', 'backups-missing'])
+    expect(items[1]).toMatchObject({ tone: 'critical', action: 'rebuild', actionLabel: 'Пересобрать' })
+    expect(buildAttentionItems({ buildFailed: false })).toEqual([])
+  })
+})
+
+describe('formatWaiting', () => {
+  it('formats minutes, hours and days', () => {
+    expect(formatWaiting(20_000)).toBe('1 мин')
+    expect(formatWaiting(45 * 60_000)).toBe('45 мин')
+    expect(formatWaiting(60 * 60_000)).toBe('1 ч')
+    expect(formatWaiting((3 * 60 + 12) * 60_000)).toBe('3 ч 12 мин')
+    expect(formatWaiting((52) * 3_600_000)).toBe('2 д 4 ч')
+    expect(formatWaiting(48 * 3_600_000)).toBe('2 д')
   })
 })

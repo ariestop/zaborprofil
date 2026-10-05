@@ -3,7 +3,7 @@ import { apiRequest } from '../../shared/api/client'
 import { adminQueryKeys } from '../../shared/api/query'
 import { useCan } from '../../stores/auth'
 import type { LeadDetail, LeadStatus } from '../../types/api'
-import type { LeadAssigneeOption, LeadFilters, LeadListParams, LeadListResponse, LeadSummary } from './model'
+import type { LeadAssigneeOption, LeadDashboard, LeadFilters, LeadListParams, LeadListResponse, LeadSummary } from './model'
 
 const leadsKey = [...adminQueryKeys.crm, 'leads'] as const
 
@@ -12,6 +12,7 @@ export const leadQueryKeys = {
   list: (params: LeadListParams) => [...leadsKey, 'list', params] as const,
   summary: [...leadsKey, 'summary'] as const,
   assignees: [...leadsKey, 'assignees'] as const,
+  dashboard: [...leadsKey, 'dashboard'] as const,
   detail: (leadId: string) => [...leadsKey, 'detail', leadId] as const,
 }
 
@@ -62,8 +63,9 @@ export function buildLeadsExportUrl(filters: LeadFilters, sort: LeadListParams['
   return `/admin/api/leads/export?${search.toString()}`
 }
 
-export function useLeadsQuery(params: LeadListParams) {
+export function useLeadsQuery(params: LeadListParams, enabled = true) {
   return useQuery({
+    enabled,
     queryKey: leadQueryKeys.list(params),
     queryFn: () => apiRequest<LeadListResponse>(buildLeadsUrl(params)),
     placeholderData: keepPreviousData,
@@ -77,6 +79,16 @@ export function useLeadSummaryQuery() {
     enabled,
     queryKey: leadQueryKeys.summary,
     queryFn: () => apiRequest<LeadSummary>('/admin/api/leads/summary'),
+  })
+}
+
+export function useLeadDashboardQuery() {
+  const enabled = useCan('leads.view')
+
+  return useQuery({
+    enabled,
+    queryKey: leadQueryKeys.dashboard,
+    queryFn: () => apiRequest<LeadDashboard>('/admin/api/leads/dashboard'),
   })
 }
 
