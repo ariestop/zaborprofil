@@ -1,5 +1,5 @@
 {# Форма заявки. Скрытые поля formLoadedAt/pageUrl заполняет браузер (страница отдаётся из HTTP-кэша). #}
-<section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8" id="lead-form" data-lead-form-section>
+<section class="rounded-3xl bg-white p-5 sm:p-8" id="lead-form" data-lead-form-section>
     <h2 class="zp-h2">{{ (lead_form_title ?? null) is not empty ? lead_form_title : 'Рассчитаем стоимость забора' }}</h2>
     <p class="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
         Оставьте имя и телефон — менеджер перезвонит, уточнит размеры и подготовит расчёт.

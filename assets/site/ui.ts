@@ -222,3 +222,192 @@ export function initLeadPlans(root: ParentNode = document): void {
         })
     })
 }
+
+export interface WorkingHoursRow {
+    days: number[]
+    open: string
+    close: string
+}
+
+export interface OfficeStatus {
+    state: 'open' | 'closed'
+    text: string
+    /** Номер дня недели в часовом поясе офиса (0 — воскресенье). */
+    weekday: number
+}
+
+const WEEKDAY_INDEX: Record<string, number> = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+}
+const WEEKDAY_LABEL = [
+    'в воскресенье',
+    'в понедельник',
+    'во вторник',
+    'в среду',
+    'в четверг',
+    'в пятницу',
+    'в субботу',
+]
+
+function toMinutes(value: string): number {
+    const [hours = '0', minutes = '0'] = value.split(':')
+
+    return Number(hours) * 60 + Number(minutes)
+}
+
+/** Время и день недели в часовом поясе офиса: посетитель из другого региона видит статус по местному времени офиса. */
+export function localClock(now: Date, timeZone: string): { weekday: number; minutes: number } {
+    const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone,
+        weekday: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23',
+    }).formatToParts(now)
+    const value = (type: string): string => parts.find((part) => part.type === type)?.value ?? ''
+
+    return {
+        weekday: WEEKDAY_INDEX[value('weekday')] ?? 0,
+        minutes: Number(value('hour')) * 60 + Number(value('minute')),
+    }
+}
+
+/** «Сейчас открыто · до 18:00» или «Закрыто · откроемся завтра в 09:00». */
+export function officeStatus(
+    rows: WorkingHoursRow[],
+    now: Date,
+    timeZone: string,
+): OfficeStatus | null {
+    const schedule = rows.filter((row) => row.open !== '' && row.close !== '')
+    if (schedule.length === 0) {
+        return null
+    }
+
+    const { weekday, minutes } = localClock(now, timeZone)
+    const today = schedule.find((row) => row.days.includes(weekday))
+    if (
+        today !== undefined &&
+        minutes >= toMinutes(today.open) &&
+        minutes < toMinutes(today.close)
+    ) {
+        return { state: 'open', text: `Сейчас открыто · до ${today.close}`, weekday }
+    }
+
+    const sameDayLater = today !== undefined && minutes < toMinutes(today.open)
+    for (let offset = sameDayLater ? 0 : 1; offset <= 7; offset += 1) {
+        const day = (weekday + offset) % 7
+        const row = schedule.find((candidate) => candidate.days.includes(day))
+        if (row !== undefined) {
+            const when = offset === 0 ? 'сегодня' : offset === 1 ? 'завтра' : WEEKDAY_LABEL[day]
+
+            return { state: 'closed', text: `Закрыто · откроемся ${when} в ${row.open}`, weekday }
+        }
+    }
+
+    return null
+}
+
+/** Подсвечивает сегодняшний день в режиме работы и показывает чип «открыто сейчас». */
+export function initOfficeStatus(root: ParentNode = document, now: Date = new Date()): void {
+    root.querySelectorAll<HTMLElement>('[data-office]').forEach((office) => {
+        const rows = Array.from(office.querySelectorAll<HTMLElement>('[data-days]'))
+        const chip = office.querySelector<HTMLElement>('[data-office-status]')
+        const timeZone = office.dataset.timezone || 'Europe/Saratov'
+        const hours: WorkingHoursRow[] = rows.map((row) => ({
+            days: (row.dataset.days ?? '')
+                .split(',')
+                .filter((day) => day !== '')
+                .map(Number),
+            open: row.dataset.open ?? '',
+            close: row.dataset.close ?? '',
+        }))
+
+        try {
+            const status = officeStatus(hours, now, timeZone)
+            if (status === null) {
+                return
+            }
+            rows.forEach((row, index) => {
+                row.dataset.today = String(hours[index].days.includes(status.weekday))
+            })
+            if (chip !== null) {
+                chip.textContent = status.text
+                chip.dataset.state = status.state
+                chip.hidden = false
+            }
+        } catch {
+            // Часовой пояс не поддерживается браузером — остаётся обычное расписание без статуса.
+        }
+    })
+}
+
+/** Кнопки «скопировать» у адреса и реквизитов: копируют в буфер и на секунду меняют вид кнопки. */
+export function initCopyButtons(root: ParentNode = document): void {
+    root.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const value = button.dataset.copy ?? ''
+            try {
+                await navigator.clipboard.writeText(value)
+            } catch {
+                const field = document.createElement('textarea')
+                field.value = value
+                field.setAttribute('readonly', '')
+                field.style.position = 'fixed'
+                field.style.opacity = '0'
+                document.body.append(field)
+                field.select()
+                document.execCommand('copy')
+                field.remove()
+            }
+            const label = button.getAttribute('aria-label') ?? ''
+            button.dataset.copied = 'true'
+            button.setAttribute('aria-label', 'Скопировано')
+            window.setTimeout(() => {
+                delete button.dataset.copied
+                button.setAttribute('aria-label', label)
+            }, 1600)
+        })
+    })
+}
+
+const ALLOWED_MAP_HOSTS = ['2gis.ru', '2gis.com']
+
+export function isAllowedMapUrl(url: string): boolean {
+    try {
+        const parsed = new URL(url, window.location.href)
+
+        return (
+            parsed.protocol === 'https:' &&
+            ALLOWED_MAP_HOSTS.some(
+                (host) => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`),
+            )
+        )
+    } catch {
+        return false
+    }
+}
+
+/** Карта подключается по нажатию: страница не тянет тяжёлый виджет, пока он не нужен. */
+export function initMapEmbeds(root: ParentNode = document): void {
+    root.querySelectorAll<HTMLButtonElement>('[data-map-embed]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const url = button.dataset.mapEmbed ?? ''
+            const container = button.closest<HTMLElement>('[data-map]')
+            if (!isAllowedMapUrl(url) || container === null) {
+                return
+            }
+            const frame = document.createElement('iframe')
+            frame.src = url
+            frame.title = button.dataset.mapTitle ?? 'Карта'
+            frame.loading = 'lazy'
+            frame.referrerPolicy = 'no-referrer-when-downgrade'
+            container.replaceChildren(frame)
+        })
+    })
+}

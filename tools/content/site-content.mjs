@@ -357,6 +357,93 @@ export const pages = [
       },
     ],
   },
+  {
+    key: 'contacts',
+    path: '/contacts/',
+    create: { type: 'contacts', slug: 'contacts', template: 'default' },
+    title: 'Контакты — Забор Профиль, Саратов и Оренбург',
+    h1: 'Контакты',
+    seo: {
+      metaTitle: 'Контакты — Забор Профиль: адрес, телефон, режим работы | Саратов и Оренбург',
+      metaDescription: `Контакты «Забор Профиль»: головной офис в Саратове (ул. Вешняя, 44/2) и дилер в Оренбурге. Телефон ${PHONE}, режим работы, реквизиты, карта.`,
+      ogImage: jaluziPhoto('2022-03-14-20-55-10'),
+      ogType: 'website',
+    },
+    blocks: [
+      {
+        type: 'hero.minimal',
+        name: 'Шапка страницы',
+        content: {
+          title: 'Контакты',
+          subtitle: 'Позвоните, напишите или приезжайте в офис — подскажем и рассчитаем забор. Головной офис в Саратове, дилер в Оренбурге.',
+        },
+      },
+      {
+        type: 'contacts-map',
+        name: 'Офисы, карта и реквизиты',
+        content: {
+          title: '',
+          offices: [
+            {
+              city: 'Саратов',
+              role: 'Головной офис · отдел оптовых продаж',
+              address: 'г. Саратов, ул. Вешняя, 44/2, этаж 2, офис 1',
+              phone: PHONE,
+              phoneHref: 'tel:+78452988808',
+              email: 'info@zaborprofil.ru',
+              mapUrl: 'https://2gis.ru/saratov/firm/70000001019507229/center/46.056128,51.577474/zoom/15',
+              timezone: 'Europe/Saratov',
+              hours: [
+                { label: 'Пн – Пт', days: [1, 2, 3, 4, 5], open: '09:00', close: '18:00' },
+                { label: 'Сб', days: [6], open: '10:00', close: '14:00' },
+                { label: 'Вс', days: [0], note: 'выходной' },
+              ],
+            },
+            {
+              city: 'Оренбург',
+              role: 'Дилер',
+              address: 'г. Оренбург, ул. Монтажников, д. 22, офис 20',
+              phone: '8 (3532) 42-88-82',
+              phoneHref: 'tel:+73532428882',
+              email: 'oren@zaborprofil.ru',
+              mapUrl: '',
+              timezone: 'Asia/Yekaterinburg',
+              hours: [
+                { label: 'Пн – Пт', days: [1, 2, 3, 4, 5], open: '09:00', close: '18:00' },
+                { label: 'Сб', days: [6], open: '10:00', close: '14:00' },
+                { label: 'Вс', days: [0], note: 'выходной' },
+              ],
+            },
+          ],
+          map: {
+            title: 'Головной офис на карте Саратова',
+            url: 'https://2gis.ru/saratov/firm/70000001019507229/center/46.056128,51.577474/zoom/15',
+            embedUrl:
+              'https://widgets.2gis.com/widget?type=firmsonmap&options=' +
+              encodeURIComponent(JSON.stringify({ pos: { lat: 51.577474, lon: 46.056128, zoom: 15 }, opt: { city: 'saratov' }, org: '70000001019507229' })),
+          },
+          requisites: {
+            title: 'Реквизиты',
+            legalName: 'ООО «Забор Профиль»',
+            note: 'отдел оптовых продаж',
+            items: [
+              { label: 'ИНН', value: '6452128198' },
+              { label: 'ОГРН', value: '1176451013232' },
+              { label: 'Банк', value: 'ООО «ОЗОН Банк»' },
+              { label: 'БИК', value: '044525068' },
+              { label: 'Корреспондентский счёт', value: '30101810645374525068' },
+              { label: 'Расчётный счёт', value: '40702810400000007407' },
+            ],
+          },
+        },
+      },
+      {
+        type: 'contact-form',
+        name: 'Форма заявки',
+        content: { title: 'Напишите нам' },
+      },
+    ],
+  },
 ]
 
 /** Пункты меню шапки и подвала (создаются, если ещё нет пункта с таким же адресом). */

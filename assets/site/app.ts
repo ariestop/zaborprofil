@@ -1,6 +1,15 @@
 import './site.css'
 import { collectUtm, formatPhone, initLeadFormContext, validateLeadFields } from './leadForm'
-import { initCallbar, initGalleries, initLeadPlans, initMobileNav, initVideoEmbeds } from './ui'
+import {
+    initCallbar,
+    initCopyButtons,
+    initGalleries,
+    initLeadPlans,
+    initMapEmbeds,
+    initMobileNav,
+    initOfficeStatus,
+    initVideoEmbeds,
+} from './ui'
 
 function formPayload(form: HTMLFormElement): Record<string, unknown> {
     const data = new FormData(form)
@@ -72,6 +81,7 @@ function initLeadForm(form: HTMLFormElement): void {
         say('Отправляем…')
         if (submit !== null) {
             submit.disabled = true
+            submit.setAttribute('aria-busy', 'true')
         }
 
         try {
@@ -103,6 +113,7 @@ function initLeadForm(form: HTMLFormElement): void {
         } finally {
             if (submit !== null) {
                 submit.disabled = false
+                submit.removeAttribute('aria-busy')
             }
         }
     })
@@ -115,6 +126,9 @@ initCallbar()
 initGalleries()
 initVideoEmbeds()
 initLeadPlans()
+initOfficeStatus()
+initCopyButtons()
+initMapEmbeds()
 
 // Swiper (~40 КБ JS + CSS) нужен только страницам со слайдером — остальным он не загружается.
 if (document.querySelector('.js-site-slider') !== null) {

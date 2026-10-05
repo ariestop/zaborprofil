@@ -13,7 +13,7 @@ final readonly class TwigBlockRenderer
     /**
      * Типы блоков первого экрана: если страница начинается с такого блока, заголовок H1 выводится внутри него.
      */
-    private const array HEADING_BLOCK_TYPES = ['hero.classic', 'hero'];
+    private const array HEADING_BLOCK_TYPES = ['hero.classic', 'hero', 'hero.minimal'];
 
     public function __construct(private Environment $twig)
     {

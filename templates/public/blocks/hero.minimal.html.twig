@@ -1,0 +1,25 @@
+{# Компактная шапка внутренней страницы (контакты, о компании): заголовок, пояснение и быстрые действия. Выводит H1 страницы. #}
+{% set heading = page_h1 ?? (block.content.title ?? block.name) %}
+<section class="bg-brand-50" data-block-type="hero.minimal">
+    <div class="zp-container py-9 sm:py-12 md:py-14">
+        {% if page_h1 is not empty %}
+            <h1 class="text-4xl leading-tight font-bold tracking-tight text-balance text-slate-950 md:text-5xl">{{ heading }}</h1>
+        {% else %}
+            <h2 class="text-4xl leading-tight font-bold tracking-tight text-balance text-slate-950 md:text-5xl">{{ heading }}</h2>
+        {% endif %}
+        {% if (block.content.subtitle ?? '') is not empty %}
+            <p class="mt-3 max-w-2xl text-lg leading-8 text-slate-700">{{ block.content.subtitle }}</p>
+        {% endif %}
+        <div class="mt-7 grid gap-3 sm:flex sm:flex-wrap">
+            <a class="zp-btn zp-btn--primary zp-btn--lg" href="{{ site.phone_href }}">
+                <svg aria-hidden="true"><use href="#i-phone"/></svg>{{ site.phone }}
+            </a>
+            <a class="zp-btn zp-btn--tonal zp-btn--lg" href="{{ site.telegram }}" target="_blank" rel="noopener">
+                <svg aria-hidden="true"><use href="#i-telegram"/></svg>Написать в Telegram
+            </a>
+            <a class="zp-btn zp-btn--ghost zp-btn--lg" href="mailto:{{ site.email }}">
+                <svg aria-hidden="true"><use href="#i-mail"/></svg>Написать на почту
+            </a>
+        </div>
+    </div>
+</section>

@@ -28,6 +28,31 @@ const simpleSettingsSchema = z.object({
   anchor: z.string().default(''),
 })
 
+const contactOfficeSchema = z.object({
+  city: z.string(),
+  /** Подпись над названием: «Головной офис», «Дилер». */
+  role: z.string().default(''),
+  address: z.string().default(''),
+  phone: z.string().default(''),
+  phoneHref: z.string().default(''),
+  email: z.string().default(''),
+  mapUrl: z.string().default(''),
+  /** IANA-часовой пояс офиса для статуса «открыто сейчас», например Europe/Saratov. */
+  timezone: z.string().default(''),
+  hours: z
+    .array(
+      z.object({
+        label: z.string(),
+        /** Дни недели: 0 — воскресенье … 6 — суббота. */
+        days: z.array(z.number().int().min(0).max(6)).default([]),
+        open: z.string().default(''),
+        close: z.string().default(''),
+        note: z.string().default(''),
+      }),
+    )
+    .default([]),
+})
+
 const gallerySettingsSchema = simpleSettingsSchema.extend({
   /** Сколько кадров видно сразу; остальные раскрывает кнопка «Показать все фото». */
   visible: z.number().int().min(1).max(200).default(8),
@@ -189,7 +214,28 @@ const structuredBlockRegistry: BlockDefinition[] = [
   def('advantages', 'Преимущества компании', 'business', 60, 'Преимущества компании.', z.object({ items: z.array(z.object({ title: z.string(), text: z.string() })).default([]) })),
   def('installation-steps', 'Этапы монтажа', 'business', 70, 'Этапы монтажа.', z.object({ items: z.array(z.object({ title: z.string(), text: z.string() })).default([]) })),
   def('price-table', 'Таблица цен', 'business', 80, 'Таблица цен.', z.object({ title: z.string().default(''), columns: z.array(z.string()).default([]), rows: z.array(z.array(z.string())).default([]) })),
-  def('contacts-map', 'Карта контактов', 'business', 90, 'Карта контактов.', z.object({ address: z.string().default(''), embedUrl: z.string().default('') })),
+  def(
+    'contacts-map',
+    'Контакты и карта',
+    'business',
+    90,
+    'Офисы с режимом работы («открыто сейчас»), карта и реквизиты с кнопками копирования.',
+    z.object({
+      title: z.string().default(''),
+      address: z.string().default(''),
+      embedUrl: z.string().default(''),
+      offices: z.array(contactOfficeSchema).default([]),
+      map: z.object({ title: z.string().default(''), url: z.string().default(''), embedUrl: z.string().default('') }).default({ title: '', url: '', embedUrl: '' }),
+      requisites: z
+        .object({
+          title: z.string().default(''),
+          legalName: z.string().default(''),
+          note: z.string().default(''),
+          items: z.array(z.object({ label: z.string(), value: z.string() })).default([]),
+        })
+        .default({ title: '', legalName: '', note: '', items: [] }),
+    }),
+  ),
   def('partner-cta', 'Партнерский CTA', 'business', 100, 'CTA для партнеров.', z.object({ ...textSchema.shape, cta: ctaSchema.default({ label: 'Стать партнером', href: '#partner' }) })),
 
   def('breadcrumbs', 'Хлебные крошки', 'seo_system', 10, 'Хлебные крошки.', z.object({ enabled: z.boolean().default(true) })),
