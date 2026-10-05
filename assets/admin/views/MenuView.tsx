@@ -97,7 +97,7 @@ export default function MenuView() {
           <input value={form.label} className="rounded-lg border border-slate-300 px-3 py-2" placeholder="Название" onChange={(event) => setForm((state) => ({ ...state, label: event.target.value }))} />
           <input value={form.url} className="rounded-lg border border-slate-300 px-3 py-2" placeholder="/url/" onChange={(event) => setForm((state) => ({ ...state, url: event.target.value }))} />
           <input value={form.sortOrder} type="number" className="rounded-lg border border-slate-300 px-3 py-2" onChange={(event) => setForm((state) => ({ ...state, sortOrder: Number(event.target.value) }))} />
-          <button className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">Добавить</button>
+          <button className="rounded-lg bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800">Добавить</button>
         </form>
         {error && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
       </div>

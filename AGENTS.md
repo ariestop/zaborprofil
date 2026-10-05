@@ -78,7 +78,7 @@ make health
 - Шрифты — Onest (текст, заголовки, UI) и Sofia Sans Condensed (цены, телефоны, характеристики), локально через `@fontsource*`, без CDN. Open Sans и Cuprum в интерфейсе запрещены.
 - Стиль — flat 2.0: плоско, но кнопки и поля от 48 px, скругление 10/12 px, видимый `:focus-visible`, текст от 17 px, контраст WCAG 2.2 AA.
 - Перед сдачей UI-изменений пройти чек-лист из раздела 13 `docs/50-brand-system.md`.
-- Временные изумрудные `brand-*` в `assets/shared/styles/app.css` заменяются токенами «Периметра» на этапе 1; в новом коде их не использовать.
+- Этап 1 выполнен: токены в `assets/shared/styles/app.css`, шрифты в `assets/shared/styles/fonts.css`, компоненты `.btn`, `.field-*`, `.price`, `.chip`, `.badge`, `.mobile-bar`. Классы `emerald-*` запрещены. Телефон и кнопки нижней панели берутся из настроек `contacts.phone`, `contacts.messenger_url`, `contacts.calculator_url`.
 
 ## Staging на Beget (dev.zaborprofil.ru)
 

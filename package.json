@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@floating-ui/react": "^0.27.19",
+    "@fontsource-variable/onest": "^5.3.1",
+    "@fontsource/sofia-sans-condensed": "^5.3.0",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-popover": "^1.1.15",
     "@tiptap/core": "^3.31.4",

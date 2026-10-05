@@ -585,7 +585,7 @@ export default function ContentPagesView() {
             <h2 className="text-lg font-semibold text-slate-950">Редактор страниц</h2>
             <p className="mt-1 text-sm text-slate-600">Создание страниц, блоки контента, SEO-поля, предпросмотр, публикация и история версий.</p>
           </div>
-          <button type="button" className="rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800" onClick={resetPageForm}>
+          <button type="button" className="rounded-lg bg-brand-700 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-800" onClick={resetPageForm}>
             Создать страницу
           </button>
         </div>
@@ -611,7 +611,7 @@ export default function ContentPagesView() {
                 <div>
                   <p className="text-sm font-semibold text-slate-700">Блоки</p>
                 </div>
-                <button type="button" className="shrink-0 text-xs font-semibold text-emerald-700" onClick={() => startNewBlock()}>+ блок</button>
+                <button type="button" className="shrink-0 text-xs font-semibold text-brand-700" onClick={() => startNewBlock()}>+ блок</button>
               </div>
               {selectedBlocks.map((block) => (
                 <button
@@ -619,7 +619,7 @@ export default function ContentPagesView() {
                   type="button"
                   className={[
                     'mb-2 block w-full rounded-lg border px-3 py-2 text-left text-sm transition hover:bg-slate-50',
-                    selectedBlockId === block.id ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200',
+                    selectedBlockId === block.id ? 'border-brand-300 bg-brand-50' : 'border-slate-200',
                   ].join(' ')}
                   onClick={() => fillBlockForm(block)}
                 >
@@ -712,7 +712,7 @@ export default function ContentPagesView() {
             </div>
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
-              <button type="submit" className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60" disabled={saving}>{saving ? savingMessage : 'Сохранить'}</button>
+              <button type="submit" className="rounded-lg bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-60" disabled={saving}>{saving ? savingMessage : 'Сохранить'}</button>
               {canPublishSelected && (
                 <button type="button" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60" disabled={statusChanging !== null} onClick={() => { void publishPage() }}>
                   {statusChanging === 'published' ? 'Публикуется...' : 'Опубликовать'}
@@ -725,7 +725,7 @@ export default function ContentPagesView() {
                 </button>
               ))}
               {selected && <button type="button" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" onClick={() => { void buildPreviewLink() }}>Предпросмотр</button>}
-              {previewUrl && <a href={previewUrl} target="_blank" rel="noreferrer" className="text-sm font-medium text-emerald-700">Открыть предпросмотр</a>}
+              {previewUrl && <a href={previewUrl} target="_blank" rel="noreferrer" className="text-sm font-medium text-brand-700">Открыть предпросмотр</a>}
               {selected && <button type="button" className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" onClick={() => { void runSeoAudit() }}>Проверить SEO</button>}
             </div>
           </form>
@@ -772,14 +772,14 @@ export default function ContentPagesView() {
                 {blockSupportsVisualEditor && (
                   <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
                     <div className="inline-flex rounded-lg border border-slate-300 bg-white p-1 text-xs font-semibold">
-                      <button type="button" className={['rounded-md px-3 py-1', visualBlockForm.mode === 'visual' ? 'bg-emerald-700 text-white' : 'text-slate-600'].join(' ')} onClick={() => setBlockEditorMode('visual')}>Визуально</button>
-                      <button type="button" className={['rounded-md px-3 py-1', visualBlockForm.mode === 'json' ? 'bg-emerald-700 text-white' : 'text-slate-600'].join(' ')} onClick={() => setBlockEditorMode('json')}>JSON</button>
+                      <button type="button" className={['rounded-md px-3 py-1', visualBlockForm.mode === 'visual' ? 'bg-brand-700 text-white' : 'text-slate-600'].join(' ')} onClick={() => setBlockEditorMode('visual')}>Визуально</button>
+                      <button type="button" className={['rounded-md px-3 py-1', visualBlockForm.mode === 'json' ? 'bg-brand-700 text-white' : 'text-slate-600'].join(' ')} onClick={() => setBlockEditorMode('json')}>JSON</button>
                     </div>
                   </div>
                 )}
 
                 {blockSupportsVisualEditor && visualBlockForm.mode === 'visual' && (
-                  <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4">
+                  <div className="mt-4 rounded-xl border border-brand-200 bg-brand-50/40 p-4">
                     {blockForm.type === 'text' && (
                       <div className="space-y-4">
                         <label className="block text-sm font-medium text-slate-700">Заголовок
@@ -833,7 +833,7 @@ export default function ContentPagesView() {
                   </div>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <button type="button" className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800" onClick={() => { void saveBlock() }}>{selectedBlock ? 'Сохранить блок' : 'Добавить блок'}</button>
+                  <button type="button" className="rounded-lg bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800" onClick={() => { void saveBlock() }}>{selectedBlock ? 'Сохранить блок' : 'Добавить блок'}</button>
                   {selectedBlock && <button type="button" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" onClick={() => { void moveBlock(selectedBlock, -1) }}>Вверх</button>}
                   {selectedBlock && <button type="button" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" onClick={() => { void moveBlock(selectedBlock, 1) }}>Вниз</button>}
                   {selectedBlock && <button type="button" className="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-700" onClick={() => { void deleteBlock(selectedBlock) }}>Удалить</button>}
@@ -862,7 +862,7 @@ export default function ContentPagesView() {
                             <p className="truncate text-sm font-semibold text-slate-900">{asset.originalName}</p>
                             <p className="truncate text-xs text-slate-500">{asset.publicPath}</p>
                           </div>
-                          <button type="button" className="shrink-0 rounded-lg bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-800" onClick={() => selectTextImageAsset(asset)}>Выбрать</button>
+                          <button type="button" className="shrink-0 rounded-lg bg-brand-700 px-3 py-2 text-xs font-semibold text-white hover:bg-brand-800" onClick={() => selectTextImageAsset(asset)}>Выбрать</button>
                         </div>
                       </article>
                     ))}
@@ -891,10 +891,10 @@ export default function ContentPagesView() {
       </div>
 
       {seoAuditToast && (
-        <div className={['fixed bottom-6 right-6 z-50 max-w-lg rounded-2xl border bg-white p-5 shadow-2xl', seoAuditToast.passed ? 'border-emerald-200' : 'border-red-200'].join(' ')} role="status">
+        <div className={['fixed bottom-6 right-6 z-50 max-w-lg rounded-2xl border bg-white p-5 shadow-2xl', seoAuditToast.passed ? 'border-brand-200' : 'border-red-200'].join(' ')} role="status">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className={['text-sm font-semibold', seoAuditToast.passed ? 'text-emerald-700' : 'text-red-700'].join(' ')}>
+              <p className={['text-sm font-semibold', seoAuditToast.passed ? 'text-brand-700' : 'text-red-700'].join(' ')}>
                 {seoAuditToast.passed ? 'Checklist пройден' : 'Checklist нашёл замечания'}
               </p>
               <p className="mt-1 text-sm text-slate-600">

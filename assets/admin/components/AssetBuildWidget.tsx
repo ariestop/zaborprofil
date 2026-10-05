@@ -72,14 +72,14 @@ export default function AssetBuildWidget() {
     return 'Готов к запуску'
   }, [status.status])
   const statusToneClass = useMemo(() => {
-    if (status.status === 'success') return 'bg-emerald-50 text-emerald-700'
+    if (status.status === 'success') return 'bg-brand-50 text-brand-700'
     if (status.status === 'failed') return 'bg-red-50 text-red-700'
     if (status.status === 'running') return 'bg-sky-50 text-sky-700'
     return 'bg-slate-100 text-slate-600'
   }, [status.status])
   const progressClass = useMemo(() => {
     if (status.status === 'failed') return 'bg-red-500'
-    if (status.status === 'success') return 'bg-emerald-600'
+    if (status.status === 'success') return 'bg-brand-600'
     return 'bg-sky-500'
   }, [status.status])
 
@@ -234,7 +234,7 @@ export default function AssetBuildWidget() {
     >
       <button
         type="button"
-        className="flex w-12 shrink-0 items-center justify-center rounded-l-2xl border border-r-0 border-emerald-200 bg-emerald-700 text-xs font-bold uppercase tracking-[0.25em] text-white shadow-2xl shadow-slate-950/10 [writing-mode:vertical-rl]"
+        className="flex w-12 shrink-0 items-center justify-center rounded-l-2xl border border-r-0 border-brand-200 bg-brand-700 text-xs font-bold uppercase tracking-[0.25em] text-white shadow-2xl shadow-slate-950/10 [writing-mode:vertical-rl]"
         aria-label={isCollapsed ? 'Открыть настройки сборки' : 'Свернуть настройки сборки'}
         onClick={toggleCollapsed}
       >
@@ -244,7 +244,7 @@ export default function AssetBuildWidget() {
       <div className="w-[calc(100%-3rem)] overflow-hidden rounded-l-none rounded-r-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-950/10">
         <div className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50">
           <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setIsExpanded((value) => !value)}>
-            <span className="block text-xs font-semibold uppercase tracking-wide text-emerald-700">Assets</span>
+            <span className="block text-xs font-semibold uppercase tracking-wide text-brand-700">Assets</span>
             <span className="mt-1 block truncate text-sm font-bold text-slate-950">{status.command}</span>
           </button>
           <span className={['shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold', statusToneClass].join(' ')}>
@@ -272,7 +272,7 @@ export default function AssetBuildWidget() {
               </div>
               <button
                 type="button"
-                className="rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg bg-brand-700 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={isRunning || isLoading}
                 onClick={() => { void startBuild() }}
               >
@@ -296,7 +296,7 @@ export default function AssetBuildWidget() {
               <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 text-xs text-slate-300">
                 <span>Лог сборки</span>
                 <div className="flex items-center gap-3">
-                  {isLogCopied && <span className="text-emerald-300">Скопировано</span>}
+                  {isLogCopied && <span className="text-brand-300">Скопировано</span>}
                   <button
                     type="button"
                     className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-300 hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
@@ -324,7 +324,7 @@ export default function AssetBuildWidget() {
             <span className="text-xs text-slate-500">Прогресс: {progress}%</span>
             <button
               type="button"
-              className="rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-lg bg-brand-700 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isRunning || isLoading}
               onClick={() => { void startBuild() }}
             >

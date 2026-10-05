@@ -92,7 +92,7 @@ export default function MigrationsView() {
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700">Settings</p>
+          <p className="text-sm font-semibold uppercase tracking-wide text-brand-700">Settings</p>
           <h2 className="mt-2 text-2xl font-bold text-slate-950">Миграции</h2>
           <p className="mt-2 text-sm text-slate-600">
             Список файлов из папки миграций, их описания и текущий статус применения. Применение выполняется по порядку до выбранной миграции.
@@ -110,7 +110,7 @@ export default function MigrationsView() {
 
       {isLoading && <p className="mt-6 text-slate-600">Загрузка...</p>}
       {!isLoading && error && <p className="mt-6 rounded-lg bg-red-50 p-4 text-sm text-red-700">{error}</p>}
-      {!isLoading && !error && notice && <p className="mt-6 rounded-lg bg-emerald-50 p-4 text-sm text-emerald-700">{notice}</p>}
+      {!isLoading && !error && notice && <p className="mt-6 rounded-lg bg-brand-50 p-4 text-sm text-brand-700">{notice}</p>}
 
       {!isLoading && !error && migrations.length === 0 && (
         <div className="mt-6 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
@@ -139,7 +139,7 @@ export default function MigrationsView() {
                   type="button"
                   className={[
                     'rounded-lg px-3 py-2 font-semibold',
-                    currentPage === page ? 'bg-emerald-700 text-white' : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50',
+                    currentPage === page ? 'bg-brand-700 text-white' : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50',
                   ].join(' ')}
                   onClick={() => goToPage(page)}
                 >
@@ -175,7 +175,7 @@ export default function MigrationsView() {
                     <span
                       className={[
                         'inline-flex rounded-full px-2.5 py-1 text-xs font-semibold',
-                        migration.isApplied ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700',
+                        migration.isApplied ? 'bg-brand-50 text-brand-700' : 'bg-amber-50 text-amber-700',
                       ].join(' ')}
                     >
                       {migration.isApplied ? 'Применена' : 'Не применена'}
@@ -196,7 +196,7 @@ export default function MigrationsView() {
                     ) : (
                       <button
                         type="button"
-                        className="rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="rounded-lg bg-brand-700 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50"
                         disabled={!migration.canApply || pendingVersion !== null}
                         onClick={() => { void runMigrationAction(migration, 'apply') }}
                       >

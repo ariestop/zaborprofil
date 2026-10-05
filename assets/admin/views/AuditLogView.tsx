@@ -19,7 +19,7 @@ export default function AuditLogView() {
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
-      <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700">System</p>
+      <p className="text-sm font-semibold uppercase tracking-wide text-brand-700">System</p>
       <h2 className="mt-2 text-2xl font-bold text-slate-950">Audit Log</h2>
 
       {error && <p className="mt-6 rounded-lg bg-red-50 p-4 text-sm text-red-700">{error}</p>}

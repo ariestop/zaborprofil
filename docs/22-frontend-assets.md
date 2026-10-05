@@ -89,6 +89,8 @@ make npm-dev        # vite dev на :5173, HMR
 
 Цвета, шрифты, радиусы и размеры текста задаёт бренд-система «Периметр»: значения токенов `@theme` берутся только из [50-brand-system](50-brand-system.md) (раздел 11). Шрифты Onest и Sofia Sans Condensed подключаются локально через npm-пакеты `@fontsource*`, не через CDN.
 
+`vite.config.ts` задаёт `base: '/build/'` для сборки: ссылки внутри CSS/JS (шрифты, картинки, чанки) должны вести в `public_html/build`, откуда их раздаёт `ViteAssetExtension` (`app.vite.public_build_path`). Без этого `url()` в CSS указывают на `/assets/...` и дают 404.
+
 Файла `tailwind.config.ts` больше нет. Поддерживаемые браузеры Tailwind 4: Safari 16.4+, Chrome 111+, Firefox 128+.
 
 Запрещено: hand-rolled CSS, конфликтующий с Tailwind классами без причины.

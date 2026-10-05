@@ -65,7 +65,7 @@ export default function MediaLibraryView() {
       <h2 className="text-lg font-semibold text-slate-950">Media Library</h2>
       <p className="mt-1 text-sm text-slate-600">Безопасная загрузка изображений и PDF для контента и SEO.</p>
 
-      <label className="mt-5 inline-flex cursor-pointer rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800">
+      <label className="mt-5 inline-flex cursor-pointer rounded-lg bg-brand-700 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-800">
         <input type="file" className="hidden" disabled={uploading} onChange={(event) => { void uploadFile(event) }} />
         {uploading ? 'Загрузка...' : 'Загрузить файл'}
       </label>
@@ -75,7 +75,7 @@ export default function MediaLibraryView() {
         {assets.map((asset) => (
           <article key={asset.id} className="rounded-xl border border-slate-200 p-4">
             <p className="font-medium text-slate-900">{asset.originalName}</p>
-            <a href={asset.publicPath} target="_blank" rel="noreferrer" className="text-sm text-emerald-700">{asset.publicPath}</a>
+            <a href={asset.publicPath} target="_blank" rel="noreferrer" className="text-sm text-brand-700">{asset.publicPath}</a>
             <p className="mt-1 text-xs text-slate-500">{asset.mimeType} · {asset.size} bytes · {asset.width ?? '-'}×{asset.height ?? '-'}</p>
             {asset.variants.length > 0 && (
               <div className="mt-3 flex flex-wrap gap-2">

@@ -354,7 +354,7 @@ code{font-family:var(--c);font-weight:600;letter-spacing:.02em}
   </div>
   <div style="display:grid;gap:2mm"><h3>Пропорции на странице</h3>
   <div class="prop"><div style="flex:60;background:#fff;color:var(--graph)">60% белый и поверхность</div><div style="flex:22;background:#23272D;color:#fff">22% чернила, графит</div><div style="flex:12;background:#45A63D;color:#fff">12% зелёные</div><div style="flex:4;background:#2A2F35;color:#fff">4%</div><div style="flex:2;background:#F2B13B"></div></div></div>
-  <span class="small">* В прежнем брендбуке указан RAL 6038 — по каталогу это люминесцентный зелёный. Для вывесок и стендов сверяйте RAL 6018 по выкрасу. CMYK и Pantone для новых цветов расчётные: утвердить с типографией по пробному оттиску.</span>
+  <span class="small">* В прежнем брендбуке указан RAL 6038 — по каталогу это люминесцентный зелёный. Для вывесок и стендов сверяйте RAL 6018 по выкрасу. CMYK для новых цветов расчётные: утверждаются по тестовому листу <code>docs/brand/print/color-proof-2026.pdf</code>. До утверждения печатать по указанным значениям.</span>
   <div class="foot"><span>Цвет</span><span class="ln"></span><span class="pn">06</span></div>
 </section>
 
@@ -640,11 +640,14 @@ code{font-family:var(--c);font-weight:600;letter-spacing:.02em}
         <li><code>docs/50-brand-system.md</code> — правила (главный источник)</li>
         <li><code>docs/brand/brandbook-2026.pdf</code> — этот документ</li>
         <li><code>docs/brand/logo/*.svg</code> — логотипы, знак, фавикон</li>
-        <li><code>assets/shared/styles/app.css</code> — токены Tailwind 4</li></ul></div>
+        <li><code>assets/shared/styles/app.css</code> — токены и компоненты</li>
+        <li><code>assets/shared/styles/fonts.css</code> — шрифты</li>
+        <li><code>docs/brand/print/color-proof-2026.pdf</code> — цветопроба</li></ul></div>
       <div class="sur"><h3>Шрифты на сайте</h3><ul class="l" style="margin-top:2mm">
         <li><code>@fontsource-variable/onest</code></li>
         <li><code>@fontsource/sofia-sans-condensed</code> (600, 800)</li>
-        <li>Только cyrillic + latin, woff2, с собственного домена. Без внешних CDN.</li></ul></div>
+        <li>cyrillic + latin (+ latin-ext у Onest ради ₽), woff2, с собственного домена. Без CDN.</li>
+        <li>В Sofia Sans Condensed нет ₽ — он берётся из Onest.</li></ul></div>
       <div class="sur"><h3>Проверки</h3><ul class="l" style="margin-top:2mm">
         <li>Контраст пар цветов — по таблице на стр. 07</li>
         <li>Кнопки и поля от 48 px, видимый :focus-visible</li>
@@ -652,19 +655,19 @@ code{font-family:var(--c);font-weight:600;letter-spacing:.02em}
     </div>
 <pre>@theme {
   --font-sans: 'Onest Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-cond: 'Sofia Sans Condensed', 'Arial Narrow', sans-serif;
+  --font-cond: 'Sofia Sans Condensed', 'Onest Variable', 'Arial Narrow', sans-serif;  /* ₽ из Onest */
 
-  --color-brand-50:  #EEF6EC;
+  --color-brand-50: #EEF6EC;  --color-brand-100: #D9EDD5;
+  --color-brand-200: #B6DCAF; --color-brand-300: #8CC783;  /* на night */
   --color-brand-500: #45A63D;   /* знак, полосы, не текст */
-  --color-brand-700: #2D7F27;   /* кнопки, ссылки 5,0:1 */
-  --color-brand-800: #246C1F;   /* hover */
+  --color-brand-600: #37922F; --color-brand-700: #2D7F27;  /* кнопки, ссылки */
+  --color-brand-800: #246C1F; --color-brand-900: #1A4F17;
 
-  --color-ink:      #23272D;
-  --color-graphite: #575C63;
-  --color-surface:  #F3F5F2;
-  --color-line:     #DCE0DB;
-  --color-night:    #2A2F35;
-  --color-badge:    #F2B13B;    /* только бейджи */
+  --color-ink: #23272D;       --color-graphite: #575C63;
+  --color-surface: #F3F5F2;   --color-line: #DCE0DB;
+  --color-line-strong: #C9CEC8; --color-night: #2A2F35;
+  --color-badge: #F2B13B;     /* только бейджи */
+  --color-focus: #9AD38F;     --color-danger: #B3261E;
 
   /* цвета продукции — только выбор цвета */
   --color-ral-6005: #0F4336;  --color-ral-8017: #45322E;
