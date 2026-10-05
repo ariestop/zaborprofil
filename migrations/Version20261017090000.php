@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace DoctrineMigrations;
 
+use App\Module\Content\Domain\Entity\Page;
+use App\Module\Content\Domain\Entity\PageBlock;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
@@ -16,9 +18,10 @@ use Symfony\Component\Uid\Ulid;
  */
 final class Version20261017090000 extends AbstractMigration
 {
-    private const string PAGE_ENTITY = 'App\\Module\\Content\\Domain\\Entity\\Page';
+    /** Так журнал действий записывает тип сущности (`AuditLogEntry::entityType`). */
+    private const string PAGE_ENTITY = Page::class;
 
-    private const string BLOCK_ENTITY = 'App\\Module\\Content\\Domain\\Entity\\PageBlock';
+    private const string BLOCK_ENTITY = PageBlock::class;
 
     public function getDescription(): string
     {
