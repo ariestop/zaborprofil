@@ -97,7 +97,7 @@ function initLeadForm(form: HTMLFormElement): void {
 
             form.reset()
             initLeadFormContext(form)
-            say('Спасибо! Заявка отправлена, мы скоро свяжемся с вами.')
+            say('Спасибо! Заявка отправлена.')
         } catch {
             say('Нет связи с сервером. Проверьте интернет или позвоните нам.', true)
         } finally {
