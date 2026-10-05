@@ -91,7 +91,7 @@
 
 Где используется:
 
-- Page Builder: `BlockMediaFields` в `BlockEditorPanel` находит в `content` блока поля изображений (`image`, `src`, `imageUrl`, `poster`, `backgroundImage`, для `before-after` — `before`/`after`, в том числе внутри `items[]`) и показывает для каждого `MediaPicker`. При выборе пустой `alt`/`imageAlt` заполняется из `alt` ассета. Для `gallery`, `works-gallery`, `slider`, `portfolio`, `fence-types` есть кнопка «Добавить изображение из медиатеки». Логика — `blocks/shared/mediaFields.ts`.
+- Редактор блоков: поля изображений в форме блока (`admin/features/page-editor/workspace/BlockFields.tsx`) используют `MediaPicker`; при выборе пустой `alt`/`imageAlt` заполняется из `alt` ассета. В списках фото (`gallery`, `portfolio`, `slider` и т. п.) кнопка добавления открывает `MediaPickerDialog`. Для блоков без ручной формы поля изображений определяются по ключам (`image`, `src`, `imageUrl`, `poster`, `backgroundImage`, …), логика — `blocks/shared/mediaFields.ts`.
 - TipTap (`SimpleEditor`): кнопка «Загрузить» отправляет файл в медиатеку (`handleImageUpload` → `POST /admin/api/media/assets`, прогресс и ошибки показываются), кнопка «Медиатека» вставляет изображение из библиотеки с `alt`/`title`.
 - Редактор страницы (`admin/features/page-editor`): «Изображение для соцсетей» (`ogImage`, абсолютный URL по `window.location.origin`) и изображение блока `text_image`.
 
@@ -102,5 +102,5 @@
 ## Тесты
 
 - PHPUnit: `tests/Functional/Media/AdminMediaApiTest.php` (список, пагинация, поиск, фильтры, загрузка, дедупликация, PATCH, «где используется», защита удаления, формат ошибок), `tests/Unit/Media/Domain/*`, `tests/Unit/Media/Application/Usage/*`.
-- Vitest: `admin/features/media/*.spec.*`, `admin/modules/page-builder/blocks/shared/mediaFields.spec.ts`, `admin/modules/page-builder/components/BlockMediaFields.spec.tsx`.
+- Vitest: `admin/features/media/*.spec.*`, `admin/modules/page-builder/blocks/shared/mediaFields.spec.ts`, `admin/features/page-editor/ContentTab.spec.tsx`.
 - E2E smoke: сценарий «media library» в `tests/e2e/admin-smoke.spec.ts`.

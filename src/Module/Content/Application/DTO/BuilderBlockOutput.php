@@ -17,6 +17,7 @@ final readonly class BuilderBlockOutput
     public function __construct(
         public string $id,
         public string $type,
+        public string $name,
         public bool $enabled,
         public int $position,
         public array $content,
@@ -30,6 +31,7 @@ final readonly class BuilderBlockOutput
         return new self(
             (string) $block->id(),
             $block->type()->value,
+            $block->name(),
             $block->isEnabled(),
             $block->position(),
             $block->content(),
@@ -49,6 +51,7 @@ final readonly class BuilderBlockOutput
         return [
             'id' => $this->id,
             'type' => $this->type,
+            'name' => $this->name,
             'enabled' => $this->enabled,
             'position' => $this->position,
             'content' => JsonObject::from($this->content),

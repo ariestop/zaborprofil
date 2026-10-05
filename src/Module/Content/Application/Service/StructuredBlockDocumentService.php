@@ -11,6 +11,7 @@ use Symfony\Component\Uid\Ulid;
 final readonly class StructuredBlockDocumentService
 {
     private const array RICH_TEXT_KEYS = ['html', 'text', 'answer', 'description'];
+    private const int NAME_MAX_LENGTH = 180;
 
     public function __construct(
         private BlockSchemaRegistry $blockSchemas,
@@ -22,7 +23,7 @@ final readonly class StructuredBlockDocumentService
     /**
      * @param array<string, mixed> $blockPayload
      *
-     * @return array{id:string, type:BlockType, enabled:bool, position:int, content:array<string, mixed>, settings:array<string, mixed>}
+     * @return array{id:string, type:BlockType, name:string|null, enabled:bool, position:int, content:array<string, mixed>, settings:array<string, mixed>}
      */
     public function parseBlockPayload(array $blockPayload, int $position): array
     {
@@ -34,6 +35,12 @@ final readonly class StructuredBlockDocumentService
             throw new InvalidArgumentException('Block "type" is required.');
         }
         $type = BlockType::from($typeRaw);
+
+        $nameRaw = $blockPayload['name'] ?? null;
+        if ($nameRaw !== null && !\is_string($nameRaw)) {
+            throw new InvalidArgumentException('Block "name" must be a string.');
+        }
+        $name = $nameRaw === null ? '' : trim($nameRaw);
 
         $enabledRaw = $blockPayload['enabled'] ?? true;
         if (!\is_bool($enabledRaw)) {
@@ -54,6 +61,7 @@ final readonly class StructuredBlockDocumentService
         return [
             'id' => $id,
             'type' => $type,
+            'name' => $name === '' ? null : mb_substr($name, 0, self::NAME_MAX_LENGTH),
             'enabled' => $enabledRaw,
             'position' => $position,
             'content' => $content,
@@ -64,7 +72,7 @@ final readonly class StructuredBlockDocumentService
     /**
      * @param list<array<string, mixed>> $blocksPayload
      *
-     * @return list<array{id:string, type:BlockType, enabled:bool, position:int, content:array<string, mixed>, settings:array<string, mixed>}>
+     * @return list<array{id:string, type:BlockType, name:string|null, enabled:bool, position:int, content:array<string, mixed>, settings:array<string, mixed>}>
      */
     public function parseBlocks(array $blocksPayload): array
     {

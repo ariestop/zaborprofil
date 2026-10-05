@@ -1,1 +1,10 @@
-{% include 'public/blocks/text.html.twig' with { block: block } only %}
+{# Текст из конструктора: HTML уже очищен при сохранении (StructuredRichTextSanitizer). #}
+{% set html = block.content.html ?? block.content.text ?? '' %}
+{% if html is not empty or (block.content.title ?? '') is not empty %}
+    <section class="prose max-w-none" data-block-type="rich-text">
+        {% if (block.content.title ?? '') is not empty %}
+            <h2>{{ block.content.title }}</h2>
+        {% endif %}
+        {{ html|raw }}
+    </section>
+{% endif %}

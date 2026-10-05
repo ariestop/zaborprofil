@@ -12,6 +12,7 @@ use App\Module\Content\Application\DTO\PageBuilderDocumentOutput;
 use App\Module\Content\Application\DTO\PageRevisionOutput;
 use App\Module\Content\Application\Handler\PublishPageHandler;
 use App\Module\Content\Application\Handler\RollbackPageRevisionHandler;
+use App\Module\Content\Application\Service\BlockSchemaRegistry;
 use App\Module\Content\Application\Service\BuilderDocumentVersion;
 use App\Module\Content\Application\Service\ContentId;
 use App\Module\Content\Application\Service\CurrentAdminActor;
@@ -77,6 +78,7 @@ final readonly class PageBuilderApiController
         StructuredBlockDocumentService $documentService,
         PublicPageCacheInvalidator $cacheInvalidator,
         BuilderDocumentVersion $versions,
+        BlockSchemaRegistry $schemas,
     ): JsonResponse {
         if (!$this->authorizationChecker->isGranted(AdminPermission::BLOCKS_EDIT)) {
             return $this->accessDenied();
@@ -141,7 +143,7 @@ final readonly class PageBuilderApiController
                 if ($existingBlock instanceof PageBlock) {
                     $existingBlock->update(
                         $parsed['type'],
-                        $this->nameFromType($parsed['type']->value),
+                        $parsed['name'] ?? ($existingBlock->type() === $parsed['type'] ? $existingBlock->name() : $schemas->get($parsed['type'])->label),
                         $parsed['content'],
                         $parsed['settings'],
                         $parsed['enabled'],
@@ -156,7 +158,7 @@ final readonly class PageBuilderApiController
                 $newBlock = new PageBlock(
                     $page,
                     $parsed['type'],
-                    $this->nameFromType($parsed['type']->value),
+                    $parsed['name'] ?? $schemas->get($parsed['type'])->label,
                     $position,
                     $parsed['content'],
                     $parsed['settings'],
@@ -190,6 +192,7 @@ final readonly class PageBuilderApiController
         Request $request,
         StructuredBlockDocumentService $documentService,
         TwigBlockRenderer $blockRenderer,
+        BlockSchemaRegistry $schemas,
     ): JsonResponse {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_VIEW)) {
             return $this->accessDenied();
@@ -221,7 +224,7 @@ final readonly class PageBuilderApiController
                 $html .= $blockRenderer->render(PageBlockView::fromSnapshot([
                     'id' => $parsed['id'],
                     'type' => $parsed['type']->value,
-                    'name' => $this->nameFromType($parsed['type']->value),
+                    'name' => $parsed['name'] ?? $schemas->get($parsed['type'])->label,
                     'position' => $position,
                     'content' => $parsed['content'],
                     'settings' => $parsed['settings'],
@@ -355,11 +358,6 @@ final readonly class PageBuilderApiController
         }
 
         return $sessionId;
-    }
-
-    private function nameFromType(string $type): string
-    {
-        return trim((string) preg_replace('/\s+/', ' ', str_replace(['.', '-'], ' ', $type)));
     }
 
     private function accessDenied(): JsonResponse

@@ -25,6 +25,7 @@ export function deserializeBuilderBlock(raw: unknown, index: number): BuilderBlo
   return {
     id: typeof source.id === 'string' ? source.id : '',
     type: (typeof source.type === 'string' ? source.type : '') as BuilderBlockType,
+    ...(typeof source.name === 'string' && source.name.trim() !== '' ? { name: source.name } : {}),
     enabled: typeof source.enabled === 'boolean' ? source.enabled : true,
     position,
     content: toJsonObject(source.content),

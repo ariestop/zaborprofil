@@ -1,1 +1,29 @@
-{% include 'public/blocks/hero.html.twig' with { block: block } only %}
+{# Первый экран из конструктора: заголовок, подзаголовок, текст, кнопка и необязательное фоновое фото. #}
+{% set content = block.content %}
+{% set image = content.image ?? '' %}
+{% set cta_label = content.cta.label ?? '' %}
+{% set cta_href = content.cta.href ?? '#lead-form' %}
+{% if cta_href == '#lead' or cta_href == '' %}{% set cta_href = '#lead-form' %}{% endif %}
+<section class="relative isolate overflow-hidden rounded-3xl bg-emerald-900 px-8 py-14 text-white" data-block-type="hero.classic">
+    {% if image is not empty %}
+        {{ responsive_image(image, {
+            decorative: true,
+            class: 'absolute inset-0 -z-10 h-full w-full object-cover',
+            sizes: '(min-width: 1152px) 1152px, 100vw',
+            priority: above_fold|default(false)
+        }) }}
+        <div class="absolute inset-0 -z-10 bg-emerald-950/60"></div>
+    {% endif %}
+    {% if (content.title ?? '') is not empty %}
+        <h2 class="text-4xl font-bold">{{ content.title }}</h2>
+    {% endif %}
+    {% if (content.subtitle ?? '') is not empty %}
+        <p class="mt-4 max-w-3xl text-xl leading-8 text-emerald-50">{{ content.subtitle }}</p>
+    {% endif %}
+    {% if (content.text ?? '') is not empty %}
+        <p class="mt-4 max-w-3xl text-lg leading-8 text-emerald-50">{{ content.text }}</p>
+    {% endif %}
+    {% if cta_label is not empty %}
+        <a class="mt-8 inline-flex items-center rounded-xl bg-white px-6 py-3 font-semibold text-emerald-900 hover:bg-emerald-50" href="{{ cta_href }}">{{ cta_label }}</a>
+    {% endif %}
+</section>

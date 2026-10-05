@@ -126,6 +126,8 @@ export interface BuilderBlockMetadata {
 export interface BuilderBlock {
   id: string
   type: BuilderBlockType
+  /** Название блока для редактора («Первый экран», «SEO-текст»). Пустое — подставляется название вида блока. */
+  name?: string
   enabled: boolean
   position: number
   content: Record<string, unknown>

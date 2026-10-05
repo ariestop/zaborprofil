@@ -1,1 +1,31 @@
-{% include 'public/blocks/gallery.html.twig' with { block: block } only %}
+{# «Наши работы»: карточки объектов с фото, названием и ссылкой. Пустой блок не выводится. #}
+{% set works = (block.content.items ?? [])|filter(item => (item.image ?? item.src ?? '') is not empty or (item.title ?? '') is not empty) %}
+{% if works|length > 0 %}
+    <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs" data-block-type="portfolio">
+        <h2 class="text-2xl font-semibold text-slate-950">{{ (block.content.title ?? '') is not empty ? block.content.title : 'Наши работы' }}</h2>
+        <div class="mt-6 grid gap-4 md:grid-cols-3">
+            {% for item in works %}
+                {% set href = item.href ?? '' %}
+                <article class="overflow-hidden rounded-xl border border-slate-200">
+                    {% if (item.image ?? item.src ?? '') is not empty %}
+                        {{ responsive_image(item.image ?? item.src, {
+                            alt: item.alt ?? null,
+                            fallback_alt: item.title ?? block.name,
+                            class: 'aspect-4/3 w-full object-cover',
+                            sizes: '(min-width: 1152px) 350px, (min-width: 768px) 33vw, 100vw'
+                        }) }}
+                    {% endif %}
+                    {% if (item.title ?? '') is not empty %}
+                        <h3 class="p-4 font-semibold text-slate-950">
+                            {% if href is not empty and href != '#' %}
+                                <a class="hover:text-emerald-700" href="{{ href }}">{{ item.title }}</a>
+                            {% else %}
+                                {{ item.title }}
+                            {% endif %}
+                        </h3>
+                    {% endif %}
+                </article>
+            {% endfor %}
+        </div>
+    </section>
+{% endif %}

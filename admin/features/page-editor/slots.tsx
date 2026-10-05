@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { usePageRevisionsQuery, type PageStatus } from '../../entities/page/api'
 import { adminQueryKeys } from '../../shared/api/query'
 import { Button } from '../../shared/ui/button'
@@ -15,13 +15,17 @@ export interface PagePublishingSlotProps {
   saveState: SaveState
   hasUnsavedChanges: boolean
   saveAll: () => Promise<boolean>
+  /** Без собственной кнопки: панель открывается снаружи (пункт меню в шапке редактора). */
+  hideTrigger?: boolean
+  /** Каждое изменение числа открывает панель. */
+  openSignal?: number
 }
 
 /**
  * Кнопка в шапке редактора: открывает панель workflow (смена статуса, расписание, журнал).
  * Несохранённые правки сохраняются перед открытием, чтобы расписание и «неопубликованные изменения» считались по актуальному состоянию.
  */
-export function PagePublishingSlot({ pageId, status, saveState, hasUnsavedChanges, saveAll }: PagePublishingSlotProps): ReactNode {
+export function PagePublishingSlot({ pageId, status, saveState, hasUnsavedChanges, saveAll, hideTrigger = false, openSignal = 0 }: PagePublishingSlotProps): ReactNode {
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
   const [opening, setOpening] = useState(false)
@@ -43,15 +47,27 @@ export function PagePublishingSlot({ pageId, status, saveState, hasUnsavedChange
     }
   }
 
+  const openPanelRef = useRef(openPanel)
+  useEffect(() => {
+    openPanelRef.current = openPanel
+  })
+  useEffect(() => {
+    if (openSignal > 0) {
+      void openPanelRef.current()
+    }
+  }, [openSignal])
+
   const onChanged = async (): Promise<void> => {
     await queryClient.invalidateQueries({ queryKey: adminQueryKeys.pages })
   }
 
   return (
     <>
-      <Button type="button" variant="outline" disabled={opening || saveState === 'saving'} onClick={() => void openPanel()}>
-        Публикация и расписание
-      </Button>
+      {hideTrigger ? null : (
+        <Button type="button" variant="outline" disabled={opening || saveState === 'saving'} onClick={() => void openPanel()}>
+          Публикация и расписание
+        </Button>
+      )}
       <Dialog
         open={open}
         onOpenChange={setOpen}
