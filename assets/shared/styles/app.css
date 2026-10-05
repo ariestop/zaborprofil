@@ -1,60 +1,20 @@
 @import 'tailwindcss' source(none);
-@import './fonts.css';
+@import './theme.css';
 
 /*
   Tailwind 4 scans the whole project by default. Keep the same sources as the
-  old tailwind.config.ts (Twig templates and admin/site assets) so utilities
+  old tailwind.config.ts (Twig templates, site assets and the admin SPA) so utilities
   are not generated from docs, PHP code or tests.
 */
 @source '../../../templates';
 @source '../../../assets';
+@source '../../../admin';
+
+/* Dark mode is toggled by the `dark` class on <html> (admin theme provider). */
+@custom-variant dark (&:where(.dark, .dark *));
 
 @plugin '@tailwindcss/typography';
 
-/*
-  Токены бренд-системы «Периметр» (вариант E). Источник значений —
-  docs/50-brand-system.md, раздел 11. Новые цвета и шрифты добавляются туда и сюда вместе.
-*/
-@theme {
-  --font-sans: 'Onest Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  /* В Sofia Sans Condensed нет знака ₽ — он берётся из Onest. */
-  --font-cond: 'Sofia Sans Condensed', 'Onest Variable', 'Arial Narrow', sans-serif;
-
-  --color-brand-50: #eef6ec;   /* подсказки, выбранные фильтры, успех */
-  --color-brand-100: #d9edd5;
-  --color-brand-200: #b6dcaf;
-  --color-brand-300: #8cc783;
-  --color-brand-500: #45a63d;  /* знак, полосы, крупные акценты — не для текста */
-  --color-brand-600: #37922f;
-  --color-brand-700: #2d7f27;  /* кнопки, ссылки: 5,0:1 на белом */
-  --color-brand-800: #246c1f;  /* hover / active */
-  --color-brand-900: #1a4f17;
-
-  --color-ink: #23272d;        /* основной текст */
-  --color-graphite: #575c63;   /* подписи, вторичный текст */
-  --color-surface: #f3f5f2;    /* фон секций и карточек */
-  --color-line: #dce0db;       /* рамки, разделители */
-  --color-line-strong: #c9cec8; /* рамки полей и вторичных кнопок */
-  --color-night: #2a2f35;      /* подвал, тёмные плашки */
-  --color-badge: #f2b13b;      /* только бейджи, текст на нём — ink */
-  --color-focus: #9ad38f;      /* обводка :focus-visible */
-  --color-danger: #b3261e;     /* ошибки полей */
-
-  /* Цвета продукции — только выбор цвета товара, не интерфейс. */
-  --color-ral-6005: #0f4336;
-  --color-ral-8017: #45322e;
-  --color-ral-7024: #373f43;
-  --color-ral-3005: #5e2028;
-  --color-ral-5005: #1e4a84;
-  --color-ral-1014: #ddc49a;
-  --color-ral-9003: #f1f1ec;
-
-  --radius-btn: 10px;
-  --radius-card: 12px;
-
-  --text-base: 1.125rem;       /* 18px */
-  --text-base--line-height: 1.55;
-}
 
 /*
   The default border color has changed to `currentcolor` in Tailwind CSS v4,
@@ -79,201 +39,13 @@
     color-scheme: light;
   }
 
+  html.dark {
+    color-scheme: dark;
+  }
+
   /* Tailwind 4 preflight uses the default cursor on buttons; keep Tailwind 3 behavior. */
   button:not(:disabled),
   [role='button']:not(:disabled) {
     cursor: pointer;
-  }
-
-  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
-    outline: 3px solid var(--color-focus);
-    outline-offset: 2px;
-  }
-}
-
-/*
-  Компоненты flat 2.0 (docs/50-brand-system.md, раздел 7).
-  Используются в Twig-шаблонах публичного сайта и при необходимости в админке.
-*/
-@layer components {
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    min-height: 3rem;
-    padding: 0.75rem 1.25rem;
-    border-radius: var(--radius-btn);
-    font-family: var(--font-sans);
-    font-size: 1rem;
-    font-weight: 600;
-    line-height: 1.2;
-    text-align: center;
-    text-decoration: none;
-    transition: background-color 0.15s, box-shadow 0.15s, transform 0.15s;
-  }
-
-  .btn:disabled,
-  .btn[aria-disabled='true'] {
-    background: #e3e6e2;
-    color: #8a9099;
-    box-shadow: none;
-    transform: none;
-    cursor: not-allowed;
-  }
-
-  .btn-primary {
-    background: var(--color-brand-700);
-    color: #fff;
-  }
-
-  .btn-primary:hover:not(:disabled) {
-    background: var(--color-brand-800);
-    box-shadow: 0 6px 16px rgb(45 127 39 / 0.28);
-    transform: translateY(-1px);
-  }
-
-  .btn-secondary {
-    background: #fff;
-    color: var(--color-ink);
-    box-shadow: inset 0 0 0 1.5px var(--color-line-strong);
-  }
-
-  .btn-secondary:hover:not(:disabled) {
-    box-shadow: inset 0 0 0 1.5px var(--color-ink);
-  }
-
-  .field {
-    display: grid;
-    gap: 0.375rem;
-  }
-
-  .field-label {
-    font-size: 0.9375rem;
-    font-weight: 500;
-    color: var(--color-graphite);
-  }
-
-  .field-input {
-    width: 100%;
-    min-height: 3rem;
-    padding: 0.625rem 0.875rem;
-    border: 1.5px solid var(--color-line-strong);
-    border-radius: var(--radius-btn);
-    background: #fff;
-    color: var(--color-ink);
-    font-size: 1rem;
-    line-height: 1.4;
-  }
-
-  .field-input:focus {
-    border-color: var(--color-brand-700);
-    box-shadow: 0 0 0 3px var(--color-brand-100);
-    outline: none;
-  }
-
-  .field-input[aria-invalid='true'] {
-    border-color: var(--color-danger);
-  }
-
-  .field-error {
-    font-size: 0.875rem;
-    color: var(--color-danger);
-  }
-
-  .eyebrow {
-    font-family: var(--font-cond);
-    font-size: 0.875rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--color-brand-700);
-  }
-
-  .price {
-    font-family: var(--font-cond);
-    font-weight: 800;
-    font-variant-numeric: tabular-nums;
-    line-height: 1;
-  }
-
-  .chip {
-    display: inline-flex;
-    align-items: center;
-    min-height: 1.75rem;
-    padding: 0.25rem 0.625rem;
-    border-radius: 6px;
-    background: var(--color-surface);
-    color: var(--color-ink);
-    font-family: var(--font-cond);
-    font-size: 0.9375rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-  }
-
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    min-height: 1.5rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 6px;
-    background: var(--color-badge);
-    color: var(--color-ink);
-    font-family: var(--font-cond);
-    font-size: 0.8125rem;
-    font-weight: 800;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-  }
-
-  /* Нижняя панель на телефоне: позвонить / написать / рассчитать. */
-  .mobile-bar {
-    position: fixed;
-    inset-inline: 0;
-    bottom: 0;
-    z-index: 40;
-    display: grid;
-    grid-auto-columns: 1fr;
-    grid-auto-flow: column;
-    gap: 0.375rem;
-    padding: 0.5rem 0.5rem calc(0.5rem + env(safe-area-inset-bottom, 0px));
-    background: #fff;
-    border-top: 1px solid var(--color-line);
-  }
-
-  .mobile-bar a {
-    display: flex;
-    min-height: 3.25rem;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.2rem;
-    border-radius: var(--radius-card);
-    background: var(--color-surface);
-    color: var(--color-ink);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    line-height: 1;
-    text-decoration: none;
-  }
-
-  .mobile-bar a.is-primary {
-    background: var(--color-brand-700);
-    color: #fff;
-  }
-
-  .mobile-bar svg {
-    width: 1.25rem;
-    height: 1.25rem;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .btn {
-    transition: none;
-  }
-
-  .btn-primary:hover:not(:disabled) {
-    transform: none;
   }
 }

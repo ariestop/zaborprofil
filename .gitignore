@@ -12,6 +12,9 @@
 !/public_html/uploads/.gitkeep
 /node_modules/
 /coverage/
+/playwright-report/
+/test-results/
+/.playwright/
 /.phpunit.cache/
 /.phpunit.result.cache
 /npm-debug.log*

@@ -1,13 +1,11 @@
-<section class="rounded-[var(--radius-card)] bg-night p-8 text-white" data-block-type="cta_form">
-    <div class="grid gap-8 md:grid-cols-[1fr_420px] md:items-start">
+<section class="zp-section" data-block-type="cta_form">
+    <div class="zp-container grid gap-6 md:grid-cols-[1fr_26rem] md:items-start">
         <div>
-            <h2 class="text-3xl font-extrabold tracking-tight text-balance">{{ block.content.title|default(block.name) }}</h2>
-            {% if block.content.text is defined %}
-                <p class="mt-4 text-lg leading-8 text-white/85">{{ block.content.text }}</p>
+            <h2 class="zp-h2">{{ block.content.title ?? block.name }}</h2>
+            {% if (block.content.text ?? '') is not empty %}
+                <p class="zp-lead">{{ block.content.text }}</p>
             {% endif %}
         </div>
-        <div class="rounded-[var(--radius-card)] bg-white p-5 text-ink">
-            {% include 'public/partials/lead_form.html.twig' %}
-        </div>
+        {% include 'public/partials/lead_form.html.twig' %}
     </div>
 </section>

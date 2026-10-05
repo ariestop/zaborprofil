@@ -1,0 +1,33 @@
+{# Таблица цен из конструктора: columns — заголовки, rows — списки ячеек по порядку колонок. На телефоне строки становятся карточками. #}
+{% set columns = block.content.columns ?? [] %}
+{% set rows = block.content.rows ?? [] %}
+{% if columns|length > 0 and rows|length > 0 %}
+    <section class="zp-section" data-block-type="price-table">
+        <div class="zp-container">
+            {% if (block.content.title ?? '') is not empty %}
+                <h2 class="zp-h2 mb-6">{{ block.content.title }}</h2>
+            {% endif %}
+            <div class="md:overflow-x-auto md:rounded-2xl md:border md:border-line">
+                <table class="zp-ptable">
+                    <thead>
+                        <tr>
+                            {% for column in columns %}
+                                <th scope="col">{{ column.label ?? column }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                            <tr>
+                                {% for column in columns %}
+                                    {% set key = column.key ?? column %}
+                                    <td data-label="{{ column.label ?? column }}">{{ row[loop.index0] ?? row[key] ?? '' }}</td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+{% endif %}

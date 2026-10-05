@@ -52,7 +52,7 @@ jobs:
         with:
           php-version: '8.5'
           extensions: ctype, iconv, intl, mbstring, opcache, pdo_mysql
-          coverage: none
+          coverage: pcov
           tools: composer:v2
 
       - name: Validate Composer
@@ -85,8 +85,13 @@ jobs:
       - name: Run Doctrine migrations on the CI MySQL
         run: php bin/console doctrine:migrations:migrate --env=test --no-interaction --allow-no-migration
 
-      - name: Doctrine schema validation
-        run: php bin/console doctrine:schema:validate --env=test --no-interaction --skip-sync
+      - name: Doctrine migrations rollback to empty schema and re-apply
+        run: |
+          php bin/console doctrine:migrations:migrate first --env=test --no-interaction
+          php bin/console doctrine:migrations:migrate --env=test --no-interaction
+
+      - name: Doctrine schema validation (mapping and database in sync)
+        run: php bin/console doctrine:schema:validate --env=test --no-interaction
 
       - name: Symfony container linter
         run: php bin/console lint:container --env=test --no-interaction
@@ -101,14 +106,24 @@ jobs:
             bash -n "$script"
           done
 
+      - name: Uptime check script
+        run: |
+          set -e
+          bash -n tools/monitoring/uptime-check.sh
+          shellcheck -x tools/monitoring/uptime-check.sh tests/shell/uptime-check.sh
+          bash tests/shell/uptime-check.sh
+
       - name: Beget deploy script checks
         run: |
           set -e
           shellcheck -x tools/deploy/deploy-beget.sh tests/shell/deploy-beget.sh
           bash tests/shell/deploy-beget.sh
 
-      - name: PHPUnit
-        run: composer test
+      - name: PHPUnit with coverage
+        run: composer test:coverage
+
+      - name: PHP coverage threshold
+        run: composer check:coverage
 
   frontend:
     name: Frontend
@@ -130,5 +145,138 @@ jobs:
       - name: NPM audit
         run: npm audit --audit-level=high
 
+      - name: Frontend typecheck
+        run: npm run typecheck
+
+      - name: Frontend unit tests with coverage threshold
+        run: npm run test:frontend:coverage
+
+      - name: Frontend lint (admin scope)
+        run: npm run lint:admin
+
       - name: Build frontend
         run: npm run build
+
+      - name: Chunk budgets
+        run: npm run check:chunks
+
+  e2e-smoke:
+    name: E2E Smoke
+    runs-on: ubuntu-latest
+    needs:
+      - backend
+      - frontend
+
+    env:
+      MYSQL_USER: zaborprofil_test
+      MYSQL_PASSWORD: zaborprofil_test
+      MYSQL_DATABASE: zaborprofil_test
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: '3306'
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: zaborprofil_test
+          MYSQL_USER: zaborprofil_test
+          MYSQL_PASSWORD: zaborprofil_test
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -proot --silent"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+          --health-start-period 30s
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: ctype, iconv, intl, mbstring, opcache, pdo_mysql
+          coverage: none
+          tools: composer:v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 25.9.0
+          cache: npm
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Use MySQL for test environment
+        run: cp .env.test.ci .env.test.local
+
+      - name: Generate E2E admin password
+        run: echo "E2E_ADMIN_PASSWORD=$(openssl rand -hex 24)" >> "$GITHUB_ENV"
+
+      - name: Run Doctrine migrations for E2E database
+        run: php bin/console doctrine:migrations:migrate --env=test --no-interaction --allow-no-migration
+
+      - name: Seed E2E admin user
+        env:
+          APP_ENV: test
+          APP_DEBUG: 0
+          E2E_ADMIN_EMAIL: e2e-admin@example.test
+          E2E_ADMIN_PASSWORD: ${{ env.E2E_ADMIN_PASSWORD }}
+        run: |
+          export DATABASE_URL="mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}?serverVersion=8.4&charset=utf8mb4"
+          php tools/testing/seed-e2e-admin.php
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Start app server for E2E smoke
+        env:
+          APP_ENV: test
+          APP_DEBUG: 0
+          SITE_URL: http://127.0.0.1:8000
+          DEFAULT_URI: http://127.0.0.1:8000
+          VITE_MANIFEST_PATH: ${{ github.workspace }}/public_html/build/.vite/manifest.json
+        run: |
+          export DATABASE_URL="mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}?serverVersion=8.4&charset=utf8mb4"
+          php -d variables_order=EGPCS -S 127.0.0.1:8000 -t public_html >/tmp/e2e-app.log 2>&1 &
+
+      - name: Wait for app server
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:8000/admin/login >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "App server did not start in time."
+          cat /tmp/e2e-app.log || true
+          exit 1
+
+      - name: Run Playwright E2E suite (smoke + content-to-lead flow)
+        env:
+          E2E_BASE_URL: http://127.0.0.1:8000
+          E2E_ADMIN_EMAIL: e2e-admin@example.test
+          E2E_ADMIN_PASSWORD: ${{ env.E2E_ADMIN_PASSWORD }}
+        run: npm run test:e2e
+
+      - name: Upload Playwright artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-e2e-smoke-artifacts
+          path: |
+            test-results/
+            playwright-report/
+            /tmp/e2e-app.log
+          if-no-files-found: ignore

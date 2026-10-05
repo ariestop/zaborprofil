@@ -148,21 +148,33 @@ ss -tln '( sport = :8081 )'
 
 ## Создание администратора
 
-Целевое: консольная команда `app:user:create-admin` (пока отсутствует). Сейчас: сгенерировать bcrypt-хеш и вставить строку в `admin_users` (тип `id` в MySQL — **BINARY(16)**, бинарное представление ULID из PHP; колонки: `email`, `roles` JSON, `password_hash`, `active`, `created_at`, `updated_at`).
-
-Сгенерировать хеш пароля (из корня проекта, внутри app-контейнера при Docker):
+Администратор создаётся консольной командой `app:user:create-admin`. Пароль не хранится в открытом виде: он хешируется стандартным `password_hasher` Symfony (`auto`), а все изменения пишутся в журнал аудита (пароль и хеш в журнал не попадают; для команд `actorEmail` = `console`).
 
 ```bash
-docker compose exec app php bin/console security:hash-password 'your-password' --no-interaction
+# интерактивно: пароль вводится скрыто, с подтверждением
+docker compose exec app php bin/console app:user:create-admin admin@example.com
+
+# без интерактива (CI, скрипты): пароль из переменной окружения, а не из аргументов команды
+docker compose exec -e ADMIN_PASSWORD='длинный-пароль-12+' app php bin/console app:user:create-admin admin@example.com --no-interaction
 ```
 
-Получить hex бинарного представления нового ULID (для `UNHEX()` в MySQL):
+Поведение:
+
+- Пароль берётся из `--password`, затем из переменной `ADMIN_PASSWORD`, затем запрашивается интерактивно. Опция `--password` попадает в историю shell и список процессов — используйте её только для локальных экспериментов. Политика пароля: от 12 до 128 символов, не равен email.
+- Команда идемпотентна. Если пользователь с таким email уже есть, команда ничего не меняет (код выхода `0`, сообщение «изменений нет») и не запрашивает пароль. Допустимые побочные действия для существующей записи: активировать деактивированного пользователя и добавить `ROLE_ADMIN`, если у него нет ни одной административной роли.
+- `--reset-password` — сбросить пароль существующего пользователя (и при необходимости заново активировать его).
+- `--super` — выдать `ROLE_SUPER_ADMIN` (нужна для опасных операций `system.dangerous`) вместо `ROLE_ADMIN`; существующему пользователю роль добавляется к текущим.
+- Email нормализуется (trim + lowercase).
+
+Сменить пароль существующего пользователя без остальных побочных эффектов:
 
 ```bash
-docker compose exec app php -r 'require "vendor/autoload.php"; echo bin2hex((new Symfony\Component\Uid\Ulid())->toBinary());'
+docker compose exec app php bin/console app:user:change-password admin@example.com
 ```
 
-Далее `INSERT` через Adminer или `make db` с `id` (`UNHEX('<hex>')`), `email`, `roles` (JSON-строка, например `'["ROLE_ADMIN"]'`), `password_hash` и метками времени. Не копируйте чужие примеры с устаревшими именами колонок (`password`, `is_active`): актуальная схема — в миграции `Version20261004000100` и entity `AdminUser`.
+На staging/production (native-стек) те же команды запускаются без Docker: `php bin/console app:user:create-admin ... --env=prod`. Для уже существующего администратора на staging (например, созданного ранее вручную) повторный запуск `app:user:create-admin <email>` безопасен и ничего не изменит.
+
+Остальное управление (роли, деактивация, удаление, сброс пароля, создание пользователей) доступно в админке на странице «Пользователи и роли» (`/admin/users`, право `users.manage`).
 
 ## Ежедневные команды
 

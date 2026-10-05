@@ -14,4 +14,9 @@ interface AuditLogRepositoryInterface
      * @return list<AuditLogEntry>
      */
     public function findLatest(int $limit = 50): array;
+
+    /**
+     * @return list<AuditLogEntry> новые записи первыми
+     */
+    public function findByEntity(string $entityType, string $entityId, string $actionPrefix, int $limit = 50): array;
 }

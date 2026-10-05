@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
-#[Route('/admin/api/system/audit')]
+#[Route('/admin/api/system/audit/legacy')]
 final readonly class AuditLogApiController
 {
     public function __construct(
@@ -21,7 +21,7 @@ final readonly class AuditLogApiController
     ) {
     }
 
-    #[Route('', name: 'admin_api_system_audit_list', methods: ['GET'])]
+    #[Route('', name: 'admin_api_system_audit_legacy_list', methods: ['GET'])]
     public function list(Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SYSTEM_VIEW)) {

@@ -1,0 +1,38 @@
+{# Тарифы/варианты: цена крупно, характеристики списком, кнопка подставляет вариант в форму заявки. #}
+{% set items = (block.content.items ?? [])|filter(item => (item.title ?? '') is not empty) %}
+{% if items|length > 0 %}
+    <section class="zp-section" data-block-type="pricing" {% if (block.settings.anchor ?? '') is not empty %}id="{{ block.settings.anchor }}"{% endif %}>
+        <div class="zp-container">
+            {% set heading = (block.content.title ?? '') is not empty ? block.content.title : block.name %}
+            {% if heading is not empty %}
+                <h2 class="zp-h2">{{ heading }}</h2>
+            {% endif %}
+            {% if (block.content.subtitle ?? '') is not empty %}
+                <p class="zp-lead">{{ block.content.subtitle }}</p>
+            {% endif %}
+            {# На телефоне варианты листаются свайпом (не растягивают страницу), на планшете и ПК — сетка. #}
+            <div class="-mx-4 mt-6 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-pl-4 px-4 pb-3 sm:mx-0 sm:grid sm:snap-none sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 md:mt-8 lg:grid-cols-4 lg:gap-4">
+                {% for item in items %}
+                    {% set features = item.features ?? (item.text is defined and item.text ? [item.text] : []) %}
+                    <article class="zp-card flex w-[78%] max-w-72 shrink-0 snap-start flex-col sm:w-auto sm:max-w-none">
+                        <h3 class="text-base font-semibold text-ink">{{ item.title }}</h3>
+                        <p class="zp-price mt-3 text-4xl text-brand-800">{{ item.price ?? 'по запросу' }}</p>
+                        {% if features|length > 0 %}
+                            <ul class="mt-4 grid gap-1.5 border-t border-line pt-4 text-sm text-graphite">
+                                {% for feature in features %}
+                                    <li class="flex items-start gap-2"><svg class="mt-0.5 size-4 shrink-0 text-brand-600" aria-hidden="true"><use href="#i-check"/></svg>{{ feature }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                        <div class="mt-auto pt-5">
+                            <a class="zp-btn zp-btn--ghost zp-btn--sm w-full" href="#lead-form" data-lead-plan="{{ item.title }}">Рассчитать этот вариант</a>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+            {% if (block.content.note ?? '') is not empty %}
+                <p class="mt-4 text-sm text-graphite">{{ block.content.note }}</p>
+            {% endif %}
+        </div>
+    </section>
+{% endif %}

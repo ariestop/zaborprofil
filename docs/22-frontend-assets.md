@@ -14,14 +14,14 @@
 ## Где живёт
 
 ```text
+admin/             # React admin SPA: app.ts, components/, pages/, modules/, ...
 assets/
-├── admin/         # React admin SPA entry: app.ts, components/, views/, ...
-└── site/          # Public site: main.ts/css, partial JS для публичного сайта
+└── site/          # Публичный сайт: app.ts и прочие entry для SSR-страниц
 public_html/
-└── build/         # Vite output (gitignored)
+└── build/         # Вывод Vite (обычно gitignored)
 ```
 
-`vite.config.ts` использует два entry: `assets/site/app.ts` и `assets/admin/app.ts` (один `manifest.json`).
+`vite.config.ts` использует два entry: `assets/site/app.ts` и `admin/app.ts` (один `manifest.json`).
 
 ## Build
 
@@ -57,12 +57,13 @@ make npm-dev        # vite dev на :5173, HMR
 ## Подключение в Twig
 
 ```twig
-{# base.html.twig (публичный сайт): CSS входа #}
+{# base.html.twig (публичный сайт) #}
 {{ vite_entry_link_tags('assets/site/app.ts') }}
+{{ vite_entry_script_tags('assets/site/app.ts') }}
 
 {# admin/dashboard.html.twig #}
-{{ vite_entry_link_tags('assets/admin/app.ts') }}
-{{ vite_entry_script_tags('assets/admin/app.ts') }}
+{{ vite_entry_link_tags('admin/app.ts') }}
+{{ vite_entry_script_tags('admin/app.ts') }}
 ```
 
 `ViteAssetExtension`:
@@ -82,7 +83,7 @@ make npm-dev        # vite dev на :5173, HMR
 
 Вся конфигурация живёт в `assets/shared/styles/app.css`:
 
-- `@import 'tailwindcss' source(none)` и `@source` для `templates/` и `assets/`: Tailwind 4 по умолчанию сканирует весь проект, поэтому источники ограничены явно.
+- `@import 'tailwindcss' source(none)` и `@source` для `templates/`, `assets/` и `admin/`: Tailwind 4 по умолчанию сканирует весь проект, поэтому источники ограничены явно.
 - `@plugin '@tailwindcss/typography'`.
 - `@theme`: кастомные цвета (`brand-*`) и шрифт `--font-sans` (оставлен стек из Tailwind 3). Кастомные значения добавляются сюда, не inline.
 - `@layer base`: совместимость с v3 (цвет границы по умолчанию `gray-200`, курсор `pointer` у кнопок).
@@ -99,9 +100,23 @@ make npm-dev        # vite dev на :5173, HMR
 
 Публичный сайт — преимущественно SSR. JS на публичных страницах — минимальный (формы, lightbox, аналитика).
 
+Для блока `slider` используется локально установленный `swiper`:
+
+- JS и CSS импортируются в `assets/site/app.ts`;
+- инициализация выполняется только для элементов `.js-site-slider`;
+- настройки (`autoplay`, `loop`, `pagination`, `navigation`, `delayMs`) передаются из SSR через `data-slider-settings`;
+- публичный Twig (`templates/public/blocks/slider.html.twig`) рендерит full-width
+  hero-слайд: фон из `item.src`, overlay, контент поверх.
+
+Для стабильного full-bleed внутри ограниченного `main` контейнера используется
+комбинация:
+
+- `left-1/2 w-screen -translate-x-1/2` на внешней секции;
+- `w-full` на `.swiper` контейнере.
+
 ## Admin SPA
 
-См. [ADMIN_FRONTEND.md](ADMIN_FRONTEND.md). Единый entry `assets/admin/app.ts`
+См. [ADMIN_FRONTEND.md](ADMIN_FRONTEND.md). Единый entry `admin/app.ts`
 грузится в `templates/admin/dashboard.html.twig` и стартует React-приложение в
 `<div id="admin-app">`. CSRF token читается из `<meta name="admin-csrf-token">`.
 
@@ -129,7 +144,7 @@ npm run build
 
 ## Чек-лист добавления frontend-фичи
 
-- [ ] Файл в `assets/site/...` или `assets/admin/...`.
+- [ ] Файл в `assets/site/...` или `admin/...`.
 - [ ] Используется TypeScript, типы прописаны.
 - [ ] Tailwind классы (а не custom CSS) для оформления.
 - [ ] `npm run build` проходит без warnings.

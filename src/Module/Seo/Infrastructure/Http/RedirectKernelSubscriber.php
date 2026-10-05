@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Module\Seo\Infrastructure\Http;
 
+use App\Module\Seo\Application\Redirect\RedirectRuleValidator;
 use App\Module\Seo\Domain\Repository\RedirectRepositoryInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -12,15 +13,6 @@ use Symfony\Component\HttpKernel\KernelEvents;
 
 final readonly class RedirectKernelSubscriber implements EventSubscriberInterface
 {
-    private const array IGNORED_PREFIXES = [
-        '/admin',
-        '/build',
-        '/health',
-        '/uploads',
-        '/_profiler',
-        '/_wdt',
-    ];
-
     public function __construct(private RedirectRepositoryInterface $redirects)
     {
     }
@@ -39,7 +31,7 @@ final readonly class RedirectKernelSubscriber implements EventSubscriberInterfac
         }
 
         $path = $event->getRequest()->getPathInfo();
-        foreach (self::IGNORED_PREFIXES as $prefix) {
+        foreach (RedirectRuleValidator::IGNORED_SOURCE_PREFIXES as $prefix) {
             if (str_starts_with($path, $prefix)) {
                 return;
             }

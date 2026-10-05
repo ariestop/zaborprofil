@@ -1,20 +1,23 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ page.title }}{% endblock %}
+{% block title %}{{ seo_title is defined and seo_title ? seo_title : page.title }}{% endblock %}
 
 {% block body %}
-    <main class="mx-auto max-w-6xl px-6 py-12">
-        {% set page_breadcrumbs = breadcrumbs is defined ? breadcrumbs : breadcrumbs_for_page(page) %}
+    {% set page_breadcrumbs = breadcrumbs is defined ? breadcrumbs : breadcrumbs_for_page(page) %}
+    {% set h1_in_block = heading_in_first_block is defined and heading_in_first_block %}
+
+    <main>
+        {# Хлебные крошки показываем на внутренних страницах; на главной (одна «крошка») они не нужны. #}
         {% if page_breadcrumbs|length > 1 %}
-            <nav class="mb-8 text-sm text-slate-500" aria-label="Хлебные крошки">
-                <ol class="flex flex-wrap gap-2">
+            <nav class="border-b border-line bg-surface" aria-label="Хлебные крошки">
+                <ol class="zp-container flex items-center gap-1.5 overflow-x-auto py-2.5 text-sm whitespace-nowrap text-graphite">
                     {% for breadcrumb in page_breadcrumbs %}
-                        <li>
+                        <li class="flex items-center gap-1.5">
                             {% if breadcrumb.current %}
-                                <span class="text-slate-700" aria-current="page">{{ breadcrumb.label }}</span>
+                                <span class="font-medium text-ink" aria-current="page">{{ breadcrumb.label }}</span>
                             {% else %}
                                 <a class="hover:text-brand-700" href="{{ breadcrumb.path }}">{{ breadcrumb.label }}</a>
-                                <span class="ml-2 text-slate-300">/</span>
+                                <span class="text-line-strong" aria-hidden="true">/</span>
                             {% endif %}
                         </li>
                     {% endfor %}
@@ -22,16 +25,45 @@
             </nav>
         {% endif %}
 
-        <h1 class="text-4xl font-bold tracking-tight text-slate-950">{{ page.h1 }}</h1>
+        {# Переключатель «Частным клиентам / Бизнесу»: показывается, только если на странице есть блоки для бизнеса. #}
+        {% set has_b2b = false %}
+        {% for block in blocks %}
+            {% if 'data-audience="b2b"' in (block ~ '') %}{% set has_b2b = true %}{% endif %}
+        {% endfor %}
+        {% if has_b2b %}
+            <div class="zp-audience-bar">
+                <div class="zp-container flex flex-wrap items-center gap-x-4 gap-y-2 py-2.5">
+                    <span class="text-sm text-graphite" id="audience-label">Для кого:</span>
+                    <div class="zp-audience" role="group" aria-labelledby="audience-label" data-audience-switch>
+                        <button type="button" data-audience-value="b2c" aria-pressed="true">Частным клиентам</button>
+                        <button type="button" data-audience-value="b2b" aria-pressed="false">Бизнесу</button>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
 
-        <div class="mt-10 space-y-10">
-            {% for block in blocks %}
-                {{ block|raw }}
-            {% endfor %}
-        </div>
+        {# Если страница начинается с первого экрана, H1 выводится внутри него. #}
+        {% if not h1_in_block %}
+            <div class="zp-container pt-8 md:pt-12">
+                <h1 class="text-3xl font-bold tracking-tight text-balance text-ink md:text-4xl">{{ page.h1 }}</h1>
+            </div>
+        {% endif %}
 
-        <div class="mt-12">
-            {% include 'public/partials/lead_form.html.twig' %}
-        </div>
+        {% for block in blocks %}
+            {{ block|raw }}
+        {% endfor %}
+
+        {# Если форма заявки уже стоит среди блоков, вторая внизу страницы не нужна. #}
+        {% set has_inline_lead_form = false %}
+        {% for block in blocks %}
+            {% if 'id="lead-form"' in (block ~ '') %}{% set has_inline_lead_form = true %}{% endif %}
+        {% endfor %}
+        {% if not has_inline_lead_form %}
+            <section class="zp-section zp-section--alt">
+                <div class="zp-container max-w-3xl">
+                    {% include 'public/partials/lead_form.html.twig' %}
+                </div>
+            </section>
+        {% endif %}
     </main>
 {% endblock %}

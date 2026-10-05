@@ -31,12 +31,14 @@
 10. `cp .env.test.ci .env.test.local` — переключает тесты на MySQL.
 11. `doctrine:migrations:status --env=test`.
 12. `doctrine:migrations:migrate --env=test --allow-no-migration`.
-13. `doctrine:schema:validate --env=test --skip-sync`.
-14. `lint:container --env=test`.
-15. `lint:twig templates --env=test`.
-16. Bash syntax check для `tools/deploy/*.sh`; ShellCheck и `tests/shell/deploy-beget.sh` для Beget-деплоя (проверка `mysql://`, симлинков `shared/`, прогрева кэша, отката).
-17. `php bin/console app:smoke:test --env=test`.
-18. `composer test` (PHPUnit).
+13. `doctrine:migrations:migrate first` + `doctrine:migrations:migrate` — откат до пустой схемы и повторное применение (проверка `down()`).
+14. `doctrine:schema:validate --env=test` — полная проверка mapping и БД (исключения: [17-doctrine-and-database](17-doctrine-and-database.md) §13.1).
+15. `lint:container --env=test`.
+16. `lint:twig templates --env=test`.
+17. Bash syntax check для `tools/deploy/*.sh`; ShellCheck и `tests/shell/deploy-beget.sh` для Beget-деплоя (проверка `mysql://`, симлинков `shared/`, прогрева кэша, отката).
+18. `php bin/console app:smoke:test --env=test`.
+19. `composer test:coverage` (PHPUnit с `pcov`, Clover-отчёт в `var/coverage/clover.xml`).
+20. `composer check:coverage` — порог покрытия строк PHP (75%).
 
 #### Frontend job
 
@@ -44,7 +46,28 @@
 2. Setup Node 25.9.0.
 3. `npm ci`.
 4. `npm audit --audit-level=high`.
-5. `npm run build` (включает `tsc --noEmit`).
+5. `npm run typecheck`.
+6. `npm run test:frontend:coverage` (Vitest + пороги покрытия из `vitest.config.ts`).
+7. `npm run lint:admin`.
+8. `npm run build`.
+9. `npm run check:chunks`.
+
+#### E2E Smoke job
+
+Дополнительно запускается `E2E Smoke` job:
+
+1. Поднимает `mysql:8.4` service (Redis не используется).
+2. Применяет migrations в `test` env.
+3. Создаёт e2e admin user через `tools/testing/seed-e2e-admin.php`.
+4. Собирает frontend.
+5. Поднимает встроенный PHP server (`php -d variables_order=EGPCS -S`) на `127.0.0.1:8000`.
+   - `variables_order=EGPCS` обязателен: при дефолтном `GPCS` переменные окружения не попадают в `$_SERVER`,
+     Symfony Runtime игнорирует `APP_ENV`/`DATABASE_URL` и приложение стартует в `dev` с хостом БД `mysql`.
+   - `VITE_MANIFEST_PATH` указывает на реальный `public_html/build/.vite/manifest.json`: в `APP_ENV=test`
+     по умолчанию используется фикстурный манифест (`tests/Fixtures/vite/manifest.json`), ассеты которого не существуют.
+6. Устанавливает Chromium (`npx playwright install --with-deps chromium`).
+7. Запускает `npm run test:e2e` — smoke и сквозной сценарий «страница -> SEO -> картинка -> публикация -> публичная страница -> заявка -> статус в CRM» (`content-to-lead.spec.ts`). Smoke: (login -> pages -> единый редактор (в т. ч. старый URL `/builder`) -> быстрый preview, создание страницы -> правка SEO -> сохранение -> предпросмотр -> предупреждение при уходе, DnD-сортировка блоков в builder с проверкой сохранённого порядка через `GET /builder` и после перезагрузки страницы, negative 422 contract check).
+8. При падении публикует Playwright artifacts (`test-results`, `playwright-report`, app server log).
 
 ### `.github/workflows/deploy-staging-beget.yml`
 
@@ -52,7 +75,7 @@
 
 - Триггеры: push в ветку `dev` и `workflow_dispatch` (вход `ref`).
 - `concurrency: deploy-staging-beget` (`cancel-in-progress: false`), environment `staging`.
-- Шаги: проверка наличия секретов (`DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`; без них деплой пропускается с предупреждением), быстрые проверки (`php -l`, `bash -n`), сборка frontend (Node 25.9.0) в `frontend-build.tar.gz`, загрузка архива и запуск `tools/deploy/deploy-beget.sh` через SSH stdin, smoke-check (без пароля 401, с `STAGING_BASIC_AUTH` — 200 и `X-Robots-Tag: noindex`) и прогрев публичных страниц. На сервере: MySQL 8.4 (`pdo_mysql`), файловый кэш в `shared/cache`, сессии в `shared/sessions`, Redis не нужен.
+- Шаги: проверка наличия секретов (`DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`; без них деплой пропускается с предупреждением), быстрые проверки (`php -l`, `bash -n`), сборка frontend (Node 25.9.0) в `frontend-build.tar.gz`, загрузка архива и запуск `tools/deploy/deploy-beget.sh` через SSH stdin, smoke-check (без пароля 401, с `STAGING_BASIC_AUTH` — 200 и `X-Robots-Tag: noindex`; для временно открытого staging — анонимный 200 с `noindex`, `robots.txt` `Disallow: /` и закрытый `/admin`, с предупреждением) и прогрев публичных страниц. На сервере: MySQL 8.4 (`pdo_mysql`), файловый кэш в `shared/cache`, сессии в `shared/sessions`, Redis не нужен.
 - Полный CI не ждёт: он запускается отдельным workflow `CI` (push в `dev` и PR в `dev` включены).
 - Production этим workflow не деплоится.
 
@@ -127,10 +150,15 @@ GitHub Environments дают:
 - Symfony container lint.
 - Twig lint.
 - Deploy scripts syntax.
-- PHPUnit (MySQL).
+- PHPUnit (MySQL) с порогом покрытия.
 - `app:smoke:test` для базовой release readiness.
 - npm audit.
-- npm/Vite build (включая `tsc --noEmit`).
+- Frontend typecheck как отдельный quality gate.
+- Frontend unit tests с порогом покрытия (`test:frontend:coverage`).
+- Scoped admin lint (`lint:admin`).
+- npm/Vite build.
+- Budget guardrail по критичным admin chunks (`check:chunks`).
+- Browser smoke regression и сквозной сценарий (`test:e2e`).
 
 ## Что НЕ автоматизировано (целевое)
 

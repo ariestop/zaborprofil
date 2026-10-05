@@ -6,27 +6,27 @@
     <main class="mx-auto max-w-6xl px-6 py-12">
         {% include 'public/catalog/_breadcrumbs.html.twig' %}
 
-        <p class="text-sm font-semibold uppercase tracking-wide text-brand-700">Категория</p>
-        <h1 class="mt-2 text-4xl font-bold tracking-tight text-slate-950">{{ category.title }}</h1>
+        <p class="text-sm font-semibold uppercase tracking-wide text-emerald-700">Категория</p>
+        <h1 class="mt-2 text-4xl font-bold tracking-tight text-ink">{{ category.title }}</h1>
         {% if category.description %}
-            <p class="mt-4 max-w-3xl text-lg leading-8 text-slate-700">{{ category.description }}</p>
+            <p class="mt-4 max-w-3xl text-lg leading-8 text-ink">{{ category.description }}</p>
         {% endif %}
 
         <section class="mt-10">
-            <h2 class="text-2xl font-bold text-slate-950">Товары в категории</h2>
+            <h2 class="text-2xl font-bold text-ink">Товары в категории</h2>
             {% if products %}
                 <div class="mt-5 grid gap-4 md:grid-cols-3">
                     {% for product in products %}
-                        <a class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition hover:border-brand-300 hover:shadow-md" href="{{ product.path }}">
-                            <h3 class="text-lg font-semibold text-slate-950">{{ product.name }}</h3>
+                        <a class="rounded-2xl border border-line bg-white p-5 shadow-xs transition hover:border-emerald-300 hover:shadow-md" href="{{ product.path }}">
+                            <h3 class="text-lg font-semibold text-ink">{{ product.name }}</h3>
                             {% if product.summary %}
-                                <p class="mt-2 text-sm leading-6 text-slate-600">{{ product.summary }}</p>
+                                <p class="mt-2 text-sm leading-6 text-graphite">{{ product.summary }}</p>
                             {% endif %}
                         </a>
                     {% endfor %}
                 </div>
             {% else %}
-                <p class="mt-4 rounded-2xl border border-slate-200 bg-white p-5 text-slate-600">В этой категории пока нет опубликованных товаров.</p>
+                <p class="mt-4 rounded-2xl border border-line bg-white p-5 text-graphite">В этой категории пока нет опубликованных товаров.</p>
             {% endif %}
         </section>
     </main>

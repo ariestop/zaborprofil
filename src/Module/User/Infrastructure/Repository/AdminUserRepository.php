@@ -29,6 +29,25 @@ final class AdminUserRepository extends ServiceEntityRepository implements UserP
         $this->getEntityManager()->flush();
     }
 
+    public function remove(AdminUser $user): void
+    {
+        $this->getEntityManager()->remove($user);
+        $this->getEntityManager()->flush();
+    }
+
+    public function findOneByEmail(string $email): ?AdminUser
+    {
+        return $this->findOneBy(['email' => mb_strtolower(trim($email))]);
+    }
+
+    /**
+     * @return list<AdminUser>
+     */
+    public function findAllActive(): array
+    {
+        return $this->findBy(['active' => true]);
+    }
+
     public function loadUserByIdentifier(string $identifier): UserInterface
     {
         $user = $this->findOneBy(['email' => mb_strtolower(trim($identifier))]);

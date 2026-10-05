@@ -110,18 +110,19 @@
 
 | Поле | Тип | Где рендерится |
 |---|---|---|
-| `title` | `string(255)`, NOT NULL | `<title>` в `base.html.twig` блок `title` |
+| `title` | `string(255)`, NOT NULL | название страницы; fallback для `<title>`, если нет `meta_title` и шаблона |
+| `meta_title` | `string(255)`, NULL | SEO-title: `<title>` в `base.html.twig` блок `title` и fallback для `og:title` (миграция `Version20261005090000`) |
 | `h1` | `string(255)`, NOT NULL | `<h1>` в `show.html.twig` |
 | `indexable` | `bool`, NOT NULL | `<meta name="robots">` в `base.html.twig` через `meta_robots` |
 | `meta_description` | `string(320)`, NULL | `<meta name="description">` |
 | `canonical_url` | `string(2048)`, NULL | `<link rel="canonical">` (если NULL — fallback на `absolute_url(page.path)`) |
-| `og_title` | `string(255)`, NULL | `<meta property="og:title">` (fallback на `title`) |
+| `og_title` | `string(255)`, NULL | `<meta property="og:title">` (fallback на эффективный `<title>`: `meta_title` → шаблон → `title`) |
 | `og_description` | `string(320)`, NULL | `<meta property="og:description">` (fallback на `meta_description`) |
 | `og_image` | `string(2048)`, NULL | `<meta property="og:image">` + автоматически twitter card |
 | `og_type` | `string(32)`, NULL | `<meta property="og:type">` (default `website`) |
 | `json_ld` | `JSON`, NULL | массив `<script type="application/ld+json">` блоков |
 
-Управление через admin API: `PUT /admin/api/content/pages/{id}/seo` (требует `AdminPermission::SEO_EDIT`). Все SEO-поля nullable; пустая строка нормализуется в NULL; canonical/og_image валидируются как абсолютные URL.
+Управление через admin API: `PUT /admin/api/content/pages/{id}/seo` (требует `AdminPermission::SEO_EDIT`). Все SEO-поля nullable; поле `metaTitle` необязательно в теле запроса — если ключ не передан, текущее значение сохраняется (обратная совместимость со старым клиентом), `null` или пустая строка очищает его; длина `metaTitle` ограничена 255 символами, превышение даёт `422 VALIDATION`; пустая строка нормализуется в NULL; canonical/og_image валидируются как абсолютные URL.
 
 **Целевое состояние** — выделение в embedded `SeoMetadata` (см. [05-domain-model](05-domain-model.md), [ADR-0010](adr/0010-seo-first-cms-architecture.md)) при появлении дополнительных контейнеров (Product, Category, Landing-вариации).
 
@@ -138,6 +139,32 @@
 | `json_ld_blocks` | базовый `SchemaOrgBuilder::webPage()` + редакторские `page.jsonLd` блоки |
 
 `templates/public/page/show.html.twig` рендерит только `<title>` (через extends `base`) и `<h1>` (явно). Все meta-теги — в `base.html.twig`.
+
+### 4.2.1 Эффективный `<title>` и шаблон по умолчанию
+
+`<title>` вычисляет [`SeoTitleResolver`](../src/Module/Seo/Application/Service/SeoTitleResolver.php), результат передаётся в Twig как `seo_title`:
+
+1. Если у страницы задан `metaTitle` — он используется как есть (шаблон не применяется).
+2. Иначе, если в настройках задан `seo.title_template` — применяется шаблон. Подстановки: `{title}` (название страницы), `{h1}`, `{site_name}` (настройка `seo.site_name`, по умолчанию «ЗаборПрофиль»). Пример: `{h1} — заборы в Москве | {site_name}`.
+3. Иначе (шаблон пуст или после подстановки получилась пустая строка) — `Page.title`. Это поведение по умолчанию, оно совпадает с прежним.
+
+Шаблон и название сайта редактируются в админке: «Настройки → Шаблон SEO-title по умолчанию» (или `PUT /admin/api/settings/seo/title_template`). Сохранение настройки сбрасывает кэш публичных страниц. `metaTitle` входит в снимок ревизии (`seoSnapshot.metaTitle`), публикуется и откатывается вместе с остальными SEO-полями; в старых ревизиях ключа нет — это трактуется как «не задан».
+
+### 4.2.2 Редактор: счётчики и превью сниппета
+
+В форме страницы (`/admin/pages`) поля SEO-title и SEO-описание имеют счётчики длины с подсказками (ориентиры: title 10–60 символов, description 80–155; жёсткие пределы сохранения — 255 и 320). Под ними выводится превью сниппета поисковой выдачи (URL-«хлебные крошки», синий заголовок, описание) с тем же правилом выбора заголовка, что и на сервере; обрезка в превью — по 60 и 155 символам. Код: `admin/features/seo/`.
+
+### 4.2.3 Правила SEO-аудита для title
+
+`SeoAuditEngine` проверяет эффективный заголовок (`metaTitle`, а если он пуст — `title`; шаблон не учитывается). Все правила — P2, публикацию не блокируют:
+
+| Код | Условие |
+|---|---|
+| `seo.title.too_short` | короче 10 символов |
+| `seo.title.too_long` | длиннее 60 символов |
+| `seo.title.duplicate` | такой же заголовок у другой опубликованной страницы (сравнение без учёта регистра, до 5 путей в сообщении) |
+
+Поле в отчёте — `metaTitle` или `title` в зависимости от источника.
 
 ### 4.3 Конвенции
 
@@ -161,6 +188,7 @@
 - Поле `Page.indexable` (`bool`) хранится в БД, доступно в admin-API и **рендерится** в `<meta name="robots">`: `index, follow` для `true`, `noindex, nofollow` для `false`. Логика — в `PublicPageController` (переменная `meta_robots`).
 - По умолчанию для новой страницы — `indexable=true`.
 - Для admin/preview/dev URL — всегда `noindex,nofollow` (программно): admin покрыт `AdminNoIndexSubscriber`, dev/staging — через `RobotsController` (см. §5.2).
+- На `APP_ENV=staging` `base.html.twig` всегда рендерит `<meta name="robots" content="noindex, nofollow">` (поверх `meta_robots` страницы), `StagingAccessSubscriber` ставит `X-Robots-Tag: noindex, nofollow`, а `robots.txt` отдаёт `Disallow: /` — независимо от `STAGING_AUTH_ENABLED` (см. [49-beget-staging-deploy](49-beget-staging-deploy.md), раздел про открытый staging).
 
 ### 5.2 robots.txt
 
@@ -168,6 +196,8 @@
 - В `dev`/`staging` окружениях — `User-agent: *` + `Disallow: /` (полный запрет индексации).
 - В `prod` — стандартный robots с `Sitemap:` директивой и точечными `Disallow:` для служебных путей.
 - Редактирование production robots.txt: `GET/PUT /admin/api/seo/robots` (требует `AdminPermission::SEO_EDIT`), значение хранится в Settings `seo.robots_txt`.
+- Проверка и предпросмотр без сохранения: `POST /admin/api/seo/robots/preview` (`{body}` → `{normalizedBody, effectiveBody, usesDefault, overriddenByEnvironment, valid, issues[]}`). Синтаксис проверяет `RobotsTxtValidator`: ошибки (директива вне группы `User-agent`, путь без `/` или `*`, `Sitemap` не абсолютный URL, неверный `Crawl-delay`) блокируют сохранение `PUT` ответом `422` с `details[{field: "body", message: "Строка N: ..."}]`; предупреждения (нет `Sitemap`, нет `Disallow: /admin/`, `Disallow: /` для всех роботов, неизвестная директива) только показываются в панели.
+- `GET` дополнительно возвращает `defaultBody` (стандартный файл), `environment` и `overriddenByEnvironment` — на не-production окружении сохранённое содержимое не используется, роботам всегда отдаётся `Disallow: /`.
 
 Минимальный production robots.txt:
 
@@ -242,13 +272,60 @@ Sitemap: https://zaborprofil.ru/sitemap.xml
 
 - Сущность `Module\Seo\Domain\Entity\Redirect` ([код](../src/Module/Seo/Domain/Entity/Redirect.php)).
 - Обрабатывается `RedirectKernelSubscriber` на `kernel.request` **до** Router (priority выше, см. [код](../src/Module/Seo/Infrastructure/Http/RedirectKernelSubscriber.php)).
-- Поддерживает 301 и 302; default — 301.
+- Поддерживает 301, 302, 307 и 308; default — 301.
 - Поле `active` — для временного отключения без удаления.
 
 ### 7.2 Автоматическое создание при смене path
 
 - При смене `Page.path` — `PagePathChangeListener` ([код](../src/Module/Seo/Infrastructure/Doctrine/PagePathChangeListener.php)) создаёт 301 со старого пути на новый.
 - Если для нового пути уже есть `Redirect → старый путь` — это loop, и операция должна быть отклонена в Application.
+
+### 7.2.1 Управление через админку (SEO-панель)
+
+Раздел `/admin/seo` (вкладка «Редиректы») работает поверх `Module\Seo\UI\Admin\RedirectApiController`. Все операции требуют `AdminPermission::SEO_EDIT`, ошибки возвращаются в формате `{error, code}` через `AdminApiErrorResponder` (для полей формы добавляется `details[{field, message}]`).
+
+| Метод и путь | Назначение |
+|---|---|
+| `GET /admin/api/seo/redirects?q=&status=all\|active\|inactive&sort=source\|hits\|lastHit\|updated&direction=asc\|desc&page=&perPage=` | Список с поиском по старому и новому URL, серверной пагинацией (до 100 на страницу) и счётчиками `counts` |
+| `POST /admin/api/seo/redirects` | Создание: `{sourcePath, targetPath, statusCode?, isActive?}` |
+| `PUT /admin/api/seo/redirects/{id}` | Правка (в том числе смена `sourcePath`); `id` — ULID |
+| `DELETE /admin/api/seo/redirects/{id}` | Удаление (`204`); пишется в журнал аудита |
+| `GET /admin/api/seo/redirects/analysis` | Все циклы и цепочки среди активных правил |
+| `POST /admin/api/seo/redirects/import` | Импорт CSV (см. §7.2.2) |
+| `GET /admin/api/seo/redirects/export` | Выгрузка `redirects.csv` |
+
+Правила валидации (`RedirectRuleValidator`):
+
+- источник — локальный путь без домена, `?` и `#` (сервер сопоставляет только путь), без `//`, длиной до 512 символов; пути под `/admin`, `/build`, `/health`, `/uploads`, `/_profiler`, `/_wdt` запрещены (`RedirectKernelSubscriber` их не обрабатывает);
+- цель — путь от корня или `http(s)://`-адрес; `javascript:`, `ftp:`, `//host` и цели под `/admin` отклоняются;
+- редирект на самого себя (в том числе абсолютным URL своего домена) запрещён;
+- код ответа: 301, 302, 307 или 308; дубликат источника даёт `REDIRECT_DUPLICATE`;
+- **цикл** (`A → B → A`) блокирует сохранение ответом `422` с кодом `REDIRECT_LOOP`; неактивное правило проверке цикла не подлежит;
+- **цепочка** (`A → B → C`) не блокирует сохранение, но возвращается в `warnings[]` ответа; также предупреждаем, если источник совпадает с опубликованной страницей (редирект её перекроет) или цель не найдена среди страниц CMS.
+
+Кириллические и прочие не-ASCII адреса сохраняются в percent-encoding (`UrlPathEncoder`), потому что `Request::getPathInfo()` отдаёт путь в закодированном виде: правило, введённое как `/старая/`, срабатывает на запрос `/%D1%81%D1%82%D0%B0%D1%80%D0%B0%D1%8F/`. В интерфейсе пути показываются в читаемом виде.
+
+Счётчик срабатываний (`hitCount`, `lastHitAt`) не попадает в журнал аудита; создание, правка и удаление правил — попадают.
+
+### 7.2.2 Импорт и экспорт CSV
+
+- Формат: `source,target[,status[,active]]`. Разделитель `,`, `;` или TAB определяется автоматически, заголовок необязателен (понимаются алиасы `source/from/old`, `target/to/new`, `status/code`, `active/enabled`), BOM и строки-комментарии `#` игнорируются. Лимиты: 1 МБ и 2000 строк за импорт, только UTF-8.
+- `POST /admin/api/seo/redirects/import` принимает `{csv, dryRun = true, updateExisting = false}`. Сначала выполняется проверка (`dryRun: true`, ничего не записывается), затем применение (`dryRun: false`). Корректные строки применяются одной транзакцией, ошибочные пропускаются и попадают в отчёт.
+- Отчёт: `{dryRun, totalRows, created, updated, skipped, failed, errors[{line, source, message}], warnings[], preview[]}`. Каждая строка проходит те же правила, что и одиночное создание; циклы и дубли внутри самого файла тоже ловятся. Существующие источники пропускаются, либо обновляются при `updateExisting: true`.
+- В интерфейсе отчёт об ошибках можно скачать как CSV (`line,source,error`).
+- Экспорт отдаёт `source,target,status,active`; файл можно импортировать обратно без изменений.
+
+### 7.2.3 Проверка циклов и цепочек
+
+`RedirectAnalyzer` строит граф активных правил «источник → внутренний целевой путь» (`RedirectGraph`; внешние цели — конечные узлы). Панель показывает циклы (с кнопками «Отключить» для каждого правила) и цепочки (кнопка «Вести напрямую на конечный URL» обновляет все промежуточные правила).
+
+### 7.2.4 Журнал 404
+
+- Публичные ответы 404 (`GET`/`HEAD`) фиксирует `NotFoundLogSubscriber` (`kernel.response`) через `NotFoundRecorder` в таблицу `seo_not_found_log`: одна строка на путь, счётчик обращений, первое и последнее обращение, последний источник перехода (без query и якоря).
+- Пути под служебными префиксами (`/admin`, `/build`, `/health`, `/uploads`, `/_profiler`, `/_wdt`) и длиннее 512 символов не пишутся. Таблица ограничена 5000 записей: при переполнении новые пути не добавляются, счётчики существующих продолжают расти. Сбой записи логируется в канал `seo` и не ломает ответ.
+- API: `GET /admin/api/seo/not-found?q=&sort=hits|lastSeen&page=&perPage=` (в записях есть флаг `hasRedirect`), `DELETE /admin/api/seo/not-found/{id}`, `DELETE /admin/api/seo/not-found` (очистить всё) и `DELETE /admin/api/seo/not-found?olderThanDays=N`.
+- Консоль: `php bin/console app:seo:not-found:prune --days=90` удаляет записи, к которым не обращались N дней; его удобно повесить на cron.
+- Из журнала редирект создаётся в один клик: форма открывается с предзаполненным старым URL.
 
 ### 7.3 Когда 301 vs 302
 
@@ -293,7 +370,7 @@ flowchart LR
 
 - `og:site_name = ЗаборПрофиль` (статика).
 - `og:type` — `Page.ogType` или `'website'` (default).
-- `og:title` — `Page.ogTitle` или `block('title')`.
+- `og:title` — `Page.ogTitle` или `block('title')` (то есть эффективный `<title>`: `metaTitle` → шаблон → `title`).
 - `og:description` — `Page.ogDescription` или `Page.metaDescription`.
 - `og:url` — равен `canonical_url`.
 - `og:image` — `Page.ogImage`. Если задан, дополнительно рендерится `twitter:card = summary_large_image` и `twitter:image`.

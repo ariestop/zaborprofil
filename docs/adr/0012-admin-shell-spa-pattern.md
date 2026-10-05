@@ -10,7 +10,7 @@ Accepted, 2026.
 
 - `/admin/login` и `/admin/logout` остаются серверными страницами Symfony Security.
 - `/admin/*` после авторизации рендерится через Twig shell `templates/admin/dashboard.html.twig`.
-- В shell монтируется клиентское приложение `assets/admin/app.ts` (React + TypeScript).
+- В shell монтируется клиентское приложение `admin/app.ts` (React + TypeScript).
 - Данные читаются и изменяются через `/admin/api/*` с CSRF, same-origin и voter-проверками.
 
 ## Решение

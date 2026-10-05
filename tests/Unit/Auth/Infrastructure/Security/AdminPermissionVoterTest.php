@@ -28,4 +28,38 @@ final class AdminPermissionVoterTest extends TestCase
 
         self::assertSame(1, $voter->vote($token, null, [AdminPermission::USERS_MANAGE]));
     }
+
+    public function testAdminCanManageUsers(): void
+    {
+        $voter = new AdminPermissionVoter();
+        $token = new UsernamePasswordToken(new AdminUser('admin@example.test', 'hash', ['ROLE_ADMIN']), 'main', ['ROLE_ADMIN']);
+
+        self::assertSame(1, $voter->vote($token, null, [AdminPermission::USERS_MANAGE]));
+    }
+
+    public function testManagerWorksWithLeadsButCannotExportThem(): void
+    {
+        $voter = new AdminPermissionVoter();
+        $token = new UsernamePasswordToken(new AdminUser('manager@example.test', 'hash', ['ROLE_MANAGER']), 'main', ['ROLE_MANAGER']);
+
+        self::assertSame(1, $voter->vote($token, null, [AdminPermission::LEADS_VIEW]));
+        self::assertSame(1, $voter->vote($token, null, [AdminPermission::LEADS_MANAGE]));
+        self::assertSame(-1, $voter->vote($token, null, [AdminPermission::LEADS_EXPORT]));
+    }
+
+    public function testOnlyAdministrativeRolesCanExportLeads(): void
+    {
+        $voter = new AdminPermissionVoter();
+
+        foreach (['ROLE_ADMIN', 'ROLE_SUPER_ADMIN'] as $role) {
+            $token = new UsernamePasswordToken(new AdminUser('user@example.test', 'hash', [$role]), 'main', [$role]);
+            self::assertSame(1, $voter->vote($token, null, [AdminPermission::LEADS_EXPORT]), $role);
+        }
+
+        foreach (['ROLE_EDITOR', 'ROLE_SEO'] as $role) {
+            $token = new UsernamePasswordToken(new AdminUser('user@example.test', 'hash', [$role]), 'main', [$role]);
+            self::assertSame(-1, $voter->vote($token, null, [AdminPermission::LEADS_VIEW]), $role);
+            self::assertSame(-1, $voter->vote($token, null, [AdminPermission::LEADS_EXPORT]), $role);
+        }
+    }
 }

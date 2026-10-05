@@ -1,0 +1,98 @@
+{% set items = block.content.items ?? [] %}
+{% if items is iterable and items|length > 0 %}
+    {% set sliderSettings = {
+        autoplay: block.settings.autoplay ?? true,
+        loop: block.settings.loop ?? true,
+        pagination: block.settings.pagination ?? true,
+        navigation: block.settings.navigation ?? true,
+        delayMs: block.settings.delayMs ?? 4500,
+        effect: block.settings.effect ?? 'slide',
+        pauseOnHover: block.settings.pauseOnHover ?? true,
+        disableOnInteraction: block.settings.disableOnInteraction ?? false,
+        speedMs: block.settings.speedMs ?? 500,
+        breakpoints: {
+            mobileSlidesPerView: block.settings.breakpoints.mobileSlidesPerView ?? 1,
+            tabletSlidesPerView: block.settings.breakpoints.tabletSlidesPerView ?? 1,
+            desktopSlidesPerView: block.settings.breakpoints.desktopSlidesPerView ?? 1,
+            mobileSpaceBetween: block.settings.breakpoints.mobileSpaceBetween ?? 8,
+            tabletSpaceBetween: block.settings.breakpoints.tabletSpaceBetween ?? 16,
+            desktopSpaceBetween: block.settings.breakpoints.desktopSpaceBetween ?? 24
+        },
+        a11yLabels: {
+            prevSlide: block.settings.a11yLabels.prevSlide ?? 'Предыдущий слайд',
+            nextSlide: block.settings.a11yLabels.nextSlide ?? 'Следующий слайд',
+            paginationBullet: block.settings.a11yLabels.paginationBullet ?? 'Перейти к слайду {{index}}'
+        }
+    } %}
+    {% set customClass = block.settings.className ?? '' %}
+
+    <section class="not-prose relative {{ customClass }}" data-block-type="slider">
+        <div
+            class="swiper js-site-slider relative w-full overflow-hidden bg-night"
+            data-slider-settings='{{ sliderSettings|json_encode(constant('JSON_UNESCAPED_UNICODE'))|e('html_attr') }}'
+        >
+            <div class="swiper-wrapper">
+                {% for item in items %}
+                    <article class="swiper-slide">
+                        <div class="relative isolate min-h-[360px] sm:min-h-[440px] lg:min-h-[540px]">
+                            {% if item.src is defined and item.src %}
+                                {{ responsive_image(item.src, {
+                                    alt: item.alt ?? null,
+                                    class: 'absolute inset-0 h-full w-full object-cover',
+                                    sizes: '100vw',
+                                    priority: above_fold|default(false) and loop.first
+                                }) }}
+                            {% else %}
+                                <div class="absolute inset-0 bg-linear-to-br from-night to-graphite"></div>
+                            {% endif %}
+
+                            <div class="absolute inset-0 bg-linear-to-t from-black/75 via-black/30 to-black/10"></div>
+
+                            <div class="zp-container relative z-10 flex h-full items-end py-10 pb-14 sm:py-14 lg:py-20">
+                                <div class="space-y-4">
+                                {% if item.title is defined and item.title %}
+                                    <h2 class="max-w-3xl text-3xl leading-tight font-bold text-balance text-white sm:text-4xl lg:text-5xl">
+                                        {{ item.title }}
+                                    </h2>
+                                {% endif %}
+                                {% if item.text is defined and item.text %}
+                                    <p class="max-w-2xl text-base leading-7 text-white/90 sm:text-xl">
+                                        {{ item.text }}
+                                    </p>
+                                {% endif %}
+                                {% if item.buttonLabel is defined and item.buttonLabel %}
+                                    <a
+                                        href="{{ item.buttonHref is defined and item.buttonHref ? item.buttonHref : '#' }}"
+                                        class="zp-btn zp-btn--light"
+                                    >
+                                        {{ item.buttonLabel }}
+                                    </a>
+                                {% endif %}
+                            </div>
+                            </div>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+
+            <div class="pointer-events-none absolute inset-x-0 top-1/2 z-20 hidden -translate-y-1/2 justify-between px-3 md:flex lg:px-6">
+                <button
+                    type="button"
+                    class="js-site-slider-prev pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-ink shadow-sm transition hover:bg-white"
+                    aria-label="{{ sliderSettings.a11yLabels.prevSlide }}"
+                >
+                    <span aria-hidden="true">←</span>
+                </button>
+                <button
+                    type="button"
+                    class="js-site-slider-next pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-ink shadow-sm transition hover:bg-white"
+                    aria-label="{{ sliderSettings.a11yLabels.nextSlide }}"
+                >
+                    <span aria-hidden="true">→</span>
+                </button>
+            </div>
+
+            <div class="js-site-slider-pagination absolute bottom-3 left-1/2 z-20 -translate-x-1/2"></div>
+        </div>
+    </section>
+{% endif %}

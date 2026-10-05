@@ -8,6 +8,7 @@ use App\Module\Auth\Domain\Security\AdminPermission;
 use App\Module\Content\Application\Service\ContentId;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use App\Module\Seo\Application\Audit\SeoAuditEngine;
+use App\Shared\UI\Http\AdminApiErrorResponder;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
@@ -19,6 +20,7 @@ final readonly class SeoAuditApiController
     public function __construct(
         private SeoAuditEngine $audit,
         private AuthorizationCheckerInterface $authorizationChecker,
+        private AdminApiErrorResponder $errors,
     ) {
     }
 
@@ -35,10 +37,7 @@ final readonly class SeoAuditApiController
         try {
             return new JsonResponse($this->audit->auditPage($pages->get($contentId->fromString($id)))->toArray());
         } catch (Throwable $exception) {
-            return new JsonResponse([
-                'error' => $exception->getMessage(),
-                'code' => 'SEO_AUDIT_FAILED',
-            ], 422);
+            return $this->errors->fromThrowable($exception, 'Admin SEO audit API');
         }
     }
 }

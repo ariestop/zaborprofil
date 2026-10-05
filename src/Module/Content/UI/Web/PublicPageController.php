@@ -7,8 +7,10 @@ namespace App\Module\Content\UI\Web;
 use App\Module\Content\Application\Service\PublicPageResolverInterface;
 use App\Module\Menu\Application\Service\BreadcrumbBuilder;
 use App\Module\Seo\Application\Service\SchemaOrgBuilder;
+use App\Module\Seo\Application\Service\SeoTitleResolver;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -18,11 +20,14 @@ final class PublicPageController extends AbstractController
     #[Route('/{path}', name: 'content_public_page', requirements: ['path' => '.*'], priority: -100, methods: ['GET'])]
     public function __invoke(
         string $path,
+        Request $request,
         PublicPageResolverInterface $resolver,
         TwigBlockRenderer $blockRenderer,
         UrlGeneratorInterface $urlGenerator,
         SchemaOrgBuilder $schemaOrg,
+        SeoTitleResolver $seoTitle,
         BreadcrumbBuilder $breadcrumbBuilder,
+        PublicPageHttpCache $httpCache,
         #[Autowire('%app.site_url%')]
         string $siteUrl,
     ): Response {
@@ -33,9 +38,10 @@ final class PublicPageController extends AbstractController
         }
 
         $blocks = [];
-        foreach ($page->blocks as $block) {
-            $blocks[] = $blockRenderer->render($block);
+        foreach ($page->blocks as $index => $block) {
+            $blocks[] = $blockRenderer->render($block, $index === 0, $index === 0 ? $page->h1 : null);
         }
+        $headingInFirstBlock = $page->blocks !== [] && $blockRenderer->consumesPageHeading($page->blocks[array_key_first($page->blocks)]->type);
 
         $canonical = $page->canonicalUrl
             ?? $urlGenerator->generate('content_public_page', ['path' => ltrim($page->path, '/')], UrlGeneratorInterface::ABSOLUTE_URL);
@@ -46,9 +52,11 @@ final class PublicPageController extends AbstractController
             ...($page->jsonLd ?? []),
         ];
 
-        return $this->render('public/page/show.html.twig', [
+        $response = $this->render('public/page/show.html.twig', [
             'page' => $page,
             'blocks' => $blocks,
+            'heading_in_first_block' => $headingInFirstBlock,
+            'seo_title' => $seoTitle->resolve($page->title, $page->h1, $page->metaTitle),
             'meta_description' => $page->metaDescription,
             'meta_robots' => $page->isIndexable ? 'index, follow' : 'noindex, nofollow',
             'canonical_url' => $canonical,
@@ -59,6 +67,9 @@ final class PublicPageController extends AbstractController
             'breadcrumbs' => $breadcrumbs,
             'json_ld_blocks' => $jsonLdBlocks,
         ]);
+        $httpCache->apply($response, $request);
+
+        return $response;
     }
 
     private function notFoundResponse(): Response

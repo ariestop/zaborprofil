@@ -27,6 +27,9 @@ final class AdminUser implements UserInterface, PasswordAuthenticatedUserInterfa
     #[ORM\Column(length: 180)]
     private string $email;
 
+    #[ORM\Column(length: 120, nullable: true)]
+    private ?string $name = null;
+
     #[ORM\Column]
     private bool $active = true;
 
@@ -68,6 +71,21 @@ final class AdminUser implements UserInterface, PasswordAuthenticatedUserInterfa
         return $this->email;
     }
 
+    /**
+     * Отображаемое имя («Игорь»); не заполнено у учётных записей, созданных только по email.
+     */
+    public function name(): ?string
+    {
+        return $this->name;
+    }
+
+    public function rename(?string $name): void
+    {
+        $name = $name === null ? null : trim($name);
+        $this->name = $name === '' ? null : $name;
+        $this->touch();
+    }
+
     public function isActive(): bool
     {
         return $this->active;
@@ -96,10 +114,7 @@ final class AdminUser implements UserInterface, PasswordAuthenticatedUserInterfa
      */
     public function getRoles(): array
     {
-        $roles = $this->roles;
-        $roles[] = 'ROLE_ADMIN';
-
-        return array_values(array_unique($roles));
+        return $this->storedRoles();
     }
 
     public function getPassword(): string
@@ -111,9 +126,72 @@ final class AdminUser implements UserInterface, PasswordAuthenticatedUserInterfa
     {
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function __serialize(): array
+    {
+        $data = (array) $this;
+        $data["\0".self::class."\0passwordHash"] = hash('crc32c', $this->passwordHash);
+
+        return $data;
+    }
+
+    /**
+     * Роли, сохранённые в БД. Совпадает с getRoles(): права строятся только из назначенных ролей и role_hierarchy.
+     *
+     * @return list<string>
+     */
+    public function storedRoles(): array
+    {
+        return array_values(array_unique($this->roles));
+    }
+
+    public function changePasswordHash(string $passwordHash): void
+    {
+        if ($passwordHash === '') {
+            throw new InvalidArgumentException('Password hash cannot be empty.');
+        }
+
+        $this->passwordHash = $passwordHash;
+        $this->touch();
+    }
+
+    public function activate(): void
+    {
+        $this->active = true;
+        $this->touch();
+    }
+
+    public function deactivate(): void
+    {
+        $this->active = false;
+        $this->touch();
+    }
+
     public function touch(): void
     {
         $this->updatedAt = new DateTimeImmutable();
+    }
+
+    /**
+     * @param list<string> $roles
+     */
+    public function updateRoles(array $roles): void
+    {
+        if ($roles === []) {
+            throw new InvalidArgumentException('At least one role is required.');
+        }
+
+        $normalizedRoles = array_values(array_unique(array_map(trim(...), $roles)));
+        $normalizedRoles = array_values(array_filter($normalizedRoles, static fn (string $role): bool => $role !== ''));
+
+        if ($normalizedRoles === []) {
+            throw new InvalidArgumentException('At least one valid role is required.');
+        }
+
+        $this->roles = $normalizedRoles;
+        $this->touch();
     }
 
     /**

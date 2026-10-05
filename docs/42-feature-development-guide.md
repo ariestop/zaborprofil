@@ -664,7 +664,7 @@ Doctrine mapping, миграции (`migrations/`), фикстуры.
 
 ### 9.10 Frontend Assets
 
-`assets/site/`, `assets/admin/`. Сборка через Vite.
+`assets/site/`, `admin/`. Сборка через Vite.
 
 **Можно:**
 

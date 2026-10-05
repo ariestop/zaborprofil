@@ -50,12 +50,20 @@
 | `TRUSTED_HOSTS` | regex hostname | Symfony framework |
 | `STAGING_AUTH_ENABLED` | `1` включает Basic Auth на `APP_ENV=staging` (по умолчанию выключено) | `StagingAccessSubscriber` |
 | `STAGING_AUTH_USER` / `STAGING_AUTH_HASH` | логин и bcrypt-хеш пароля; хеш в `.env.local` в **одинарных кавычках**. При `STAGING_AUTH_ENABLED=1` и неверных значениях доступ закрыт для всех | `StagingAccessSubscriber` |
+| `STAGING_ALLOW_PUBLIC` | `1` вместе с `STAGING_AUTH_ENABLED=0` разрешает деплой временно открытого staging без Basic Auth; без явного `1` preflight `deploy-beget.sh` требует `STAGING_AUTH_ENABLED=1`. Приложение флаг не читает; noindex действует всегда ([49-beget-staging-deploy](49-beget-staging-deploy.md)) | `tools/deploy/deploy-beget.sh` |
+| `ADMIN_WEB_MIGRATIONS_ENABLED` | `0` (по умолчанию) / `1` — разрешить apply/rollback Doctrine-миграций из веб-админки (только `ROLE_SUPER_ADMIN` + confirm-token). На staging/production держать `0` | `MigrationsApiController` |
+| `PUBLIC_HTTP_CACHE_ENABLED` | `1` — публичные `Cache-Control`/`ETag` для страниц сайта (по умолчанию `1` в `prod`, `0` иначе; на `staging` не действует) | `PublicPageHttpCache` |
+| `PUBLIC_HTTP_CACHE_MAX_AGE`, `PUBLIC_HTTP_CACHE_S_MAXAGE`, `PUBLIC_HTTP_CACHE_STALE_WHILE_REVALIDATE` | TTL браузера / общих кэшей / stale-while-revalidate, секунды (`0` / `300` / `60`) | `PublicPageHttpCache` |
+| `NGINX_FASTCGI_CACHE_DIR`, `NGINX_FASTCGI_CACHE_LEVELS` | Каталог и `levels` nginx `fastcgi_cache_path` для сброса кэша при публикации (пусто — отключено, `1:2`) | `NginxFastcgiCachePurger` |
 | `XDEBUG_MODE` | `off` / `develop,debug` | Docker PHP-FPM |
 | `MYSQL_DATABASE`/`MYSQL_USER`/`MYSQL_PASSWORD`/`MYSQL_ROOT_PASSWORD`/`MYSQL_PORT` | для Docker Compose | Compose |
 | `HTTP_PORT` | хост-порт nginx для проброса `host:container` (Compose). Можно задать привязку к интерфейсу: `8081` (все интерфейсы) или `127.0.0.1:8081` (только loopback хоста; удобно на сервере, для доступа с ноутбука — SSH `-L` / Remote Ports) | Compose |
 | `MAILPIT_PORT`/`ADMINER_PORT`/`VITE_PORT` | хост-порты | Compose, dev only |
 | `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | для critical alerts | `TelegramErrorHandler` |
 | `RELEASE_TAG` | версия для логов/Sentry | `ReleaseProcessor` |
+| `LEAD_NOTIFICATION_EMAIL` / `LEAD_TELEGRAM_BOT_TOKEN` / `LEAD_TELEGRAM_CHAT_ID` | куда уходят уведомления о новых заявках; если доставка не удалась ни по одному каналу, пишется `error` в канал `observability` (алерт) | `LeadNotifier` |
+| `SENTRY_DSN` | DSN Sentry или self-hosted (GlitchTip); пусто — error tracking выключен. Персональные данные не отправляются ([28-logging-observability](28-logging-observability.md)) | `sentry/sentry-symfony` |
+| `SENTRY_RELEASE` | необязательная метка релиза в Sentry | `sentry/sentry-symfony` |
 
 ## Deploy script variables (операционные)
 

@@ -1,11 +1,15 @@
-<section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs" id="lead-form">
-    <h2 class="text-2xl font-bold tracking-tight text-ink">Получить консультацию</h2>
-    <p class="mt-2 text-graphite">Оставьте контакты, и менеджер свяжется с вами для расчёта.</p>
+{# Форма заявки. Скрытые поля formLoadedAt/pageUrl заполняет браузер (страница отдаётся из HTTP-кэша). #}
+<section class="rounded-3xl bg-white p-5 sm:p-8" id="lead-form" data-lead-form-section>
+    <h2 class="zp-h2">{{ (lead_form_title ?? null) is not empty ? lead_form_title : 'Рассчитаем стоимость забора' }}</h2>
+    <p class="mt-2 text-sm leading-6 text-graphite sm:text-base">
+        Оставьте имя и телефон — менеджер перезвонит, уточнит размеры и подготовит расчёт.
+        Или позвоните сами: <a class="font-semibold whitespace-nowrap text-brand-700 hover:underline" href="{{ site.phone_href }}">{{ site.phone }}</a>.
+    </p>
 
-    <form class="js-lead-form mt-5 grid gap-4" action="/api/leads" method="post" data-page-url="{{ app.request.uri }}">
+    <form class="js-lead-form mt-5 grid gap-4" action="/api/leads" method="post" novalidate>
         <input type="hidden" name="source" value="public_page_form">
-        <input type="hidden" name="formLoadedAt" value="{{ 'now'|date(constant('DATE_ATOM')) }}">
-        <input type="hidden" name="pageUrl" value="{{ app.request.uri }}">
+        <input type="hidden" name="formLoadedAt" value="">
+        <input type="hidden" name="pageUrl" value="">
         <input type="hidden" name="policyUrl" value="/privacy/">
 
         <label class="hidden" aria-hidden="true">
@@ -13,36 +17,31 @@
             <input type="text" name="website" tabindex="-1" autocomplete="off">
         </label>
 
-        <label class="field">
-            <span class="field-label">Имя</span>
-            <input class="field-input" name="name" autocomplete="name" required>
+        <div class="grid gap-4 sm:grid-cols-2">
+            <label class="zp-field">
+                Ваше имя
+                <input class="zp-input" name="name" autocomplete="name" placeholder="Как к вам обращаться" required>
+            </label>
+
+            <label class="zp-field">
+                Телефон
+                <input class="zp-input" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" required>
+            </label>
+        </div>
+
+        <label class="zp-field">
+            Что нужно сделать <span class="font-normal text-graphite">(необязательно)</span>
+            <textarea class="zp-input" name="message" rows="3" placeholder="Например: забор из жалюзи, 40 метров, нужны ворота и калитка"></textarea>
         </label>
 
-        <label class="field">
-            <span class="field-label">Телефон</span>
-            <input class="field-input" name="phone" type="tel" autocomplete="tel" required>
-        </label>
-
-        <label class="field">
-            <span class="field-label">Email</span>
-            <input class="field-input" name="email" type="email" autocomplete="email">
-        </label>
-
-        <label class="field">
-            <span class="field-label">Сообщение</span>
-            <textarea class="field-input" name="message" rows="4"></textarea>
-        </label>
-
-        <label class="flex gap-3 text-[0.9375rem] text-graphite">
-            <input class="mt-1 size-5 shrink-0 rounded-sm border-line-strong accent-brand-700" type="checkbox" name="consent" required>
-            <span>Согласен на обработку персональных данных.</span>
+        <label class="flex items-start gap-3 text-sm leading-5 text-graphite">
+            <input class="mt-0.5 size-5 shrink-0 rounded-sm border-line-strong accent-brand-700" type="checkbox" name="consent" required>
+            <span>Согласен на <a class="text-brand-700 underline" href="/privacy/" target="_blank" rel="noopener">обработку персональных данных</a>.</span>
         </label>
 
         <input type="hidden" name="consentText" value="Пользователь согласился на обработку персональных данных.">
 
-        <button class="btn btn-primary w-full sm:w-auto sm:justify-self-start" type="submit">
-            Перезвоните мне
-        </button>
-        <p class="js-lead-form-status text-graphite" role="status"></p>
+        <button class="zp-btn zp-btn--primary w-full sm:w-auto sm:justify-self-start" type="submit">Отправить заявку</button>
+        <p class="js-lead-form-status min-h-5 text-sm text-graphite" role="status" aria-live="polite"></p>
     </form>
 </section>

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Module\Seo\Domain\Entity;
 
+use App\Module\Seo\Domain\Service\UrlPathEncoder;
 use App\Module\Seo\Infrastructure\Doctrine\Repository\DoctrineRedirectRepository;
 use App\Shared\Domain\Contract\TimestampedEntityInterface;
 use App\Shared\Domain\Trait\HasTimestamps;
@@ -89,6 +90,12 @@ class Redirect implements TimestampedEntityInterface
         return $this->lastHitAt;
     }
 
+    public function changeSourcePath(string $sourcePath): void
+    {
+        $this->sourcePath = self::normalizeSourcePath($sourcePath);
+        $this->touch();
+    }
+
     public function update(string $targetPath, int $statusCode, bool $active): void
     {
         $this->targetPath = self::normalizeTargetPath($targetPath);
@@ -106,7 +113,7 @@ class Redirect implements TimestampedEntityInterface
 
     public static function normalizeSourcePath(string $path): string
     {
-        $normalized = trim($path);
+        $normalized = UrlPathEncoder::encode(trim($path));
 
         if ($normalized === '') {
             throw new InvalidArgumentException('Redirect source path cannot be empty.');
@@ -123,9 +130,9 @@ class Redirect implements TimestampedEntityInterface
         return $normalized;
     }
 
-    private static function normalizeTargetPath(string $path): string
+    public static function normalizeTargetPath(string $path): string
     {
-        $normalized = trim($path);
+        $normalized = UrlPathEncoder::encode(trim($path));
 
         if ($normalized === '') {
             throw new InvalidArgumentException('Redirect target path cannot be empty.');

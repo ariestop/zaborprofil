@@ -30,12 +30,11 @@
 | Доменная модель / Entity | [05-domain-model](05-domain-model.md), [10-domain-layer](10-domain-layer.md), [17-doctrine-and-database](17-doctrine-and-database.md), [18-migrations](18-migrations.md) |
 | Application / use case | [09-application-layer](09-application-layer.md), [19-forms-dto-validation](19-forms-dto-validation.md), [30-error-handling](30-error-handling.md) |
 | Контроллеры / роуты | [08-controller-architecture](08-controller-architecture.md), [16-routing](16-routing.md), [12-admin-area](12-admin-area.md), [13-front-area](13-front-area.md), [14-api-area](14-api-area.md) |
-| Шаблоны / SSR | [21-templates-and-twig](21-templates-and-twig.md), [22-frontend-assets](22-frontend-assets.md), [26-seo-architecture](26-seo-architecture.md), [50-brand-system](50-brand-system.md) |
-| Дизайн, стили, иконки, тексты интерфейса, полиграфия | [50-brand-system](50-brand-system.md), [brand/brandbook-2026.pdf](brand/brandbook-2026.pdf) |
+| Шаблоны / SSR | [21-templates-and-twig](21-templates-and-twig.md), [22-frontend-assets](22-frontend-assets.md), [26-seo-architecture](26-seo-architecture.md) |
 | Безопасность | [20-security-and-access-control](20-security-and-access-control.md), [25-files-and-uploads](25-files-and-uploads.md) |
 | Кеш (filesystem) | [23-cache](23-cache.md) |
 | Очереди / Messenger | [24-messenger-and-queues](24-messenger-and-queues.md) |
-| Деплой / инфраструктура | [32-docker-architecture](32-docker-architecture.md), [33-local-development](33-local-development.md), [34-deployment](34-deployment.md), [35-cicd](35-cicd.md), [36-backup-restore](36-backup-restore.md), [37-runbooks](37-runbooks.md), [47-dev-database-state](47-dev-database-state.md), [49-beget-staging-deploy](49-beget-staging-deploy.md) |
+| Деплой / инфраструктура | [32-docker-architecture](32-docker-architecture.md), [33-local-development](33-local-development.md), [34-deployment](34-deployment.md), [35-cicd](35-cicd.md), [36-backup-restore](36-backup-restore.md), [37-runbooks](37-runbooks.md), [47-dev-database-state](47-dev-database-state.md), [49-beget-staging-deploy](49-beget-staging-deploy.md), [50-publishing-workflow](50-publishing-workflow.md) |
 | Новый модуль | [06-module-architecture](06-module-architecture.md), [43-module-development-guide](43-module-development-guide.md) |
 | Новая фича end-to-end | [41-implementation-playbook](41-implementation-playbook.md), [42-feature-development-guide](42-feature-development-guide.md) |
 
@@ -109,6 +108,7 @@
 - [48-documentation-normalization](48-documentation-normalization.md) — матрица перехода `docs/*.md -> docs/NN-*.md` и кандидаты на удаление дублей.
 - [49-beget-staging-deploy](49-beget-staging-deploy.md) — автодеплой staging `dev.zaborprofil.ru` на Beget (ветка `dev`, GitHub Actions, SSH).
 - [50-brand-system](50-brand-system.md) — **бренд-система «Периметр» (брендбук 2026, вариант E)**: логотип, цвета, шрифты, компоненты, тексты. Обязательна для любых изменений UI. PDF: [brand/brandbook-2026.pdf](brand/brandbook-2026.pdf).
+- [50-publishing-workflow](50-publishing-workflow.md) — workflow статусов страниц, планировщик публикации, diff ревизий и журнал событий.
 
 ### ADR
 
@@ -128,3 +128,12 @@
 ### Архивные справочники (legacy)
 
 Исторические тематические документы верхнего уровня `docs/*.md` (без `NN-` префикса) остаются временным слоем совместимости. Канонический источник — нумерованные `NN-*.md` файлы. Карта соответствий и статус переноса: [48-documentation-normalization](48-documentation-normalization.md) и [legacy/README.md](legacy/README.md).
+
+### Admin frontend foundation
+
+- [admin/admin-architecture](admin/admin-architecture.md) — модель hybrid admin shell.
+- [admin/frontend-structure](admin/frontend-structure.md) — целевая структура `admin/`.
+- [admin/api-layer](admin/api-layer.md) — API client + TanStack Query foundation.
+- [admin/page-builder](admin/page-builder.md) — builder contracts и hooks.
+- [admin/media-library](admin/media-library.md) — медиатека `/admin/media`, `MediaPicker` и Media API.
+- [admin/tiptap-builder-integration](admin/tiptap-builder-integration.md) — разделение ответственности редакторов.

@@ -1,6 +1,19 @@
 twig:
     file_name_pattern: '*.twig'
     default_path: '%kernel.project_dir%/templates'
+    globals:
+        # Контакты компании для шапки, подвала и мобильной панели связи (источник: действующий zaborprofil.ru).
+        site:
+            name: 'Забор Профиль'
+            tagline: 'Ограждения и комплектующие'
+            city: 'Саратов'
+            phone: '8 (8452) 98-88-08'
+            phone_href: 'tel:+78452988808'
+            email: 'info@zaborprofil.ru'
+            telegram: 'https://t.me/zabortop'
+            instagram: 'https://instagram.com/zaborprofil.ru'
+            map_url: 'https://2gis.ru/saratov/firm/70000001019507229'
+            delivery: 'Доставка по России и Казахстану'
 
 when@test:
     twig:

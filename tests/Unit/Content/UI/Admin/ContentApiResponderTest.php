@@ -6,14 +6,16 @@ namespace App\Tests\Unit\Content\UI\Admin;
 
 use App\Module\Content\Domain\Exception\ContentNotFoundException;
 use App\Module\Content\UI\Admin\ContentApiResponder;
+use App\Shared\UI\Http\AdminApiErrorResponder;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\AbstractLogger;
+use Psr\Log\NullLogger;
 
 final class ContentApiResponderTest extends TestCase
 {
     public function testReturns404WithDomainMessageForNotFound(): void
     {
-        $responder = new ContentApiResponder();
+        $responder = new ContentApiResponder(new AdminApiErrorResponder(new NullLogger()));
 
         $response = $responder->error(new ContentNotFoundException('Page not found'));
 
@@ -26,7 +28,7 @@ final class ContentApiResponderTest extends TestCase
 
     public function testReturns422WithDomainMessageForValidationErrors(): void
     {
-        $responder = new ContentApiResponder();
+        $responder = new ContentApiResponder(new AdminApiErrorResponder(new NullLogger()));
 
         $response = $responder->error(new \InvalidArgumentException('slug is required'));
 
@@ -65,7 +67,7 @@ final class ContentApiResponderTest extends TestCase
             }
         };
 
-        $responder = new ContentApiResponder($logger);
+        $responder = new ContentApiResponder(new AdminApiErrorResponder($logger));
 
         $response = $responder->error(new \RuntimeException('SQLSTATE[42P01]: secret table name'));
 

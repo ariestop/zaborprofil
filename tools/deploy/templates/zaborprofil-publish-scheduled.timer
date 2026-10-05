@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Zaborprofil scheduled page publishing every minute
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+AccuracySec=10s
+Unit=zaborprofil-publish-scheduled.service
+
+[Install]
+WantedBy=timers.target

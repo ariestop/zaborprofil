@@ -8,6 +8,7 @@ monolog:
         - deploy
         - business
         - critical
+        - observability
 
     handlers:
         main:
@@ -60,6 +61,10 @@ monolog:
             id: App\Shared\Infrastructure\Logging\TelegramErrorHandler
             level: error
             channels: ['!event', '!doctrine', '!console']
+        sentry:
+            type: service
+            id: Sentry\Monolog\LogToSentryIssueHandler
+            channels: [observability]
         console:
             type: console
             process_psr_3_messages: false

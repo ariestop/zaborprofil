@@ -32,11 +32,19 @@ final class DoctrinePageTemplateRepository extends ServiceEntityRepository imple
         return $this->findOneBy(['code' => $code]) ?? throw new ContentNotFoundException('Page template not found.');
     }
 
-    public function findActive(?PageType $pageType = null): array
+    public function findByCode(string $code): ?PageTemplate
+    {
+        return $this->findOneBy(['code' => $code]);
+    }
+
+    public function findActive(?PageType $pageType = null, ?string $kind = PageTemplate::KIND_PAGE): array
     {
         $criteria = ['active' => true];
         if ($pageType !== null) {
             $criteria['pageType'] = $pageType;
+        }
+        if ($kind !== null) {
+            $criteria['kind'] = $kind;
         }
 
         return $this->findBy($criteria, ['system' => 'DESC', 'name' => 'ASC']);

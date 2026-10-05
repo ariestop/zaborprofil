@@ -52,6 +52,9 @@ final readonly class SecurityHeadersSubscriber implements EventSubscriberInterfa
             "form-action 'self'",
             "frame-ancestors 'none'",
             "img-src 'self' data: https:",
+            "media-src 'self' https:",
+            // Видео (Rutube, VK Видео) подключаются по нажатию, карта — 2ГИС.
+            "frame-src 'self' https://rutube.ru https://vkvideo.ru https://vk.com https://*.2gis.ru https://*.2gis.com",
             "script-src 'self' 'unsafe-inline'",
             "style-src 'self' 'unsafe-inline'",
             "connect-src 'self'",

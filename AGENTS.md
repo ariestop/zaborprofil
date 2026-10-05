@@ -52,7 +52,7 @@ make health
 - `src/Module/` — модули модульного монолита.
 - `templates/` — Twig-шаблоны публичного сайта и админки.
 - `assets/site/` — frontend публичного сайта.
-- `assets/admin/` — React + TypeScript entrypoint админ-панели.
+- `admin/` — React + TypeScript entrypoint админ-панели.
 - `docs/` — документация на русском языке.
 
 ## Архитектурные правила
@@ -73,12 +73,12 @@ make health
 Утверждённая бренд-система — вариант E «Периметр». Все текущие и новые агенты используют только её при любых изменениях публичного сайта, админки, Twig-шаблонов, стилей, иконок, текстов интерфейса и полиграфии.
 
 - Главный источник правил: `docs/50-brand-system.md`. Визуальная версия: `docs/brand/brandbook-2026.pdf`. При расхождении верен `.md`, PDF обновить.
-- Логотипы — только SVG из `docs/brand/logo/` (`logo-horizontal`, `logo-compact` для телефона и мест уже 200 px, `mark`, `favicon`, версии `-white`/`-mono`). Не перерисовывать и не перенабирать.
-- Цвета — только токены из раздела 11 `docs/50-brand-system.md`: действие `#2D7F27`, бренд `#45A63D` (не для текста), текст `#23272D`, подписи `#575C63`, фон `#F3F5F2`, тёмный `#2A2F35`, бейдж `#F2B13B`. Цвета RAL — только для выбора цвета товара, не для интерфейса.
-- Шрифты — Onest (текст, заголовки, UI) и Sofia Sans Condensed (цены, телефоны, характеристики), локально через `@fontsource*`, без CDN. Open Sans и Cuprum в интерфейсе запрещены.
+- Логотипы — только SVG из `docs/brand/logo/` (рабочие копии — `public_html/img/logo*.svg`, `public_html/favicon.svg`). На телефоне и в местах уже 200 px — `logo-compact`. Не перерисовывать и не перенабирать.
+- Цвета — только токены из `assets/shared/styles/theme.css` (раздел 11 `docs/50-brand-system.md`): действие `brand-700` `#2D7F27`, бренд `brand-500` `#45A63D` (не для текста), текст `ink` `#23272D`, подписи `graphite` `#575C63`, фон `surface` `#F3F5F2`, тёмный `night` `#2A2F35`, бейдж `badge` `#F2B13B`. Цвета RAL — только для выбора цвета товара. Классы `emerald-*` и собственные HEX в новом коде запрещены.
+- Шрифты — Onest (текст, заголовки, UI) и Sofia Sans Condensed (цены, телефоны, характеристики), локально через `@fontsource*`, без CDN. В Sofia Sans Condensed нет ₽ — Onest должен оставаться вторым в `--font-cond`. Open Sans и Cuprum в интерфейсе запрещены.
 - Стиль — flat 2.0: плоско, но кнопки и поля от 48 px, скругление 10/12 px, видимый `:focus-visible`, текст от 17 px, контраст WCAG 2.2 AA.
+- Контакты — только из Twig-глобала `site` (`config/packages/twig.yaml`).
 - Перед сдачей UI-изменений пройти чек-лист из раздела 13 `docs/50-brand-system.md`.
-- Этап 1 выполнен: токены в `assets/shared/styles/app.css`, шрифты в `assets/shared/styles/fonts.css`, компоненты `.btn`, `.field-*`, `.price`, `.chip`, `.badge`, `.mobile-bar`. Классы `emerald-*` запрещены. Телефон и кнопки нижней панели берутся из настроек `contacts.phone`, `contacts.messenger_url`, `contacts.calculator_url`.
 
 ## Staging на Beget (dev.zaborprofil.ru)
 

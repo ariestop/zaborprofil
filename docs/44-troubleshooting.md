@@ -118,10 +118,10 @@ php bin/console cache:clear
 ### `doctrine:schema:validate` ошибочный
 
 ```bash
-php bin/console doctrine:schema:validate --skip-sync
+php bin/console doctrine:schema:validate
 ```
 
-Скажет, что не сходится между attributes и БД. Часто — забытый индекс, либо объект, созданный в миграции вручную и не выраженный в attributes (generated column, functional/FULLTEXT-индекс), либо расхождение charset/collation таблицы с `default_table_options` (должно быть `utf8mb4` / `utf8mb4_0900_ai_ci`).
+Скажет, что не сходится между attributes и БД. Часто — забытый индекс, либо объект, созданный в миграции вручную и не выраженный в attributes (generated column, functional/FULLTEXT-индекс; такие объекты нужно описать listener-ом, как `PagePathActiveSchemaListener`, и задокументировать в [17-doctrine-and-database](17-doctrine-and-database.md) §13.1), либо устаревший кэш контейнера после смены listener-ов/`doctrine.yaml` (`cache:clear`), либо расхождение charset/collation таблицы с `default_table_options` (должно быть `utf8mb4` / `utf8mb4_0900_ai_ci`).
 
 ### `Class metadata not found`
 

@@ -18,6 +18,8 @@ final readonly class UpdatePageSeoMetadataCommand
         public ?string $ogImage = null,
         public ?string $ogType = null,
         public ?array $jsonLd = null,
+        public ?string $metaTitle = null,
+        public bool $metaTitleProvided = false,
     ) {
     }
 }

@@ -4,46 +4,27 @@ declare(strict_types=1);
 
 namespace App\Module\Content\UI\Admin;
 
-use App\Module\Content\Domain\Exception\ContentNotFoundException;
-use InvalidArgumentException;
-use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
+use App\Shared\UI\Http\AdminApiErrorResponder;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Throwable;
-use ValueError;
 
 final readonly class ContentApiResponder
 {
-    private LoggerInterface $logger;
-
-    public function __construct(?LoggerInterface $logger = null)
-    {
-        $this->logger = $logger ?? new NullLogger();
+    public function __construct(
+        private AdminApiErrorResponder $responder,
+    ) {
     }
 
     public function error(Throwable $exception): JsonResponse
     {
-        if ($exception instanceof ContentNotFoundException) {
-            return new JsonResponse([
-                'error' => $exception->getMessage(),
-                'code' => 'NOT_FOUND',
-            ], 404);
-        }
+        return $this->responder->fromThrowable($exception, 'Admin Content API');
+    }
 
-        if ($exception instanceof InvalidArgumentException || $exception instanceof ValueError) {
-            return new JsonResponse([
-                'error' => $exception->getMessage(),
-                'code' => 'VALIDATION',
-            ], 422);
-        }
-
-        $this->logger->error('Admin Content API failed with an unexpected exception.', [
-            'exception' => $exception,
-        ]);
-
-        return new JsonResponse([
-            'error' => 'Internal server error',
-            'code' => 'INTERNAL',
-        ], 500);
+    /**
+     * @param array<string, mixed> $extra
+     */
+    public function conflict(string $message, string $code, array $extra = []): JsonResponse
+    {
+        return $this->responder->conflict($message, $code, $extra);
     }
 }

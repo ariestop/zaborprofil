@@ -1,0 +1,6 @@
+{# Форма заявки в выбранном месте страницы; тогда общая форма внизу страницы не выводится. #}
+<section class="zp-section zp-section--alt" data-block-type="contact-form">
+    <div class="zp-container max-w-3xl">
+        {% include 'public/partials/lead_form.html.twig' with { lead_form_title: block.content.title ?? null } %}
+    </div>
+</section>

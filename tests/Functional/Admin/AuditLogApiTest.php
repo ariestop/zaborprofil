@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Functional\Admin;
 
 use App\Module\Admin\Infrastructure\Http\AdminApiCsrfSubscriber;
+use App\Module\Settings\Domain\Entity\Setting;
 use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
 use App\Tests\Support\Database\SchemaTestHelper;
 use Doctrine\ORM\EntityManagerInterface;
@@ -31,9 +32,13 @@ final class AuditLogApiTest extends WebTestCase
         $payload = json_decode($client->getResponse()->getContent() ?: '[]', true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($payload);
         self::assertNotEmpty($payload);
-        self::assertIsArray($payload[0]);
-        self::assertSame('create', $payload[0]['action'] ?? null);
-        self::assertSame('audit@example.test', $payload[0]['actorEmail'] ?? null);
+        $entries = array_values(array_filter(
+            $payload,
+            static fn (mixed $entry): bool => \is_array($entry) && ($entry['entityType'] ?? null) === Setting::class,
+        ));
+        self::assertNotEmpty($entries);
+        self::assertSame('create', $entries[0]['action'] ?? null);
+        self::assertSame('audit@example.test', $entries[0]['actorEmail'] ?? null);
     }
 
     private function createAdminUser(): AdminUser

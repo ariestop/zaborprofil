@@ -2,15 +2,17 @@
 <html lang="ru">
     <head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>{% block title %}ЗаборПрофиль{% endblock %}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+        <meta name="theme-color" content="#1b490c">
+        <title>{% block title %}{{ site.name }}{% endblock %}</title>
         {% block meta_description %}
             {% if meta_description is defined and meta_description %}
                 <meta name="description" content="{{ meta_description }}">
             {% endif %}
         {% endblock %}
         {% block meta_robots %}
-            <meta name="robots" content="{{ meta_robots is defined and meta_robots ? meta_robots : 'index, follow' }}">
+            {% set robots_content = app.environment == 'staging' ? 'noindex, nofollow' : (meta_robots is defined and meta_robots ? meta_robots : 'index, follow') %}
+            <meta name="robots" content="{{ robots_content }}">
         {% endblock %}
         {% block canonical_url %}
             {% if canonical_url is defined and canonical_url %}
@@ -18,7 +20,8 @@
             {% endif %}
         {% endblock %}
         {% block meta_open_graph %}
-            <meta property="og:site_name" content="ЗаборПрофиль">
+            <meta property="og:site_name" content="{{ site.name }}">
+            <meta property="og:locale" content="ru_RU">
             <meta property="og:type" content="{{ og_type is defined and og_type ? og_type : 'website' }}">
             <meta property="og:title" content="{{ og_title is defined and og_title ? og_title : block('title') }}">
             {% if og_description is defined and og_description %}
@@ -35,6 +38,18 @@
                 <meta name="twitter:image" content="{{ og_image }}">
             {% endif %}
         {% endblock %}
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+        <script type="application/ld+json">{{ {
+            '@context': 'https://schema.org',
+            '@type': 'Organization',
+            'name': site.name,
+            'url': app.request.schemeAndHttpHost ~ '/',
+            'logo': app.request.schemeAndHttpHost ~ '/img/logo.png',
+            'telephone': '+7-8452-98-88-08',
+            'email': site.email,
+            'areaServed': ['Саратов', 'Россия', 'Казахстан'],
+            'sameAs': [site.telegram, site.instagram]
+        }|json_encode(constant('JSON_UNESCAPED_UNICODE') b-or constant('JSON_UNESCAPED_SLASHES'))|raw }}</script>
         {% block json_ld %}
             {% if json_ld_blocks is defined and json_ld_blocks %}
                 {% for block in json_ld_blocks %}
@@ -42,87 +57,142 @@
                 {% endfor %}
             {% endif %}
         {% endblock %}
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-        <meta name="theme-color" content="#ffffff">
         {% block stylesheets %}
             {{ vite_entry_link_tags('assets/site/app.ts') }}
         {% endblock %}
     </head>
-    {# Контакты для шапки и нижней панели задаются в админке: настройки contacts.phone, contacts.messenger_url, contacts.calculator_url. #}
-    {% set contact_phone = setting('contacts', 'phone', '') %}
-    {% set contact_messenger_url = setting('contacts', 'messenger_url', '') %}
-    {% set contact_calculator_url = setting('contacts', 'calculator_url', '') %}
-    {% set contact_phone_href = contact_phone ? 'tel:' ~ contact_phone|replace({' ': '', '(': '', ')': '', '-': '', '‑': ''}) : '' %}
-    <body class="{% block body_class %}min-h-screen bg-white text-base text-ink antialiased{% if contact_phone or contact_messenger_url or contact_calculator_url %} pb-24 md:pb-0{% endif %}{% endblock %}">
+    <body class="zp-body">
+        {% include 'public/partials/icons.html.twig' %}
+        <a class="zp-skip" href="#content">Перейти к содержимому</a>
+
         {% block site_header %}
             {% set service_menu = menu_items('service') %}
             {% set header_menu = menu_items('header') %}
+            {# Пока меню «header» не заполнено в админке, показываем основные разделы, чтобы шапка не была пустой. #}
+            {% if not header_menu %}
+                {% set header_menu = [
+                    {label: 'Забор Жалюзи', url: '/zabor-jaluzi/'},
+                    {label: 'Каталог', url: '/#catalog'},
+                    {label: 'Как мы работаем', url: '/#process'},
+                    {label: 'Контакты', url: '#contacts'}
+                ] %}
+            {% endif %}
 
             {% if service_menu %}
-                <nav class="border-b border-slate-200 bg-slate-900 text-sm text-white" aria-label="Сервисная навигация">
-                    <div class="mx-auto flex max-w-6xl justify-end gap-5 px-6 py-2">
+                <nav class="zp-service" aria-label="Сервисная навигация">
+                    <div class="zp-container flex justify-end gap-5 py-2">
                         {% for item in service_menu %}
-                            <a class="text-slate-200 hover:text-white" href="{{ item.url }}">{{ item.label }}</a>
+                            <a href="{{ item.url }}">{{ item.label }}</a>
                         {% endfor %}
                     </div>
                 </nav>
             {% endif %}
 
-            <header class="border-b border-line bg-white">
-                <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-4 py-3 sm:px-6">
-                    <a class="block w-40 sm:hidden [&>svg]:block [&>svg]:h-auto [&>svg]:w-full" href="/" aria-label="Забор Профиль — на главную">{{ source('brand/logo-compact.svg') }}</a>
-                    <a class="hidden w-60 sm:block [&>svg]:block [&>svg]:h-auto [&>svg]:w-full" href="/" aria-label="Забор Профиль — на главную">{{ source('brand/logo-horizontal.svg') }}</a>
+            <header class="zp-header" data-site-header>
+                <div class="zp-container zp-header__bar">
+                    <a class="zp-logo" href="/" aria-label="{{ site.name }} — на главную">
+                        <picture>
+                            {# Брендбук «Периметр»: уже 200 px — компактный логотип без дескриптора. #}
+                            <source media="(max-width: 639px)" srcset="/img/logo-compact.svg" width="160" height="23">
+                            <img src="/img/logo.svg" width="230" height="34" alt="{{ site.name }}: {{ site.tagline|lower }}" decoding="async" fetchpriority="high">
+                        </picture>
+                    </a>
+
                     {% if header_menu %}
-                        <nav class="order-last -mx-4 flex w-[calc(100%+2rem)] gap-5 overflow-x-auto px-4 pb-1 text-[0.9375rem] font-medium whitespace-nowrap text-ink md:order-none md:mx-0 md:w-auto md:overflow-visible md:px-0 md:pb-0" aria-label="Основная навигация">
+                        <nav class="zp-nav" aria-label="Основная навигация">
                             {% for item in header_menu %}
-                                <a class="py-2 hover:text-brand-700" href="{{ item.url }}">{{ item.label }}</a>
+                                <a href="{{ item.url }}">{{ item.label }}</a>
                             {% endfor %}
                         </nav>
                     {% endif %}
-                    {% if contact_phone %}
-                        <a class="price hidden text-2xl text-ink hover:text-brand-700 sm:block" href="{{ contact_phone_href }}">{{ contact_phone }}</a>
-                    {% endif %}
+
+                    <div class="zp-header__actions">
+                        <a class="zp-header__phone" href="{{ site.phone_href }}">
+                            <svg class="size-5 shrink-0 text-brand-500" aria-hidden="true"><use href="#i-phone"/></svg>
+                            <span class="hidden lg:inline">{{ site.phone }}</span>
+                            <span class="sr-only lg:hidden">Позвонить: {{ site.phone }}</span>
+                        </a>
+                        <a class="zp-btn zp-btn--primary zp-btn--sm hidden md:inline-flex" href="#lead-form" data-lead-cta>Рассчитать стоимость</a>
+                        <button class="zp-burger" type="button" aria-expanded="false" aria-controls="mobile-nav" data-nav-toggle>
+                            <svg class="size-6" aria-hidden="true" data-icon-open><use href="#i-menu"/></svg>
+                            <svg class="hidden size-6" aria-hidden="true" data-icon-close><use href="#i-close"/></svg>
+                            <span class="sr-only">Меню</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="zp-drawer" id="mobile-nav" data-nav-panel hidden>
+                    <nav class="zp-container zp-drawer__nav" aria-label="Мобильная навигация">
+                        {% for item in header_menu %}
+                            <a href="{{ item.url }}">{{ item.label }}<svg class="size-4 text-graphite/70" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+                        {% endfor %}
+                    </nav>
+                    <div class="zp-container zp-drawer__foot">
+                        <a class="zp-btn zp-btn--primary w-full" href="#lead-form" data-nav-close>Рассчитать стоимость</a>
+                        <a class="zp-btn zp-btn--ghost w-full" href="{{ site.phone_href }}">
+                            <svg class="size-5" aria-hidden="true"><use href="#i-phone"/></svg>{{ site.phone }}
+                        </a>
+                        <p class="text-center text-sm text-graphite">{{ site.city }} · {{ site.delivery }}</p>
+                    </div>
                 </div>
             </header>
         {% endblock %}
 
-        {% block body %}{% endblock %}
+        <div id="content" tabindex="-1">
+            {% block body %}{% endblock %}
+        </div>
 
         {% block site_footer %}
             {% set footer_menu = menu_items('footer') %}
-            {% if footer_menu %}
-                <footer class="border-t border-line bg-white">
-                    <nav class="mx-auto flex max-w-6xl flex-wrap gap-5 px-4 py-6 text-[0.9375rem] text-graphite sm:px-6" aria-label="Навигация в подвале">
-                        {% for item in footer_menu %}
-                            <a class="hover:text-brand-700" href="{{ item.url }}">{{ item.label }}</a>
-                        {% endfor %}
-                    </nav>
-                </footer>
-            {% endif %}
+            <footer class="zp-footer" id="contacts">
+                <div class="zp-container zp-footer__grid">
+                    <div class="space-y-4">
+                        <a class="inline-block" href="/" aria-label="{{ site.name }}">
+                            <img class="zp-footer__logo" src="/img/logo-white.svg" width="230" height="34" alt="{{ site.name }}" loading="lazy" decoding="async">
+                        </a>
+                        <p class="max-w-xs text-sm leading-6 text-white/75">
+                            Производство и монтаж заборов под ключ. {{ site.delivery }}.
+                        </p>
+                        <div class="flex gap-3">
+                            <a class="zp-social" href="{{ site.telegram }}" rel="noopener" target="_blank" aria-label="Telegram"><svg class="size-5" aria-hidden="true"><use href="#i-telegram"/></svg></a>
+                            <a class="zp-social" href="{{ site.instagram }}" rel="noopener" target="_blank" aria-label="Instagram"><svg class="size-5" aria-hidden="true"><use href="#i-instagram"/></svg></a>
+                        </div>
+                    </div>
 
-            {% if contact_phone or contact_messenger_url or contact_calculator_url %}
-                <nav class="mobile-bar md:hidden" aria-label="Быстрая связь">
-                    {% if contact_phone %}
-                        <a href="{{ contact_phone_href }}">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>
-                            Позвонить
-                        </a>
+                    <address class="space-y-3 text-sm not-italic">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-white/60">Контакты</p>
+                        <a class="zp-footer__phone" href="{{ site.phone_href }}">{{ site.phone }}</a>
+                        <a class="zp-footer__link" href="mailto:{{ site.email }}"><svg class="size-4" aria-hidden="true"><use href="#i-mail"/></svg>{{ site.email }}</a>
+                        <a class="zp-footer__link" href="{{ site.map_url }}" rel="noopener" target="_blank"><svg class="size-4" aria-hidden="true"><use href="#i-pin"/></svg>{{ site.city }} — показать на карте</a>
+                    </address>
+
+                    {% if footer_menu %}
+                        <nav aria-label="Навигация в подвале" class="space-y-3 text-sm">
+                            <p class="text-xs font-semibold uppercase tracking-wider text-white/60">Разделы</p>
+                            <ul class="space-y-2">
+                                {% for item in footer_menu %}
+                                    <li><a class="zp-footer__link" href="{{ item.url }}">{{ item.label }}</a></li>
+                                {% endfor %}
+                            </ul>
+                        </nav>
                     {% endif %}
-                    {% if contact_messenger_url %}
-                        <a href="{{ contact_messenger_url }}" rel="noopener">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.6 8.6 0 0 1-3.8-.9L3 21l1.9-5.2a8.4 8.4 0 0 1-.9-3.8A8.5 8.5 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"/></svg>
-                            Написать
-                        </a>
-                    {% endif %}
-                    {% if contact_calculator_url %}
-                        <a class="is-primary" href="{{ contact_calculator_url }}">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 11h2M14 11h2M8 15h2M14 15h2M8 19h8"/></svg>
-                            Рассчитать
-                        </a>
-                    {% endif %}
-                </nav>
-            {% endif %}
+                </div>
+                <div class="zp-container zp-footer__copy">
+                    <p>© {{ site.name }}, 2010–{{ 'now'|date('Y') }}</p>
+                </div>
+            </footer>
         {% endblock %}
-        {% block javascripts %}{% endblock %}
+
+        {# Мобильная панель связи: всегда под большим пальцем, исчезает, когда на экране уже форма заявки. #}
+        <div class="zp-callbar" data-callbar>
+            <a class="zp-btn zp-btn--ghost" href="{{ site.phone_href }}">
+                <svg class="size-5" aria-hidden="true"><use href="#i-phone"/></svg>Позвонить
+            </a>
+            <a class="zp-btn zp-btn--primary" href="#lead-form">Рассчитать</a>
+        </div>
+
+        {% block javascripts %}
+            {{ vite_entry_script_tags('assets/site/app.ts') }}
+        {% endblock %}
     </body>
 </html>

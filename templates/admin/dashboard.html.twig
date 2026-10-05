@@ -6,13 +6,12 @@
     <meta name="robots" content="noindex, nofollow">
 {% endblock %}
 
-{% block body_class %}min-h-screen bg-slate-50 text-slate-950{% endblock %}
 {% block site_header %}{% endblock %}
 {% block site_footer %}{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
-    {{ vite_entry_link_tags('assets/admin/app.ts') }}
+    {{ vite_entry_link_tags('admin/app.ts') }}
     <meta name="admin-csrf-token" content="{{ csrf_token('admin_api') }}">
     <meta name="admin-csrf-header" content="X-CSRF-Token">
 {% endblock %}
@@ -22,6 +21,9 @@
         <div
             id="admin-app"
             data-user-email="{{ app.user ? app.user.userIdentifier : '' }}"
+            data-user-name="{{ app.user and app.user.name is defined ? app.user.name : '' }}"
+            data-roles="{{ access.roles|join(',') }}"
+            data-permissions="{{ access.permissions|join(',') }}"
             data-logout-url="{{ path('admin_logout') }}"
             data-logout-token="{{ csrf_token('logout') }}"
         ></div>
@@ -30,5 +32,5 @@
 
 {% block javascripts %}
     {{ parent() }}
-    {{ vite_entry_script_tags('assets/admin/app.ts') }}
+    {{ vite_entry_script_tags('admin/app.ts') }}
 {% endblock %}

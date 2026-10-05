@@ -1757,6 +1757,8 @@ df -h /var/www/<project>
 grep -E 'APP_SECRET' /var/www/<project>/shared/.env.local
 php bin/console debug:firewall
 tail -n 200 /var/www/<project>/current/var/log/prod.log | grep -iE 'security|login'
+tail -n 200 /var/www/<project>/current/var/log/security.log
+grep -n "Admin login rejected" /var/www/<project>/current/var/log/security.log | tail -n 20
 ```
 
 #### Пошаговое решение
@@ -1765,6 +1767,10 @@ tail -n 200 /var/www/<project>/current/var/log/prod.log | grep -iE 'security|log
 2. Проверить, что `APP_SECRET` стабилен между релизами.
 3. Проверить, что каталог сессий (`var/sessions/<env>`) существует и доступен на запись, сессии не теряются между релизами.
 4. Если сменили алгоритм password hash — потребуется ре-хэш паролей при следующем входе (Symfony Security умеет авто-rehash).
+5. Если в `security.log` есть `Admin login rejected: invalid CSRF token...`:
+   - проверить `Origin`/`Referer` в запросе `POST /admin/login`;
+   - проверить, что логин и последующие запросы идут в одном origin (схема+хост+порт);
+   - проверить прокси/CDN, который может вырезать `Origin`/`Referer` или ломать `X-Forwarded-Proto`.
 
 #### Проверка
 
@@ -1795,6 +1801,7 @@ tail -n 200 /var/www/<project>/current/var/log/prod.log | grep -iE 'security|log
 
 ```bash
 tail -n 100 /var/www/<project>/current/var/log/prod.log | grep -i csrf
+tail -n 200 /var/www/<project>/current/var/log/security.log | grep -E "Invalid CSRF|Admin login rejected"
 curl -I https://<domain>/admin/login
 ```
 
@@ -1802,7 +1809,11 @@ curl -I https://<domain>/admin/login
 
 1. Если массово — проверить session storage (права и место в `var/sessions/<env>`).
 2. Если у одного пользователя — попросить почистить cookies / hard-refresh.
-3. Не отключать CSRF защиту в production.
+3. Для `POST /admin/login` дополнительно проверить:
+   - в DevTools есть ли `Origin` и/или `Referer`;
+   - совпадает ли origin с `SITE_URL`/фактическим доменом;
+   - не режет ли reverse proxy эти заголовки.
+4. Не отключать CSRF защиту в production.
 
 #### Проверка
 

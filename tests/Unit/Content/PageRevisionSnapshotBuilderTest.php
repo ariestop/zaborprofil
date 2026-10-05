@@ -25,6 +25,7 @@ final class PageRevisionSnapshotBuilderTest extends TestCase
             'website',
             [['@context' => 'https://schema.org', '@type' => 'Service']],
         );
+        $page->updateMetaTitle('Монтаж заборов под ключ | ЗаборПрофиль');
         $block = new PageBlock($page, BlockType::Hero, 'Hero', 0, ['title' => 'Монтаж заборов']);
 
         $revision = (new PageRevisionSnapshotBuilder())->build($page, 1, [$block], comment: 'Initial publish');
@@ -32,6 +33,7 @@ final class PageRevisionSnapshotBuilderTest extends TestCase
         self::assertSame(1, $revision->version());
         self::assertSame('/montazh-zaborov/', $revision->path());
         self::assertSame('Монтаж заборов', $revision->seoSnapshot()['ogTitle']);
+        self::assertSame('Монтаж заборов под ключ | ЗаборПрофиль', $revision->seoSnapshot()['metaTitle']);
         self::assertSame(BlockType::Hero->value, $revision->blocksSnapshot()[0]['type']);
         self::assertSame('Initial publish', $revision->comment());
     }

@@ -33,8 +33,34 @@ ROLE_MANAGER: []
 
 ```yaml
 - { path: ^/admin/login$, roles: PUBLIC_ACCESS }
-- { path: ^/admin, roles: ROLE_ADMIN }
+- { path: ^/admin, roles: [ROLE_EDITOR, ROLE_SEO, ROLE_MANAGER] }
 ```
+
+В `/admin` входит любая админская роль: `ROLE_ADMIN` и `ROLE_SUPER_ADMIN` попадают под правило через `role_hierarchy`. `AdminUser::getRoles()` возвращает только назначенные роли (раньше всегда добавлялась `ROLE_ADMIN`, из-за чего редактор, SEO и менеджер фактически были администраторами). Аккаунт без админской роли не может войти: `AdminUserChecker` отклоняет вход с сообщением «У учётной записи нет доступа к админ-панели», а уже открытая сессия получает `403`.
+
+Конкретные разделы и эндпоинты закрывает `AdminPermissionVoter`: каждый контроллер `/admin/api/*` проверяет своё право.
+
+### Права для SPA
+
+`GET /admin/api/me` возвращает `{email, roles, permissions}`; те же `roles` и `permissions` шаблон `admin/dashboard.html.twig` отдаёт в `data-roles` / `data-permissions` корня `#admin-app`. Список прав вычисляет `AdminAccessProfile` теми же voter'ами, что защищают эндпоинты. Фронтенд (`admin/stores/auth.ts`) использует его, чтобы:
+
+- скрывать пункты бокового меню и командной палитры (`permission` в `admin/routes/route-config.ts`);
+- закрывать маршруты компонентом `RouteGuard` (страница 403 вместо раздела);
+- прятать кнопки и вкладки (создание страницы, публикация, вкладки редактора, удаление медиа, экспорт заявок).
+
+Это только удобство интерфейса: сервер проверяет право на каждый запрос. Список прав в `admin/entities/user/permissions.ts` должен совпадать с `AdminPermission` — это проверяет `permissions.spec.ts`.
+
+### Что доступно ролям
+
+| Роль | Разделы админки |
+|---|---|
+| `ROLE_EDITOR` | сводка, страницы (создание, правка блоков, отправка на ревью), медиатека (загрузка) |
+| `ROLE_SEO` | сводка, страницы (просмотр, согласование), SEO: редиректы, robots, 404, аудит |
+| `ROLE_MANAGER` | сводка, заявки (просмотр, статусы, ответственные, заметки; без экспорта) |
+| `ROLE_ADMIN` | всё, кроме опасных операций системного центра, пользователи, настройки |
+| `ROLE_SUPER_ADMIN` | всё, включая `system.dangerous` |
+
+Системный центр (`system.*`), настройки, пользователи и журнал действий недоступны ролям ниже `ROLE_ADMIN`.
 
 ### Permissions
 
@@ -53,6 +79,7 @@ public function publish(...) {}
 | `seo.edit` | `ROLE_SEO`, `ROLE_ADMIN` |
 | `media.upload`, `media.delete` | `ROLE_EDITOR`, `ROLE_ADMIN` |
 | `leads.view`, `leads.manage` | `ROLE_MANAGER`, `ROLE_ADMIN` |
+| `leads.export` | `ROLE_ADMIN`, `ROLE_SUPER_ADMIN` (выгрузка персональных данных в CSV, каждый экспорт пишется в audit log) |
 | `settings.edit`, `users.manage`, `system.manage` | `ROLE_ADMIN` / `ROLE_SUPER_ADMIN` |
 
 При появлении сложных правил на конкретные сущности — выделить **resource voters** (например, `PageVoter::canEdit($page, $user)`).
@@ -83,6 +110,7 @@ public function publish(...) {}
 - `media.delete`
 - `leads.view`
 - `leads.manage`
+- `leads.export`
 - `settings.edit`
 - `users.manage`
 - `system.view`
@@ -92,6 +120,7 @@ public function publish(...) {}
 
 - Login form — Symfony `enable_csrf: true`.
 - Logout — `enable_csrf: true`.
+- Для неудачных входов на `admin_login` логируется диагностическое событие `Admin login rejected...` с контекстом `Origin/Referer/Host`, чтобы быстрее находить проблемы same-origin и reverse proxy.
 - Admin JSON API — double-submit:
   - токен `admin_api` рендерится в `<meta name="admin-csrf-token">`;
   - React SPA шлёт `X-CSRF-Token`;
@@ -213,7 +242,7 @@ password_hashers:
 
 ## Common mistakes
 
-- Открыть `^/admin` для `IS_AUTHENTICATED_FULLY` вместо `ROLE_ADMIN`.
+- Вернуть принудительное добавление `ROLE_ADMIN` в `AdminUser::getRoles()` или сузить `^/admin` до `ROLE_ADMIN`: роли Editor/SEO/Manager перестанут входить в админку (или получат лишние права).
 - Забыть `#[IsGranted]` на admin endpoint, полагаясь только на firewall (риск при перенастройке firewall’ов).
 - Закомментировать `AdminApiCsrfSubscriber` для упрощения e2e — оставить так в production.
 - Поставить `cost = 4` для `password_hashers` на prod.

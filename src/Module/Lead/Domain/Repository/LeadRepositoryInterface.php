@@ -16,4 +16,38 @@ interface LeadRepositoryInterface
      * @return list<Lead>
      */
     public function findLatest(int $limit = 100): array;
+
+    public function search(LeadSearchCriteria $criteria): LeadSearchResult;
+
+    /**
+     * Заявки под фильтром без пагинации, но не более $limit.
+     *
+     * @return list<Lead>
+     */
+    public function findForExport(LeadSearchCriteria $criteria, int $limit): array;
+
+    /**
+     * Количество заявок по статусам с учётом всех фильтров, кроме статуса.
+     * Отсутствующие статусы возвращаются с нулём.
+     *
+     * @return array<string, int>
+     */
+    public function countByStatus(LeadSearchCriteria $criteria): array;
+
+    /**
+     * @return list<string>
+     */
+    public function distinctSources(): array;
+
+    /**
+     * Сколько заявок переведено в «завершена» и изменялось не раньше $since.
+     */
+    public function countDoneSince(\DateTimeImmutable $since): int;
+
+    /**
+     * Даты создания заявок (без спама) не раньше $since, от старых к новым.
+     *
+     * @return list<\DateTimeImmutable>
+     */
+    public function createdAtSince(\DateTimeImmutable $since): array;
 }

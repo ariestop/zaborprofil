@@ -30,12 +30,14 @@ final class AdminPermission
     public const string MEDIA_DELETE = 'media.delete';
     public const string LEADS_VIEW = 'leads.view';
     public const string LEADS_MANAGE = 'leads.manage';
+    public const string LEADS_EXPORT = 'leads.export';
     public const string CATALOG_VIEW = 'catalog.view';
     public const string CATALOG_MANAGE = 'catalog.manage';
     public const string SETTINGS_EDIT = 'settings.edit';
     public const string USERS_MANAGE = 'users.manage';
     public const string SYSTEM_VIEW = 'system.view';
     public const string SYSTEM_MANAGE = 'system.manage';
+    public const string SYSTEM_DANGEROUS = 'system.dangerous';
 
     /**
      * @return list<string>
@@ -67,12 +69,14 @@ final class AdminPermission
             self::MEDIA_DELETE,
             self::LEADS_VIEW,
             self::LEADS_MANAGE,
+            self::LEADS_EXPORT,
             self::CATALOG_VIEW,
             self::CATALOG_MANAGE,
             self::SETTINGS_EDIT,
             self::USERS_MANAGE,
             self::SYSTEM_VIEW,
             self::SYSTEM_MANAGE,
+            self::SYSTEM_DANGEROUS,
         ];
     }
 }

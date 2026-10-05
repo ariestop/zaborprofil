@@ -33,6 +33,10 @@ final readonly class PageOutput
         public ?string $ogImage = null,
         public ?string $ogType = null,
         public ?array $jsonLd = null,
+        public ?string $metaTitle = null,
+        public ?string $parentId = null,
+        public ?string $updatedAt = null,
+        public ?string $updatedBy = null,
     ) {
     }
 
@@ -60,6 +64,10 @@ final readonly class PageOutput
             $page->ogImage(),
             $page->ogType(),
             $page->jsonLd(),
+            $page->metaTitle(),
+            $page->parent() === null ? null : (string) $page->parent()->id(),
+            $page->updatedAt()->format(DATE_ATOM),
+            $page->updatedBy(),
         );
     }
 
@@ -78,12 +86,16 @@ final readonly class PageOutput
             'status' => $this->status,
             'template' => $this->template,
             'sortOrder' => $this->sortOrder,
+            'parentId' => $this->parentId,
             'isIndexable' => $this->isIndexable,
             'visibility' => $this->visibility,
             'publishedAt' => $this->publishedAt,
             'scheduledPublishAt' => $this->scheduledPublishAt,
             'scheduledUnpublishAt' => $this->scheduledUnpublishAt,
+            'updatedAt' => $this->updatedAt,
+            'updatedBy' => $this->updatedBy,
             'seo' => [
+                'metaTitle' => $this->metaTitle,
                 'metaDescription' => $this->metaDescription,
                 'canonicalUrl' => $this->canonicalUrl,
                 'ogTitle' => $this->ogTitle,

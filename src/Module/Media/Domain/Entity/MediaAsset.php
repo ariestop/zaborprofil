@@ -13,8 +13,18 @@ use Symfony\Component\Uid\Ulid;
 #[ORM\Table(name: 'media_assets')]
 #[ORM\Index(name: 'idx_media_assets_created_at', columns: ['created_at'])]
 #[ORM\Index(name: 'idx_media_assets_mime_type', columns: ['mime_type'])]
+#[ORM\Index(name: 'idx_media_assets_file_hash', columns: ['file_hash'])]
+#[ORM\Index(name: 'idx_media_assets_folder', columns: ['folder'])]
+#[ORM\Index(name: 'idx_media_assets_public_path', columns: ['public_path'], options: ['lengths' => [191]])]
 final class MediaAsset
 {
+    public const int METADATA_MAX_LENGTH = 255;
+    public const int DESCRIPTION_MAX_LENGTH = 2000;
+    public const int FOLDER_MAX_LENGTH = 120;
+    public const string FOLDER_NONE = '__none__';
+    public const int FOCAL_MIN = 0;
+    public const int FOCAL_MAX = 100;
+
     #[ORM\Id]
     #[ORM\Column(type: 'ulid', unique: true)]
     private Ulid $id;
@@ -46,6 +56,27 @@ final class MediaAsset
     #[ORM\Column(type: 'json')]
     private array $variants;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $alt = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $title = null;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $description = null;
+
+    #[ORM\Column(length: self::FOLDER_MAX_LENGTH, nullable: true)]
+    private ?string $folder = null;
+
+    #[ORM\Column(name: 'file_hash', length: 64, nullable: true)]
+    private ?string $fileHash = null;
+
+    #[ORM\Column(name: 'focal_x', type: 'smallint', nullable: true, options: ['unsigned' => true])]
+    private ?int $focalX = null;
+
+    #[ORM\Column(name: 'focal_y', type: 'smallint', nullable: true, options: ['unsigned' => true])]
+    private ?int $focalY = null;
+
     #[ORM\Column]
     private DateTimeImmutable $createdAt;
 
@@ -61,6 +92,7 @@ final class MediaAsset
         ?int $width,
         ?int $height,
         array $variants = [],
+        ?string $fileHash = null,
     ) {
         if ($size <= 0) {
             throw new InvalidArgumentException('Media asset size must be positive.');
@@ -75,6 +107,7 @@ final class MediaAsset
         $this->width = $width;
         $this->height = $height;
         $this->variants = self::normalizeVariants($variants);
+        $this->fileHash = self::normalizeHash($fileHash);
         $this->createdAt = new DateTimeImmutable();
     }
 
@@ -86,6 +119,106 @@ final class MediaAsset
     public function publicPath(): string
     {
         return $this->publicPath;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function allPublicPaths(): array
+    {
+        return array_values(array_unique([
+            $this->publicPath,
+            ...array_map(static fn (array $variant): string => $variant['publicPath'], $this->variants),
+        ]));
+    }
+
+    public function mimeType(): string
+    {
+        return $this->mimeType;
+    }
+
+    public function width(): ?int
+    {
+        return $this->width;
+    }
+
+    public function height(): ?int
+    {
+        return $this->height;
+    }
+
+    public function alt(): ?string
+    {
+        return $this->alt;
+    }
+
+    public function title(): ?string
+    {
+        return $this->title;
+    }
+
+    public function description(): ?string
+    {
+        return $this->description;
+    }
+
+    public function folder(): ?string
+    {
+        return $this->folder;
+    }
+
+    public function fileHash(): ?string
+    {
+        return $this->fileHash;
+    }
+
+    public function updateMetadata(?string $alt, ?string $title, ?string $description = null, ?string $folder = null): void
+    {
+        $this->alt = self::optionalText($alt, 'alt');
+        $this->title = self::optionalText($title, 'title');
+        $this->description = self::optionalText($description, 'description', self::DESCRIPTION_MAX_LENGTH);
+        $this->folder = self::normalizeFolder($folder);
+    }
+
+    public function focalX(): ?int
+    {
+        return $this->focalX;
+    }
+
+    public function focalY(): ?int
+    {
+        return $this->focalY;
+    }
+
+    /**
+     * Фокальная точка в процентах от ширины/высоты (0–100); обе координаты задаются или очищаются вместе.
+     */
+    public function updateFocalPoint(?int $x, ?int $y): void
+    {
+        if ($x === null && $y === null) {
+            $this->focalX = null;
+            $this->focalY = null;
+
+            return;
+        }
+
+        if ($x === null || $y === null) {
+            throw new InvalidArgumentException('Media asset focal point requires both coordinates.');
+        }
+
+        foreach ([$x, $y] as $coordinate) {
+            if ($coordinate < self::FOCAL_MIN || $coordinate > self::FOCAL_MAX) {
+                throw new InvalidArgumentException(\sprintf('Media asset focal point must be between %d and %d.', self::FOCAL_MIN, self::FOCAL_MAX));
+            }
+        }
+
+        $this->focalX = $x;
+        $this->focalY = $y;
+    }
+
+    public function attachFileHash(string $fileHash): void
+    {
+        $this->fileHash = self::normalizeHash($fileHash);
     }
 
     /**
@@ -111,6 +244,13 @@ final class MediaAsset
             'width' => $this->width,
             'height' => $this->height,
             'variants' => $this->variants,
+            'alt' => $this->alt,
+            'title' => $this->title,
+            'description' => $this->description,
+            'folder' => $this->folder,
+            'fileHash' => $this->fileHash,
+            'focalX' => $this->focalX,
+            'focalY' => $this->focalY,
             'createdAt' => $this->createdAt->format(DATE_ATOM),
         ];
     }
@@ -139,6 +279,52 @@ final class MediaAsset
         }
 
         return $normalized;
+    }
+
+    private static function optionalText(?string $value, string $field, int $maxLength = self::METADATA_MAX_LENGTH): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $normalized = trim($value);
+        if ($normalized === '') {
+            return null;
+        }
+
+        if (mb_strlen($normalized) > $maxLength) {
+            throw new InvalidArgumentException(\sprintf('Media asset %s cannot be longer than %d characters.', $field, $maxLength));
+        }
+
+        return $normalized;
+    }
+
+    public static function normalizeFolder(?string $value): ?string
+    {
+        $folder = self::optionalText($value, 'folder', self::FOLDER_MAX_LENGTH);
+        if ($folder === null) {
+            return null;
+        }
+
+        if ($folder === self::FOLDER_NONE || preg_match('/[\x00-\x1F\x7F\/\\\\]/u', $folder) === 1) {
+            throw new InvalidArgumentException('Media asset folder contains forbidden characters.');
+        }
+
+        return $folder;
+    }
+
+    private static function normalizeHash(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $hash = strtolower(trim($value));
+        if (preg_match('/^[a-f0-9]{64}$/', $hash) !== 1) {
+            throw new InvalidArgumentException('Media asset file hash must be a SHA-256 hex digest.');
+        }
+
+        return $hash;
     }
 
     private static function required(string $value, string $message): string

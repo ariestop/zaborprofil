@@ -1,0 +1,107 @@
+# Архитектура admin-shell (React SPA внутри Symfony)
+
+## Контекст
+
+Админка в проекте работает по гибридной модели:
+
+- Symfony управляет `login/logout`, session-auth и backend security.
+- Twig-шаблон рендерит shell-контейнер `#admin-app`.
+- React + TypeScript запускается внутри этого контейнера и ведёт SPA-навигацию.
+- JSON API остаётся в том же приложении и домене под `/admin/api/*`.
+
+## Слои admin frontend
+
+`admin/` разделён на слои:
+
+- `app/` — bootstrap, providers, global runtime.
+- `routes/` — SPA routing и route config.
+- `layouts/` — shell layout (topbar/sidebar/breadcrumbs/main).
+- `pages/` — route-level страницы.
+- `modules/` — крупные функциональные foundation-блоки (например, page-builder).
+- `features/` — прикладные UI-фичи (например, rich-text).
+- `entities/` — типы/модели сущностей frontend.
+- `widgets/` — крупные самостоятельные виджеты shell.
+- `shared/` — UI-kit, API-клиент, hooks, utils, config.
+
+## Shell responsibilities
+
+Shell отвечает за:
+
+- каркас интерфейса (sidebar/topbar/breadcrumbs);
+- маршрутизацию и lazy loading страниц;
+- глобальные системные паттерны (error boundary, loading fallback, toasts, dialogs);
+- foundation для command palette, global search и dark/light mode.
+
+## Навигация и шапка
+
+- Боковое меню (`admin/layouts/SidebarNav.tsx`) строится из `admin/routes/route-config.ts`: у маршрута есть `navGroup` (`main`, `content`, `seo`, `manage`, `server`) и `icon`. Порядок групп задаёт `navGroups`.
+- Группа «Сервер» (обзор системы, процессы, логи, очереди, кэш, БД, безопасность, резервные копии, деплой, миграции) по умолчанию свёрнута и раскрывается автоматически, когда открыт один из её разделов. Состояние хранится в `localStorage` (`admin.nav.serverOpen`).
+- Меню сворачивается в узкую рейку с иконками (`admin.sidebar.collapsed`), на телефоне открывается выезжающей панелью из шапки.
+- Рядом с пунктом «Заявки» показывается число новых заявок из `GET /admin/api/leads/summary`.
+- «Сводка» (`/admin/dashboard`, `fullBleed`) собрана по макету «Вариант 4 — Сводка»: приветствие и быстрые действия, «Требует внимания» (новые заявки, сборка админки, резервные копии, очередь, 5xx, предупреждения сервера), «Новые заявки» с кнопками «Позвонить» / «В работу» (с отменой), плитки KPI, график «Заявки за 14 дней» (`GET /admin/api/leads/dashboard`), «Состояние сайта» и сжатый блок мониторинга (5xx, очередь, диск). Блоки скрываются по правам (`leads.view`, `pages.view`, `system.view`); кнопка «Создать» выводится в слот шапки.
+- Шапка (`admin/layouts/Topbar.tsx`): хлебные крошки, поиск по разделам и командам (`Ctrl/Cmd+K`, `admin/widgets/CommandPaletteDialog.tsx`), плашка окружения (кроме `prod`), ссылка на сайт и переключатель темы. Сочетание `Ctrl/Cmd+F` больше не перехватывается — работает обычный поиск браузера.
+- Подписи интерфейса — на русском. Технические значения сервера (имена классов в журнале действий, окружение, предупреждения) переводятся через `admin/shared/lib/system-labels.ts`.
+
+## System Center foundation
+
+В admin-shell добавлен модуль `System Center` (`/admin/system/*`) с 10 подразделами:
+
+1. Обзор системы
+2. Процессы и сервисы
+3. Логи
+4. Очереди Symfony Messenger
+5. Кэш
+6. База данных
+7. Безопасность
+8. Бэкапы
+9. Деплой
+10. Аудит действий админов
+
+Backend API реализован под `/admin/api/system/*` через отдельные контроллеры `System*Controller` и сервисы `*Service`.
+
+Ключевые ограничения:
+
+- frontend не передаёт произвольные shell-команды;
+- опасные действия выполняются только через backend whitelist-команд;
+- все mutating-запросы требуют CSRF + Origin;
+- для dangerous действий обязателен одноразовый `confirmToken` (TTL + actor/action binding);
+- dangerous actions доступны только `ROLE_SUPER_ADMIN` (`system.dangerous`);
+- каждое системное действие логируется в audit log (attempt/success/failure).
+
+## Symfony integration points
+
+- Twig shell template: `templates/admin/dashboard.html.twig`.
+- SPA fallback routes: `src/Module/Admin/UI/Admin/DashboardController.php`.
+- Security/session/access control: `config/packages/security.yaml`.
+- CSRF для mutating API-запросов: `src/Module/Admin/Infrastructure/Http/AdminApiCsrfSubscriber.php`.
+
+## Статус Этапа 3 (stabilization)
+
+Реализовано:
+
+- Snapshot runtime для `PageBuilder`;
+- TanStack Table для страниц/пользователей/CRM;
+- dnd-kit для reorder блоков в builder;
+- Recharts виджет на dashboard;
+- доменные API hooks в `entities/*`.
+- Functional regression для admin API edge-cases: 401/403/404/422 + csrf/origin/session.
+- Regression flow-тест editor-пути: pages -> detail -> builder -> reorder -> rich-text -> preview.
+- Усиленный CI frontend gate: отдельные `typecheck`, `test:frontend`, `lint:admin`, chunk budgets.
+- Prefetch policy с network/device-aware деградацией и bounded concurrency.
+
+## Release readiness checklist
+
+- [ ] Backend CI зелёный (`composer check:*`, migrations, schema validate, phpunit, smoke).
+- [ ] Frontend CI зелёный (`npm run typecheck`, `npm run test:frontend`, `npm run lint:admin`, `npm run build`, `npm run check:chunks`).
+- [ ] Ручная проверка критичных путей: login, pages list/detail, builder save/reorder/rich-text, preview.
+- [ ] Legacy-ссылки на `views/*`/старый router отсутствуют в коде и docs.
+- [ ] Известные ограничения и rollback-план актуализированы перед merge.
+
+## Known limitations
+
+- Browser smoke E2E на Playwright подключён только для критичного admin-flow; расширенные editor regression кейсы пока остаются в ручных чек-листах `tests/E2E`.
+- Dashboard analytics пока закрывает только базовый виджет; расширенная бизнес-аналитика запланирована отдельно.
+
+## Пользователи: имена
+
+У администратора есть необязательное отображаемое имя (`admin_users.name`, до 120 символов). Оно задаётся при создании пользователя и правится прямо в таблице «Пользователи и роли» (`PATCH /admin/api/users/{id}/name`, право `users.manage`; пустое имя очищает поле). Имя текущего пользователя передаётся в SPA через `data-user-name` и показывается в приветствии «Сводки» и в подвале бокового меню.

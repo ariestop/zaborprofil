@@ -118,10 +118,11 @@
 - Symfony Secrets Vault вместо `.env.production`.
 - Deptrac/Pact unit для проверки публичных API между модулями.
 
-## Известные баги (предсуществующие, не блокирующие)
+## Известные баги
 
-- `AdminNoIndexHeaderTest::testPublicResponseDoesNotCarryXRobotsTagHeader` падает: `GET /` возвращает `X-Robots-Tag: noindex` (одиночное слово, не `noindex, nofollow, noarchive` от `AdminNoIndexSubscriber`). Источник пока не выявлен. Не связано с фичей SEO/Cache (подтверждено baseline-проверкой). Завести отдельный bugfix-тикет.
-- PHPStan: 4 предсуществующих ошибки в `src/Shared/UI/Twig/ViteAssetExtension.php` (booleanNot.alwaysFalse, booleanAnd.rightAlwaysTrue) и `tests/Unit/Content/UI/Admin/ContentApiResponderTest.php` (assign.propertyType, cast.string). Не относятся к новым фичам.
+Ранее зафиксированные `AdminNoIndexHeaderTest` и 4 ошибки PHPStan устранены: тест проходит, `composer check:phpstan` чистый.
+
+Ранее выявленная матрицей ролей (`tests/Functional/Security/AdminRoleMatrixTest.php`) проблема неявного `ROLE_ADMIN` у `ROLE_EDITOR`, `ROLE_SEO` и `ROLE_MANAGER` устранена в пункте A2: вход в админку открыт этим ролям, а матрица проверяет их права без пропусков (`skipped`).
 
 ## Risks (фиксация для архитектурного контроля)
 

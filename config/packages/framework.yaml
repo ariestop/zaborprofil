@@ -14,9 +14,19 @@ framework:
     php_errors:
         log: true
 
+    rate_limiter:
+        admin_client_errors:
+            policy: sliding_window
+            limit: 20
+            interval: '10 minutes'
+
 when@test:
     framework:
         test: true
         disallow_search_engine_index: false
+        # Кэш-пул rate limiter сбрасывается между запросами (kernel.reset), поэтому в тестах лимиты живут в памяти процесса.
+        rate_limiter:
+            admin_client_errors:
+                storage_service: test.rate_limiter.storage
         session:
             storage_factory_id: session.storage.factory.mock_file

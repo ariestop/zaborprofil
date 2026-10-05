@@ -1,0 +1,149 @@
+{#
+  Контакты: офисы (адрес, телефон, почта, режим работы со статусом «открыто сейчас»), карта и реквизиты.
+  Если офисы в блоке не заданы, показываются общие контакты сайта (старые блоки contacts/map тоже рисуются здесь).
+#}
+{% set offices = (block.content.offices ?? [])|filter(office => (office.city ?? '') is not empty) %}
+{% if offices|length == 0 %}
+    {% set offices = [{
+        city: block.content.address ?? site.city,
+        role: '',
+        address: block.content.address ?? '',
+        phone: block.content.phone ?? site.phone,
+        phoneHref: block.content.phoneHref ?? site.phone_href,
+        email: block.content.email ?? site.email,
+        mapUrl: block.content.mapUrl ?? site.map_url,
+        hours: [],
+        items: block.content.items ?? []
+    }] %}
+{% endif %}
+{% set requisites = block.content.requisites ?? {} %}
+{% set req_items = (requisites.items ?? [])|filter(item => (item.value ?? '') is not empty) %}
+{% set map = block.content.map ?? {} %}
+{% set map_embed = map.embedUrl ?? block.content.embedUrl ?? '' %}
+<section class="zp-section" data-block-type="contacts-map">
+    <div class="zp-container">
+        {% if (block.content.title ?? '') is not empty %}
+            <h2 class="zp-h2 mb-6 md:mb-8">{{ block.content.title }}</h2>
+        {% endif %}
+
+        <div class="grid gap-4 md:grid-cols-2 md:gap-6">
+            {% for office in offices %}
+                {% set phone_href = office.phoneHref ?? (office.phone is defined and office.phone ? 'tel:+' ~ (office.phone|replace({'+': '', ' ': '', '(': '', ')': '', '-': ''})) : site.phone_href) %}
+                <article class="zp-office" data-office {% if (office.timezone ?? '') is not empty %}data-timezone="{{ office.timezone }}"{% endif %}>
+                    <header>
+                        {% if (office.role ?? '') is not empty %}
+                            <p class="text-sm font-semibold text-brand-700">{{ office.role }}</p>
+                        {% endif %}
+                        <h3 class="text-3xl font-bold tracking-tight text-ink">{{ office.city }}</h3>
+                        {% if (office.hours ?? [])|length > 0 %}
+                            <span class="zp-chip mt-3" data-office-status hidden></span>
+                        {% endif %}
+                    </header>
+
+                    <dl class="mt-3">
+                        {% if (office.address ?? '') is not empty %}
+                            <div class="zp-row">
+                                <span class="zp-tile"><svg aria-hidden="true"><use href="#i-pin"/></svg></span>
+                                <div class="min-w-0 flex-1">
+                                    <dt>Адрес</dt>
+                                    <dd>{{ office.address }}</dd>
+                                </div>
+                                <button type="button" class="zp-iconbtn" data-copy="{{ office.address }}" aria-label="Скопировать адрес">
+                                    <svg aria-hidden="true"><use href="#i-copy"/></svg>
+                                </button>
+                            </div>
+                        {% endif %}
+                        {% if (office.phone ?? '') is not empty %}
+                            <div class="zp-row">
+                                <span class="zp-tile"><svg aria-hidden="true"><use href="#i-phone"/></svg></span>
+                                <div class="min-w-0 flex-1">
+                                    <dt>Телефон</dt>
+                                    <dd><a class="hover:text-brand-700" href="{{ phone_href }}">{{ office.phone }}</a></dd>
+                                </div>
+                            </div>
+                        {% endif %}
+                        {% if (office.email ?? '') is not empty %}
+                            <div class="zp-row">
+                                <span class="zp-tile"><svg aria-hidden="true"><use href="#i-mail"/></svg></span>
+                                <div class="min-w-0 flex-1">
+                                    <dt>Почта</dt>
+                                    <dd class="break-all"><a class="hover:text-brand-700" href="mailto:{{ office.email }}">{{ office.email }}</a></dd>
+                                </div>
+                            </div>
+                        {% endif %}
+                        {% for item in office.items ?? [] %}
+                            <div class="zp-row">
+                                <div class="min-w-0 flex-1">
+                                    <dt>{{ item.label ?? 'Контакт' }}</dt>
+                                    <dd>{{ item.value ?? '' }}</dd>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </dl>
+
+                    {% if (office.hours ?? [])|length > 0 %}
+                        <div class="mt-3 border-t border-line/80 pt-4">
+                            <p class="mb-2 text-sm text-graphite">Режим работы</p>
+                            <div class="zp-hours">
+                                {% for row in office.hours %}
+                                    <div data-days="{{ (row.days ?? [])|join(',') }}" data-open="{{ row.open ?? '' }}" data-close="{{ row.close ?? '' }}">
+                                        <span>{{ row.label ?? '' }}</span>
+                                        <span>{{ (row.open ?? '') is not empty ? row.open ~ '–' ~ row.close : (row.note ?? 'выходной') }}</span>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <div class="mt-6 grid gap-3 sm:grid-cols-2">
+                        {% if (office.phone ?? '') is not empty %}
+                            <a class="zp-btn zp-btn--primary" href="{{ phone_href }}"><svg aria-hidden="true"><use href="#i-phone"/></svg>Позвонить</a>
+                        {% endif %}
+                        {% if (office.mapUrl ?? '') is not empty %}
+                            <a class="zp-btn zp-btn--ghost" href="{{ office.mapUrl }}" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#i-route"/></svg>Маршрут</a>
+                        {% elseif (office.email ?? '') is not empty %}
+                            <a class="zp-btn zp-btn--ghost" href="mailto:{{ office.email }}"><svg aria-hidden="true"><use href="#i-mail"/></svg>Написать</a>
+                        {% endif %}
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+
+        {% if map_embed is not empty or (map.url ?? '') is not empty %}
+            <div class="zp-mapface mt-4 md:mt-6" data-map>
+                <span class="zp-tile !size-14 !bg-brand-700 !text-white"><svg aria-hidden="true"><use href="#i-pin"/></svg></span>
+                <p class="px-4 text-lg font-semibold text-ink">{{ map.title ?? 'Мы на карте' }}</p>
+                <div class="grid w-full gap-3 px-4 sm:flex sm:w-auto sm:flex-wrap sm:justify-center">
+                    {% if map_embed is not empty %}
+                        <button type="button" class="zp-btn zp-btn--primary" data-map-embed="{{ map_embed }}" data-map-title="{{ map.title ?? 'Карта' }}">Показать карту</button>
+                    {% endif %}
+                    {% if (map.url ?? '') is not empty %}
+                        <a class="zp-btn zp-btn--ghost" href="{{ map.url }}" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#i-route"/></svg>Открыть в 2ГИС</a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+
+        {% if req_items|length > 0 %}
+            <div class="mt-10 md:mt-14">
+                <h2 class="zp-h2">{{ (requisites.title ?? '') is not empty ? requisites.title : 'Реквизиты' }}</h2>
+                {% if (requisites.legalName ?? '') is not empty %}
+                    <p class="mt-2 text-lg text-graphite">{{ requisites.legalName }}{% if (requisites.note ?? '') is not empty %} · {{ requisites.note }}{% endif %}</p>
+                {% endif %}
+                <dl class="zp-reqs mt-5">
+                    {% for item in req_items %}
+                        <div class="zp-row items-center !py-3.5">
+                            <div class="min-w-0 flex-1">
+                                <dt>{{ item.label ?? '' }}</dt>
+                                <dd class="break-all tabular-nums">{{ item.value }}</dd>
+                            </div>
+                            <button type="button" class="zp-iconbtn" data-copy="{{ item.value }}" aria-label="Скопировать: {{ item.label ?? 'значение' }}">
+                                <svg aria-hidden="true"><use href="#i-copy"/></svg>
+                            </button>
+                        </div>
+                    {% endfor %}
+                </dl>
+            </div>
+        {% endif %}
+    </div>
+</section>

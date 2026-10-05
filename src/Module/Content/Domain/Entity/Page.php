@@ -20,11 +20,14 @@ use Symfony\Component\Uid\Ulid;
 #[ORM\Index(name: 'idx_content_pages_status', columns: ['status'])]
 #[ORM\Index(name: 'idx_content_pages_parent_id', columns: ['parent_id'])]
 #[ORM\Index(name: 'idx_content_pages_deleted_at', columns: ['deleted_at'])]
+#[ORM\Index(name: 'idx_content_pages_status_publish_at', columns: ['status', 'scheduled_publish_at'])]
+#[ORM\Index(name: 'idx_content_pages_status_unpublish_at', columns: ['status', 'scheduled_unpublish_at'])]
 // Path uniqueness among live pages is enforced by the unique index
 // `uniq_content_pages_path_active` over the generated column `path_active`
 // (`IF(deleted_at IS NULL, path, NULL)`) created in the initial migration.
 // MySQL has no partial indexes and ORM attributes cannot describe generated
-// columns, so the constraint is intentionally NOT declared here. Application
+// columns, so the column and index are declared in the expected schema by
+// `PagePathActiveSchemaListener` instead of this entity. Application
 // code MUST still rely on `PageRepositoryInterface::existsByPath()` to reject
 // duplicate live paths with a friendly error.
 final class Page
@@ -68,6 +71,9 @@ final class Page
 
     #[ORM\Column(length: 32, enumType: PageVisibility::class)]
     private PageVisibility $visibility = PageVisibility::Public;
+
+    #[ORM\Column(name: 'meta_title', length: 255, nullable: true)]
+    private ?string $metaTitle = null;
 
     #[ORM\Column(name: 'meta_description', length: 320, nullable: true)]
     private ?string $metaDescription = null;
@@ -215,6 +221,11 @@ final class Page
         return $this->visibility;
     }
 
+    public function metaTitle(): ?string
+    {
+        return $this->metaTitle;
+    }
+
     public function metaDescription(): ?string
     {
         return $this->metaDescription;
@@ -276,6 +287,15 @@ final class Page
     public function updatedBy(): ?string
     {
         return $this->updatedBy;
+    }
+
+    /**
+     * Кто последним изменил страницу или её блоки; null — изменение без администратора
+     * (публикация по расписанию, консольные команды). Время правки не трогает.
+     */
+    public function recordEditor(?string $editorId): void
+    {
+        $this->updatedBy = self::normalizeOptionalUlidString($editorId, 'updatedBy');
     }
 
     public function publishedBy(): ?string
@@ -358,6 +378,18 @@ final class Page
         $this->touch();
     }
 
+    public function changeIndexable(bool $indexable): void
+    {
+        $this->indexable = $indexable;
+        $this->touch();
+    }
+
+    public function updateMetaTitle(?string $metaTitle): void
+    {
+        $this->metaTitle = self::normalizeOptionalString($metaTitle, 255, 'metaTitle');
+        $this->touch();
+    }
+
     public function submitForReview(?string $updatedBy = null): void
     {
         $this->status = PageStatus::Review;
@@ -368,6 +400,7 @@ final class Page
     public function approve(?string $updatedBy = null): void
     {
         $this->status = PageStatus::Approved;
+        $this->clearSchedule();
         $this->updatedBy = self::normalizeOptionalUlidString($updatedBy, 'updatedBy');
         $this->touch();
     }
@@ -395,9 +428,34 @@ final class Page
         $this->touch();
     }
 
+    public function scheduleUnpublish(DateTimeImmutable $unpublishAt, ?string $updatedBy = null): void
+    {
+        if ($this->status !== PageStatus::Published) {
+            throw new InvalidArgumentException('Scheduled unpublish can be set only for a published page.');
+        }
+
+        $this->scheduledUnpublishAt = $unpublishAt;
+        $this->updatedBy = self::normalizeOptionalUlidString($updatedBy, 'updatedBy');
+        $this->touch();
+    }
+
+    public function cancelSchedule(?string $updatedBy = null): void
+    {
+        if ($this->status === PageStatus::Scheduled) {
+            $this->status = PageStatus::Approved;
+        } elseif ($this->status !== PageStatus::Published || $this->scheduledUnpublishAt === null) {
+            throw new InvalidArgumentException('Page has no active schedule.');
+        }
+
+        $this->clearSchedule();
+        $this->updatedBy = self::normalizeOptionalUlidString($updatedBy, 'updatedBy');
+        $this->touch();
+    }
+
     public function unpublish(?string $updatedBy = null): void
     {
         $this->status = PageStatus::Unpublished;
+        $this->clearSchedule();
         $this->updatedBy = self::normalizeOptionalUlidString($updatedBy, 'updatedBy');
         $this->touch();
     }
@@ -405,6 +463,7 @@ final class Page
     public function archive(?string $updatedBy = null): void
     {
         $this->status = PageStatus::Archived;
+        $this->clearSchedule();
         $this->updatedBy = self::normalizeOptionalUlidString($updatedBy, 'updatedBy');
         $this->touch();
     }
@@ -413,6 +472,7 @@ final class Page
     {
         $this->markDeleted();
         $this->status = PageStatus::Deleted;
+        $this->clearSchedule();
         $this->touch();
     }
 
@@ -420,6 +480,7 @@ final class Page
     {
         $this->deletedAt = null;
         $this->status = PageStatus::Draft;
+        $this->clearSchedule();
         $this->updatedBy = self::normalizeOptionalUlidString($updatedBy, 'updatedBy');
         $this->touch();
     }
@@ -442,6 +503,12 @@ final class Page
     public function touch(): void
     {
         $this->updatedAt = new DateTimeImmutable();
+    }
+
+    private function clearSchedule(): void
+    {
+        $this->scheduledPublishAt = null;
+        $this->scheduledUnpublishAt = null;
     }
 
     private static function required(string $value, string $message): string

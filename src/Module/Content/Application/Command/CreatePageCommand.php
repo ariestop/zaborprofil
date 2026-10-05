@@ -19,6 +19,7 @@ final readonly class CreatePageCommand
         public bool $isIndexable = true,
         public ?string $parentId = null,
         public PageVisibility $visibility = PageVisibility::Public,
+        public ?string $starterTemplate = null,
     ) {
     }
 }

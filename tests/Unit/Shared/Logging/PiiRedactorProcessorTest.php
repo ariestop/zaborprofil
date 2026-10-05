@@ -34,4 +34,22 @@ final class PiiRedactorProcessorTest extends TestCase
         self::assertIsArray($processed->context['nested']);
         self::assertSame('[ip]', $processed->context['nested']['ip']);
     }
+
+    public function testRedactsInternationalPhonesAndNoteText(): void
+    {
+        $record = new LogRecord(
+            datetime: new \DateTimeImmutable(),
+            channel: 'business',
+            level: Level::Info,
+            message: 'Callback to +375 29 123-45-67 and +49 (151) 2345 6789 requested',
+            context: ['noteText' => 'Клиент просит перезвонить', 'leadId' => '01ARZ3NDEKTSV4RRFFQ69G5FAV'],
+            extra: [],
+        );
+
+        $processed = (new PiiRedactorProcessor())($record);
+
+        self::assertSame('Callback to [phone] and [phone] requested', $processed->message);
+        self::assertSame('[redacted]', $processed->context['noteText']);
+        self::assertSame('01ARZ3NDEKTSV4RRFFQ69G5FAV', $processed->context['leadId']);
+    }
 }

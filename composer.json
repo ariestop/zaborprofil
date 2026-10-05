@@ -12,6 +12,7 @@
         "doctrine/doctrine-bundle": "^3.0",
         "doctrine/doctrine-migrations-bundle": "^4.0",
         "doctrine/orm": "^3.5",
+        "sentry/sentry-symfony": "^5.13",
         "symfony/cache": "^8.0",
         "symfony/console": "^8.0",
         "symfony/doctrine-messenger": "^8.0",
@@ -38,6 +39,7 @@
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.75",
         "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-phpunit": "^2.0",
         "phpunit/phpunit": "^12.0",
         "rector/rector": "^2.0",
         "symfony/browser-kit": "^8.0",
@@ -85,6 +87,8 @@
         "check:phpstan": "php vendor/bin/phpstan analyse --memory-limit=512M",
         "check:rector": "php vendor/bin/rector process --dry-run --ansi",
         "test": "php vendor/bin/phpunit",
+        "test:coverage": "php -d pcov.directory=src vendor/bin/phpunit --coverage-clover var/coverage/clover.xml",
+        "check:coverage": "php tools/quality/check-coverage.php var/coverage/clover.xml 75",
         "check": [
             "@check:syntax",
             "@check:cs",

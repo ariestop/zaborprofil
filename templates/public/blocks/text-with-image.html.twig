@@ -1,0 +1,25 @@
+{% set image = block.content.image ?? '' %}
+{% set paragraphs = (block.content.text ?? '')|split("\n")|map(line => line|trim)|filter(line => line is not empty) %}
+<section class="zp-section" data-block-type="text-with-image">
+    <div class="zp-container grid items-center gap-6 md:grid-cols-2 md:gap-12">
+        <div>
+            {% if (block.content.subtitle ?? '') is not empty %}
+                <p class="zp-eyebrow">{{ block.content.subtitle }}</p>
+            {% endif %}
+            <h2 class="zp-h2">{{ block.content.title ?? block.name }}</h2>
+            <div class="mt-4 space-y-3 text-base leading-7 text-ink">
+                {% for paragraph in paragraphs %}
+                    <p>{{ paragraph }}</p>
+                {% endfor %}
+            </div>
+        </div>
+        {% if image is not empty %}
+            {{ responsive_image(image, {
+                alt: block.content.imageAlt ?? block.content.alt ?? null,
+                fallback_alt: block.content.title ?? block.name,
+                class: 'aspect-4/3 w-full rounded-2xl object-cover shadow-sm',
+                sizes: '(min-width: 1152px) 540px, (min-width: 768px) 50vw, 100vw'
+            }) }}
+        {% endif %}
+    </div>
+</section>

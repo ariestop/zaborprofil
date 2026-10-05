@@ -24,7 +24,26 @@ final readonly class BlockSchema
         public array $defaultSettings = [],
         public string $priority = 'MVP',
         public string $seoImpact = 'medium',
+        public bool $isLegacy = false,
+        public ?string $canonicalType = null,
     ) {
+    }
+
+    public function withCanonicalType(?string $canonicalType): self
+    {
+        return new self(
+            $this->type,
+            $this->label,
+            $this->description,
+            $this->requiredContentFields,
+            $this->recommendedPageTypes,
+            $this->defaultContent,
+            $this->defaultSettings,
+            $this->priority,
+            $this->seoImpact,
+            $this->isLegacy,
+            $canonicalType,
+        );
     }
 
     /**
@@ -42,6 +61,8 @@ final readonly class BlockSchema
             'defaultSettings' => $this->defaultSettings,
             'priority' => $this->priority,
             'seoImpact' => $this->seoImpact,
+            'isLegacy' => $this->isLegacy,
+            'canonicalType' => $this->canonicalType,
         ];
     }
 }
