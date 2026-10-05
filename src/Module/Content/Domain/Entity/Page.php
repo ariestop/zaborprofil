@@ -289,6 +289,15 @@ final class Page
         return $this->updatedBy;
     }
 
+    /**
+     * Кто последним изменил страницу или её блоки; null — изменение без администратора
+     * (публикация по расписанию, консольные команды). Время правки не трогает.
+     */
+    public function recordEditor(?string $editorId): void
+    {
+        $this->updatedBy = self::normalizeOptionalUlidString($editorId, 'updatedBy');
+    }
+
     public function publishedBy(): ?string
     {
         return $this->publishedBy;

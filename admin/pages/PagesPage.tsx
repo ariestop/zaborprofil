@@ -219,7 +219,7 @@ export default function PagesPage({ creating = false }: { creating?: boolean }) 
                     <th scope="col" className="w-[38%] p-3">Страница</th>
                     <th scope="col" className="w-[16%] p-3">Тип</th>
                     <th scope="col" className="w-[24%] p-3">Статус</th>
-                    <th scope="col" className="p-3">Изменена</th>
+                    <th scope="col" className="w-[16%] p-3">Изменена</th>
                     <th scope="col" className="w-14 py-3 pr-4"><span className="sr-only">Действия</span></th>
                   </tr>
                 </thead>
@@ -252,7 +252,10 @@ export default function PagesPage({ creating = false }: { creating?: boolean }) 
                             {page.hasUnpublishedChanges === true ? <ChangesMarker /> : null}
                           </span>
                         </td>
-                        <td className="whitespace-nowrap p-3 text-[#344054] dark:text-slate-300">{formatUpdated(page.updatedAt)}</td>
+                        <td className="max-w-0 p-3 text-[#344054] dark:text-slate-300">
+                          <span className="block whitespace-nowrap">{formatUpdated(page.updatedAt)}</span>
+                          {page.updatedByName != null ? <span className="block truncate text-xs text-[#5D6679] dark:text-slate-400" title={`Изменил(а): ${page.updatedByName}`}>{page.updatedByName}</span> : null}
+                        </td>
                         <td className="py-3 pr-4"><PageRowMenu page={page} actions={actions} /></td>
                       </tr>
                     )
@@ -274,7 +277,7 @@ export default function PagesPage({ creating = false }: { creating?: boolean }) 
                       <span className="truncate font-mono text-xs text-[#5D6679] dark:text-slate-400">{page.path}</span>
                       <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs text-[#5D6679] dark:text-slate-400">
                         <StatusPill status={page.status} />
-                        <span>{formatUpdated(page.updatedAt)}</span>
+                        <span>{formatUpdated(page.updatedAt)}{page.updatedByName != null ? ` · ${page.updatedByName}` : ''}</span>
                         {page.hasUnpublishedChanges === true ? <ChangesMarker short /> : null}
                         {page.isIndexable ? null : <NoindexMarker />}
                       </span>

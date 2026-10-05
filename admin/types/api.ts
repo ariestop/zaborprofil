@@ -125,6 +125,9 @@ export interface ContentPageItem {
   scheduledUnpublishAt: string | null
   /** Время последней правки страницы или её блоков (список страниц). */
   updatedAt?: string | null
+  /** Кто последним изменил страницу или её блоки: id администратора и подпись (имя или email). */
+  updatedBy?: string | null
+  updatedByName?: string | null
   /** Опубликованная страница отличается от рабочей версии (только в общем списке страниц). */
   hasUnpublishedChanges?: boolean
   seo: PageSeoPayload
