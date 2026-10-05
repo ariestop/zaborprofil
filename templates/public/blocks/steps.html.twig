@@ -6,10 +6,16 @@
             {% set cols = {1: 'md:grid-cols-1', 2: 'md:grid-cols-2', 3: 'md:grid-cols-3'}[items|length] ?? 'md:grid-cols-4' %}
             <ol class="grid gap-3 {{ cols }} md:gap-4">
                 {% for item in items %}
+                    {% set icon = item.icon ?? '' %}
                     <li class="zp-card flex gap-3.5 md:block">
-                        <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-700 text-base font-bold text-white">{{ loop.index }}</span>
+                        {% if icon in ['measure', 'truck', 'fence', 'shield'] %}
+                            {# Фирменная иконка вместо номера; номер остаётся в заголовке шага. #}
+                            <svg class="size-11 shrink-0 text-ink" aria-hidden="true"><use href="#i-zp-{{ icon }}"/></svg>
+                        {% else %}
+                            <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-700 text-base font-bold text-white">{{ loop.index }}</span>
+                        {% endif %}
                         <div>
-                            <h3 class="text-base font-semibold text-ink md:mt-3">{{ item.title }}</h3>
+                            <h3 class="text-base font-semibold text-ink md:mt-3">{% if icon in ['measure', 'truck', 'fence', 'shield'] %}<span class="text-brand-700">{{ loop.index }}.</span> {% endif %}{{ item.title }}</h3>
                             {% if (item.text ?? '') is not empty %}
                                 <p class="mt-1 text-sm leading-6 text-graphite">{{ item.text }}</p>
                             {% endif %}

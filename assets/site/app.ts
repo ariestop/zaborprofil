@@ -1,4 +1,6 @@
 import './site.css'
+import { initAudienceSwitch } from './audience'
+import { initFenceConfigurators } from './configurator'
 import { collectUtm, formatPhone, initLeadFormContext, validateLeadFields } from './leadForm'
 import {
     initCallbar,
@@ -129,6 +131,8 @@ initVideoEmbeds()
 initLeadPlans()
 initOfficeStatus()
 initPriceMatrices()
+initFenceConfigurators()
+initAudienceSwitch()
 initCopyButtons()
 initMapEmbeds()
 

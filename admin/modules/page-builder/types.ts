@@ -59,6 +59,7 @@ export const STRUCTURED_BLOCK_TYPES = [
   'installation-steps',
   'price-table',
   'price-matrix',
+  'fence-configurator',
   'contacts-map',
   'partner-cta',
   'breadcrumbs',

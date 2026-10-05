@@ -134,6 +134,21 @@ export function BlockInspector({ block, issues, showJson, onChange, onDuplicate,
           </button>
         </div>
 
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor={`${block.id}-audience`} className="text-[13px] font-semibold text-graphite dark:text-slate-200">Кому показывать</label>
+          <select
+            id={`${block.id}-audience`}
+            value={typeof block.settings.audience === 'string' ? block.settings.audience : ''}
+            onChange={(event) => touch({ settings: { ...block.settings, audience: event.target.value } })}
+            className="h-9 rounded-lg border border-line-strong bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-900"
+          >
+            <option value="">Всем посетителям</option>
+            <option value="b2c">Только частным клиентам</option>
+            <option value="b2b">Только бизнесу</option>
+          </select>
+          <p className="text-xs text-graphite dark:text-slate-400">Если на странице есть блоки «Только бизнесу», над ними появится переключатель «Частным клиентам / Бизнесу»</p>
+        </div>
+
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={onDuplicate} className="inline-flex h-[38px] items-center gap-1.5 rounded-[9px] border border-line-strong bg-white px-3 text-[13px] font-semibold text-graphite hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="8.5" y="8.5" width="11" height="11" rx="2" /><path d="M15.5 8.5V6a1.5 1.5 0 0 0-1.5-1.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5" /></svg>

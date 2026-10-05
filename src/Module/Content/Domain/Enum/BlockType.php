@@ -49,6 +49,7 @@ enum BlockType: string
     case InstallationSteps = 'installation-steps';
     case PriceTable = 'price-table';
     case PriceMatrix = 'price-matrix';
+    case FenceConfigurator = 'fence-configurator';
     case ContactsMap = 'contacts-map';
     case PartnerCta = 'partner-cta';
 
