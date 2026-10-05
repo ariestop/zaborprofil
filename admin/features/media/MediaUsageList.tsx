@@ -21,7 +21,7 @@ export function MediaUsageList({ usages, className }: { usages: MediaUsageItem[]
         <li key={`${usage.type}-${usage.sourceId}-${usage.location}`} className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs dark:border-slate-700">
           <div className="flex flex-wrap items-center gap-1.5">
             {usage.adminPath !== null ? (
-              <a href={usage.adminPath} target="_blank" rel="noreferrer" className="font-medium text-emerald-700 underline dark:text-emerald-400">
+              <a href={usage.adminPath} target="_blank" rel="noreferrer" className="font-medium text-brand-700 underline dark:text-brand-400">
                 {usage.title}
               </a>
             ) : (

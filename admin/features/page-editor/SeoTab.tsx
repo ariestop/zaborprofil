@@ -89,7 +89,7 @@ export function SeoTab({ controller, onOpenTab }: SeoTabProps) {
           </Field>
           <p className="text-sm text-slate-600 dark:text-slate-300">
             Индексация: <strong>{isIndexable ? 'разрешена' : 'запрещена (noindex)'}</strong>.{' '}
-            <button type="button" className="text-emerald-700 underline dark:text-emerald-400" onClick={() => onOpenTab('settings')}>
+            <button type="button" className="text-brand-700 underline dark:text-brand-400" onClick={() => onOpenTab('settings')}>
               Изменить во вкладке «Настройки»
             </button>
           </p>

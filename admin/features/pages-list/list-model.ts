@@ -41,14 +41,14 @@ export function statusTabs(pages: ContentPageItem[], active: StatusFilter): Arra
 }
 
 export const STATUS_PILL: Record<PageStatus, string> = {
-  draft: 'bg-[#FEF0C7] text-[#7A4A00] dark:bg-amber-950/60 dark:text-amber-200',
-  review: 'bg-[#EDE9FE] text-[#5B21B6] dark:bg-violet-950/60 dark:text-violet-200',
-  approved: 'bg-[#E0EAFF] text-[#1E40AF] dark:bg-blue-950/60 dark:text-blue-200',
-  scheduled: 'bg-[#E0F2FE] text-[#075985] dark:bg-sky-950/60 dark:text-sky-200',
-  published: 'bg-[#DCFAE6] text-[#067647] dark:bg-emerald-950/60 dark:text-emerald-200',
-  unpublished: 'bg-[#F2F4F7] text-[#475467] dark:bg-slate-800 dark:text-slate-300',
-  archived: 'bg-[#F2F4F7] text-[#475467] dark:bg-slate-800 dark:text-slate-300',
-  deleted: 'bg-[#FEE4E2] text-[#B42318] dark:bg-red-950/60 dark:text-red-200',
+  draft: 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-200',
+  review: 'bg-violet-100 text-violet-800 dark:bg-violet-950/60 dark:text-violet-200',
+  approved: 'bg-indigo-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-200',
+  scheduled: 'bg-sky-100 text-sky-800 dark:bg-sky-950/60 dark:text-sky-200',
+  published: 'bg-brand-100 text-brand-800 dark:bg-brand-950/60 dark:text-brand-200',
+  unpublished: 'bg-surface-strong text-graphite dark:bg-slate-800 dark:text-slate-300',
+  archived: 'bg-surface-strong text-graphite dark:bg-slate-800 dark:text-slate-300',
+  deleted: 'bg-danger-50 text-danger dark:bg-red-950/60 dark:text-red-200',
 }
 
 function updatedTime(page: ContentPageItem): number {
@@ -135,16 +135,16 @@ export interface TemplateBar {
 }
 
 const BARS: Array<{ test: RegExp, bar: TemplateBar }> = [
-  { test: /^hero|slider/, bar: { height: 16, width: '100%', color: '#344054' } },
-  { test: /price|pricing|calculator/, bar: { height: 9, width: '100%', color: '#FDBA74' } },
-  { test: /form|lead|callback|contacts?$/, bar: { height: 9, width: '70%', color: '#667085' } },
-  { test: /^cta/, bar: { height: 7, width: '100%', color: '#047857' } },
-  { test: /gallery|portfolio|works|before-after/, bar: { height: 11, width: '100%', color: '#98A2B3' } },
-  { test: /feature|advantage|benefit|steps|process|fence-types/, bar: { height: 9, width: '100%', color: '#A6D8C4' } },
-  { test: /faq/, bar: { height: 6, width: '100%', color: '#D0D5DD' } },
+  { test: /^hero|slider/, bar: { height: 16, width: '100%', color: 'var(--color-graphite)' } },
+  { test: /price|pricing|calculator/, bar: { height: 9, width: '100%', color: 'var(--color-badge)' } },
+  { test: /form|lead|callback|contacts?$/, bar: { height: 9, width: '70%', color: 'var(--color-graphite)' } },
+  { test: /^cta/, bar: { height: 7, width: '100%', color: 'var(--color-brand-700)' } },
+  { test: /gallery|portfolio|works|before-after/, bar: { height: 11, width: '100%', color: 'var(--color-line-strong)' } },
+  { test: /feature|advantage|benefit|steps|process|fence-types/, bar: { height: 9, width: '100%', color: 'var(--color-brand-200)' } },
+  { test: /faq/, bar: { height: 6, width: '100%', color: 'var(--color-line-strong)' } },
 ]
 
-const TEXT_BAR: TemplateBar = { height: 5, width: '86%', color: '#D0D5DD' }
+const TEXT_BAR: TemplateBar = { height: 5, width: '86%', color: 'var(--color-line-strong)' }
 
 function sortedBlocks(template: PageTemplateItem): PageTemplateBlock[] {
   return [...template.blocksSchema].sort((left, right) => left.position - right.position)

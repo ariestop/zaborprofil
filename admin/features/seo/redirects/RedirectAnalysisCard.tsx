@@ -74,7 +74,7 @@ export function RedirectAnalysisCard() {
               Проверено активных правил: {analysis.activeRules}. Циклов: {analysis.loops.length}. Цепочек: {analysis.chains.length}.
             </p>
             {analysis.loops.length === 0 && analysis.chains.length === 0 ? (
-              <p className="text-sm text-emerald-700 dark:text-emerald-400">Проблем не найдено.</p>
+              <p className="text-sm text-brand-700 dark:text-brand-400">Проблем не найдено.</p>
             ) : null}
 
             {analysis.loops.map((loop) => (

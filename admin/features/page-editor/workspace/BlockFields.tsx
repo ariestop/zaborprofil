@@ -20,8 +20,8 @@ interface BlockFieldsProps {
   resetKey: string
 }
 
-const fieldLabelClass = 'text-[13px] font-semibold text-[#344054] dark:text-slate-200'
-const helpClass = 'text-xs text-[#5D6679] dark:text-slate-400'
+const fieldLabelClass = 'text-[13px] font-semibold text-graphite dark:text-slate-200'
+const helpClass = 'text-xs text-graphite dark:text-slate-400'
 const placeholderBorder = 'border-amber-400 focus:ring-amber-400 dark:border-amber-500'
 const errorBorder = 'border-red-500 focus:ring-red-500'
 
@@ -129,8 +129,8 @@ function ImageField({ spec, value, onChange }: { spec: Extract<FieldSpec, { kind
   )
 }
 
-const iconButton = 'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[#5D6679] transition hover:bg-slate-100 disabled:opacity-30 dark:text-slate-400 dark:hover:bg-slate-800'
-const addButton = 'inline-flex h-9 items-center justify-center gap-1.5 rounded-[9px] bg-[#E7F5EF] px-3 text-[13px] font-semibold text-[#065F46] transition hover:bg-[#D1F0E3] dark:bg-emerald-900/40 dark:text-emerald-200'
+const iconButton = 'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-graphite transition hover:bg-slate-100 disabled:opacity-30 dark:text-slate-400 dark:hover:bg-slate-800'
+const addButton = 'inline-flex h-9 items-center justify-center gap-1.5 rounded-[9px] bg-brand-50 px-3 text-[13px] font-semibold text-brand-800 transition hover:bg-brand-100 dark:bg-brand-900/40 dark:text-brand-200'
 
 function move<T>(list: T[], from: number, to: number): T[] {
   if (to < 0 || to >= list.length) {
@@ -157,9 +157,9 @@ function ItemsField({ spec, value, onChange, errors, path, resetKey }: { spec: E
       <ol className="flex flex-col gap-2">
         {items.map((item, index) => (
           // Порядок — единственный идентификатор элемента: у пунктов нет собственных id.
-          <li key={index} className="rounded-[10px] border border-[#E4E7EC] p-2.5 dark:border-slate-700">
+          <li key={index} className="rounded-[10px] border border-line p-2.5 dark:border-slate-700">
             <div className="mb-2 flex items-center gap-1">
-              <span className="flex-1 text-xs font-semibold text-[#5D6679] dark:text-slate-400">{spec.itemLabel} {index + 1}</span>
+              <span className="flex-1 text-xs font-semibold text-graphite dark:text-slate-400">{spec.itemLabel} {index + 1}</span>
               <button type="button" className={iconButton} aria-label={`${spec.itemLabel} ${index + 1}: выше`} disabled={index === 0} onClick={() => onChange(move(items, index, index - 1))}>
                 <NavIcon name="chevron" size={16} style={{ transform: 'rotate(180deg)' }} />
               </button>
@@ -222,12 +222,12 @@ function TableField({ label, value, onChange }: { label: string, value: Content,
     <div className="flex flex-col gap-2">
       <div className="flex items-baseline justify-between gap-2">
         <p className={fieldLabelClass}>{label}</p>
-        <button type="button" className="text-xs font-semibold text-[#047857] hover:underline dark:text-emerald-400" aria-expanded={editColumns} onClick={() => setEditColumns(!editColumns)}>
+        <button type="button" className="text-xs font-semibold text-brand-700 hover:underline dark:text-brand-400" aria-expanded={editColumns} onClick={() => setEditColumns(!editColumns)}>
           {editColumns ? 'Готово' : `Колонки: ${columns.join(' · ') || 'не заданы'}`}
         </button>
       </div>
       {editColumns ? (
-        <div className="flex flex-col gap-1.5 rounded-[10px] bg-[#F9FAFB] p-2.5 dark:bg-slate-800/60">
+        <div className="flex flex-col gap-1.5 rounded-[10px] bg-surface p-2.5 dark:bg-slate-800/60">
           {columns.map((column, index) => (
             <div key={index} className="flex items-center gap-1.5">
               <Input aria-label={`Колонка ${index + 1}`} value={column} onChange={(event) => setColumns(columns.map((current, position) => (position === index ? event.target.value : current)))} />
@@ -242,7 +242,7 @@ function TableField({ label, value, onChange }: { label: string, value: Content,
           </button>
         </div>
       ) : null}
-      <div className="grid gap-1.5 text-xs font-semibold text-[#5D6679] dark:text-slate-400" style={grid}>
+      <div className="grid gap-1.5 text-xs font-semibold text-graphite dark:text-slate-400" style={grid}>
         {columns.map((column, index) => <span key={`${column}-${index}`} className="truncate">{column}</span>)}
         <span />
       </div>
@@ -314,7 +314,7 @@ export function BlockFields({ specs, value, onChange, errors, resetKey }: BlockF
             return (
               <div key={spec.key} className="flex flex-col gap-1.5">
                 <p className={fieldLabelClass}>{spec.label}</p>
-                <div className="overflow-hidden rounded-[10px] border border-[#D0D5DD] dark:border-slate-700">
+                <div className="overflow-hidden rounded-[10px] border border-line-strong dark:border-slate-700">
                   <RichTextEditor key={resetKey} initialValue={asString(value[spec.key])} onChange={(next) => set(spec.key, next)} />
                 </div>
                 {errors[spec.key] !== undefined ? <p className="text-xs text-red-600" role="alert">{errors[spec.key]}</p> : null}
@@ -328,7 +328,7 @@ export function BlockFields({ specs, value, onChange, errors, resetKey }: BlockF
           case 'group': {
             const group = isRecord(value[spec.key]) ? value[spec.key] as Content : {}
             return (
-              <fieldset key={spec.key} className="flex flex-col gap-3 rounded-[10px] border border-[#E4E7EC] p-3 dark:border-slate-700">
+              <fieldset key={spec.key} className="flex flex-col gap-3 rounded-[10px] border border-line p-3 dark:border-slate-700">
                 {spec.label !== undefined ? <legend className={cn(fieldLabelClass, 'px-1')}>{spec.label}</legend> : null}
                 <BlockFields
                   specs={spec.fields}
@@ -349,7 +349,7 @@ export function BlockFields({ specs, value, onChange, errors, resetKey }: BlockF
           case 'checkbox':
             return (
               <label key={spec.key} className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={value[spec.key] === true} onChange={(event) => set(spec.key, event.target.checked)} className="h-4 w-4 accent-[#047857]" />
+                <input type="checkbox" checked={value[spec.key] === true} onChange={(event) => set(spec.key, event.target.checked)} className="h-4 w-4 accent-brand-700" />
                 {spec.label}
               </label>
             )
@@ -360,7 +360,7 @@ export function BlockFields({ specs, value, onChange, errors, resetKey }: BlockF
               </FieldShell>
             )
           case 'note':
-            return <p key={`note-${index}`} className="rounded-[10px] bg-[#F9FAFB] p-3 text-[13px] text-[#344054] dark:bg-slate-800/60 dark:text-slate-300">{spec.text}</p>
+            return <p key={`note-${index}`} className="rounded-[10px] bg-surface p-3 text-[13px] text-graphite dark:bg-slate-800/60 dark:text-slate-300">{spec.text}</p>
           default:
             return null
         }

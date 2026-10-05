@@ -23,7 +23,7 @@ function ChangeRow({ change }: { change: DiffChange }) {
         <p className="mt-1 whitespace-pre-wrap break-words text-slate-800">
           {change.textDiff.map((part, index) => {
             if (part.op === 'insert') {
-              return <ins key={index} className="bg-emerald-100 text-emerald-900 no-underline">{part.text}</ins>
+              return <ins key={index} className="bg-brand-100 text-brand-900 no-underline">{part.text}</ins>
             }
             if (part.op === 'delete') {
               return <del key={index} className="bg-red-100 text-red-800">{part.text}</del>
@@ -36,7 +36,7 @@ function ChangeRow({ change }: { change: DiffChange }) {
         <p className="mt-1 break-words text-slate-800">
           <del className="bg-red-100 text-red-800">{scalarText(change.before)}</del>
           {' → '}
-          <ins className="bg-emerald-100 text-emerald-900 no-underline">{scalarText(change.after)}</ins>
+          <ins className="bg-brand-100 text-brand-900 no-underline">{scalarText(change.after)}</ins>
         </p>
       )}
     </li>

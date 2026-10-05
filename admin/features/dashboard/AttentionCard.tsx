@@ -5,9 +5,9 @@ import type { AttentionItem, AttentionTone } from './attention'
 import { dashCard, dashHeading, dashMuted, dashOutlineButton } from './styles'
 
 const markerTone: Record<AttentionTone, string> = {
-  leads: 'bg-[#FFEDD5] text-[#9A3412] dark:bg-orange-900/40 dark:text-orange-200',
-  critical: 'bg-[#FEE4E2] text-[#B42318] dark:bg-red-900/40 dark:text-red-300',
-  warning: 'bg-[#FEF0C7] text-[#7A4A00] dark:bg-amber-900/40 dark:text-amber-200',
+  leads: 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-200',
+  critical: 'bg-danger-50 text-danger dark:bg-red-900/40 dark:text-red-300',
+  warning: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
 }
 
 interface AttentionCardProps {
@@ -28,13 +28,13 @@ export function AttentionCard({ items, loading, rebuilding, onRebuild }: Attenti
 
       {loading && items.length === 0 ? <Skeleton className="my-3 h-16 w-full" /> : null}
       {!loading && items.length === 0 ? (
-        <p className="py-4 text-sm text-[#344054] dark:text-slate-300">Всё в порядке: новых заявок нет, сервер не сообщает о проблемах.</p>
+        <p className="py-4 text-sm text-graphite dark:text-slate-300">Всё в порядке: новых заявок нет, сервер не сообщает о проблемах.</p>
       ) : null}
 
       {items.length > 0 ? (
         <ul className="mt-2 flex flex-col" aria-label="Задачи, требующие внимания">
           {items.map((item) => (
-            <li key={item.id} className="flex items-center gap-3.5 border-t border-[#F0F2F5] py-3.5 dark:border-slate-800">
+            <li key={item.id} className="flex items-center gap-3.5 border-t border-surface-strong py-3.5 dark:border-slate-800">
               <span
                 aria-hidden="true"
                 className={cn('flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[10px] text-[15px] font-bold', markerTone[item.tone])}

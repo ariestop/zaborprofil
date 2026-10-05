@@ -5,7 +5,7 @@ import type { LengthLimits, LengthStatus } from './snippet'
 const statusClasses: Record<LengthStatus, string> = {
   empty: 'text-slate-500 dark:text-slate-400',
   short: 'text-amber-700 dark:text-amber-400',
-  good: 'text-emerald-700 dark:text-emerald-400',
+  good: 'text-brand-700 dark:text-brand-400',
   long: 'text-amber-700 dark:text-amber-400',
   'over-limit': 'text-red-700 dark:text-red-400',
 }

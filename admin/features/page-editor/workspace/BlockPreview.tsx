@@ -8,8 +8,8 @@ import { asItems, asString, canonicalType, isRecord, plainText } from './block-k
 
 function EmptyMedia({ title, text }: { title: string, text: string }) {
   return (
-    <span className="m-6 flex flex-col items-center gap-1 rounded-xl border-[1.5px] border-dashed border-[#D0D5DD] px-4 py-7 text-center text-[#5D6679]">
-      <span className="font-semibold text-[#344054]">{title}</span>
+    <span className="m-6 flex flex-col items-center gap-1 rounded-xl border-[1.5px] border-dashed border-line-strong px-4 py-7 text-center text-graphite">
+      <span className="font-semibold text-graphite">{title}</span>
       <span className="text-[13px]">{text}</span>
     </span>
   )
@@ -24,17 +24,17 @@ function Hero({ content }: { content: Record<string, unknown> }) {
   const image = asString(content.image)
 
   return (
-    <span className="relative isolate block overflow-hidden bg-emerald-900 px-8 py-12 text-white">
+    <span className="relative isolate block overflow-hidden bg-brand-900 px-8 py-12 text-white">
       {image !== '' ? (
         <>
           <img src={image} alt="" className="absolute inset-0 -z-10 h-full w-full object-cover" />
-          <span className="absolute inset-0 -z-10 bg-emerald-950/60" />
+          <span className="absolute inset-0 -z-10 bg-brand-950/60" />
         </>
       ) : null}
-      {asString(content.title) !== '' ? <span className="block text-3xl font-bold leading-tight">{asString(content.title)}</span> : <span className="block text-3xl font-bold text-emerald-200/70">Без заголовка</span>}
-      {asString(content.subtitle) !== '' ? <span className="mt-3 block max-w-2xl text-lg text-emerald-50">{asString(content.subtitle)}</span> : null}
-      {asString(content.text) !== '' ? <span className="mt-3 block max-w-2xl text-emerald-50">{asString(content.text)}</span> : null}
-      {asString(cta.label) !== '' ? <span className="mt-6 inline-flex rounded-xl bg-white px-5 py-2.5 font-semibold text-emerald-900">{asString(cta.label)}</span> : null}
+      {asString(content.title) !== '' ? <span className="block text-3xl font-bold leading-tight">{asString(content.title)}</span> : <span className="block text-3xl font-bold text-brand-200/70">Без заголовка</span>}
+      {asString(content.subtitle) !== '' ? <span className="mt-3 block max-w-2xl text-lg text-brand-50">{asString(content.subtitle)}</span> : null}
+      {asString(content.text) !== '' ? <span className="mt-3 block max-w-2xl text-brand-50">{asString(content.text)}</span> : null}
+      {asString(cta.label) !== '' ? <span className="mt-6 inline-flex rounded-xl bg-white px-5 py-2.5 font-semibold text-brand-900">{asString(cta.label)}</span> : null}
     </span>
   )
 }
@@ -61,7 +61,7 @@ function Cards({ content, dark }: { content: Record<string, unknown>, dark: bool
       <span className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}>
         {items.map((item, index) => (
           <span key={index} className={`block rounded-xl p-4 ${dark ? 'bg-white/10' : 'bg-white shadow-xs'}`}>
-            {dark ? <span className="block text-xs font-semibold text-emerald-200">Шаг {index + 1}</span> : null}
+            {dark ? <span className="block text-xs font-semibold text-brand-200">Шаг {index + 1}</span> : null}
             <span className={`block font-semibold ${dark ? 'mt-1' : 'text-slate-950'}`}>{asString(item.title)}</span>
             {asString(item.text) !== '' ? <span className={`mt-1.5 block text-[13px] leading-5 ${dark ? 'text-slate-200' : 'text-slate-600'}`}>{asString(item.text)}</span> : null}
           </span>
@@ -166,12 +166,12 @@ function Cta({ content }: { content: Record<string, unknown> }) {
   const cta = isRecord(content.cta) ? content.cta : {}
 
   return (
-    <span className="flex flex-wrap items-center justify-between gap-4 bg-emerald-800 px-8 py-7 text-white">
+    <span className="flex flex-wrap items-center justify-between gap-4 bg-brand-800 px-8 py-7 text-white">
       <span className="block">
         <span className="block text-2xl font-bold">{asString(content.title) || 'Без заголовка'}</span>
-        {asString(content.subtitle) !== '' ? <span className="mt-1.5 block text-emerald-50">{asString(content.subtitle)}</span> : null}
+        {asString(content.subtitle) !== '' ? <span className="mt-1.5 block text-brand-50">{asString(content.subtitle)}</span> : null}
       </span>
-      {asString(cta.label) !== '' ? <span className="inline-flex rounded-xl bg-white px-5 py-2.5 font-semibold text-emerald-900">{asString(cta.label)}</span> : null}
+      {asString(cta.label) !== '' ? <span className="inline-flex rounded-xl bg-white px-5 py-2.5 font-semibold text-brand-900">{asString(cta.label)}</span> : null}
     </span>
   )
 }
@@ -184,7 +184,7 @@ export function LeadFormPreview({ title }: { title: string }) {
         <span className="mt-4 flex flex-wrap gap-2.5">
           <span className="flex h-10 min-w-36 flex-1 items-center rounded-lg border border-slate-300 px-3 text-slate-400">Имя</span>
           <span className="flex h-10 min-w-36 flex-1 items-center rounded-lg border border-slate-300 px-3 text-slate-400">Телефон</span>
-          <span className="flex h-10 items-center rounded-lg bg-emerald-700 px-4 font-semibold text-white">Отправить заявку</span>
+          <span className="flex h-10 items-center rounded-lg bg-brand-700 px-4 font-semibold text-white">Отправить заявку</span>
         </span>
       </span>
     </span>

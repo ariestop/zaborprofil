@@ -127,7 +127,7 @@ function UploadRow({ item, onCancel, onRetry }: { item: UploadItem; onCancel: ()
           aria-valuemax={100}
           aria-valuenow={percent}
         >
-          <div className="h-full bg-emerald-600 transition-all" style={{ width: `${percent}%` }} />
+          <div className="h-full bg-brand-600 transition-all" style={{ width: `${percent}%` }} />
         </div>
       ) : null}
       {item.status === 'error' ? <p className="mt-1 text-xs text-red-700 dark:text-red-400" role="alert">{item.error}</p> : null}
@@ -461,7 +461,7 @@ export function MediaLibrary({ mode, onSelect, imagesOnly = false, perPage = DEF
       data-testid="media-library"
     >
       {dragging ? (
-        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl border-2 border-dashed border-emerald-500 bg-emerald-50/90 text-sm font-semibold text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-200" data-testid="drop-overlay">
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center rounded-xl border-2 border-dashed border-brand-500 bg-brand-50/90 text-sm font-semibold text-brand-800 dark:bg-brand-950/80 dark:text-brand-200" data-testid="drop-overlay">
           Отпустите файлы, чтобы загрузить
         </div>
       ) : null}
@@ -489,8 +489,8 @@ export function MediaLibrary({ mode, onSelect, imagesOnly = false, perPage = DEF
           {SORT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
         </select>
         <div className="flex overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700" role="group" aria-label="Вид">
-          <button type="button" aria-pressed={view === 'grid'} className={cn('px-3 py-2 text-sm', view === 'grid' ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-slate-900')} onClick={() => setView('grid')}>Сетка</button>
-          <button type="button" aria-pressed={view === 'list'} className={cn('px-3 py-2 text-sm', view === 'list' ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-slate-900')} onClick={() => setView('list')}>Список</button>
+          <button type="button" aria-pressed={view === 'grid'} className={cn('px-3 py-2 text-sm', view === 'grid' ? 'bg-brand-600 text-white' : 'bg-white dark:bg-slate-900')} onClick={() => setView('grid')}>Сетка</button>
+          <button type="button" aria-pressed={view === 'list'} className={cn('px-3 py-2 text-sm', view === 'list' ? 'bg-brand-600 text-white' : 'bg-white dark:bg-slate-900')} onClick={() => setView('list')}>Список</button>
         </div>
         <div className="ml-auto">
           <Button type="button" onClick={() => fileInput.current?.click()}>Загрузить файлы</Button>
@@ -575,8 +575,8 @@ export function MediaLibrary({ mode, onSelect, imagesOnly = false, perPage = DEF
                   <button
                     type="button"
                     className={cn(
-                      'group block w-full overflow-hidden rounded-xl border text-left transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500',
-                      asset.id === selectedId ? 'border-emerald-600 ring-2 ring-emerald-500' : 'border-slate-200 hover:border-slate-400 dark:border-slate-700',
+                      'group block w-full overflow-hidden rounded-xl border text-left transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500',
+                      asset.id === selectedId ? 'border-brand-600 ring-2 ring-brand-500' : 'border-slate-200 hover:border-slate-400 dark:border-slate-700',
                     )}
                     aria-pressed={asset.id === selectedId}
                     onClick={() => activate(asset)}
@@ -600,7 +600,7 @@ export function MediaLibrary({ mode, onSelect, imagesOnly = false, perPage = DEF
                 <li key={asset.id}>
                   <button
                     type="button"
-                    className={cn('flex w-full items-center gap-3 px-3 py-2 text-left text-sm', asset.id === selectedId ? 'bg-emerald-50 dark:bg-emerald-950/30' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50')}
+                    className={cn('flex w-full items-center gap-3 px-3 py-2 text-left text-sm', asset.id === selectedId ? 'bg-brand-50 dark:bg-brand-950/30' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50')}
                     aria-pressed={asset.id === selectedId}
                     onClick={() => activate(asset)}
                     onDoubleClick={() => { if (mode === 'select') onSelect?.(asset) }}

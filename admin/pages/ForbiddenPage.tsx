@@ -13,7 +13,7 @@ export default function ForbiddenPage() {
       </p>
       <Link
         to="/admin/dashboard"
-        className="mt-6 inline-flex h-10 items-center rounded-lg border border-slate-300 px-4 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
+        className="mt-6 inline-flex h-10 items-center rounded-lg border border-slate-300 px-4 text-sm font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800"
       >
         На сводку
       </Link>

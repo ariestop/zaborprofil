@@ -105,7 +105,7 @@ export default function SettingsPage() {
         <div className="text-sm">
           <Link
             to="/admin/settings/migrations"
-            className="text-emerald-700 hover:underline dark:text-emerald-400"
+            className="text-brand-700 hover:underline dark:text-brand-400"
           >
             Открыть Миграции
           </Link>

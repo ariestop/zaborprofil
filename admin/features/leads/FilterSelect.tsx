@@ -21,10 +21,10 @@ export function FilterSelect({ label, value, options, onChange, active = false }
   return (
     <label
       className={cn(
-        'relative inline-flex h-8 cursor-pointer items-center gap-1 rounded-lg border px-2.5 text-[13px] font-medium focus-within:ring-2 focus-within:ring-emerald-500',
+        'relative inline-flex h-8 cursor-pointer items-center gap-1 rounded-lg border px-2.5 text-[13px] font-medium focus-within:ring-2 focus-within:ring-brand-500',
         active
-          ? 'border-[#A6D8C4] bg-[#E7F5EF] text-[#065F46] dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200'
-          : 'border-[#D0D5DD] bg-white text-[#344054] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200',
+          ? 'border-brand-200 bg-brand-50 text-brand-800 dark:border-brand-800 dark:bg-brand-900/30 dark:text-brand-200'
+          : 'border-line-strong bg-white text-graphite dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200',
       )}
     >
       <span className="max-w-44 truncate">{current?.label ?? label}</span>

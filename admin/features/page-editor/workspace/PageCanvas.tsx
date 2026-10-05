@@ -50,8 +50,8 @@ export function PageCanvas({
   return (
     <section aria-label="Предпросмотр страницы" className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-[13px] text-[#5D6679] dark:text-slate-400">Как на сайте · клик по секции открывает её поля</p>
-        <div role="group" aria-label="Ширина предпросмотра" className="flex rounded-[10px] bg-[#EAECF0] p-[3px] dark:bg-slate-800">
+        <p className="text-[13px] text-graphite dark:text-slate-400">Как на сайте · клик по секции открывает её поля</p>
+        <div role="group" aria-label="Ширина предпросмотра" className="flex rounded-[10px] bg-line p-[3px] dark:bg-slate-800">
           {([['desktop', 'Как на компьютере', <path key="d" d="M3.5 5.5h17v11h-17zM9 20h6M12 16.5V20" />], ['phone', 'Как на телефоне', <path key="p" d="M7.5 3.5h9v17h-9zM11 17.5h2" />]] as const).map(([value, label, icon]) => (
             <button
               key={value}
@@ -59,7 +59,7 @@ export function PageCanvas({
               aria-label={label}
               aria-pressed={device === value}
               onClick={() => onDeviceChange(value)}
-              className={cn('flex h-[34px] w-10 items-center justify-center rounded-lg', device === value ? 'bg-white text-[#101828] shadow-xs dark:bg-slate-900 dark:text-slate-100' : 'text-[#5D6679] dark:text-slate-400')}
+              className={cn('flex h-[34px] w-10 items-center justify-center rounded-lg', device === value ? 'bg-white text-ink shadow-xs dark:bg-slate-900 dark:text-slate-100' : 'text-graphite dark:text-slate-400')}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{icon}</svg>
             </button>
@@ -68,10 +68,10 @@ export function PageCanvas({
       </div>
 
       <div className={cn('mx-auto w-full transition-[max-width]', device === 'phone' ? 'max-w-[390px]' : 'max-w-none')}>
-        <div className="flex items-center gap-2.5 rounded-t-xl border border-b-0 border-[#D0D5DD] bg-[#F9FAFB] px-3.5 py-2 text-xs text-[#5D6679] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+        <div className="flex items-center gap-2.5 rounded-t-xl border border-b-0 border-line-strong bg-surface px-3.5 py-2 text-xs text-graphite dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
           <span className="truncate font-mono">zaborprofil.ru{pagePath}</span>
         </div>
-        <div className="overflow-hidden rounded-b-xl border border-[#D0D5DD] bg-white text-[#101828] dark:border-slate-700">
+        <div className="overflow-hidden rounded-b-xl border border-line-strong bg-white text-ink dark:border-slate-700">
           <div className="px-8 pb-2 pt-8">
             {/* В админке заголовок страницы — в шапке редактора; здесь только его вид на сайте, без второго h1. */}
             <p className="text-3xl font-bold tracking-tight text-slate-950">{pageH1}</p>
@@ -81,9 +81,9 @@ export function PageCanvas({
             const title = blockTitle(block)
 
             return (
-              <div key={block.id} className={cn('relative', selected && 'z-[1] outline outline-2 -outline-offset-2 outline-[#047857]')} data-testid="canvas-block">
+              <div key={block.id} className={cn('relative', selected && 'z-[1] outline outline-2 -outline-offset-2 outline-brand-700')} data-testid="canvas-block">
                 {selected ? (
-                  <div className="flex flex-wrap items-center gap-1.5 bg-[#047857] py-1.5 pl-3 pr-2 text-[13px] text-white">
+                  <div className="flex flex-wrap items-center gap-1.5 bg-brand-700 py-1.5 pl-3 pr-2 text-[13px] text-white">
                     <span className="min-w-28 flex-1 font-semibold">{title}</span>
                     <button type="button" className={toolButton} aria-label="Переместить выше" disabled={index === 0} onClick={() => onMove(block.id, -1)}>
                       <ToolIcon><path d="M12 19.5v-15M7 9.5l5-5 5 5" /></ToolIcon>
@@ -103,10 +103,10 @@ export function PageCanvas({
                   </div>
                 ) : null}
                 {isPlaceholderBlock(block) ? (
-                  <span className="pointer-events-none absolute bottom-2.5 right-2.5 z-[1] rounded-md bg-[#FFEDD5] px-2 py-0.5 text-[11px] font-bold text-[#9A3412]">заготовка</span>
+                  <span className="pointer-events-none absolute bottom-2.5 right-2.5 z-[1] rounded-md bg-orange-100 px-2 py-0.5 text-[11px] font-bold text-orange-800">заготовка</span>
                 ) : null}
                 {!block.enabled ? (
-                  <span className="pointer-events-none absolute right-2.5 top-2.5 z-[1] rounded-md bg-[#101828] px-2 py-0.5 text-[11px] font-bold text-white">скрыт на сайте</span>
+                  <span className="pointer-events-none absolute right-2.5 top-2.5 z-[1] rounded-md bg-ink px-2 py-0.5 text-[11px] font-bold text-white">скрыт на сайте</span>
                 ) : null}
                 <button
                   type="button"
@@ -117,11 +117,11 @@ export function PageCanvas({
                   <BlockPreview block={block} />
                 </button>
                 {selected ? (
-                  <div className="border-t border-[#D1FADF] bg-[#F6FEF9] px-3 py-2 dark:border-emerald-900 dark:bg-emerald-950/30">
+                  <div className="border-t border-brand-100 bg-brand-50 px-3 py-2 dark:border-brand-900 dark:bg-brand-950/30">
                     <button
                       type="button"
                       onClick={() => onInsertAfter(block.id)}
-                      className="flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-[#47B38A] bg-white text-[13px] font-semibold text-[#047857] dark:bg-slate-900"
+                      className="flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-brand-400 bg-white text-[13px] font-semibold text-brand-700 dark:bg-slate-900"
                     >
                       <NavIcon name="plus" size={14} strokeWidth={2} />
                       Добавить блок после «{title}»

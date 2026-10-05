@@ -118,7 +118,7 @@ export function AuditTab() {
                         {audit?.status === 'done' && audit.result.issues.length > 0 ? (
                           <Button type="button" size="sm" variant="ghost" onClick={() => setDetailsId(page.id)}>Замечания</Button>
                         ) : null}
-                        <Link className="inline-flex h-8 items-center text-sm text-emerald-700 underline dark:text-emerald-400" to={`/admin/pages/${page.id}`}>
+                        <Link className="inline-flex h-8 items-center text-sm text-brand-700 underline dark:text-brand-400" to={`/admin/pages/${page.id}`}>
                           Открыть
                         </Link>
                       </div>

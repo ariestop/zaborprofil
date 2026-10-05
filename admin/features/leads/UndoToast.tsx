@@ -32,13 +32,13 @@ export function UndoToast({ toast, onUndo, onDismiss, durationMs = 8000 }: UndoT
   return (
     <div
       role="status"
-      className="fixed bottom-6 left-1/2 z-[70] flex max-w-[calc(100%-2rem)] -translate-x-1/2 items-center gap-4 rounded-xl bg-[#101828] py-3 pl-4 pr-3 text-sm text-white shadow-lg"
+      className="fixed bottom-6 left-1/2 z-[70] flex max-w-[calc(100%-2rem)] -translate-x-1/2 items-center gap-4 rounded-xl bg-ink py-3 pl-4 pr-3 text-sm text-white shadow-lg"
     >
       <span className="min-w-0 truncate">{toast.text}</span>
       <button
         type="button"
         onClick={onUndo}
-        className="h-[34px] shrink-0 rounded-lg bg-[#344054] px-3 text-[13px] font-semibold text-white hover:bg-[#475467] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-400"
+        className="h-[34px] shrink-0 rounded-lg bg-graphite px-3 text-[13px] font-semibold text-white hover:bg-graphite focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-400"
       >
         Отменить
       </button>

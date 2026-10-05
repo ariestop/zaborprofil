@@ -40,9 +40,9 @@ export const editorTabs: Array<{ value: EditorTab, label: string, permission?: A
 ]
 
 const statusPill: Record<ReturnType<typeof statusTone>, string> = {
-  success: 'bg-[#DCFAE6] text-[#067647] dark:bg-emerald-900/40 dark:text-emerald-200',
-  warning: 'bg-[#FEF0C7] text-[#7A4A00] dark:bg-amber-900/40 dark:text-amber-200',
-  neutral: 'bg-[#F2F4F7] text-[#344054] dark:bg-slate-800 dark:text-slate-200',
+  success: 'bg-brand-100 text-brand-800 dark:bg-brand-900/40 dark:text-brand-200',
+  warning: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
+  neutral: 'bg-surface-strong text-graphite dark:bg-slate-800 dark:text-slate-200',
 }
 
 export function pageEditorTabPath(pageId: string, tab: EditorTab): string {
@@ -128,16 +128,16 @@ export function PageEditor({ page, initialBlocks, initialBuilderVersion = null, 
     <div data-testid="page-editor" className="flex min-w-0 flex-col">
       <LeaveGuard when={controller.hasUnsavedChanges} isAllowed={isAllowedNavigation} onSaveAndLeave={saveAll} />
 
-      <header className="border-b border-[#E4E7EC] bg-white px-4 pt-4 lg:px-6 dark:border-slate-800 dark:bg-slate-900">
+      <header className="border-b border-line bg-white px-4 pt-4 lg:px-6 dark:border-slate-800 dark:bg-slate-900">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
           <div className="flex min-w-0 flex-[1_1_360px] flex-col gap-1">
             <div className="flex flex-wrap items-center gap-2.5">
               <h1 className="text-[22px] font-bold tracking-[-0.01em]">{page.title}</h1>
               <span className={cn('rounded-full px-2 py-0.5 text-xs font-semibold', statusPill[statusTone(page.status)])}>{pageStatusLabels[page.status]}</span>
             </div>
-            <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[13px] text-[#5D6679] dark:text-slate-400">
+            <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[13px] text-graphite dark:text-slate-400">
               {page.status === 'published' ? (
-                <a href={page.path} target="_blank" rel="noreferrer" className="font-mono text-xs text-[#047857] underline dark:text-emerald-400">{page.path}</a>
+                <a href={page.path} target="_blank" rel="noreferrer" className="font-mono text-xs text-brand-700 underline dark:text-brand-400">{page.path}</a>
               ) : (
                 <span className="font-mono text-xs">{page.path}</span>
               )}
@@ -161,7 +161,7 @@ export function PageEditor({ page, initialBlocks, initialBuilderVersion = null, 
               {publishVisible ? (
                 <Button
                   type="button"
-                  className="rounded-r-none bg-[#047857] hover:bg-[#065F46]"
+                  className="rounded-r-none bg-brand-700 hover:bg-brand-800"
                   disabled={controller.isPublishing || controller.saveState === 'saving'}
                   onClick={() => void controller.publish()}
                 >
@@ -176,9 +176,9 @@ export function PageEditor({ page, initialBlocks, initialBuilderVersion = null, 
                     type="button"
                     aria-label="Другие действия со страницей"
                     className={cn(
-                      'inline-flex h-10 w-10 items-center justify-center focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500',
+                      'inline-flex h-10 w-10 items-center justify-center focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500',
                       publishVisible
-                        ? 'rounded-r-lg border-l border-[#0B6B4E] bg-[#047857] text-white hover:bg-[#065F46]'
+                        ? 'rounded-r-lg border-l border-brand-800 bg-brand-700 text-white hover:bg-brand-800'
                         : 'rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100',
                     )}
                   >
@@ -212,8 +212,8 @@ export function PageEditor({ page, initialBlocks, initialBuilderVersion = null, 
                 className={cn(
                   'flex h-[42px] items-center gap-1.5 px-3.5 text-sm transition',
                   active
-                    ? 'font-semibold text-[#101828] shadow-[inset_0_-2px_0_#047857] dark:text-slate-100'
-                    : 'font-medium text-[#475467] hover:text-[#101828] dark:text-slate-400 dark:hover:text-slate-100',
+                    ? 'font-semibold text-ink shadow-[inset_0_-2px_0_#047857] dark:text-slate-100'
+                    : 'font-medium text-graphite hover:text-ink dark:text-slate-400 dark:hover:text-slate-100',
                 )}
               >
                 {item.label}
@@ -247,7 +247,7 @@ export function PageEditor({ page, initialBlocks, initialBuilderVersion = null, 
             />
           ) : null}
           {tabAllowed && tab !== 'content' ? (
-            <section className="mx-auto max-w-5xl rounded-2xl border border-[#E4E7EC] bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <section className="mx-auto max-w-5xl rounded-2xl border border-line bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
               {tab === 'seo' ? <SeoTab controller={controller} onOpenTab={openTab} /> : null}
               {tab === 'settings' ? <SettingsTab controller={controller} page={page} /> : null}
               {tab === 'revisions' ? <RevisionsTab controller={controller} status={page.status} /> : null}

@@ -28,18 +28,18 @@ interface CreateValues {
   parentId: string
 }
 
-const inputClass = 'h-[42px] w-full rounded-[10px] border border-[#D0D5DD] bg-white px-3 text-[15px] text-[#101828] outline-hidden focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/30 aria-[invalid=true]:border-red-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100'
+const inputClass = 'h-[42px] w-full rounded-[10px] border border-line-strong bg-white px-3 text-[15px] text-ink outline-hidden focus:border-brand-600 focus:ring-2 focus:ring-brand-500/30 aria-[invalid=true]:border-red-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100'
 
 function TemplateThumb({ template }: { template: PageTemplateItem | null }) {
   const bars = template === null ? [] : templateBars(template)
 
   return (
-    <span aria-hidden="true" className="flex h-[60px] w-[52px] shrink-0 flex-col gap-[2px] overflow-hidden rounded-lg bg-[#F2F4F7] p-[5px] [--bar-scale:0.42] sm:h-[92px] sm:w-full sm:gap-[3px] sm:p-2 sm:[--bar-scale:1] dark:bg-slate-800">
+    <span aria-hidden="true" className="flex h-[60px] w-[52px] shrink-0 flex-col gap-[2px] overflow-hidden rounded-lg bg-surface-strong p-[5px] [--bar-scale:0.42] sm:h-[92px] sm:w-full sm:gap-[3px] sm:p-2 sm:[--bar-scale:1] dark:bg-slate-800">
       {bars.map((bar, index) => (
         // Полосы схемы не переставляются и не имеют идентичности: индекс — их ключ.
         <span key={index} className="block shrink-0 rounded-[3px]" style={{ height: `max(3px, calc(${bar.height}px * var(--bar-scale)))`, width: bar.width, background: bar.color }} />
       ))}
-      {bars.length === 0 ? <span className="m-auto text-[#98A2B3]"><NavIcon name="plus" size={16} /></span> : null}
+      {bars.length === 0 ? <span className="m-auto text-graphite/60"><NavIcon name="plus" size={16} /></span> : null}
     </span>
   )
 }
@@ -55,17 +55,17 @@ function TemplateCard({ template, selected, onSelect }: { template: PageTemplate
       aria-checked={selected}
       onClick={onSelect}
       className={cn(
-        'flex items-center gap-3 rounded-xl text-left transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 sm:flex-col sm:items-stretch sm:gap-2',
+        'flex items-center gap-3 rounded-xl text-left transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 sm:flex-col sm:items-stretch sm:gap-2',
         selected
-          ? 'border-2 border-[#047857] bg-[#F6FEF9] p-[9px] dark:bg-emerald-950/30'
-          : 'border border-[#E4E7EC] bg-white p-[10px] hover:border-[#A6D8C4] dark:border-slate-700 dark:bg-slate-900',
+          ? 'border-2 border-brand-700 bg-brand-50 p-[9px] dark:bg-brand-950/30'
+          : 'border border-line bg-white p-[10px] hover:border-brand-200 dark:border-slate-700 dark:bg-slate-900',
       )}
     >
       <TemplateThumb template={template} />
       <span className="flex min-w-0 flex-1 flex-col gap-0.5 sm:px-0.5 sm:pb-0.5">
         <span className="font-semibold">{name}</span>
-        {description !== '' ? <span className="hidden text-xs text-[#5D6679] sm:block dark:text-slate-400">{description}</span> : null}
-        <span className="text-xs font-semibold text-[#047857] dark:text-emerald-400">{blocksCount(template?.blocksSchema.length ?? 0)}</span>
+        {description !== '' ? <span className="hidden text-xs text-graphite sm:block dark:text-slate-400">{description}</span> : null}
+        <span className="text-xs font-semibold text-brand-700 dark:text-brand-400">{blocksCount(template?.blocksSchema.length ?? 0)}</span>
       </span>
     </button>
   )
@@ -143,25 +143,25 @@ export function PageCreateDialog({ onClose }: { onClose: () => void }) {
   return (
     <DialogPrimitive.Root open onOpenChange={(open) => (open ? undefined : onClose())}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-[#101828]/45" />
+        <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-ink/45" />
         <DialogPrimitive.Content
           onOpenAutoFocus={(event) => {
             event.preventDefault()
             form.setFocus('title')
           }}
-          className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col rounded-t-[20px] bg-white text-[#101828] shadow-xl sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-[5vh] sm:max-h-[90vh] sm:w-[calc(100vw-32px)] sm:max-w-[920px] sm:-translate-x-1/2 sm:rounded-2xl dark:bg-slate-900 dark:text-slate-100"
+          className="fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col rounded-t-[20px] bg-white text-ink shadow-xl sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-[5vh] sm:max-h-[90vh] sm:w-[calc(100vw-32px)] sm:max-w-[920px] sm:-translate-x-1/2 sm:rounded-2xl dark:bg-slate-900 dark:text-slate-100"
         >
           <form onSubmit={form.handleSubmit(submit, openAddressOnError)} noValidate className="flex min-h-0 flex-1 flex-col">
-            <span aria-hidden="true" className="mx-auto mt-2 h-1 w-10 rounded-full bg-[#D0D5DD] sm:hidden" />
+            <span aria-hidden="true" className="mx-auto mt-2 h-1 w-10 rounded-full bg-line-strong sm:hidden" />
             <div className="flex items-start gap-3 px-4 pb-1 pt-3 sm:px-6 sm:pt-5">
               <div className="min-w-0 flex-1">
                 <DialogPrimitive.Title className="text-lg font-bold sm:text-xl">Новая страница</DialogPrimitive.Title>
-                <DialogPrimitive.Description className="mt-0.5 text-sm text-[#5D6679] dark:text-slate-400">
+                <DialogPrimitive.Description className="mt-0.5 text-sm text-graphite dark:text-slate-400">
                   Создаётся черновиком: на сайте не появится, пока вы её не опубликуете
                 </DialogPrimitive.Description>
               </div>
               <DialogPrimitive.Close asChild>
-                <button type="button" aria-label="Закрыть" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-[#E4E7EC] text-[#344054] hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
+                <button type="button" aria-label="Закрыть" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-line text-graphite hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
                   <NavIcon name="close" size={18} />
                 </button>
               </DialogPrimitive.Close>
@@ -174,9 +174,9 @@ export function PageCreateDialog({ onClose }: { onClose: () => void }) {
                   error={errors.title?.message}
                   hint={editAddress ? undefined : (
                     <>
-                      Адрес: {path === '' ? 'появится после названия' : <span className="font-mono text-[#344054] dark:text-slate-200">{path}</span>}
+                      Адрес: {path === '' ? 'появится после названия' : <span className="font-mono text-graphite dark:text-slate-200">{path}</span>}
                       {' · '}
-                      <button type="button" onClick={() => setEditAddress(true)} className="font-semibold text-[#047857] hover:underline dark:text-emerald-400">изменить</button>
+                      <button type="button" onClick={() => setEditAddress(true)} className="font-semibold text-brand-700 hover:underline dark:text-brand-400">изменить</button>
                     </>
                   )}
                 >
@@ -215,7 +215,7 @@ export function PageCreateDialog({ onClose }: { onClose: () => void }) {
               </div>
 
               {editAddress ? (
-                <div className="mt-3 grid gap-3.5 rounded-xl bg-[#F9FAFB] p-3 sm:grid-cols-2 dark:bg-slate-950">
+                <div className="mt-3 grid gap-3.5 rounded-xl bg-surface p-3 sm:grid-cols-2 dark:bg-slate-950">
                   <Field label="Slug" error={errors.slug?.message} hint="Последняя часть адреса латиницей">
                     {(id, describedBy) => (
                       <input
@@ -240,8 +240,8 @@ export function PageCreateDialog({ onClose }: { onClose: () => void }) {
               ) : null}
 
               <div className="mt-5">
-                <p id="new-page-template" className="mb-2.5 text-sm font-semibold text-[#344054] dark:text-slate-200">Шаблон</p>
-                {templatesQuery.isPending ? <p className="text-sm text-[#5D6679]">Загружаем шаблоны…</p> : null}
+                <p id="new-page-template" className="mb-2.5 text-sm font-semibold text-graphite dark:text-slate-200">Шаблон</p>
+                {templatesQuery.isPending ? <p className="text-sm text-graphite">Загружаем шаблоны…</p> : null}
                 <div role="radiogroup" aria-labelledby="new-page-template" className="grid gap-1.5 sm:grid-cols-[repeat(auto-fill,minmax(200px,1fr))] sm:gap-2.5">
                   {templates.map((item) => (
                     <TemplateCard key={item.code} template={item} selected={item.code === templateCode} onSelect={() => setPicked(item.code)} />
@@ -262,21 +262,21 @@ export function PageCreateDialog({ onClose }: { onClose: () => void }) {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3 border-t border-[#F0F2F5] bg-[#F9FAFB] px-4 py-3 sm:rounded-b-2xl sm:px-6 sm:py-3.5 dark:border-slate-800 dark:bg-slate-950">
-              <p className="hidden min-w-0 flex-[1_1_320px] text-[13px] text-[#475467] sm:block dark:text-slate-400">
+            <div className="flex flex-wrap items-center gap-3 border-t border-surface-strong bg-surface px-4 py-3 sm:rounded-b-2xl sm:px-6 sm:py-3.5 dark:border-slate-800 dark:bg-slate-950">
+              <p className="hidden min-w-0 flex-[1_1_320px] text-[13px] text-graphite sm:block dark:text-slate-400">
                 {template === null
-                  ? <><b className="text-[#101828] dark:text-slate-100">Пустая страница:</b> блоки добавите сами</>
-                  : <><b className="text-[#101828] dark:text-slate-100">{template.name}:</b> {blockNames.join(' · ')}</>}
+                  ? <><b className="text-ink dark:text-slate-100">Пустая страница:</b> блоки добавите сами</>
+                  : <><b className="text-ink dark:text-slate-100">{template.name}:</b> {blockNames.join(' · ')}</>}
               </p>
               <DialogPrimitive.Close asChild>
-                <button type="button" className="hidden h-[42px] rounded-[10px] border border-[#D0D5DD] bg-white px-3.5 text-sm font-semibold text-[#344054] hover:bg-slate-50 sm:block dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                <button type="button" className="hidden h-[42px] rounded-[10px] border border-line-strong bg-white px-3.5 text-sm font-semibold text-graphite hover:bg-slate-50 sm:block dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
                   Отмена
                 </button>
               </DialogPrimitive.Close>
               <button
                 type="submit"
                 disabled={createMutation.isPending}
-                className="h-12 flex-1 rounded-xl bg-[#047857] px-4 text-[15px] font-semibold text-white hover:bg-[#065F46] disabled:opacity-60 sm:h-[42px] sm:flex-none sm:rounded-[10px] sm:text-sm"
+                className="h-12 flex-1 rounded-xl bg-brand-700 px-4 text-[15px] font-semibold text-white hover:bg-brand-800 disabled:opacity-60 sm:h-[42px] sm:flex-none sm:rounded-[10px] sm:text-sm"
               >
                 {createMutation.isPending ? 'Создаём…' : 'Создать и открыть'}
               </button>

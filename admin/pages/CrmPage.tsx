@@ -117,9 +117,9 @@ function isDesktop(): boolean {
 }
 
 const filterButton = 'h-8'
-const chipBase = 'h-[30px] rounded-full border px-2.5 text-xs transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500'
-const chipOn = 'border-[#A6D8C4] bg-[#E7F5EF] font-semibold text-[#065F46] dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200'
-const chipOff = 'border-[#D0D5DD] bg-white font-medium text-[#344054] hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
+const chipBase = 'h-[30px] rounded-full border px-2.5 text-xs transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500'
+const chipOn = 'border-brand-200 bg-brand-50 font-semibold text-brand-800 dark:border-brand-800 dark:bg-brand-900/30 dark:text-brand-200'
+const chipOff = 'border-line-strong bg-white font-medium text-graphite hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
 
 /**
  * Рабочее место по заявкам: слева список с вкладками статусов, фильтрами и быстрыми видами,
@@ -332,7 +332,7 @@ export default function CrmPage() {
             type="button"
             disabled={exporting}
             onClick={() => void exportCsv()}
-            className="h-10 rounded-[10px] border border-[#D0D5DD] bg-white px-3.5 text-sm font-semibold text-[#344054] transition hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            className="h-10 rounded-[10px] border border-line-strong bg-white px-3.5 text-sm font-semibold text-graphite transition hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
           >
             Экспорт CSV
           </button>
@@ -341,7 +341,7 @@ export default function CrmPage() {
           <button
             type="button"
             onClick={() => setCreateOpen(true)}
-            className="inline-flex h-10 items-center gap-1.5 rounded-[10px] bg-[#047857] px-3.5 text-sm font-semibold text-white transition hover:bg-[#065F46] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+            className="inline-flex h-10 items-center gap-1.5 rounded-[10px] bg-brand-700 px-3.5 text-sm font-semibold text-white transition hover:bg-brand-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
           >
             <NavIcon name="plus" size={16} strokeWidth={2} />
             Заявка после звонка
@@ -353,12 +353,12 @@ export default function CrmPage() {
         <section
           aria-label="Список заявок"
           className={cn(
-            'box-border flex min-w-0 flex-col border-r border-[#E4E7EC] bg-white lg:sticky lg:top-[65px] lg:h-[calc(100vh-65px)] lg:w-[380px] lg:shrink-0 lg:overflow-y-auto dark:border-slate-800 dark:bg-slate-900',
+            'box-border flex min-w-0 flex-col border-r border-line bg-white lg:sticky lg:top-[65px] lg:h-[calc(100vh-65px)] lg:w-[380px] lg:shrink-0 lg:overflow-y-auto dark:border-slate-800 dark:bg-slate-900',
             selected && 'hidden lg:flex',
           )}
         >
           <div className="flex flex-col gap-3 px-[18px] pb-2.5 pt-[18px]">
-            <div role="tablist" aria-label="Статус заявок" className="flex gap-0.5 rounded-[11px] bg-[#EAECF0] p-[3px] dark:bg-slate-800">
+            <div role="tablist" aria-label="Статус заявок" className="flex gap-0.5 rounded-[11px] bg-line p-[3px] dark:bg-slate-800">
               {TABS.map((tab) => {
                 const active = params.status === tab.id
 
@@ -370,18 +370,18 @@ export default function CrmPage() {
                     aria-selected={active}
                     onClick={() => update({ status: tab.id })}
                     className={cn(
-                      'flex h-9 flex-[1_1_auto] items-center justify-center gap-1 whitespace-nowrap rounded-[9px] px-1.5 text-xs font-semibold focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500',
-                      active ? 'bg-white text-[#101828] dark:bg-slate-950 dark:text-slate-100' : 'bg-transparent text-[#475467] dark:text-slate-400',
+                      'flex h-9 flex-[1_1_auto] items-center justify-center gap-1 whitespace-nowrap rounded-[9px] px-1.5 text-xs font-semibold focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500',
+                      active ? 'bg-white text-ink dark:bg-slate-950 dark:text-slate-100' : 'bg-transparent text-graphite dark:text-slate-400',
                     )}
                   >
                     {tab.label}
-                    <span className="text-[11px] font-bold text-[#5D6679] dark:text-slate-400">{tabCount(tab.id)}</span>
+                    <span className="text-[11px] font-bold text-graphite dark:text-slate-400">{tabCount(tab.id)}</span>
                   </button>
                 )
               })}
             </div>
 
-            <label className="flex h-10 items-center gap-2 rounded-[10px] border border-[#D0D5DD] px-3 text-[#5D6679] focus-within:ring-2 focus-within:ring-emerald-500 dark:border-slate-700 dark:text-slate-400">
+            <label className="flex h-10 items-center gap-2 rounded-[10px] border border-line-strong px-3 text-graphite focus-within:ring-2 focus-within:ring-brand-500 dark:border-slate-700 dark:text-slate-400">
               <NavIcon name="search" size={16} />
               <input
                 type="search"
@@ -394,7 +394,7 @@ export default function CrmPage() {
                     update({})
                   }
                 }}
-                className="min-w-0 flex-1 border-0 bg-transparent text-sm text-[#101828] outline-hidden placeholder:text-[#5D6679] dark:text-slate-100"
+                className="min-w-0 flex-1 border-0 bg-transparent text-sm text-ink outline-hidden placeholder:text-graphite dark:text-slate-100"
               />
             </label>
 
@@ -432,24 +432,24 @@ export default function CrmPage() {
 
             {customPeriod || period === 'custom' ? (
               <div className="grid grid-cols-2 gap-2">
-                <label className="grid gap-1 text-xs text-[#5D6679] dark:text-slate-400">
+                <label className="grid gap-1 text-xs text-graphite dark:text-slate-400">
                   С
                   <input
                     type="date"
                     aria-label="Дата от"
                     value={params.from}
                     onChange={(event) => update({ from: event.target.value })}
-                    className="h-9 rounded-lg border border-[#D0D5DD] bg-white px-2 text-[13px] text-[#101828] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                    className="h-9 rounded-lg border border-line-strong bg-white px-2 text-[13px] text-ink dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                   />
                 </label>
-                <label className="grid gap-1 text-xs text-[#5D6679] dark:text-slate-400">
+                <label className="grid gap-1 text-xs text-graphite dark:text-slate-400">
                   По
                   <input
                     type="date"
                     aria-label="Дата до"
                     value={params.to}
                     onChange={(event) => update({ to: event.target.value })}
-                    className="h-9 rounded-lg border border-[#D0D5DD] bg-white px-2 text-[13px] text-[#101828] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                    className="h-9 rounded-lg border border-line-strong bg-white px-2 text-[13px] text-ink dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                   />
                 </label>
               </div>
@@ -482,7 +482,7 @@ export default function CrmPage() {
                     type="button"
                     aria-label={`Удалить вид «${view.name}»`}
                     onClick={() => savedViews.remove(view.id)}
-                    className="flex h-5 w-5 items-center justify-center rounded-full text-[#5D6679] hover:bg-slate-100 dark:hover:bg-slate-800"
+                    className="flex h-5 w-5 items-center justify-center rounded-full text-graphite hover:bg-slate-100 dark:hover:bg-slate-800"
                   >
                     <NavIcon name="close" size={12} />
                   </button>
@@ -492,7 +492,7 @@ export default function CrmPage() {
                 <button
                   type="button"
                   onClick={() => setSavingView((value) => !value)}
-                  className={cn(chipBase, 'border-dashed border-[#D0D5DD] bg-white font-medium text-[#5D6679] hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400')}
+                  className={cn(chipBase, 'border-dashed border-line-strong bg-white font-medium text-graphite hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400')}
                 >
                   + Сохранить вид
                 </button>
@@ -514,12 +514,12 @@ export default function CrmPage() {
                   autoFocus
                   value={viewName}
                   onChange={(event) => setViewName(event.target.value)}
-                  className="h-9 min-w-0 flex-1 rounded-lg border border-[#D0D5DD] bg-white px-2.5 text-[13px] dark:border-slate-700 dark:bg-slate-900"
+                  className="h-9 min-w-0 flex-1 rounded-lg border border-line-strong bg-white px-2.5 text-[13px] dark:border-slate-700 dark:bg-slate-900"
                 />
                 <button
                   type="submit"
                   disabled={viewName.trim() === ''}
-                  className="h-9 rounded-lg bg-[#047857] px-3 text-[13px] font-semibold text-white disabled:opacity-60"
+                  className="h-9 rounded-lg bg-brand-700 px-3 text-[13px] font-semibold text-white disabled:opacity-60"
                 >
                   Сохранить
                 </button>
@@ -530,7 +530,7 @@ export default function CrmPage() {
               <div>
                 <button
                   type="button"
-                  className={cn(filterButton, 'rounded-lg px-1 text-[13px] font-medium text-[#047857] hover:underline dark:text-emerald-400')}
+                  className={cn(filterButton, 'rounded-lg px-1 text-[13px] font-medium text-brand-700 hover:underline dark:text-brand-400')}
                   onClick={() => {
                     setSearchText('')
                     setCustomPeriod(false)
@@ -548,11 +548,11 @@ export default function CrmPage() {
               <ErrorState title="Не удалось загрузить заявки" description="Проверьте endpoint /admin/api/leads и право leads.view." />
             ) : null}
 
-            {leadsQuery.isPending ? <p className="m-2 text-sm text-[#5D6679]">Загрузка...</p> : null}
+            {leadsQuery.isPending ? <p className="m-2 text-sm text-graphite">Загрузка...</p> : null}
 
             {data !== undefined && items.length === 0 ? (
-              <div className="m-2 rounded-xl border border-dashed border-[#D0D5DD] p-6 text-center text-[#5D6679] dark:border-slate-700">
-                <p className="m-0 font-semibold text-[#101828] dark:text-slate-100">{hasFilters ? 'Ничего не найдено' : 'Здесь пусто'}</p>
+              <div className="m-2 rounded-xl border border-dashed border-line-strong p-6 text-center text-graphite dark:border-slate-700">
+                <p className="m-0 font-semibold text-ink dark:text-slate-100">{hasFilters ? 'Ничего не найдено' : 'Здесь пусто'}</p>
                 <p className="m-0 mt-1 text-[13px]">
                   {hasFilters ? 'Измените поисковый запрос или сбросьте фильтры' : 'Все заявки в этом статусе разобраны'}
                 </p>
@@ -571,30 +571,30 @@ export default function CrmPage() {
                         to={leadHref(lead.id)}
                         aria-current={isCurrent ? 'true' : undefined}
                         className={cn(
-                          'flex w-full gap-3 rounded-xl border px-3 py-[13px] text-left text-sm text-[#101828] no-underline hover:text-[#101828] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-slate-100',
+                          'flex w-full gap-3 rounded-xl border px-3 py-[13px] text-left text-sm text-ink no-underline hover:text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-slate-100',
                           isCurrent
-                            ? 'border-[#A6D8C4] bg-[#E7F5EF] dark:border-emerald-800 dark:bg-emerald-900/20'
+                            ? 'border-brand-200 bg-brand-50 dark:border-brand-800 dark:bg-brand-900/20'
                             : 'border-transparent bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800/60',
                         )}
                       >
                         <span
                           aria-hidden="true"
-                          className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-[#F2F4F7] text-[13px] font-bold text-[#344054] dark:bg-slate-800 dark:text-slate-200"
+                          className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-surface-strong text-[13px] font-bold text-graphite dark:bg-slate-800 dark:text-slate-200"
                         >
                           {leadInitials(lead.name)}
                         </span>
                         <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
                           <span className="flex items-center gap-2">
                             <span className={cn('min-w-0 flex-1 truncate', unread ? 'font-bold' : 'font-medium')}>{lead.name}</span>
-                            {unread ? <span aria-label="Не прочитана" className="h-2 w-2 shrink-0 rounded-full bg-[#C2410C]" /> : null}
-                            <time dateTime={lead.createdAt} className="shrink-0 text-xs text-[#5D6679] dark:text-slate-400">{formatLeadListTime(lead.createdAt)}</time>
+                            {unread ? <span aria-label="Не прочитана" className="h-2 w-2 shrink-0 rounded-full bg-orange-700" /> : null}
+                            <time dateTime={lead.createdAt} className="shrink-0 text-xs text-graphite dark:text-slate-400">{formatLeadListTime(lead.createdAt)}</time>
                           </span>
                           {lead.messagePreview !== null ? (
-                            <span className="line-clamp-2 text-[13px] text-[#475467] dark:text-slate-300">{lead.messagePreview}</span>
+                            <span className="line-clamp-2 text-[13px] text-graphite dark:text-slate-300">{lead.messagePreview}</span>
                           ) : null}
-                          <span className="flex flex-wrap gap-1.5 text-xs text-[#5D6679] dark:text-slate-400">
+                          <span className="flex flex-wrap gap-1.5 text-xs text-graphite dark:text-slate-400">
                             <span>{leadSourceLabel(lead.source)}</span>
-                            {lead.b2b ? <span className="rounded-[5px] bg-[#E0EAFF] px-1.5 font-bold text-[#1E40AF] dark:bg-blue-900/40 dark:text-blue-200">B2B</span> : null}
+                            {lead.b2b ? <span className="rounded-[5px] bg-indigo-100 px-1.5 font-bold text-blue-800 dark:bg-blue-900/40 dark:text-blue-200">B2B</span> : null}
                           </span>
                         </span>
                       </Link>
@@ -619,8 +619,8 @@ export default function CrmPage() {
           {selected ? (
             <LeadDetailPage key={leadId} leadId={leadId} closeHref={listHref} onChangeStatus={changeStatus} />
           ) : (
-            <div className="mx-auto my-20 max-w-[360px] text-center text-[#5D6679] dark:text-slate-400">
-              <p className="m-0 text-lg font-bold text-[#101828] dark:text-slate-100">Выберите заявку слева</p>
+            <div className="mx-auto my-20 max-w-[360px] text-center text-graphite dark:text-slate-400">
+              <p className="m-0 text-lg font-bold text-ink dark:text-slate-100">Выберите заявку слева</p>
               <p className="m-0 mt-1.5">Или переключите статус вверху списка</p>
             </div>
           )}
