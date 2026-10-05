@@ -34,7 +34,7 @@
                         {% if (office.role ?? '') is not empty %}
                             <p class="text-sm font-semibold text-brand-700">{{ office.role }}</p>
                         {% endif %}
-                        <h3 class="text-3xl font-bold tracking-tight text-slate-950">{{ office.city }}</h3>
+                        <h3 class="text-3xl font-bold tracking-tight text-ink">{{ office.city }}</h3>
                         {% if (office.hours ?? [])|length > 0 %}
                             <span class="zp-chip mt-3" data-office-status hidden></span>
                         {% endif %}
@@ -82,8 +82,8 @@
                     </dl>
 
                     {% if (office.hours ?? [])|length > 0 %}
-                        <div class="mt-3 border-t border-slate-200/80 pt-4">
-                            <p class="mb-2 text-sm text-slate-500">Режим работы</p>
+                        <div class="mt-3 border-t border-line/80 pt-4">
+                            <p class="mb-2 text-sm text-graphite">Режим работы</p>
                             <div class="zp-hours">
                                 {% for row in office.hours %}
                                     <div data-days="{{ (row.days ?? [])|join(',') }}" data-open="{{ row.open ?? '' }}" data-close="{{ row.close ?? '' }}">
@@ -112,7 +112,7 @@
         {% if map_embed is not empty or (map.url ?? '') is not empty %}
             <div class="zp-mapface mt-4 md:mt-6" data-map>
                 <span class="zp-tile !size-14 !bg-brand-700 !text-white"><svg aria-hidden="true"><use href="#i-pin"/></svg></span>
-                <p class="px-4 text-lg font-semibold text-slate-950">{{ map.title ?? 'Мы на карте' }}</p>
+                <p class="px-4 text-lg font-semibold text-ink">{{ map.title ?? 'Мы на карте' }}</p>
                 <div class="grid w-full gap-3 px-4 sm:flex sm:w-auto sm:flex-wrap sm:justify-center">
                     {% if map_embed is not empty %}
                         <button type="button" class="zp-btn zp-btn--primary" data-map-embed="{{ map_embed }}" data-map-title="{{ map.title ?? 'Карта' }}">Показать карту</button>
@@ -128,7 +128,7 @@
             <div class="mt-10 md:mt-14">
                 <h2 class="zp-h2">{{ (requisites.title ?? '') is not empty ? requisites.title : 'Реквизиты' }}</h2>
                 {% if (requisites.legalName ?? '') is not empty %}
-                    <p class="mt-2 text-lg text-slate-600">{{ requisites.legalName }}{% if (requisites.note ?? '') is not empty %} · {{ requisites.note }}{% endif %}</p>
+                    <p class="mt-2 text-lg text-graphite">{{ requisites.legalName }}{% if (requisites.note ?? '') is not empty %} · {{ requisites.note }}{% endif %}</p>
                 {% endif %}
                 <dl class="zp-reqs mt-5">
                     {% for item in req_items %}

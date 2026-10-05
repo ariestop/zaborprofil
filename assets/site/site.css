@@ -6,6 +6,20 @@
 @import '../shared/styles/theme.css';
 @import '../shared/styles/fonts.css';
 
+/*
+  Шкала текста публичного сайта по брендбуку (docs/50-brand-system.md, раздел 5):
+  основной текст 17 px, мелкий 15 px, подписи 13 px. Действует только в бандле сайта —
+  админка собирается отдельно и сохраняет стандартную шкалу Tailwind.
+*/
+@theme {
+    --text-xs: 0.8125rem;
+    --text-xs--line-height: 1.4;
+    --text-sm: 0.9375rem;
+    --text-sm--line-height: 1.5;
+    --text-base: 1.0625rem;
+    --text-base--line-height: 1.6;
+}
+
 /* Публичный сайт собирает утилиты только из Twig-шаблонов и своих скриптов — без админского кода (так CSS в разы меньше). */
 @source '../../templates';
 @source '../site';
@@ -18,7 +32,7 @@
     ::before,
     ::backdrop,
     ::file-selector-button {
-        border-color: var(--color-slate-200, currentcolor);
+        border-color: var(--color-line, currentcolor);
     }
 
     html {
@@ -52,7 +66,7 @@
 
 @layer components {
     .zp-body {
-        @apply bg-white pb-[4.5rem] text-slate-900 antialiased md:pb-0;
+        @apply bg-white pb-[4.5rem] text-base text-ink antialiased md:pb-0;
     }
 
     .zp-skip {
@@ -68,11 +82,11 @@
         @apply hidden bg-graphite text-sm lg:block;
     }
     .zp-service a {
-        @apply text-slate-200 hover:text-white;
+        @apply text-white/85 hover:text-white;
     }
 
     .zp-header {
-        @apply sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/85;
+        @apply sticky top-0 z-40 border-b border-line bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/85;
     }
     .zp-header__bar {
         @apply flex h-14 items-center gap-2 md:h-[4.5rem] md:gap-4;
@@ -87,19 +101,23 @@
         @apply hidden flex-1 items-center justify-center gap-0.5 lg:flex;
     }
     .zp-nav a {
-        @apply rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap text-slate-700 transition hover:bg-brand-50 hover:text-brand-800;
+        @apply rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap text-ink transition hover:bg-brand-50 hover:text-brand-800;
     }
     .zp-header__actions {
         @apply ml-auto flex items-center gap-1.5 sm:gap-2;
     }
+    /* Цены, телефоны, характеристики: Sofia Sans Condensed (брендбук, раздел 5); ₽ берётся из Onest. */
+    .zp-price {
+        @apply font-cond leading-none font-extrabold tracking-normal tabular-nums;
+    }
     .zp-header__phone {
-        @apply inline-flex size-11 items-center justify-center gap-2 rounded-full bg-brand-50 font-semibold text-slate-900 transition hover:bg-brand-100 lg:size-auto lg:rounded-lg lg:bg-transparent lg:px-3 lg:py-2 lg:text-base lg:whitespace-nowrap;
+        @apply inline-flex size-11 items-center justify-center gap-2 rounded-full bg-brand-50 font-cond font-extrabold text-ink tabular-nums transition hover:bg-brand-100 lg:size-auto lg:rounded-lg lg:bg-transparent lg:px-3 lg:py-2 lg:text-xl lg:whitespace-nowrap;
     }
     .zp-burger {
-        @apply inline-flex size-11 items-center justify-center rounded-full text-slate-800 transition hover:bg-slate-100 lg:hidden;
+        @apply inline-flex size-11 items-center justify-center rounded-full text-ink transition hover:bg-surface-strong lg:hidden;
     }
     .zp-drawer {
-        @apply absolute inset-x-0 top-full max-h-[calc(100dvh-3.5rem)] overflow-y-auto border-b border-slate-200 bg-white shadow-xl lg:hidden;
+        @apply absolute inset-x-0 top-full max-h-[calc(100dvh-3.5rem)] overflow-y-auto border-b border-line bg-white shadow-xl lg:hidden;
     }
     .zp-drawer[hidden] {
         display: none;
@@ -108,7 +126,7 @@
         @apply flex flex-col py-2;
     }
     .zp-drawer__nav a {
-        @apply flex min-h-12 items-center justify-between border-b border-slate-100 text-base font-medium text-slate-900 last:border-b-0;
+        @apply flex min-h-12 items-center justify-between border-b border-line text-base font-medium text-ink last:border-b-0;
     }
     .zp-drawer__foot {
         @apply grid gap-3 pt-3 pb-5;
@@ -134,10 +152,10 @@
         @apply bg-brand-100 text-brand-900 hover:bg-brand-200 active:bg-brand-200;
     }
     .zp-btn--dark {
-        @apply bg-slate-900 text-white hover:bg-slate-800 active:bg-slate-950;
+        @apply bg-night text-white hover:bg-night/90 active:bg-ink;
     }
     .zp-btn--ghost {
-        @apply border-slate-300 bg-white text-slate-900 hover:border-brand-600 hover:text-brand-800 active:bg-brand-50;
+        @apply border-line-strong bg-white text-ink hover:border-brand-600 hover:text-brand-800 active:bg-brand-50;
     }
     .zp-btn--light {
         @apply bg-white text-brand-900 hover:bg-brand-50 active:bg-brand-100;
@@ -154,7 +172,7 @@
         @apply absolute size-5 animate-spin rounded-full border-2 border-white/40 border-t-white;
     }
     .zp-iconbtn {
-        @apply inline-flex size-11 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700 transition-colors hover:bg-brand-100 hover:text-brand-900 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600 active:bg-brand-200;
+        @apply inline-flex size-11 shrink-0 items-center justify-center rounded-lg bg-surface-strong text-ink transition-colors hover:bg-brand-100 hover:text-brand-900 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600 active:bg-brand-200;
     }
     .zp-iconbtn[data-copied='true'] {
         @apply bg-brand-700 text-white;
@@ -171,11 +189,11 @@
         @apply size-5;
     }
     .zp-chip {
-        @apply inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-700;
+        @apply inline-flex items-center gap-2 rounded-full bg-surface-strong px-3 py-1.5 text-sm font-semibold text-ink;
     }
     .zp-chip::before {
         content: '';
-        @apply size-2.5 rounded-full bg-slate-400;
+        @apply size-2.5 rounded-full bg-graphite/60;
     }
     .zp-chip[data-state='open'] {
         @apply bg-brand-100 text-brand-900;
@@ -187,25 +205,25 @@
         @apply bg-amber-500;
     }
     .zp-office {
-        @apply flex flex-col rounded-3xl bg-slate-50 p-5 sm:p-7;
+        @apply flex flex-col rounded-3xl bg-surface p-5 sm:p-7;
     }
     .zp-row {
         @apply flex items-start gap-3.5 py-3;
     }
     .zp-row + .zp-row {
-        @apply border-t border-slate-200/80;
+        @apply border-t border-line/80;
     }
     .zp-row dt {
-        @apply text-sm text-slate-500;
+        @apply text-sm text-graphite;
     }
     .zp-row dd {
-        @apply text-base font-semibold text-slate-950;
+        @apply text-base font-semibold text-ink;
     }
     .zp-hours {
         @apply grid gap-1 text-base;
     }
     .zp-hours > div {
-        @apply flex items-center justify-between gap-4 rounded-lg px-3 py-1.5 text-slate-600;
+        @apply flex items-center justify-between gap-4 rounded-lg px-3 py-1.5 text-graphite;
     }
     .zp-hours > div[data-today='true'] {
         @apply bg-brand-100 font-semibold text-brand-900;
@@ -221,12 +239,12 @@
         @apply absolute inset-0 h-full w-full border-0;
     }
     .zp-reqs {
-        @apply divide-y divide-slate-200/80 rounded-3xl bg-slate-50 px-5 sm:px-7;
+        @apply divide-y divide-line/80 rounded-3xl bg-surface px-5 sm:px-7;
     }
 
     /* ---------- Мобильная панель связи ---------- */
     .zp-callbar {
-        @apply fixed inset-x-0 bottom-0 z-40 grid grid-cols-2 gap-2 border-t border-slate-200 bg-white/95 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur transition-transform duration-200 md:hidden;
+        @apply fixed inset-x-0 bottom-0 z-40 grid grid-cols-2 gap-2 border-t border-line bg-white/95 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur transition-transform duration-200 md:hidden;
     }
     .zp-callbar[data-hidden='true'] {
         @apply translate-y-full;
@@ -237,22 +255,22 @@
         @apply py-10 md:py-16;
     }
     .zp-section--alt {
-        @apply bg-slate-50;
+        @apply bg-surface;
     }
     .zp-section--dark {
-        @apply bg-slate-900 text-white;
+        @apply bg-night text-white;
     }
     .zp-eyebrow {
         @apply mb-2 text-xs font-semibold tracking-wider text-brand-700 uppercase;
     }
     .zp-h2 {
-        @apply text-2xl leading-tight font-bold tracking-tight text-balance text-slate-950 md:text-3xl;
+        @apply text-2xl leading-tight font-bold tracking-tight text-balance text-ink md:text-3xl;
     }
     .zp-lead {
-        @apply mt-3 max-w-2xl text-base leading-7 text-slate-600 md:text-lg;
+        @apply mt-3 max-w-2xl text-base leading-7 text-graphite md:text-lg;
     }
     .zp-card {
-        @apply rounded-2xl bg-white p-4 ring-1 ring-slate-200 md:p-5;
+        @apply rounded-2xl bg-white p-4 ring-1 ring-line md:p-5;
     }
     .zp-checklist {
         @apply grid gap-2.5;
@@ -272,12 +290,12 @@
         @apply absolute inset-0 -z-10 h-full w-full object-cover;
     }
     .zp-hero__shade {
-        @apply absolute inset-0 -z-10 bg-linear-to-t from-slate-950/90 via-slate-950/65 to-slate-950/35 md:bg-linear-to-r md:from-slate-950/85 md:via-slate-950/55 md:to-transparent;
+        @apply absolute inset-0 -z-10 bg-linear-to-t from-night/90 via-night/65 to-night/35 md:bg-linear-to-r md:from-night/85 md:via-night/55 md:to-transparent;
     }
 
     /* ---------- Подвал ---------- */
     .zp-footer {
-        @apply mt-0 bg-slate-900 text-slate-200;
+        @apply mt-0 bg-night text-white/85;
     }
     .zp-footer__grid {
         @apply grid gap-8 py-10 md:grid-cols-3 md:py-14;
@@ -286,13 +304,13 @@
         @apply h-8 w-auto;
     }
     .zp-footer__phone {
-        @apply block text-xl font-bold text-white hover:text-brand-200;
+        @apply block font-cond text-2xl font-extrabold text-white tabular-nums hover:text-brand-200;
     }
     .zp-footer__link {
-        @apply inline-flex min-h-8 items-center gap-2 text-slate-300 hover:text-white;
+        @apply inline-flex min-h-8 items-center gap-2 text-white/75 hover:text-white;
     }
     .zp-footer__copy {
-        @apply border-t border-white/10 py-5 text-xs text-slate-400;
+        @apply border-t border-white/10 py-5 text-xs text-white/60;
     }
     .zp-social {
         @apply inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-brand-600;
@@ -300,10 +318,10 @@
 
     /* ---------- Форма заявки ---------- */
     .zp-field {
-        @apply grid gap-1.5 text-sm font-medium text-slate-700;
+        @apply grid gap-1.5 text-sm font-medium text-ink;
     }
     .zp-input {
-        @apply min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 transition placeholder:text-slate-400 focus:border-brand-600 focus:ring-2 focus:ring-brand-600/25 focus:outline-none;
+        @apply min-h-12 w-full rounded-xl border border-line-strong bg-white px-4 py-3 text-base text-ink transition placeholder:text-graphite/70 focus:border-brand-600 focus:ring-2 focus:ring-brand-600/25 focus:outline-none;
     }
     .zp-input[aria-invalid='true'] {
         @apply border-red-500 ring-2 ring-red-500/20;
@@ -311,16 +329,16 @@
 
     /* ---------- Таблица цен: на телефоне превращается в карточки ---------- */
     .zp-ptable {
-        @apply w-full border-collapse text-sm;
+        @apply w-full border-collapse text-base tabular-nums;
     }
     .zp-ptable th {
-        @apply bg-slate-100 px-4 py-3 text-left font-semibold text-slate-700;
+        @apply bg-surface-strong px-4 py-3 text-left font-semibold text-ink;
     }
     .zp-ptable td {
-        @apply px-4 py-3 text-slate-700;
+        @apply px-4 py-3 text-ink;
     }
     .zp-ptable tbody tr {
-        @apply border-b border-slate-100;
+        @apply border-b border-line;
     }
     @media (max-width: 47.99rem) {
         .zp-ptable thead {
@@ -334,17 +352,17 @@
             width: 100%;
         }
         .zp-ptable tbody tr {
-            @apply mb-3 rounded-2xl bg-white p-4 ring-1 ring-slate-200;
+            @apply mb-3 rounded-2xl bg-white p-4 ring-1 ring-line;
         }
         .zp-ptable td {
             @apply flex items-baseline justify-between gap-4 px-0 py-1.5;
         }
         .zp-ptable td::before {
             content: attr(data-label);
-            @apply text-slate-500;
+            @apply text-graphite;
         }
         .zp-ptable td:first-child {
-            @apply block pb-2 text-base font-semibold text-slate-950;
+            @apply block pb-2 text-base font-semibold text-ink;
         }
         .zp-ptable td:first-child::before {
             content: none;
@@ -361,7 +379,7 @@
 
     /* ---------- Видео: лёгкая заглушка вместо тяжёлого iframe ---------- */
     .zp-video {
-        @apply relative block aspect-video w-full overflow-hidden rounded-2xl bg-slate-900 text-white;
+        @apply relative block aspect-video w-full overflow-hidden rounded-2xl bg-night text-white;
     }
     .zp-video iframe,
     .zp-video video {
@@ -372,13 +390,13 @@
 @layer components {
     /* ---------- Прайс-лист с выбором ---------- */
     .zp-seg {
-        @apply inline-flex max-w-full rounded-2xl bg-slate-100 p-1.5;
+        @apply inline-flex max-w-full rounded-2xl bg-surface-strong p-1.5;
     }
     .zp-seg__item {
-        @apply min-h-11 flex-1 rounded-xl px-5 text-base font-semibold whitespace-nowrap text-slate-600 transition-colors hover:text-slate-950 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
+        @apply min-h-11 flex-1 rounded-xl px-5 text-base font-semibold whitespace-nowrap text-graphite transition-colors hover:text-ink focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
     }
     .zp-seg__item[aria-selected='true'] {
-        @apply bg-white text-slate-950;
+        @apply bg-white text-ink;
     }
     .zp-pills {
         @apply flex flex-wrap gap-2;
@@ -387,7 +405,7 @@
         @apply relative cursor-pointer;
     }
     .zp-pill span {
-        @apply inline-flex min-h-11 min-w-14 items-center justify-center rounded-xl bg-slate-100 px-4 text-base font-semibold text-slate-700 transition-colors select-none hover:bg-brand-100 hover:text-brand-900;
+        @apply inline-flex min-h-11 min-w-14 items-center justify-center rounded-xl bg-surface-strong px-4 text-base font-semibold text-ink transition-colors select-none hover:bg-brand-100 hover:text-brand-900;
     }
     .zp-pill input:checked + span {
         @apply bg-brand-700 text-white;
@@ -396,7 +414,7 @@
         @apply outline-3 outline-offset-2 outline-brand-600;
     }
     .zp-option {
-        @apply rounded-2xl bg-slate-50 p-4 sm:p-5;
+        @apply rounded-2xl bg-surface p-4 sm:p-5;
     }
     .zp-option--compact {
         @apply p-4;
@@ -405,7 +423,7 @@
         display: none;
     }
     .zp-fulltable > summary {
-        @apply inline-flex min-h-12 cursor-pointer list-none items-center gap-2 rounded-xl bg-slate-100 px-5 font-semibold text-slate-800 transition-colors select-none hover:bg-brand-100 hover:text-brand-900 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600 [&::-webkit-details-marker]:hidden;
+        @apply inline-flex min-h-12 cursor-pointer list-none items-center gap-2 rounded-xl bg-surface-strong px-5 font-semibold text-ink transition-colors select-none hover:bg-brand-100 hover:text-brand-900 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600 [&::-webkit-details-marker]:hidden;
     }
     .zp-fulltable > summary::before {
         content: '+';
@@ -415,20 +433,20 @@
         content: '–';
     }
     .zp-scroll {
-        @apply max-w-full overflow-x-auto rounded-2xl ring-1 ring-slate-200;
+        @apply max-w-full overflow-x-auto rounded-2xl ring-1 ring-line;
     }
     .zp-ptable-full {
         @apply w-full border-collapse text-sm;
     }
     .zp-ptable-full th,
     .zp-ptable-full td {
-        @apply border-b border-slate-100 px-3 py-2.5 text-left whitespace-nowrap;
+        @apply border-b border-line px-3 py-2.5 text-left whitespace-nowrap;
     }
     .zp-ptable-full thead th {
-        @apply sticky top-0 z-10 bg-slate-100 text-slate-700;
+        @apply sticky top-0 z-10 bg-surface-strong text-ink;
     }
     .zp-ptable-full tbody th {
-        @apply sticky left-0 bg-white font-semibold text-slate-950;
+        @apply sticky left-0 bg-white font-semibold text-ink;
     }
     .zp-ptable-full tbody tr:hover > * {
         @apply bg-brand-50;
@@ -436,7 +454,7 @@
 
     /* ---------- Быстрая навигация по странице ---------- */
     .zp-quicknav {
-        @apply sticky top-14 z-30 border-b border-slate-200 bg-white md:top-[4.5rem];
+        @apply sticky top-14 z-30 border-b border-line bg-white md:top-[4.5rem];
     }
     .zp-quicknav__list {
         @apply -mx-4 flex gap-2 overflow-x-auto px-4 py-2.5 sm:mx-0 sm:px-0;
@@ -446,6 +464,6 @@
         display: none;
     }
     .zp-quicknav__list a {
-        @apply inline-flex min-h-10 items-center rounded-full bg-slate-100 px-4 text-sm font-semibold whitespace-nowrap text-slate-700 transition-colors hover:bg-brand-100 hover:text-brand-900 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
+        @apply inline-flex min-h-10 items-center rounded-full bg-surface-strong px-4 text-sm font-semibold whitespace-nowrap text-ink transition-colors hover:bg-brand-100 hover:text-brand-900 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
     }
 }

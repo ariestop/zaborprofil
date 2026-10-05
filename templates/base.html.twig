@@ -124,7 +124,7 @@
                 <div class="zp-drawer" id="mobile-nav" data-nav-panel hidden>
                     <nav class="zp-container zp-drawer__nav" aria-label="Мобильная навигация">
                         {% for item in header_menu %}
-                            <a href="{{ item.url }}">{{ item.label }}<svg class="size-4 text-slate-400" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+                            <a href="{{ item.url }}">{{ item.label }}<svg class="size-4 text-graphite/70" aria-hidden="true"><use href="#i-arrow"/></svg></a>
                         {% endfor %}
                     </nav>
                     <div class="zp-container zp-drawer__foot">
@@ -132,7 +132,7 @@
                         <a class="zp-btn zp-btn--ghost w-full" href="{{ site.phone_href }}">
                             <svg class="size-5" aria-hidden="true"><use href="#i-phone"/></svg>{{ site.phone }}
                         </a>
-                        <p class="text-center text-sm text-slate-500">{{ site.city }} · {{ site.delivery }}</p>
+                        <p class="text-center text-sm text-graphite">{{ site.city }} · {{ site.delivery }}</p>
                     </div>
                 </div>
             </header>
@@ -150,7 +150,7 @@
                         <a class="inline-block" href="/" aria-label="{{ site.name }}">
                             <img class="zp-footer__logo" src="/img/logo-white.svg" width="230" height="34" alt="{{ site.name }}" loading="lazy" decoding="async">
                         </a>
-                        <p class="max-w-xs text-sm leading-6 text-slate-300">
+                        <p class="max-w-xs text-sm leading-6 text-white/75">
                             Производство и монтаж заборов под ключ. {{ site.delivery }}.
                         </p>
                         <div class="flex gap-3">
@@ -160,7 +160,7 @@
                     </div>
 
                     <address class="space-y-3 text-sm not-italic">
-                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Контакты</p>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-white/60">Контакты</p>
                         <a class="zp-footer__phone" href="{{ site.phone_href }}">{{ site.phone }}</a>
                         <a class="zp-footer__link" href="mailto:{{ site.email }}"><svg class="size-4" aria-hidden="true"><use href="#i-mail"/></svg>{{ site.email }}</a>
                         <a class="zp-footer__link" href="{{ site.map_url }}" rel="noopener" target="_blank"><svg class="size-4" aria-hidden="true"><use href="#i-pin"/></svg>{{ site.city }} — показать на карте</a>
@@ -168,7 +168,7 @@
 
                     {% if footer_menu %}
                         <nav aria-label="Навигация в подвале" class="space-y-3 text-sm">
-                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Разделы</p>
+                            <p class="text-xs font-semibold uppercase tracking-wider text-white/60">Разделы</p>
                             <ul class="space-y-2">
                                 {% for item in footer_menu %}
                                     <li><a class="zp-footer__link" href="{{ item.url }}">{{ item.label }}</a></li>

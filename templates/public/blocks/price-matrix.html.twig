@@ -48,11 +48,11 @@
                 {% endfor %}
                 <div class="mt-6" role="tabpanel" id="pm-{{ block.id }}-panel-{{ gi }}" {% if groups|length > 1 %}aria-labelledby="pm-{{ block.id }}-tab-{{ gi }}"{% endif %} data-pm-panel="{{ gi }}">
                     {% if (group.note ?? '') is not empty %}
-                        <p class="mb-4 max-w-3xl text-base leading-7 text-slate-600">{{ group.note }}</p>
+                        <p class="mb-4 max-w-3xl text-base leading-7 text-graphite">{{ group.note }}</p>
                     {% endif %}
 
                     <fieldset class="min-w-0">
-                        <legend class="mb-2 text-sm font-semibold text-slate-500">{{ group.rowsLabel ?? 'Профиль' }}</legend>
+                        <legend class="mb-2 text-sm font-semibold text-graphite">{{ group.rowsLabel ?? 'Профиль' }}</legend>
                         <div class="zp-pills">
                             {% for row in rows %}
                                 <label class="zp-pill">
@@ -65,7 +65,7 @@
 
                     {% if (group.filterLabel ?? '') is not empty and group_names|length > 1 %}
                         <fieldset class="mt-4 min-w-0">
-                            <legend class="mb-2 text-sm font-semibold text-slate-500">{{ group.filterLabel }}</legend>
+                            <legend class="mb-2 text-sm font-semibold text-graphite">{{ group.filterLabel }}</legend>
                             <div class="zp-pills">
                                 <label class="zp-pill">
                                     <input class="peer sr-only" type="radio" name="pm-{{ block.id }}-filter-{{ gi }}" value="" data-pm-filter checked>
@@ -81,19 +81,19 @@
                         </fieldset>
                     {% endif %}
 
-                    <p class="mt-5 text-sm text-slate-500" role="status" aria-live="polite" data-pm-count></p>
+                    <p class="mt-5 text-sm text-graphite" role="status" aria-live="polite" data-pm-count></p>
 
                     <ul class="{{ (group.compact ?? false) ? 'grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6' : 'grid gap-3 sm:grid-cols-2 lg:grid-cols-3' }} mt-3" data-pm-list {% if not (group.compact ?? false) %}data-pm-limit="{{ group.limit ?? 6 }}"{% endif %}>
                         {% for option in options %}
                             {% set price = (option.prices ?? {})[first_row] ?? null %}
-                            {% set tone = tones[option.tone ?? ''] ?? 'bg-slate-200 text-slate-800' %}
+                            {% set tone = tones[option.tone ?? ''] ?? 'bg-line text-ink' %}
                             <li class="zp-option {{ (group.compact ?? false) ? 'zp-option--compact' : '' }}" data-pm-option data-group="{{ option.group ?? '' }}" data-prices="{{ (option.prices ?? {})|json_encode(constant('JSON_UNESCAPED_UNICODE'))|e('html_attr') }}" {% if price is null %}hidden{% endif %}>
                                 {% if group.compact ?? false %}
-                                    <p class="text-sm font-semibold text-slate-600">{{ option.title }}</p>
-                                    <p class="mt-1 text-xl font-bold tracking-tight text-slate-950"><span data-pm-price>{{ _self.money(price) }}</span> <span class="text-sm font-semibold text-slate-500">{{ unit }}</span></p>
+                                    <p class="text-sm font-semibold text-graphite">{{ option.title }}</p>
+                                    <p class="zp-price mt-1 text-2xl text-ink"><span data-pm-price>{{ _self.money(price) }}</span> <span class="text-sm font-semibold text-graphite">{{ unit }}</span></p>
                                 {% else %}
                                     <div class="flex items-start justify-between gap-3">
-                                        <h3 class="text-lg leading-snug font-bold text-slate-950">{{ option.title }}</h3>
+                                        <h3 class="text-lg leading-snug font-bold text-ink">{{ option.title }}</h3>
                                         {% if (option.group ?? '') is not empty %}
                                             <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-bold {{ tone }}">{{ option.group }}</span>
                                         {% endif %}
@@ -103,13 +103,13 @@
                                             {% for spec in option.specs %}
                                                 {% set chip = spec.chip ?? '' %}
                                                 {% if chip != '-' and spec.value is not empty %}
-                                                    <li class="rounded-lg bg-white px-2.5 py-1 font-semibold text-slate-800">{{ chip is not empty ? chip : spec.label ~ ': ' ~ spec.value }}</li>
+                                                    <li class="rounded-lg bg-white px-2.5 py-1 font-semibold text-ink">{{ chip is not empty ? chip : spec.label ~ ': ' ~ spec.value }}</li>
                                                 {% endif %}
                                             {% endfor %}
                                         </ul>
                                     {% endif %}
-                                    <div class="mt-4 flex items-end justify-between gap-3 border-t border-slate-200 pt-4">
-                                        <p class="text-2xl leading-none font-bold tracking-tight text-brand-800"><span data-pm-price>{{ _self.money(price) }}</span> <span class="text-sm font-semibold text-slate-500">{{ unit }}</span></p>
+                                    <div class="mt-4 flex items-end justify-between gap-3 border-t border-line pt-4">
+                                        <p class="zp-price text-3xl text-brand-800"><span data-pm-price>{{ _self.money(price) }}</span> <span class="text-sm font-semibold text-graphite">{{ unit }}</span></p>
                                         <a class="zp-btn zp-btn--tonal zp-btn--sm" href="#lead-form" data-lead-plan="{{ option.title }}, {{ first_row }}" data-pm-order data-title="{{ option.title }}" data-details="{{ (option.specs ?? [])|filter(spec => (spec.chip ?? '') != '-' and (spec.value ?? '') is not empty)|map(spec => spec.value)|join(', ') }}">Заказать</a>
                                     </div>
                                 {% endif %}
@@ -119,7 +119,7 @@
                     <div class="mt-4 text-center" data-pm-more-wrap hidden>
                         <button type="button" class="zp-btn zp-btn--ghost" data-pm-more></button>
                     </div>
-                    <p class="mt-4 rounded-2xl bg-slate-50 p-5 text-base text-slate-600" data-pm-empty hidden>Для этого профиля нет вариантов в выбранном классе. Выберите другой профиль или класс — или позвоните, подберём аналог.</p>
+                    <p class="mt-4 rounded-2xl bg-surface p-5 text-base text-graphite" data-pm-empty hidden>Для этого профиля нет вариантов в выбранном классе. Выберите другой профиль или класс — или позвоните, подберём аналог.</p>
 
                     <details class="zp-fulltable mt-6">
                         <summary>Показать полную таблицу цен ({{ unit }})</summary>
@@ -135,14 +135,14 @@
                                 <tbody>
                                     {% for option in options %}
                                         <tr>
-                                            <th scope="row">{{ option.title }}{% if (option.group ?? '') is not empty %} <span class="text-slate-500">· {{ option.group }}</span>{% endif %}</th>
+                                            <th scope="row">{{ option.title }}{% if (option.group ?? '') is not empty %} <span class="text-graphite">· {{ option.group }}</span>{% endif %}</th>
                                             {% for label in specs_labels %}
                                                 {% set found = '' %}
                                                 {% for spec in option.specs ?? [] %}{% if spec.label == label %}{% set found = spec.value %}{% endif %}{% endfor %}
                                                 <td>{{ found }}</td>
                                             {% endfor %}
                                             {% for row in rows %}
-                                                <td class="text-right font-semibold tabular-nums">{{ _self.money((option.prices ?? {})[row] ?? null) }}</td>
+                                                <td class="text-right font-cond text-base font-semibold tabular-nums">{{ _self.money((option.prices ?? {})[row] ?? null) }}</td>
                                             {% endfor %}
                                         </tr>
                                     {% endfor %}

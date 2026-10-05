@@ -4,7 +4,7 @@
 {% set portrait = (block.settings.aspect ?? 'landscape') == 'portrait' %}
 {% set contain = (block.settings.fit ?? 'cover') == 'contain' %}
 {% set grid_class = portrait ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' %}
-{% set img_class = (portrait ? 'aspect-3/4' : 'aspect-4/3') ~ ' w-full ' ~ (contain ? 'object-contain bg-slate-50' : 'object-cover') ~ ' transition duration-300 group-hover:scale-105' %}
+{% set img_class = (portrait ? 'aspect-3/4' : 'aspect-4/3') ~ ' w-full ' ~ (contain ? 'object-contain bg-surface' : 'object-cover') ~ ' transition duration-300 group-hover:scale-105' %}
 {% if images|length > 0 %}
     <section class="zp-section" data-block-type="gallery" data-gallery>
         <div class="zp-container">
@@ -15,7 +15,7 @@
                 {% for item in images %}
                     {% set src = item.src ?? item.image %}
                     <figure {% if loop.index > visible %}data-gallery-extra{% endif %}>
-                        <a class="group block overflow-hidden rounded-xl bg-slate-100" href="{{ src }}" data-lightbox aria-label="Открыть фото {{ loop.index }} из {{ images|length }}">
+                        <a class="group block overflow-hidden rounded-xl bg-surface-strong" href="{{ src }}" data-lightbox aria-label="Открыть фото {{ loop.index }} из {{ images|length }}">
                             {{ responsive_image(src, {
                                 alt: item.alt ?? null,
                                 fallback_alt: item.caption ?? block.content.title ?? block.name,
@@ -25,7 +25,7 @@
                             }) }}
                         </a>
                         {% if (item.caption ?? '') is not empty %}
-                            <figcaption class="mt-1.5 text-sm text-slate-500">{{ item.caption }}</figcaption>
+                            <figcaption class="mt-1.5 text-sm text-graphite">{{ item.caption }}</figcaption>
                         {% endif %}
                     </figure>
                 {% endfor %}

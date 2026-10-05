@@ -28,7 +28,7 @@
 
     <section class="not-prose relative {{ customClass }}" data-block-type="slider">
         <div
-            class="swiper js-site-slider relative w-full overflow-hidden bg-slate-950"
+            class="swiper js-site-slider relative w-full overflow-hidden bg-night"
             data-slider-settings='{{ sliderSettings|json_encode(constant('JSON_UNESCAPED_UNICODE'))|e('html_attr') }}'
         >
             <div class="swiper-wrapper">
@@ -43,7 +43,7 @@
                                     priority: above_fold|default(false) and loop.first
                                 }) }}
                             {% else %}
-                                <div class="absolute inset-0 bg-linear-to-br from-slate-900 to-slate-700"></div>
+                                <div class="absolute inset-0 bg-linear-to-br from-night to-graphite"></div>
                             {% endif %}
 
                             <div class="absolute inset-0 bg-linear-to-t from-black/75 via-black/30 to-black/10"></div>
@@ -78,14 +78,14 @@
             <div class="pointer-events-none absolute inset-x-0 top-1/2 z-20 hidden -translate-y-1/2 justify-between px-3 md:flex lg:px-6">
                 <button
                     type="button"
-                    class="js-site-slider-prev pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-800 shadow-sm transition hover:bg-white"
+                    class="js-site-slider-prev pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-ink shadow-sm transition hover:bg-white"
                     aria-label="{{ sliderSettings.a11yLabels.prevSlide }}"
                 >
                     <span aria-hidden="true">←</span>
                 </button>
                 <button
                     type="button"
-                    class="js-site-slider-next pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-800 shadow-sm transition hover:bg-white"
+                    class="js-site-slider-next pointer-events-auto inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-ink shadow-sm transition hover:bg-white"
                     aria-label="{{ sliderSettings.a11yLabels.nextSlide }}"
                 >
                     <span aria-hidden="true">→</span>

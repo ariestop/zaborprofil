@@ -22,6 +22,7 @@
     --color-ink: #23272d; /* основной текст */
     --color-graphite: #575c63; /* графит бренда: подписи, вторичный текст */
     --color-surface: #f3f5f2; /* фон секций и карточек */
+    --color-surface-strong: #e9ece8; /* чипы и кнопки на фоне surface */
     --color-line: #dce0db; /* рамки, разделители */
     --color-line-strong: #c9cec8; /* рамки полей и вторичных кнопок */
     --color-night: #2a2f35; /* подвал, тёмные плашки */

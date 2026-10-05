@@ -3,12 +3,12 @@
 <section class="bg-brand-50" data-block-type="hero.minimal">
     <div class="zp-container py-9 sm:py-12 md:py-14">
         {% if page_h1 is not empty %}
-            <h1 class="text-4xl leading-tight font-bold tracking-tight text-balance text-slate-950 md:text-5xl">{{ heading }}</h1>
+            <h1 class="text-4xl leading-tight font-bold tracking-tight text-balance text-ink md:text-5xl">{{ heading }}</h1>
         {% else %}
-            <h2 class="text-4xl leading-tight font-bold tracking-tight text-balance text-slate-950 md:text-5xl">{{ heading }}</h2>
+            <h2 class="text-4xl leading-tight font-bold tracking-tight text-balance text-ink md:text-5xl">{{ heading }}</h2>
         {% endif %}
         {% if (block.content.subtitle ?? '') is not empty %}
-            <p class="mt-3 max-w-2xl text-lg leading-8 text-slate-700">{{ block.content.subtitle }}</p>
+            <p class="mt-3 max-w-2xl text-lg leading-8 text-ink">{{ block.content.subtitle }}</p>
         {% endif %}
         <div class="mt-7 grid gap-3 sm:flex sm:flex-wrap">
             <a class="zp-btn zp-btn--primary zp-btn--lg" href="{{ site.phone_href }}">
