@@ -61,6 +61,7 @@ final class PublicBlockTemplatesTest extends KernelTestCase
         yield 'video (embed)' => ['video', ['url' => 'https://rutube.ru/play/embed/abc/', 'title' => 'Видео'], [], 'data-video-embed="https://rutube.ru/play/embed/abc/"'];
         yield 'video (file)' => ['video', ['url' => '/uploads/a.mp4'], [], 'preload="none"'];
         yield 'contacts-map' => ['contacts-map', ['title' => 'Контакты'], [], 'tel:+78452988808'];
+        yield 'hero.minimal' => ['hero.minimal', ['title' => 'Контакты', 'subtitle' => 'Позвоните нам'], [], 'data-block-type="hero.minimal"'];
         yield 'image' => ['image', ['src' => '/uploads/a.jpg', 'alt' => 'Картинка'], [], 'alt="Картинка"'];
     }
 
@@ -95,6 +96,55 @@ final class PublicBlockTemplatesTest extends KernelTestCase
         self::assertStringContainsString('<h2', $without);
         self::assertTrue($renderer->consumesPageHeading('hero.classic'));
         self::assertFalse($renderer->consumesPageHeading('rich-text'));
+    }
+
+    public function testContactsBlockRendersOfficesHoursAndRequisitesWithCopyButtons(): void
+    {
+        $html = $this->render('contacts-map', [
+            'offices' => [[
+                'city' => 'Саратов',
+                'role' => 'Головной офис',
+                'address' => 'ул. Вешняя, 44/2',
+                'phone' => '8 (8452) 98-88-08',
+                'phoneHref' => 'tel:+78452988808',
+                'email' => 'info@zaborprofil.ru',
+                'timezone' => 'Europe/Saratov',
+                'hours' => [
+                    ['label' => 'Пн – Пт', 'days' => [1, 2, 3, 4, 5], 'open' => '09:00', 'close' => '18:00'],
+                    ['label' => 'Вс', 'days' => [0], 'note' => 'выходной'],
+                ],
+            ]],
+            'map' => ['url' => 'https://2gis.ru/saratov/firm/1', 'embedUrl' => 'https://widgets.2gis.com/widget?type=firmsonmap'],
+            'requisites' => ['legalName' => 'ООО «Забор Профиль»', 'items' => [['label' => 'ИНН', 'value' => '6452128198'], ['label' => 'Пусто', 'value' => '']]],
+        ]);
+
+        self::assertStringContainsString('data-timezone="Europe/Saratov"', $html);
+        self::assertStringContainsString('data-days="1,2,3,4,5" data-open="09:00" data-close="18:00"', $html);
+        self::assertStringContainsString('выходной', $html);
+        self::assertStringContainsString('data-copy="ул. Вешняя, 44/2"', $html);
+        self::assertStringContainsString('href="tel:+78452988808"', $html);
+        self::assertStringContainsString('data-map-embed="https://widgets.2gis.com/widget?type=firmsonmap"', $html);
+        self::assertStringContainsString('data-copy="6452128198"', $html);
+        self::assertSame(1, substr_count($html, 'aria-label="Скопировать: '), 'Реквизит без значения не выводится.');
+    }
+
+    public function testLegacyContactsBlockStillShowsSiteContacts(): void
+    {
+        $html = $this->render('contacts', ['items' => [['label' => 'Склад', 'value' => 'Саратов']]]);
+
+        self::assertStringContainsString('tel:+78452988808', $html);
+        self::assertStringContainsString('Склад', $html);
+    }
+
+    public function testMinimalHeroTakesPageHeading(): void
+    {
+        $renderer = self::getContainer()->get(TwigBlockRenderer::class);
+        self::assertInstanceOf(TwigBlockRenderer::class, $renderer);
+        $html = $renderer->render(new PageBlockView('b1', 'hero.minimal', 'Шапка', 0, ['title' => 'Контакты'], []), true, 'Контакты — Забор Профиль');
+
+        self::assertStringContainsString('<h1', $html);
+        self::assertStringContainsString('Контакты — Забор Профиль', $html);
+        self::assertTrue($renderer->consumesPageHeading('hero.minimal'));
     }
 
     public function testSiteContactsAreAvailableToEveryTemplate(): void

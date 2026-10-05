@@ -1,11 +1,16 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import {
     initCallbar,
+    initCopyButtons,
     initGalleries,
     initLeadPlans,
     initMobileNav,
+    initOfficeStatus,
     initVideoEmbeds,
     isAllowedEmbedUrl,
+    isAllowedMapUrl,
+    officeStatus,
+    type WorkingHoursRow,
 } from './ui'
 
 function mount(html: string): HTMLElement {
@@ -133,5 +138,100 @@ describe('initCallbar', () => {
         expect(() =>
             initCallbar(mount('<div data-callbar></div><section class="zp-hero"></section>')),
         ).not.toThrow()
+    })
+})
+
+describe('officeStatus', () => {
+    const week: WorkingHoursRow[] = [
+        { days: [1, 2, 3, 4, 5], open: '09:00', close: '18:00' },
+        { days: [6], open: '10:00', close: '14:00' },
+        { days: [0], open: '', close: '' },
+    ]
+    // 2026-10-05 — понедельник. Саратов (UTC+4): 09:00 по Москве+1 = 05:00 UTC.
+    const at = (iso: string): Date => new Date(iso)
+
+    it('показывает «открыто» в рабочее время по местному времени офиса', () => {
+        const status = officeStatus(week, at('2026-10-05T07:00:00Z'), 'Europe/Saratov')
+
+        expect(status).toMatchObject({
+            state: 'open',
+            text: 'Сейчас открыто · до 18:00',
+            weekday: 1,
+        })
+    })
+
+    it('учитывает часовой пояс: в Оренбурге (UTC+5) то же время UTC уже вечер', () => {
+        expect(officeStatus(week, at('2026-10-05T13:30:00Z'), 'Asia/Yekaterinburg')?.state).toBe(
+            'closed',
+        )
+        expect(officeStatus(week, at('2026-10-05T13:30:00Z'), 'Europe/Saratov')?.state).toBe('open')
+    })
+
+    it('до открытия обещает сегодня, после закрытия — завтра', () => {
+        expect(officeStatus(week, at('2026-10-05T03:00:00Z'), 'Europe/Saratov')?.text).toBe(
+            'Закрыто · откроемся сегодня в 09:00',
+        )
+        expect(officeStatus(week, at('2026-10-05T15:00:00Z'), 'Europe/Saratov')?.text).toBe(
+            'Закрыто · откроемся завтра в 09:00',
+        )
+    })
+
+    it('в субботу после закрытия переносит на понедельник, в воскресенье тоже', () => {
+        expect(officeStatus(week, at('2026-10-10T11:00:00Z'), 'Europe/Saratov')?.text).toBe(
+            'Закрыто · откроемся в понедельник в 09:00',
+        )
+        expect(officeStatus(week, at('2026-10-11T08:00:00Z'), 'Europe/Saratov')?.text).toBe(
+            'Закрыто · откроемся завтра в 09:00',
+        )
+    })
+
+    it('без расписания статуса нет', () => {
+        expect(officeStatus([], new Date(), 'Europe/Saratov')).toBeNull()
+    })
+})
+
+describe('initOfficeStatus и копирование', () => {
+    it('подсвечивает сегодняшний день и показывает чип', () => {
+        const root = mount(`
+      <article data-office data-timezone="Europe/Saratov">
+        <span data-office-status hidden></span>
+        <div data-days="1,2,3,4,5" data-open="09:00" data-close="18:00"></div>
+        <div data-days="0" data-open="" data-close=""></div>
+      </article>`)
+        initOfficeStatus(root, new Date('2026-10-05T07:00:00Z'))
+
+        const rows = root.querySelectorAll<HTMLElement>('[data-days]')
+        expect(rows[0].dataset.today).toBe('true')
+        expect(rows[1].dataset.today).toBe('false')
+        const chip = root.querySelector<HTMLElement>('[data-office-status]')!
+        expect(chip.hidden).toBe(false)
+        expect(chip.dataset.state).toBe('open')
+    })
+
+    it('копирует значение и временно помечает кнопку', async () => {
+        const written: string[] = []
+        Object.defineProperty(navigator, 'clipboard', {
+            value: { writeText: async (text: string) => written.push(text) },
+            configurable: true,
+        })
+        const root = mount('<button data-copy="6452128198" aria-label="Скопировать ИНН"></button>')
+        initCopyButtons(root)
+        const button = root.querySelector<HTMLButtonElement>('button')!
+
+        button.click()
+        await Promise.resolve()
+        await Promise.resolve()
+
+        expect(written).toEqual(['6452128198'])
+        expect(button.dataset.copied).toBe('true')
+    })
+})
+
+describe('isAllowedMapUrl', () => {
+    it('разрешает только https-виджеты 2ГИС', () => {
+        expect(isAllowedMapUrl('https://widgets.2gis.com/widget?type=firmsonmap')).toBe(true)
+        expect(isAllowedMapUrl('https://2gis.ru/saratov')).toBe(true)
+        expect(isAllowedMapUrl('http://widgets.2gis.com/widget')).toBe(false)
+        expect(isAllowedMapUrl('https://evil.example/2gis.com')).toBe(false)
     })
 })
