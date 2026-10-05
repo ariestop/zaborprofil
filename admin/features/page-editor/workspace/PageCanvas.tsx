@@ -73,7 +73,8 @@ export function PageCanvas({
         </div>
         <div className="overflow-hidden rounded-b-xl border border-[#D0D5DD] bg-white text-[#101828] dark:border-slate-700">
           <div className="px-8 pb-2 pt-8">
-            <h1 className="text-3xl font-bold tracking-tight text-slate-950">{pageH1}</h1>
+            {/* В админке заголовок страницы — в шапке редактора; здесь только его вид на сайте, без второго h1. */}
+            <p className="text-3xl font-bold tracking-tight text-slate-950">{pageH1}</p>
           </div>
           {blocks.map((block, index) => {
             const selected = block.id === selectedBlockId
