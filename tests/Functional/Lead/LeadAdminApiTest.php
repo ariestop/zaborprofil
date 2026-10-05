@@ -117,7 +117,14 @@ final class LeadAdminApiTest extends AdminApiTestCase
         $dashboard = $this->json($client);
         self::assertIsArray($dashboard['daily']);
         self::assertCount(14, $dashboard['daily']);
-        self::assertSame(0, array_sum(array_column($this->rows($dashboard['daily']), 'count')) - $dashboard['createdLast14Days']);
+        $perDay = 0;
+        foreach ($dashboard['daily'] as $day) {
+            self::assertIsArray($day);
+            self::assertIsInt($day['count']);
+            $perDay += $day['count'];
+        }
+        self::assertSame($perDay, $dashboard['createdLast14Days']);
+        self::assertGreaterThan(0, $perDay);
         self::assertIsInt($dashboard['doneLastWeek']);
         self::assertIsString($dashboard['oldestNewAt']);
     }
