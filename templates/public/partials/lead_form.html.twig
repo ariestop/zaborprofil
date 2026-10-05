@@ -1,7 +1,7 @@
 {# Форма заявки. Скрытые поля formLoadedAt/pageUrl заполняет браузер (страница отдаётся из HTTP-кэша). #}
 <section class="rounded-3xl bg-white p-5 sm:p-8" id="lead-form" data-lead-form-section>
     <h2 class="zp-h2">{{ (lead_form_title ?? null) is not empty ? lead_form_title : 'Рассчитаем стоимость забора' }}</h2>
-    <p class="mt-2 text-sm leading-6 text-slate-600 sm:text-base">
+    <p class="mt-2 text-sm leading-6 text-graphite sm:text-base">
         Оставьте имя и телефон — менеджер перезвонит, уточнит размеры и подготовит расчёт.
         Или позвоните сами: <a class="font-semibold whitespace-nowrap text-brand-700 hover:underline" href="{{ site.phone_href }}">{{ site.phone }}</a>.
     </p>
@@ -30,18 +30,18 @@
         </div>
 
         <label class="zp-field">
-            Что нужно сделать <span class="font-normal text-slate-500">(необязательно)</span>
+            Что нужно сделать <span class="font-normal text-graphite">(необязательно)</span>
             <textarea class="zp-input" name="message" rows="3" placeholder="Например: забор из жалюзи, 40 метров, нужны ворота и калитка"></textarea>
         </label>
 
-        <label class="flex items-start gap-3 text-sm leading-5 text-slate-600">
-            <input class="mt-0.5 size-5 shrink-0 rounded-sm border-slate-300 accent-brand-700" type="checkbox" name="consent" required>
+        <label class="flex items-start gap-3 text-sm leading-5 text-graphite">
+            <input class="mt-0.5 size-5 shrink-0 rounded-sm border-line-strong accent-brand-700" type="checkbox" name="consent" required>
             <span>Согласен на <a class="text-brand-700 underline" href="/privacy/" target="_blank" rel="noopener">обработку персональных данных</a>.</span>
         </label>
 
         <input type="hidden" name="consentText" value="Пользователь согласился на обработку персональных данных.">
 
         <button class="zp-btn zp-btn--primary w-full sm:w-auto sm:justify-self-start" type="submit">Отправить заявку</button>
-        <p class="js-lead-form-status min-h-5 text-sm text-slate-600" role="status" aria-live="polite"></p>
+        <p class="js-lead-form-status min-h-5 text-sm text-graphite" role="status" aria-live="polite"></p>
     </form>
 </section>

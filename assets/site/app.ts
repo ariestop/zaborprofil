@@ -48,7 +48,7 @@ function initLeadForm(form: HTMLFormElement): void {
         if (status !== null) {
             status.textContent = text
             status.classList.toggle('text-red-600', failed)
-            status.classList.toggle('text-slate-600', !failed)
+            status.classList.toggle('text-graphite', !failed)
         }
     }
 

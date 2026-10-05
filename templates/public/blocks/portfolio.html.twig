@@ -8,7 +8,7 @@
                 {% for item in works %}
                     {% set href = item.href ?? '' %}
                     {% set linked = href is not empty and href != '#' %}
-                    <article class="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs transition hover:border-brand-500 hover:shadow-md">
+                    <article class="group relative overflow-hidden rounded-2xl border border-line bg-white shadow-xs transition hover:border-brand-500 hover:shadow-md">
                         {% if (item.image ?? item.src ?? '') is not empty %}
                             {{ responsive_image(item.image ?? item.src, {
                                 alt: item.alt ?? null,
@@ -18,7 +18,7 @@
                             }) }}
                         {% endif %}
                         {% if (item.title ?? '') is not empty %}
-                            <h3 class="flex items-center justify-between gap-2 p-3 text-sm leading-snug font-semibold text-slate-950 sm:p-4 sm:text-base">
+                            <h3 class="flex items-center justify-between gap-2 p-3 text-sm leading-snug font-semibold text-ink sm:p-4 sm:text-base">
                                 {% if linked %}
                                     <a class="after:absolute after:inset-0 hover:text-brand-800" href="{{ href }}">{{ item.title }}</a>
                                     <svg class="size-4 shrink-0 text-brand-600" aria-hidden="true"><use href="#i-arrow"/></svg>
