@@ -59,7 +59,7 @@ export function CreateLeadDialog({ open, onOpenChange, onCreated }: CreateLeadDi
           <Input required maxLength={40} type="tel" autoComplete="off" value={phone} onChange={(event) => setPhone(event.target.value)} />
         </label>
         <label className="grid gap-1 text-sm font-medium">
-          Email <span className="font-normal text-slate-500">(необязательно)</span>
+          Email <span className="font-normal text-graphite dark:text-slate-500">(необязательно)</span>
           <Input type="email" maxLength={180} autoComplete="off" value={email} onChange={(event) => setEmail(event.target.value)} />
         </label>
         <label className="grid gap-1 text-sm font-medium">

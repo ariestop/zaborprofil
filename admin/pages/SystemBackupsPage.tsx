@@ -26,14 +26,14 @@ export default function SystemBackupsPage() {
         {backupsQuery.data.latestBackup === null ? (
           <div className="text-sm">
             <p className="font-semibold text-red-700 dark:text-red-400">Резервных копий нет</p>
-            <p className="mt-1 text-slate-500 dark:text-slate-400">
+            <p className="mt-1 text-graphite dark:text-slate-400">
               В каталоге {backupsQuery.data.backupDirectory} нет файлов. При сбое восстановить сайт будет не из чего — настройте регулярное резервное копирование.
             </p>
           </div>
         ) : (
           <div className="text-sm">
             <p>{backupsQuery.data.latestBackup.name}</p>
-            <p className="text-slate-500 dark:text-slate-400">
+            <p className="text-graphite dark:text-slate-400">
               {formatBytes(backupsQuery.data.latestBackup.size)} · {formatDateTime(backupsQuery.data.latestBackup.modifiedAt)}
             </p>
           </div>

@@ -35,10 +35,10 @@ export function MediaPicker({
 
   return (
     <div className={className} data-testid="media-picker">
-      <label htmlFor={inputId} className="block text-xs font-medium text-slate-700 dark:text-slate-200">{label}</label>
+      <label htmlFor={inputId} className="block text-xs font-medium text-ink dark:text-slate-200">{label}</label>
       <div className="mt-1 flex items-start gap-3">
         {showPreview ? (
-          <img src={value} alt="" className="h-16 w-24 shrink-0 rounded-md border border-slate-200 bg-slate-100 object-cover dark:border-slate-700 dark:bg-slate-800" />
+          <img src={value} alt="" className="h-16 w-24 shrink-0 rounded-md border border-line bg-surface-strong object-cover dark:border-slate-700 dark:bg-slate-800" />
         ) : null}
         <div className="min-w-0 flex-1 space-y-2">
           <Input
@@ -54,7 +54,7 @@ export function MediaPicker({
           </div>
         </div>
       </div>
-      {description !== undefined ? <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{description}</p> : null}
+      {description !== undefined ? <p className="mt-1 text-xs text-graphite dark:text-slate-400">{description}</p> : null}
       <MediaPickerDialog
         open={open}
         onOpenChange={setOpen}

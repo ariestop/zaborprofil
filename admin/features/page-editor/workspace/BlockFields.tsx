@@ -202,7 +202,7 @@ function LinkField({
                 onChange={(event) =>
                     onChange(event.target.value === 'lead' ? LEAD_FORM_ANCHOR : '')
                 }
-                className="h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                className="h-10 w-full rounded-lg border border-line-strong bg-white px-3 text-sm text-ink dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
             >
                 <option value="lead">К форме заявки на этой странице</option>
                 <option value="custom">На другую страницу или адрес</option>
@@ -264,7 +264,7 @@ function ImageField({
 }
 
 const iconButton =
-    'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-graphite transition hover:bg-slate-100 disabled:opacity-30 dark:text-slate-400 dark:hover:bg-slate-800'
+    'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-graphite transition hover:bg-surface-strong disabled:opacity-30 dark:text-slate-400 dark:hover:bg-slate-800'
 const addButton =
     'inline-flex h-9 items-center justify-center gap-1.5 rounded-[9px] bg-brand-50 px-3 text-[13px] font-semibold text-brand-800 transition hover:bg-brand-100 dark:bg-brand-900/40 dark:text-brand-200'
 

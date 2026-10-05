@@ -6,7 +6,7 @@
     <main class="mx-auto max-w-6xl px-6 py-12">
         {% include 'public/catalog/_breadcrumbs.html.twig' %}
 
-        <p class="text-sm font-semibold uppercase tracking-wide text-emerald-700">Категория</p>
+        <p class="text-sm font-semibold uppercase tracking-wide text-brand-700">Категория</p>
         <h1 class="mt-2 text-4xl font-bold tracking-tight text-ink">{{ category.title }}</h1>
         {% if category.description %}
             <p class="mt-4 max-w-3xl text-lg leading-8 text-ink">{{ category.description }}</p>
@@ -17,7 +17,7 @@
             {% if products %}
                 <div class="mt-5 grid gap-4 md:grid-cols-3">
                     {% for product in products %}
-                        <a class="rounded-2xl border border-line bg-white p-5 shadow-xs transition hover:border-emerald-300 hover:shadow-md" href="{{ product.path }}">
+                        <a class="rounded-2xl border border-line bg-white p-5 shadow-xs transition hover:border-brand-300 hover:shadow-md" href="{{ product.path }}">
                             <h3 class="text-lg font-semibold text-ink">{{ product.name }}</h3>
                             {% if product.summary %}
                                 <p class="mt-2 text-sm leading-6 text-graphite">{{ product.summary }}</p>

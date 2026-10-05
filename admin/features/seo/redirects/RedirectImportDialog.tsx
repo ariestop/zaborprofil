@@ -141,7 +141,7 @@ export function RedirectImportDialog({ open, onClose }: RedirectImportDialogProp
 
 function ImportReport({ report, applied }: { report: RedirectImportReport, applied: boolean }) {
   return (
-    <section className="grid gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700" aria-label="Отчёт импорта">
+    <section className="grid gap-3 rounded-lg border border-line p-3 dark:border-slate-700" aria-label="Отчёт импорта">
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <strong>{applied ? 'Результат импорта' : 'Предпросмотр (ничего не записано)'}</strong>
         <Badge>Строк: {report.totalRows}</Badge>
@@ -188,7 +188,7 @@ function ImportReport({ report, applied }: { report: RedirectImportReport, appli
         <div className="max-h-48 overflow-y-auto">
           <table className="min-w-full text-xs">
             <thead>
-              <tr className="text-left text-slate-500">
+              <tr className="text-left text-graphite dark:text-slate-500">
                 <th className="py-1 pr-2">Стр.</th>
                 <th className="py-1 pr-2">Старый URL</th>
                 <th className="py-1 pr-2">Новый URL</th>
@@ -198,7 +198,7 @@ function ImportReport({ report, applied }: { report: RedirectImportReport, appli
             </thead>
             <tbody>
               {report.preview.map((row) => (
-                <tr key={`${row.line}-${row.source}`} className="border-t border-slate-100 dark:border-slate-800">
+                <tr key={`${row.line}-${row.source}`} className="border-t border-surface-strong dark:border-slate-800">
                   <td className="py-1 pr-2">{row.line}</td>
                   <td className="py-1 pr-2 font-mono">{decodeForDisplay(row.source)}</td>
                   <td className="py-1 pr-2 font-mono">{decodeForDisplay(row.target)}</td>

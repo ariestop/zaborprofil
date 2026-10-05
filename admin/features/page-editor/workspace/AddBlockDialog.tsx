@@ -222,7 +222,7 @@ export function AddBlockDialog({
                                     'h-8 rounded-full border px-3 text-[13px] transition',
                                     category === item.id
                                         ? 'border-ink bg-ink font-semibold text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-900'
-                                        : 'border-line-strong bg-white font-medium text-graphite hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200',
+                                        : 'border-line-strong bg-white font-medium text-graphite hover:bg-surface dark:hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200',
                                 )}
                             >
                                 {item.label}

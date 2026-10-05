@@ -132,7 +132,7 @@ export function SeoTab({ controller, onOpenTab }: SeoTabProps) {
                             />
                         )}
                     </Field>
-                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                    <p className="text-sm text-graphite dark:text-slate-300">
                         Индексация:{' '}
                         <strong>{isIndexable ? 'разрешена' : 'запрещена (noindex)'}</strong>.{' '}
                         <button
@@ -246,7 +246,7 @@ function AuditSummary({ result }: { result: SeoAuditResult }) {
 
     const counts = countIssues(result.issues)
     return (
-        <span className="text-sm text-slate-700 dark:text-slate-200">
+        <span className="text-sm text-ink dark:text-slate-200">
             {result.passed ? 'Публикация разрешена' : 'Публикация заблокирована'}: P0 — {counts.P0},
             P1 — {counts.P1}, P2 — {counts.P2}
         </span>

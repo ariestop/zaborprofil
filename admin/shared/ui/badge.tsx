@@ -12,7 +12,7 @@ export function Badge({ children, tone = 'neutral' }: BadgeProps) {
             className={cn(
                 'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium',
                 tone === 'neutral' &&
-                    'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200',
+                    'bg-surface-strong text-ink dark:bg-slate-800 dark:text-slate-200',
                 tone === 'success' &&
                     'bg-brand-100 text-brand-800 dark:bg-brand-900/30 dark:text-brand-300',
                 tone === 'warning' &&

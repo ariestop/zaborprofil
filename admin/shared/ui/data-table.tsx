@@ -40,13 +40,13 @@ export function DataTable<TData>({ columns, data, pageSize = 10 }: DataTableProp
 
   return (
     <div className="space-y-3">
-      <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800">
-        <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
-          <thead className="bg-slate-50 dark:bg-slate-900">
+      <div className="overflow-hidden rounded-xl border border-line dark:border-slate-800">
+        <table className="min-w-full divide-y divide-line dark:divide-slate-800">
+          <thead className="bg-surface dark:bg-slate-900">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <th key={header.id} className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th key={header.id} className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-graphite dark:text-slate-500">
                     {header.isPlaceholder
                       ? null
                       : flexRender(header.column.columnDef.header, header.getContext())}
@@ -55,11 +55,11 @@ export function DataTable<TData>({ columns, data, pageSize = 10 }: DataTableProp
               </tr>
             ))}
           </thead>
-          <tbody className="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-950">
+          <tbody className="divide-y divide-surface-strong bg-white dark:divide-slate-800 dark:bg-slate-950">
             {table.getRowModel().rows.map((row) => (
               <tr key={row.id}>
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-3 py-2 text-sm text-slate-700 dark:text-slate-200">
+                  <td key={cell.id} className="px-3 py-2 text-sm text-ink dark:text-slate-200">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
@@ -70,7 +70,7 @@ export function DataTable<TData>({ columns, data, pageSize = 10 }: DataTableProp
       </div>
 
       <div className="flex items-center justify-between">
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-graphite dark:text-slate-400">
           Страница {table.getState().pagination.pageIndex + 1} из {table.getPageCount()}
         </p>
         <div className="flex items-center gap-2">

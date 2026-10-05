@@ -26,7 +26,7 @@ export function MediaUsageList({
             {usages.map((usage) => (
                 <li
                     key={`${usage.type}-${usage.sourceId}-${usage.location}`}
-                    className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs dark:border-slate-700"
+                    className="rounded-lg border border-line px-2.5 py-1.5 text-xs dark:border-slate-700"
                 >
                     <div className="flex flex-wrap items-center gap-1.5">
                         {usage.adminPath !== null ? (
@@ -53,7 +53,7 @@ export function MediaUsageList({
                             </Badge>
                         ) : null}
                     </div>
-                    <p className="mt-0.5 text-slate-500 dark:text-slate-400">
+                    <p className="mt-0.5 text-graphite dark:text-slate-400">
                         {usageTypeLabel(usage.type)} · {usage.location}
                     </p>
                 </li>

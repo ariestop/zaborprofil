@@ -6,8 +6,8 @@
                     {% if breadcrumb.current %}
                         <span class="text-ink" aria-current="page">{{ breadcrumb.label }}</span>
                     {% else %}
-                        <a class="hover:text-emerald-700" href="{{ breadcrumb.path }}">{{ breadcrumb.label }}</a>
-                        <span class="ml-2 text-line-strong">/</span>
+                        <a class="hover:text-brand-700" href="{{ breadcrumb.path }}">{{ breadcrumb.label }}</a>
+                        <span class="ml-2 text-line-strong" aria-hidden="true">/</span>
                     {% endif %}
                 </li>
             {% endfor %}

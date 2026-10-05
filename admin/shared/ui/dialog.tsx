@@ -25,10 +25,10 @@ export function Dialog({
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-slate-950/40" />
+        <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-night/40" />
         <DialogPrimitive.Content
           className={[
-            'fixed left-1/2 top-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900',
+            'fixed left-1/2 top-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-line bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-900',
             contentClassName?.includes('max-w-') === true ? '' : 'max-w-lg',
             contentClassName ?? '',
           ].join(' ')}
@@ -50,7 +50,7 @@ export function Dialog({
         >
           <DialogPrimitive.Title className="text-base font-semibold">{title}</DialogPrimitive.Title>
           {description !== undefined ? (
-            <DialogPrimitive.Description className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            <DialogPrimitive.Description className="mt-1 text-sm text-graphite dark:text-slate-400">
               {description}
             </DialogPrimitive.Description>
           ) : null}

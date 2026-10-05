@@ -91,7 +91,7 @@ export function EditConflictDialog({ conflict, onOverwrite, onReload, onDismiss 
       description={`${EDIT_CONFLICT_MESSAGE}${changedAt === '' ? '' : ` Страница обновлена ${changedAt}.`}`}
       closeOnInteractOutside={false}
     >
-      <ul className="mb-4 list-disc space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-300">
+      <ul className="mb-4 list-disc space-y-1 pl-5 text-sm text-graphite dark:text-slate-300">
         <li><strong>Перезаписать</strong> — ваши блоки заменят версию на сервере.</li>
         <li><strong>Загрузить с сервера</strong> — ваши несохранённые правки блоков будут потеряны.</li>
         <li><strong>Остаться</strong> — закрыть окно и скопировать нужное вручную; черновик сохранён в браузере.</li>

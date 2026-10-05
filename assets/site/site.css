@@ -111,10 +111,10 @@
         @apply font-cond leading-none font-extrabold tracking-normal tabular-nums;
     }
     .zp-header__phone {
-        @apply inline-flex size-11 items-center justify-center gap-2 rounded-full bg-brand-50 font-cond font-extrabold text-ink tabular-nums transition hover:bg-brand-100 lg:size-auto lg:rounded-lg lg:bg-transparent lg:px-3 lg:py-2 lg:text-xl lg:whitespace-nowrap;
+        @apply inline-flex size-12 items-center justify-center gap-2 rounded-full bg-brand-50 font-cond font-extrabold text-ink tabular-nums transition hover:bg-brand-100 lg:size-auto lg:rounded-lg lg:bg-transparent lg:px-3 lg:py-2 lg:text-xl lg:whitespace-nowrap;
     }
     .zp-burger {
-        @apply inline-flex size-11 items-center justify-center rounded-full text-ink transition hover:bg-surface-strong lg:hidden;
+        @apply inline-flex size-12 items-center justify-center rounded-full text-ink transition hover:bg-surface-strong lg:hidden;
     }
     .zp-drawer {
         @apply absolute inset-x-0 top-full max-h-[calc(100dvh-3.5rem)] overflow-y-auto border-b border-line bg-white shadow-xl lg:hidden;
@@ -140,7 +140,7 @@
         @apply size-5 shrink-0;
     }
     .zp-btn--sm {
-        @apply min-h-10 rounded-lg px-4 text-sm;
+        @apply min-h-12 rounded-lg px-4 text-sm;
     }
     .zp-btn--lg {
         @apply min-h-14 px-7 text-lg;
@@ -172,7 +172,7 @@
         @apply absolute size-5 animate-spin rounded-full border-2 border-white/40 border-t-white;
     }
     .zp-iconbtn {
-        @apply inline-flex size-11 shrink-0 items-center justify-center rounded-lg bg-surface-strong text-ink transition-colors hover:bg-brand-100 hover:text-brand-900 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600 active:bg-brand-200;
+        @apply inline-flex size-12 shrink-0 items-center justify-center rounded-lg bg-surface-strong text-ink transition-colors hover:bg-brand-100 hover:text-brand-900 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600 active:bg-brand-200;
     }
     .zp-iconbtn[data-copied='true'] {
         @apply bg-brand-700 text-white;
@@ -313,7 +313,7 @@
         @apply border-t border-white/10 py-5 text-xs text-white/60;
     }
     .zp-social {
-        @apply inline-flex size-11 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-brand-600;
+        @apply inline-flex size-12 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-brand-600;
     }
 
     /* ---------- Форма заявки ---------- */
@@ -393,7 +393,7 @@
         @apply inline-flex max-w-full rounded-2xl bg-surface-strong p-1.5;
     }
     .zp-seg__item {
-        @apply min-h-11 flex-1 rounded-xl px-5 text-base font-semibold whitespace-nowrap text-graphite transition-colors hover:text-ink focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
+        @apply min-h-12 flex-1 rounded-xl px-5 text-base font-semibold whitespace-nowrap text-graphite transition-colors hover:text-ink focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
     }
     .zp-seg__item[aria-selected='true'] {
         @apply bg-white text-ink;
@@ -405,7 +405,7 @@
         @apply relative cursor-pointer;
     }
     .zp-pill span {
-        @apply inline-flex min-h-11 min-w-14 items-center justify-center rounded-xl bg-surface-strong px-4 text-base font-semibold text-ink transition-colors select-none hover:bg-brand-100 hover:text-brand-900;
+        @apply inline-flex min-h-12 min-w-14 items-center justify-center rounded-xl bg-surface-strong px-4 text-base font-semibold text-ink transition-colors select-none hover:bg-brand-100 hover:text-brand-900;
     }
     .zp-pill input:checked + span {
         @apply bg-brand-700 text-white;
@@ -464,7 +464,7 @@
         display: none;
     }
     .zp-quicknav__list a {
-        @apply inline-flex min-h-10 items-center rounded-full bg-surface-strong px-4 text-sm font-semibold whitespace-nowrap text-ink transition-colors hover:bg-brand-100 hover:text-brand-900 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
+        @apply inline-flex min-h-12 items-center rounded-full bg-surface-strong px-4 text-sm font-semibold whitespace-nowrap text-ink transition-colors hover:bg-brand-100 hover:text-brand-900 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
     }
 }
 
@@ -501,7 +501,7 @@
         @apply absolute inset-0 opacity-0;
     }
     .zp-cfg-seg span {
-        @apply flex min-h-11 cursor-pointer items-center justify-center rounded-lg px-3 text-center text-sm font-semibold whitespace-nowrap text-graphite transition-colors;
+        @apply flex min-h-12 cursor-pointer items-center justify-center rounded-lg px-3 text-center text-sm font-semibold whitespace-nowrap text-graphite transition-colors;
     }
     .zp-cfg-seg input:checked + span {
         @apply bg-white text-ink shadow-sm;
@@ -513,7 +513,7 @@
         @apply flex flex-wrap gap-2.5;
     }
     .zp-swatch {
-        @apply relative size-11 cursor-pointer rounded-lg ring-1 ring-black/15;
+        @apply relative size-12 cursor-pointer rounded-lg ring-1 ring-black/15;
         background: var(--swatch);
     }
     .zp-swatch input {
@@ -529,7 +529,7 @@
         @apply h-11 w-full accent-brand-700;
     }
     .zp-check {
-        @apply flex min-h-11 cursor-pointer items-center gap-2.5 text-base text-ink;
+        @apply flex min-h-12 cursor-pointer items-center gap-2.5 text-base text-ink;
     }
     .zp-check input {
         @apply size-5 accent-brand-700;
@@ -628,7 +628,7 @@
         @apply inline-flex gap-1 rounded-[var(--radius-btn)] bg-surface-strong p-1;
     }
     .zp-audience button {
-        @apply min-h-11 rounded-lg px-4 text-sm font-semibold text-graphite transition-colors hover:text-ink;
+        @apply min-h-12 rounded-lg px-4 text-sm font-semibold text-graphite transition-colors hover:text-ink;
     }
     .zp-audience button[aria-pressed='true'] {
         @apply bg-white text-ink shadow-sm;

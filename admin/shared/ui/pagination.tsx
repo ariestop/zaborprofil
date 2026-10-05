@@ -10,7 +10,7 @@ interface PaginationProps {
 export function Pagination({ page, pages, total, onPageChange }: PaginationProps) {
   return (
     <div className="flex items-center justify-between">
-      <p className="text-xs text-slate-500 dark:text-slate-400">
+      <p className="text-xs text-graphite dark:text-slate-400">
         Страница {page} из {pages} · всего {total}
       </p>
       <div className="flex items-center gap-2">

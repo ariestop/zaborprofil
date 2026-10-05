@@ -38,10 +38,10 @@ export function Topbar({ onOpenNav, actionsRef }: TopbarProps) {
     const newLeads = leadSummary.data?.new ?? 0
     const envLabel = environmentLabel(overview.data?.environment.appEnv)
     const iconButton =
-        'inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
+        'inline-flex h-10 w-10 items-center justify-center rounded-lg border border-line bg-white text-ink transition hover:bg-surface focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
 
     return (
-        <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/95">
+        <header className="sticky top-0 z-30 border-b border-line bg-white/95 backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/95">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 lg:px-8">
                 <button
                     type="button"
@@ -57,11 +57,11 @@ export function Topbar({ onOpenNav, actionsRef }: TopbarProps) {
                 <button
                     type="button"
                     onClick={openCommandPalette}
-                    className="order-last flex h-10 w-full items-center gap-2 rounded-lg border border-slate-300 bg-slate-50 px-3 text-left text-sm text-slate-500 transition hover:bg-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 sm:order-none sm:ml-6 sm:w-auto sm:min-w-72 sm:max-w-md sm:flex-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                    className="order-last flex h-10 w-full items-center gap-2 rounded-lg border border-line-strong bg-surface px-3 text-left text-sm text-graphite transition hover:bg-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 sm:order-none sm:ml-6 sm:w-auto sm:min-w-72 sm:max-w-md sm:flex-1 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
                 >
                     <NavIcon name="search" />
                     <span className="flex-1 truncate">Найти страницу, заявку или команду…</span>
-                    <kbd className="rounded-md border border-slate-300 bg-white px-1.5 py-0.5 font-sans text-xs text-slate-600 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300">
+                    <kbd className="rounded-md border border-line-strong bg-white px-1.5 py-0.5 font-sans text-xs text-graphite dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300">
                         {isMac ? '⌘K' : 'Ctrl K'}
                     </kbd>
                 </button>
@@ -76,7 +76,7 @@ export function Topbar({ onOpenNav, actionsRef }: TopbarProps) {
                         href="/"
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex h-10 items-center gap-1.5 rounded-[10px] px-3 font-medium text-graphite transition hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-slate-200 dark:hover:bg-slate-800"
+                        className="inline-flex h-10 items-center gap-1.5 rounded-[10px] px-3 font-medium text-graphite transition hover:bg-surface-strong focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-slate-200 dark:hover:bg-slate-800"
                         aria-label="Открыть сайт в новой вкладке"
                         title="Открыть сайт"
                     >

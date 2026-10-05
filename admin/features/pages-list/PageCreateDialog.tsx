@@ -247,7 +247,7 @@ export function PageCreateDialog({ onClose }: { onClose: () => void }) {
                                 <button
                                     type="button"
                                     aria-label="Закрыть"
-                                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-line text-graphite hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px] border border-line text-graphite hover:bg-surface dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                                 >
                                     <NavIcon name="close" size={18} />
                                 </button>
@@ -454,7 +454,7 @@ export function PageCreateDialog({ onClose }: { onClose: () => void }) {
                             <DialogPrimitive.Close asChild>
                                 <button
                                     type="button"
-                                    className="hidden h-[42px] rounded-[10px] border border-line-strong bg-white px-3.5 text-sm font-semibold text-graphite hover:bg-slate-50 sm:block dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                                    className="hidden h-[42px] rounded-[10px] border border-line-strong bg-white px-3.5 text-sm font-semibold text-graphite hover:bg-surface dark:hover:bg-slate-50 sm:block dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                                 >
                                     Отмена
                                 </button>

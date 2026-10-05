@@ -207,7 +207,7 @@ const SPECS: Partial<Record<BuilderBlockType, FieldSpec[]>> = {
                     kind: 'text',
                     key: 'hex',
                     label: 'Цвет на экране (HEX)',
-                    help: 'Приближение для картинки, например #0F4336',
+                    help: 'Приближение для картинки, например #2D7F27',
                 },
             ],
         },
