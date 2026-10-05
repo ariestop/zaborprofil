@@ -88,7 +88,7 @@ export function SidebarNav({ collapsed = false, onNavigate }: SidebarNavProps) {
                               : 'min-h-10 px-3 py-2',
                         isActive
                             ? 'bg-brand-50 text-brand-800 dark:bg-brand-900/30 dark:text-brand-300'
-                            : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
+                            : 'text-ink hover:bg-surface-strong dark:text-slate-300 dark:hover:bg-slate-800',
                     )
                 }
             >
@@ -132,10 +132,10 @@ export function SidebarNav({ collapsed = false, onNavigate }: SidebarNavProps) {
                                 title={group.title ?? first.title}
                                 onClick={onNavigate}
                                 className={cn(
-                                    'mt-3 flex h-11 items-center justify-center rounded-lg transition hover:bg-slate-100 dark:hover:bg-slate-800',
+                                    'mt-3 flex h-11 items-center justify-center rounded-lg transition hover:bg-surface-strong dark:hover:bg-slate-800',
                                     inServerSection
                                         ? 'bg-brand-50 text-brand-800 dark:bg-brand-900/30 dark:text-brand-300'
-                                        : 'text-slate-700 dark:text-slate-300',
+                                        : 'text-ink dark:text-slate-300',
                                 )}
                             >
                                 <NavIcon name={group.icon ?? 'server'} />
@@ -146,14 +146,14 @@ export function SidebarNav({ collapsed = false, onNavigate }: SidebarNavProps) {
                     return (
                         <div
                             key={group.key}
-                            className="mt-4 border-t border-slate-200 pt-3 dark:border-slate-800"
+                            className="mt-4 border-t border-line pt-3 dark:border-slate-800"
                         >
                             <button
                                 type="button"
                                 aria-expanded={serverExpanded}
                                 aria-controls={`nav-group-${group.key}`}
                                 onClick={() => setServerOpen(!serverExpanded)}
-                                className="flex min-h-10 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-slate-300 dark:hover:bg-slate-800"
+                                className="flex min-h-10 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium text-ink transition hover:bg-surface-strong focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-slate-300 dark:hover:bg-slate-800"
                             >
                                 <NavIcon name={group.icon ?? 'server'} />
                                 <span className="flex-1">{group.title}</span>
@@ -169,7 +169,7 @@ export function SidebarNav({ collapsed = false, onNavigate }: SidebarNavProps) {
                             {serverExpanded ? (
                                 <div
                                     id={`nav-group-${group.key}`}
-                                    className="ml-4 mt-0.5 flex flex-col gap-0.5 border-l border-slate-200 pl-2 dark:border-slate-800"
+                                    className="ml-4 mt-0.5 flex flex-col gap-0.5 border-l border-line pl-2 dark:border-slate-800"
                                 >
                                     {routes.map((route) => renderItem(route, true))}
                                 </div>
@@ -184,13 +184,13 @@ export function SidebarNav({ collapsed = false, onNavigate }: SidebarNavProps) {
                         className={cn('flex flex-col gap-0.5', group.title !== null && 'mt-4')}
                     >
                         {group.title !== null && !collapsed ? (
-                            <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                            <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-graphite dark:text-slate-400">
                                 {group.title}
                             </p>
                         ) : null}
                         {group.title !== null && collapsed ? (
                             <span
-                                className="mx-3 mb-1 border-t border-slate-200 dark:border-slate-800"
+                                className="mx-3 mb-1 border-t border-line dark:border-slate-800"
                                 aria-hidden="true"
                             />
                         ) : null}

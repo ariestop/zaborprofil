@@ -33,7 +33,7 @@ const sectionTitle =
     'm-0 text-xs font-semibold uppercase tracking-[0.06em] text-graphite dark:text-slate-400'
 const card = 'rounded-[14px] border border-line bg-white dark:border-slate-800 dark:bg-slate-900'
 const outlineAction =
-    'inline-flex h-[42px] items-center gap-2 rounded-[11px] border border-line-strong bg-white px-3.5 text-sm font-semibold text-ink no-underline transition hover:bg-slate-50 hover:text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800'
+    'inline-flex h-[42px] items-center gap-2 rounded-[11px] border border-line-strong bg-white px-3.5 text-sm font-semibold text-ink no-underline transition hover:bg-surface hover:text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800'
 
 function phoneHref(phone: string): string {
     return `tel:${phone.replace(/[^\d+]/g, '')}`
@@ -387,7 +387,7 @@ export default function LeadDetailPage({
                                 <summary className="cursor-pointer text-graphite dark:text-slate-400">
                                     Сохранённый снимок
                                 </summary>
-                                <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-slate-50 p-2 font-mono text-xs dark:bg-slate-950">
+                                <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-surface p-2 font-mono text-xs dark:bg-slate-950">
                                     {JSON.stringify(lead.consentSnapshot, null, 2)}
                                 </pre>
                             </details>
@@ -478,7 +478,7 @@ export default function LeadDetailPage({
                                 type="button"
                                 disabled={note.trim() === '' || noteMutation.isPending}
                                 onClick={() => void submitNote()}
-                                className="h-[38px] rounded-[10px] border border-line-strong bg-white px-3.5 text-[13px] font-semibold text-ink transition hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                                className="h-[38px] rounded-[10px] border border-line-strong bg-white px-3.5 text-[13px] font-semibold text-ink transition hover:bg-surface dark:hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                             >
                                 Добавить заметку
                             </button>

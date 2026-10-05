@@ -108,7 +108,7 @@ export function AuditTab() {
                         >
                             {running ? 'Проверка...' : 'Проверить все опубликованные'}
                         </Button>
-                        <span className="text-sm text-slate-600 dark:text-slate-300">
+                        <span className="text-sm text-graphite dark:text-slate-300">
                             Проверено страниц: {checkedCount} из {pages.length}
                         </span>
                     </div>
@@ -131,7 +131,7 @@ export function AuditTab() {
                                     ].map((title) => (
                                         <th
                                             key={title}
-                                            className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500"
+                                            className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-graphite dark:text-slate-500"
                                         >
                                             {title}
                                         </th>
@@ -211,7 +211,7 @@ export function AuditTab() {
                                 <Badge tone={severityTone(issue.severity)}>{issue.severity}</Badge>
                                 <span>
                                     {issue.message}{' '}
-                                    <span className="font-mono text-xs text-slate-500">
+                                    <span className="font-mono text-xs text-graphite dark:text-slate-500">
                                         ({issue.code})
                                     </span>
                                 </span>
@@ -231,11 +231,11 @@ export function AuditTab() {
 
 function AuditSummary({ state }: { state: AuditState | undefined }) {
     if (state === undefined) {
-        return <span className="text-slate-400">Не проверялась</span>
+        return <span className="text-graphite dark:text-slate-400">Не проверялась</span>
     }
 
     if (state.status === 'loading') {
-        return <span className="text-slate-500">Проверка...</span>
+        return <span className="text-graphite dark:text-slate-500">Проверка...</span>
     }
 
     if (state.status === 'error') {

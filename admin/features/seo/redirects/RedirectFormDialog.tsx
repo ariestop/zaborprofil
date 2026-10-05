@@ -105,12 +105,12 @@ export function RedirectFormDialog({ open, redirect, draft, onClose }: RedirectF
     >
       <form className="grid gap-3" onSubmit={submit} noValidate>
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300" htmlFor="redirect-source">Старый URL</label>
+          <label className="mb-1 block text-xs font-medium text-graphite dark:text-slate-300" htmlFor="redirect-source">Старый URL</label>
           <Input id="redirect-source" placeholder="/old-page/" autoComplete="off" {...form.register('sourcePath')} />
           {errors.sourcePath?.message !== undefined ? <p className="mt-1 text-xs text-red-600">{errors.sourcePath.message}</p> : null}
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-300" htmlFor="redirect-target">Новый URL</label>
+          <label className="mb-1 block text-xs font-medium text-graphite dark:text-slate-300" htmlFor="redirect-target">Новый URL</label>
           <Input id="redirect-target" placeholder="/new-page/ или https://example.com/page/" autoComplete="off" {...form.register('targetPath')} />
           {errors.targetPath?.message !== undefined ? <p className="mt-1 text-xs text-red-600">{errors.targetPath.message}</p> : null}
         </div>

@@ -136,7 +136,7 @@ export default function AssetBuildWidget() {
         if (status.status === 'success') return 'bg-brand-50 text-brand-700'
         if (status.status === 'failed') return 'bg-red-50 text-red-700'
         if (status.status === 'running') return 'bg-sky-50 text-sky-700'
-        return 'bg-slate-100 text-slate-600'
+        return 'bg-surface-strong text-graphite'
     }, [status.status])
     const progressClass = useMemo(() => {
         if (status.status === 'failed') return 'bg-red-500'
@@ -354,15 +354,15 @@ export default function AssetBuildWidget() {
         >
             <button
                 type="button"
-                className="flex w-12 shrink-0 items-center justify-center rounded-l-2xl border border-r-0 border-brand-200 bg-brand-700 text-xs font-bold uppercase tracking-[0.25em] text-white shadow-2xl shadow-slate-950/10 [writing-mode:vertical-rl]"
+                className="flex w-12 shrink-0 items-center justify-center rounded-l-2xl border border-r-0 border-brand-200 bg-brand-700 text-xs font-bold uppercase tracking-[0.25em] text-white shadow-2xl shadow-night/10 [writing-mode:vertical-rl]"
                 aria-label={isCollapsed ? 'Открыть настройки сборки' : 'Свернуть настройки сборки'}
                 onClick={toggleCollapsed}
             >
                 настройка
             </button>
 
-            <div className="w-[calc(100%-3rem)] overflow-hidden rounded-l-none rounded-r-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-950/10">
-                <div className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-slate-50">
+            <div className="w-[calc(100%-3rem)] overflow-hidden rounded-l-none rounded-r-2xl border border-line bg-white shadow-2xl shadow-night/10">
+                <div className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-surface">
                     <button
                         type="button"
                         className="min-w-0 flex-1 text-left"
@@ -372,7 +372,7 @@ export default function AssetBuildWidget() {
                             Сборка интерфейса
                         </span>
                         <span
-                            className="mt-1 block truncate text-sm font-bold text-slate-950"
+                            className="mt-1 block truncate text-sm font-bold text-ink"
                             title={status.command}
                         >
                             {assetsHeadline}
@@ -388,7 +388,7 @@ export default function AssetBuildWidget() {
                     </span>
                     <button
                         type="button"
-                        className="shrink-0 rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                        className="shrink-0 rounded-lg border border-line px-2 py-1 text-xs font-semibold text-graphite hover:bg-surface hover:text-ink"
                         onClick={collapsePanel}
                     >
                         Свернуть
@@ -396,9 +396,9 @@ export default function AssetBuildWidget() {
                 </div>
 
                 {isExpanded ? (
-                    <div className="space-y-4 border-t border-slate-100 p-4">
+                    <div className="space-y-4 border-t border-surface-strong p-4">
                         <div className="flex items-center justify-between gap-3">
-                            <div className="text-xs text-slate-500">
+                            <div className="text-xs text-graphite">
                                 <p>Старт: {formatDate(status.startedAt)}</p>
                                 {status.finishedAt && <p>Финиш: {formatDate(status.finishedAt)}</p>}
                             </div>
@@ -415,10 +415,10 @@ export default function AssetBuildWidget() {
                         </div>
 
                         <div className="space-y-2">
-                            <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                            <p className="text-xs font-medium uppercase tracking-wide text-graphite">
                                 Что пересобрать
                             </p>
-                            <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+                            <div className="space-y-2 rounded-lg border border-line bg-surface p-3">
                                 {activeTargets.map((target) => (
                                     <label
                                         key={target.id}
@@ -426,7 +426,7 @@ export default function AssetBuildWidget() {
                                     >
                                         <input
                                             type="checkbox"
-                                            className="mt-0.5 h-4 w-4 rounded-sm border-slate-300 text-brand-600 focus:ring-brand-500"
+                                            className="mt-0.5 h-4 w-4 rounded-sm border-line-strong text-brand-600 focus:ring-brand-500"
                                             checked={selectedTargets.includes(target.id)}
                                             disabled={isRunning || isLoading}
                                             onChange={() => {
@@ -434,10 +434,10 @@ export default function AssetBuildWidget() {
                                             }}
                                         />
                                         <span className="min-w-0">
-                                            <span className="block text-sm font-medium text-slate-800">
+                                            <span className="block text-sm font-medium text-ink">
                                                 {target.label}
                                             </span>
-                                            <span className="block text-xs text-slate-500">
+                                            <span className="block text-xs text-graphite">
                                                 {target.description}
                                             </span>
                                         </span>
@@ -447,11 +447,11 @@ export default function AssetBuildWidget() {
                         </div>
 
                         <div>
-                            <div className="mb-2 flex items-center justify-between text-xs font-medium text-slate-500">
+                            <div className="mb-2 flex items-center justify-between text-xs font-medium text-graphite">
                                 <span>Прогресс</span>
                                 <span>{progress}%</span>
                             </div>
-                            <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                            <div className="h-2 overflow-hidden rounded-full bg-surface-strong">
                                 <div
                                     className={[
                                         'h-full rounded-full transition-all duration-500',
@@ -466,8 +466,8 @@ export default function AssetBuildWidget() {
                             <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p>
                         )}
 
-                        <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-950">
-                            <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 text-xs text-slate-300">
+                        <div className="overflow-hidden rounded-xl border border-line bg-night">
+                            <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 text-xs text-line-strong">
                                 <span>Лог сборки</span>
                                 <div className="flex items-center gap-3">
                                     {isLogCopied && (
@@ -475,7 +475,7 @@ export default function AssetBuildWidget() {
                                     )}
                                     <button
                                         type="button"
-                                        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-300 hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                                        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-line-strong hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                                         disabled={!hasLogs}
                                         title="Скопировать лог"
                                         aria-label="Скопировать лог сборки"
@@ -509,7 +509,7 @@ export default function AssetBuildWidget() {
                             </div>
                             <pre
                                 ref={logContainer}
-                                className="max-h-56 overflow-auto whitespace-pre-wrap wrap-break-word p-3 text-xs leading-5 text-slate-100"
+                                className="max-h-56 overflow-auto whitespace-pre-wrap wrap-break-word p-3 text-xs leading-5 text-surface"
                             >
                                 {hasLogs ? status.logs : 'Лог появится после запуска сборки.'}
                             </pre>
@@ -517,7 +517,7 @@ export default function AssetBuildWidget() {
                     </div>
                 ) : (
                     <div className="flex items-center justify-between gap-3 px-4 py-3">
-                        <span className="text-xs text-slate-500">Прогресс: {progress}%</span>
+                        <span className="text-xs text-graphite">Прогресс: {progress}%</span>
                         <button
                             type="button"
                             className="rounded-lg bg-brand-700 px-3 py-2 text-sm font-semibold text-white hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50"

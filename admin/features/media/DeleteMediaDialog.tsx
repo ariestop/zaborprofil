@@ -30,14 +30,14 @@ export function DeleteMediaDialog({ asset, pending, onCancel, onConfirm }: Delet
       contentClassName="max-w-xl"
     >
       <div className="space-y-3" data-testid="delete-media-dialog">
-        {usagesQuery.isLoading ? <p className="text-sm text-slate-500">Проверяем, где используется файл…</p> : null}
+        {usagesQuery.isLoading ? <p className="text-sm text-graphite dark:text-slate-500">Проверяем, где используется файл…</p> : null}
         {usagesQuery.isError ? (
           <p className="text-sm text-red-700 dark:text-red-400" role="alert">
             Не удалось проверить использование файла: {describeMediaError(usagesQuery.error)}
           </p>
         ) : null}
 
-        {usagesQuery.isSuccess && !used ? <p className="text-sm text-slate-600 dark:text-slate-300">Файл нигде не используется — его можно удалить безопасно.</p> : null}
+        {usagesQuery.isSuccess && !used ? <p className="text-sm text-graphite dark:text-slate-300">Файл нигде не используется — его можно удалить безопасно.</p> : null}
 
         {usagesQuery.isSuccess && used && usages !== undefined ? (
           <>

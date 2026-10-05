@@ -48,12 +48,12 @@ export function RevisionsTab({ controller, status }: RevisionsTabProps) {
           <EmptyState title="Версий пока нет" description="Они появятся после первой публикации страницы." />
         ) : null}
         {revisionsQuery.isSuccess && revisionsQuery.data.length > 0 ? (
-          <ul className="divide-y divide-slate-100 dark:divide-slate-800" data-testid="revisions-list">
+          <ul className="divide-y divide-surface-strong dark:divide-slate-800" data-testid="revisions-list">
             {revisionsQuery.data.map((revision) => (
               <li key={revision.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                 <div className="min-w-0">
                   <p className="text-sm font-medium">Версия {revision.version} · {formatRevisionDate(revision.createdAt)}</p>
-                  <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                  <p className="truncate text-xs text-graphite dark:text-slate-400">
                     {revision.title} · {revision.path}{revision.comment !== null && revision.comment !== '' ? ` · ${revision.comment}` : ''}
                   </p>
                 </div>

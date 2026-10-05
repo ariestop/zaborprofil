@@ -64,15 +64,15 @@ function SaveTemplateForm({ request, pageType, onClose }: { request: SaveTemplat
         )
       }}
     >
-      <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+      <label className="block text-sm font-medium text-ink dark:text-slate-200">
         Название шаблона
         <Input className="mt-1" value={name} maxLength={180} onChange={(event) => setName(event.target.value)} />
       </label>
-      <label className="block text-sm font-medium text-slate-700 dark:text-slate-200">
+      <label className="block text-sm font-medium text-ink dark:text-slate-200">
         Описание (необязательно)
         <Textarea className="mt-1" value={description} onChange={(event) => setDescription(event.target.value)} />
       </label>
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-graphite dark:text-slate-500">
         Блоков в шаблоне: {request.blocks.length}. Тексты и изображения копируются как есть — замените их на странице после вставки.
       </p>
       {error !== null ? <p role="alert" className="text-sm text-red-700">{error}</p> : null}

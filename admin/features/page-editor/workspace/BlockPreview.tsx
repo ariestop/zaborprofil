@@ -17,7 +17,7 @@ function EmptyMedia({ title, text }: { title: string; text: string }) {
 
 function Heading({
     text,
-    className = 'text-2xl font-semibold text-slate-950',
+    className = 'text-2xl font-semibold text-ink dark:text-slate-950',
 }: {
     text: string
     className?: string
@@ -73,7 +73,10 @@ function RichText({ html, title }: { html: string; title: string }) {
             <span
                 className="prose block max-w-none"
                 dangerouslySetInnerHTML={{
-                    __html: html === '' ? '<p class="text-slate-400">Пустой текст</p>' : html,
+                    __html:
+                        html === ''
+                            ? '<p class="text-graphite dark:text-slate-400">Пустой текст</p>'
+                            : html,
                 }}
             />
         </span>
@@ -87,10 +90,12 @@ function Cards({ content, dark }: { content: Record<string, unknown>; dark: bool
     }
 
     return (
-        <span className={`block px-8 py-7 ${dark ? 'bg-slate-950 text-white' : 'bg-slate-50'}`}>
+        <span
+            className={`block px-8 py-7 ${dark ? 'bg-night text-white' : 'bg-surface dark:bg-slate-50'}`}
+        >
             <Heading
                 text={asString(content.title)}
-                className={`text-2xl font-semibold ${dark ? 'text-white' : 'text-slate-950'}`}
+                className={`text-2xl font-semibold ${dark ? 'text-white' : 'text-ink dark:text-slate-950'}`}
             />
             <span
                 className="grid gap-3"
@@ -106,12 +111,14 @@ function Cards({ content, dark }: { content: Record<string, unknown>; dark: bool
                                 Шаг {index + 1}
                             </span>
                         ) : null}
-                        <span className={`block font-semibold ${dark ? 'mt-1' : 'text-slate-950'}`}>
+                        <span
+                            className={`block font-semibold ${dark ? 'mt-1' : 'text-ink dark:text-slate-950'}`}
+                        >
                             {asString(item.title)}
                         </span>
                         {asString(item.text) !== '' ? (
                             <span
-                                className={`mt-1.5 block text-[13px] leading-5 ${dark ? 'text-slate-200' : 'text-slate-600'}`}
+                                className={`mt-1.5 block text-[13px] leading-5 ${dark ? 'text-line dark:text-slate-200' : 'text-graphite dark:text-slate-600'}`}
                             >
                                 {asString(item.text)}
                             </span>
@@ -136,10 +143,10 @@ function Faq({ content }: { content: Record<string, unknown> }) {
                 {items.map((item, index) => (
                     <span
                         key={index}
-                        className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3 font-semibold text-slate-950"
+                        className="flex items-center justify-between gap-3 rounded-xl border border-line dark:border-slate-200 px-4 py-3 font-semibold text-ink dark:text-slate-950"
                     >
                         {asString(item.question) || asString(item.title) || 'Вопрос'}
-                        <span aria-hidden="true" className="text-slate-400">
+                        <span aria-hidden="true" className="text-graphite dark:text-slate-400">
                             +
                         </span>
                     </span>
@@ -177,7 +184,7 @@ function Gallery({ content, portfolio }: { content: Record<string, unknown>; por
                     return (
                         <span
                             key={index}
-                            className="block overflow-hidden rounded-xl border border-slate-200"
+                            className="block overflow-hidden rounded-xl border border-line dark:border-slate-200"
                         >
                             {src !== '' ? (
                                 <img
@@ -186,7 +193,7 @@ function Gallery({ content, portfolio }: { content: Record<string, unknown>; por
                                     className="aspect-4/3 w-full object-cover"
                                 />
                             ) : (
-                                <span className="block aspect-4/3 bg-slate-200" />
+                                <span className="block aspect-4/3 bg-line dark:bg-slate-200" />
                             )}
                             {portfolio && asString(item.title) !== '' ? (
                                 <span className="block p-3 text-sm font-semibold">
@@ -214,7 +221,7 @@ function Slider({ content }: { content: Record<string, unknown> }) {
     const src = asString(first.src)
 
     return (
-        <span className="relative isolate flex min-h-52 flex-col justify-end gap-2 overflow-hidden bg-slate-700 px-8 py-7 text-white">
+        <span className="relative isolate flex min-h-52 flex-col justify-end gap-2 overflow-hidden bg-night dark:bg-slate-700 px-8 py-7 text-white">
             {src !== '' ? (
                 <>
                     <img
@@ -222,14 +229,16 @@ function Slider({ content }: { content: Record<string, unknown> }) {
                         alt=""
                         className="absolute inset-0 -z-10 h-full w-full object-cover"
                     />
-                    <span className="absolute inset-0 -z-10 bg-slate-950/50" />
+                    <span className="absolute inset-0 -z-10 bg-night/50" />
                 </>
             ) : null}
             {asString(first.title) !== '' ? (
                 <span className="block text-2xl font-bold">{asString(first.title)}</span>
             ) : null}
             {asString(first.text) !== '' ? (
-                <span className="block text-slate-100">{asString(first.text)}</span>
+                <span className="block text-surface dark:text-slate-100">
+                    {asString(first.text)}
+                </span>
             ) : null}
             <span className="flex gap-1.5" aria-hidden="true">
                 {asItems(content.items).map((_, index) => (
@@ -260,13 +269,13 @@ function PriceTable({ content }: { content: Record<string, unknown> }) {
         <span className="block px-8 py-7">
             <Heading text={asString(content.title)} />
             <span
-                className="grid overflow-hidden rounded-xl border border-slate-200 text-sm"
+                className="grid overflow-hidden rounded-xl border border-line dark:border-slate-200 text-sm"
                 style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}
             >
                 {columns.map((column, index) => (
                     <span
                         key={`h${index}`}
-                        className="bg-slate-50 px-3 py-2.5 font-semibold text-slate-700"
+                        className="bg-surface dark:bg-slate-50 px-3 py-2.5 font-semibold text-ink dark:text-slate-700"
                     >
                         {column}
                     </span>
@@ -275,7 +284,7 @@ function PriceTable({ content }: { content: Record<string, unknown> }) {
                     columns.map((_, cellIndex) => (
                         <span
                             key={`${rowIndex}-${cellIndex}`}
-                            className="border-t border-slate-100 px-3 py-2.5 text-slate-700"
+                            className="border-t border-surface-strong dark:border-slate-100 px-3 py-2.5 text-ink dark:text-slate-700"
                         >
                             {asString(row[cellIndex])}
                         </span>
@@ -311,15 +320,15 @@ function Cta({ content }: { content: Record<string, unknown> }) {
 export function LeadFormPreview({ title }: { title: string }) {
     return (
         <span className="block px-8 py-7">
-            <span className="block rounded-2xl border border-slate-200 bg-white p-5">
-                <span className="block text-xl font-bold text-slate-950">
+            <span className="block rounded-2xl border border-line dark:border-slate-200 bg-white p-5">
+                <span className="block text-xl font-bold text-ink dark:text-slate-950">
                     {title === '' ? 'Получить консультацию' : title}
                 </span>
                 <span className="mt-4 flex flex-wrap gap-2.5">
-                    <span className="flex h-10 min-w-36 flex-1 items-center rounded-lg border border-slate-300 px-3 text-slate-400">
+                    <span className="flex h-10 min-w-36 flex-1 items-center rounded-lg border border-line-strong dark:border-slate-300 px-3 text-graphite dark:text-slate-400">
                         Имя
                     </span>
-                    <span className="flex h-10 min-w-36 flex-1 items-center rounded-lg border border-slate-300 px-3 text-slate-400">
+                    <span className="flex h-10 min-w-36 flex-1 items-center rounded-lg border border-line-strong dark:border-slate-300 px-3 text-graphite dark:text-slate-400">
                         Телефон
                     </span>
                     <span className="flex h-10 items-center rounded-lg bg-brand-700 px-4 font-semibold text-white">
@@ -339,12 +348,15 @@ function Generic({ block }: { block: BuilderBlock }) {
 
     return (
         <span className="block px-8 py-6">
-            <span className="block rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
-                <span className="block text-lg font-semibold text-slate-950">
+            <span className="block rounded-2xl border border-line dark:border-slate-200 bg-white p-5 shadow-xs">
+                <span className="block text-lg font-semibold text-ink dark:text-slate-950">
                     {texts[0] ?? block.name ?? block.type}
                 </span>
                 {texts.slice(1, 3).map((text, index) => (
-                    <span key={index} className="mt-2 block text-sm text-slate-600">
+                    <span
+                        key={index}
+                        className="mt-2 block text-sm text-graphite dark:text-slate-600"
+                    >
                         {text}
                     </span>
                 ))}

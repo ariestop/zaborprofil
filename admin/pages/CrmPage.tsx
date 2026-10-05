@@ -127,7 +127,7 @@ const chipBase =
 const chipOn =
     'border-brand-200 bg-brand-50 font-semibold text-brand-800 dark:border-brand-800 dark:bg-brand-900/30 dark:text-brand-200'
 const chipOff =
-    'border-line-strong bg-white font-medium text-graphite hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
+    'border-line-strong bg-white font-medium text-graphite hover:bg-surface dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
 
 /**
  * Рабочее место по заявкам: слева список с вкладками статусов, фильтрами и быстрыми видами,
@@ -394,7 +394,7 @@ export default function CrmPage() {
                         type="button"
                         disabled={exporting}
                         onClick={() => void exportCsv()}
-                        className="h-10 rounded-[10px] border border-line-strong bg-white px-3.5 text-sm font-semibold text-graphite transition hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                        className="h-10 rounded-[10px] border border-line-strong bg-white px-3.5 text-sm font-semibold text-graphite transition hover:bg-surface dark:hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                     >
                         Экспорт CSV
                     </button>
@@ -582,7 +582,7 @@ export default function CrmPage() {
                                         type="button"
                                         aria-label={`Удалить вид «${view.name}»`}
                                         onClick={() => savedViews.remove(view.id)}
-                                        className="flex h-5 w-5 items-center justify-center rounded-full text-graphite hover:bg-slate-100 dark:hover:bg-slate-800"
+                                        className="flex h-5 w-5 items-center justify-center rounded-full text-graphite hover:bg-surface-strong dark:hover:bg-slate-800"
                                     >
                                         <NavIcon name="close" size={12} />
                                     </button>
@@ -594,7 +594,7 @@ export default function CrmPage() {
                                     onClick={() => setSavingView((value) => !value)}
                                     className={cn(
                                         chipBase,
-                                        'border-dashed border-line-strong bg-white font-medium text-graphite hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400',
+                                        'border-dashed border-line-strong bg-white font-medium text-graphite hover:bg-surface dark:hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400',
                                     )}
                                 >
                                     + Сохранить вид
@@ -692,7 +692,7 @@ export default function CrmPage() {
                                                     'flex w-full gap-3 rounded-xl border px-3 py-[13px] text-left text-sm text-ink no-underline hover:text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-slate-100',
                                                     isCurrent
                                                         ? 'border-brand-200 bg-brand-50 dark:border-brand-800 dark:bg-brand-900/20'
-                                                        : 'border-transparent bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800/60',
+                                                        : 'border-transparent bg-transparent hover:bg-surface dark:hover:bg-slate-800/60',
                                                 )}
                                             >
                                                 <span

@@ -156,7 +156,7 @@ export function SettingsTab({ controller, page }: SettingsTabProps) {
           </Field>
           <div className="flex items-center gap-3 self-end pb-2">
             <Switch checked={isIndexable} onCheckedChange={(value) => setValue('isIndexable', value, { shouldDirty: true })} />
-            <span className="text-sm text-slate-700 dark:text-slate-200" id="indexable-label">
+            <span className="text-sm text-ink dark:text-slate-200" id="indexable-label">
               Разрешить индексацию поисковиками ({isIndexable ? 'index' : 'noindex'})
             </span>
           </div>
@@ -179,13 +179,13 @@ export function SettingsTab({ controller, page }: SettingsTabProps) {
             </Button>
           ))}
         </div>
-        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+        <p className="mt-2 text-xs text-graphite dark:text-slate-400">
           Публикация доступна в шапке редактора: сначала сохраняются изменения, затем выполняется SEO-аудит.
         </p>
       </Card>
 
       <Card title="Опасная зона">
-        <p className="text-sm text-slate-600 dark:text-slate-300">Удалённая страница перестаёт отображаться на сайте и в списке страниц.</p>
+        <p className="text-sm text-graphite dark:text-slate-300">Удалённая страница перестаёт отображаться на сайте и в списке страниц.</p>
         <Button type="button" variant="danger" className="mt-3" disabled={statusMutation.isPending || page.status === 'deleted'} onClick={() => setDeleteOpen(true)}>
           Удалить страницу
         </Button>

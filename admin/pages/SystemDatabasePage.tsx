@@ -27,7 +27,7 @@ export default function SystemDatabasePage() {
           </Badge>
           <span className="text-sm">{databaseQuery.data.databaseName}</span>
         </div>
-        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{databaseQuery.data.serverVersion}</p>
+        <p className="mt-2 text-sm text-graphite dark:text-slate-400">{databaseQuery.data.serverVersion}</p>
       </Card>
     </div>
   )

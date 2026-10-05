@@ -56,7 +56,7 @@ function SidebarContent({ collapsed, onToggleCollapsed, onClose }: SidebarConten
                             <span className="block truncate text-[15px] font-bold">
                                 ЗаборПрофиль
                             </span>
-                            <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
+                            <span className="block truncate text-xs text-graphite dark:text-slate-400">
                                 Панель управления
                             </span>
                         </span>
@@ -68,7 +68,7 @@ function SidebarContent({ collapsed, onToggleCollapsed, onClose }: SidebarConten
                         onClick={onToggleCollapsed}
                         aria-label={collapsed ? 'Развернуть меню' : 'Свернуть меню'}
                         title={collapsed ? 'Развернуть меню' : 'Свернуть меню'}
-                        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-slate-400 dark:hover:bg-slate-800"
+                        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-graphite hover:bg-surface-strong focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-slate-400 dark:hover:bg-slate-800"
                     >
                         <NavIcon name="sidebar" />
                     </button>
@@ -78,7 +78,7 @@ function SidebarContent({ collapsed, onToggleCollapsed, onClose }: SidebarConten
                         type="button"
                         onClick={onClose}
                         aria-label="Закрыть меню"
-                        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+                        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-graphite hover:bg-surface-strong dark:text-slate-400 dark:hover:bg-slate-800"
                     >
                         <NavIcon name="close" />
                     </button>
@@ -89,7 +89,7 @@ function SidebarContent({ collapsed, onToggleCollapsed, onClose }: SidebarConten
                 <SidebarNav collapsed={collapsed} onNavigate={onClose} />
             </div>
 
-            <div className="border-t border-slate-200 p-3 dark:border-slate-800">
+            <div className="border-t border-line p-3 dark:border-slate-800">
                 <div
                     className={cn(
                         'flex items-center gap-3 rounded-xl',
@@ -97,7 +97,7 @@ function SidebarContent({ collapsed, onToggleCollapsed, onClose }: SidebarConten
                     )}
                 >
                     <span
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-strong text-sm font-bold text-ink dark:bg-slate-800 dark:text-slate-200"
                         title={userEmail}
                         aria-hidden="true"
                     >
@@ -107,7 +107,7 @@ function SidebarContent({ collapsed, onToggleCollapsed, onClose }: SidebarConten
                         <span className="min-w-0 flex-1">
                             <span className="block truncate text-sm font-medium">{userLabel}</span>
                             {userName === '' ? null : (
-                                <span className="block truncate text-xs text-slate-500 dark:text-slate-400">
+                                <span className="block truncate text-xs text-graphite dark:text-slate-400">
                                     {userEmail}
                                 </span>
                             )}
@@ -119,7 +119,7 @@ function SidebarContent({ collapsed, onToggleCollapsed, onClose }: SidebarConten
                             type="submit"
                             aria-label="Выйти"
                             title="Выйти"
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-slate-400 dark:hover:bg-slate-800"
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-graphite hover:bg-surface-strong focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-slate-400 dark:hover:bg-slate-800"
                         >
                             <NavIcon name="logout" />
                         </button>
@@ -173,7 +173,7 @@ export function AdminShellLayout() {
             <aside
                 aria-label="Боковое меню"
                 className={cn(
-                    'sticky top-0 hidden h-screen shrink-0 border-r border-slate-200 bg-white transition-[width] duration-200 lg:block dark:border-slate-800 dark:bg-slate-900',
+                    'sticky top-0 hidden h-screen shrink-0 border-r border-line bg-white transition-[width] duration-200 lg:block dark:border-slate-800 dark:bg-slate-900',
                     collapsed ? 'w-[76px]' : 'w-64',
                 )}
             >
@@ -188,7 +188,7 @@ export function AdminShellLayout() {
                     <button
                         type="button"
                         aria-label="Закрыть меню"
-                        className="absolute inset-0 h-full w-full bg-slate-950/40"
+                        className="absolute inset-0 h-full w-full bg-night/40"
                         onClick={() => setMobileNavOpen(false)}
                     />
                     <aside
@@ -209,7 +209,7 @@ export function AdminShellLayout() {
                         </main>
                     ) : (
                         <main className="flex-1 px-4 py-6 lg:px-8">
-                            <section className="mx-auto max-w-[1440px] rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                            <section className="mx-auto max-w-[1440px] rounded-2xl border border-line bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
                                 <Outlet />
                             </section>
                         </main>

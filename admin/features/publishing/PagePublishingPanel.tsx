@@ -81,7 +81,7 @@ export function PagePublishingPanel({ pageId, onChanged }: PagePublishingPanelPr
   })
 
   if (workflowQuery.isPending) {
-    return <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs text-sm text-slate-500">Загрузка статуса публикации...</section>
+    return <section className="rounded-2xl border border-line bg-white p-6 shadow-xs text-sm text-graphite">Загрузка статуса публикации...</section>
   }
 
   if (workflowQuery.isError) {
@@ -92,18 +92,18 @@ export function PagePublishingPanel({ pageId, onChanged }: PagePublishingPanelPr
   const busy = statusMutation.isPending || scheduleMutation.isPending || cancelMutation.isPending
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs" aria-label="Публикация страницы">
+    <section className="rounded-2xl border border-line bg-white p-6 shadow-xs" aria-label="Публикация страницы">
       <div className="flex flex-wrap items-center gap-3">
-        <h3 className="text-base font-semibold text-slate-950">Публикация</h3>
+        <h3 className="text-base font-semibold text-ink">Публикация</h3>
         <Badge tone={statusTone(workflow.status)}>{statusLabels[workflow.status]}</Badge>
         {workflow.hasUnpublishedChanges && <Badge tone="warning">Есть неопубликованные изменения</Badge>}
       </div>
 
       <ScheduleSummary workflow={workflow} />
 
-      <label className="mt-4 block text-sm font-medium text-slate-700">
+      <label className="mt-4 block text-sm font-medium text-ink">
         Комментарий к изменению статуса
-        <input type="text" value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Необязательно" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+        <input type="text" value={comment} onChange={(event) => setComment(event.target.value)} placeholder="Необязательно" className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2" />
       </label>
 
       <div className="mt-3 flex flex-wrap gap-2">
@@ -175,7 +175,7 @@ function ScheduleSummary({ workflow }: { workflow: PageWorkflow }) {
   if (workflow.scheduledPublishAt === null && workflow.scheduledUnpublishAt === null) return null
 
   return (
-    <dl className="mt-3 grid gap-1 text-sm text-slate-700" data-testid="schedule-summary">
+    <dl className="mt-3 grid gap-1 text-sm text-ink" data-testid="schedule-summary">
       {workflow.scheduledPublishAt !== null && (
         <div className="flex gap-2"><dt className="font-medium">Публикация по расписанию:</dt><dd>{formatDateTime(workflow.scheduledPublishAt)}</dd></div>
       )}
@@ -189,18 +189,18 @@ function ScheduleSummary({ workflow }: { workflow: PageWorkflow }) {
 function WorkflowHistory({ workflow }: { workflow: PageWorkflow }) {
   return (
     <div className="mt-6">
-      <h4 className="text-sm font-semibold text-slate-900">Журнал событий</h4>
-      {workflow.history.length === 0 && <p className="mt-2 text-sm text-slate-500">Событий пока нет.</p>}
+      <h4 className="text-sm font-semibold text-ink">Журнал событий</h4>
+      {workflow.history.length === 0 && <p className="mt-2 text-sm text-graphite">Событий пока нет.</p>}
       <ul className="mt-2 space-y-2">
         {workflow.history.map((entry) => (
-          <li key={entry.id} className="rounded-lg border border-slate-200 px-3 py-2 text-sm" data-testid="workflow-event">
-            <p className="font-medium text-slate-900">
+          <li key={entry.id} className="rounded-lg border border-line px-3 py-2 text-sm" data-testid="workflow-event">
+            <p className="font-medium text-ink">
               {eventLabels[entry.event] ?? entry.event}
               {entry.fromStatus !== null && entry.toStatus !== null && entry.fromStatus !== entry.toStatus && (
-                <span className="font-normal text-slate-600"> · {statusLabels[entry.fromStatus as WorkflowStatus] ?? entry.fromStatus} → {statusLabels[entry.toStatus as WorkflowStatus] ?? entry.toStatus}</span>
+                <span className="font-normal text-graphite"> · {statusLabels[entry.fromStatus as WorkflowStatus] ?? entry.fromStatus} → {statusLabels[entry.toStatus as WorkflowStatus] ?? entry.toStatus}</span>
               )}
             </p>
-            <p className="text-xs text-slate-500">{formatDateTime(entry.occurredAt)} · {entry.actor}{entry.comment ? ` · ${entry.comment}` : ''}</p>
+            <p className="text-xs text-graphite">{formatDateTime(entry.occurredAt)} · {entry.actor}{entry.comment ? ` · ${entry.comment}` : ''}</p>
           </li>
         ))}
       </ul>

@@ -28,21 +28,21 @@ export function SectionTemplatesDialog({ open, onClose, onInsert }: SectionTempl
       description="Блоки секции добавятся в конец страницы."
       contentClassName="max-w-2xl"
     >
-      {query.isPending ? <p className="text-sm text-slate-500">Загрузка…</p> : null}
+      {query.isPending ? <p className="text-sm text-graphite dark:text-slate-500">Загрузка…</p> : null}
       {query.isError ? <p role="alert" className="text-sm text-red-700">Не удалось загрузить шаблоны секций.</p> : null}
       {query.isSuccess && templates.length === 0 ? (
         <EmptyState title="Шаблонов секций пока нет" description="Выберите блок на странице и нажмите «Сохранить как шаблон секции»." />
       ) : null}
       <ul className="max-h-96 space-y-2 overflow-y-auto">
         {templates.map((template) => (
-          <li key={template.code} className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+          <li key={template.code} className="flex items-start justify-between gap-3 rounded-lg border border-line p-3 dark:border-slate-800">
             <div className="text-sm">
               <p className="font-medium">
                 {template.name}
                 {template.isSystem ? <span className="ml-2"><Badge>системный</Badge></span> : null}
               </p>
-              {template.description !== null && template.description !== '' ? <p className="text-slate-600 dark:text-slate-300">{template.description}</p> : null}
-              <p className="text-xs text-slate-500">Блоков: {template.blocksSchema.length}</p>
+              {template.description !== null && template.description !== '' ? <p className="text-graphite dark:text-slate-300">{template.description}</p> : null}
+              <p className="text-xs text-graphite dark:text-slate-500">Блоков: {template.blocksSchema.length}</p>
             </div>
             <div className="flex shrink-0 gap-2">
               <Button type="button" size="sm" onClick={() => onInsert(template)}>Вставить</Button>

@@ -37,13 +37,13 @@ export function SliderEditor({ block, onChange }: SliderEditorProps) {
     }
 
     return (
-        <div className="space-y-3 rounded-md border border-slate-200 p-3 text-xs dark:border-slate-700">
+        <div className="space-y-3 rounded-md border border-line p-3 text-xs dark:border-slate-700">
             <p>
                 Блок <span className="font-semibold">{block.type}</span> поддерживает расширенные
                 настройки. Редактирование выполняется через JSON-панель ниже.
             </p>
 
-            <div className="rounded-md bg-slate-50 p-3 text-slate-700 dark:bg-slate-900 dark:text-slate-200">
+            <div className="rounded-md bg-surface p-3 text-ink dark:bg-slate-900 dark:text-slate-200">
                 <p className="font-semibold">Быстрый статус</p>
                 <ul className="mt-2 list-disc space-y-1 pl-4">
                     <li>
@@ -114,12 +114,12 @@ export function SliderEditor({ block, onChange }: SliderEditorProps) {
                 </ul>
             </div>
 
-            <div className="rounded-md border border-slate-200 p-3 dark:border-slate-700">
+            <div className="rounded-md border border-line p-3 dark:border-slate-700">
                 <p className="font-semibold">Минимально полезный слайд</p>
-                <p className="mt-1 text-slate-600 dark:text-slate-300">
+                <p className="mt-1 text-graphite dark:text-slate-300">
                     `src` + `alt` + `title` + `buttonLabel/buttonHref`.
                 </p>
-                <p className="mt-1 text-slate-600 dark:text-slate-300">
+                <p className="mt-1 text-graphite dark:text-slate-300">
                     Первый слайд сейчас:{' '}
                     <span className="font-semibold">
                         {String(firstSlide.title ?? '(без title)')}

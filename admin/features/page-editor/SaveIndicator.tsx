@@ -9,7 +9,7 @@ interface SaveIndicatorProps {
 }
 
 const dotClasses: Record<SaveState, string> = {
-    clean: 'bg-slate-300 dark:bg-slate-600',
+    clean: 'bg-line-strong dark:bg-slate-600',
     dirty: 'bg-amber-500',
     saving: 'bg-sky-500 animate-pulse',
     saved: 'bg-brand-500',
@@ -28,7 +28,7 @@ export function SaveIndicator({ state, lastSavedAt, autosaveActive, hint }: Save
             data-testid="save-indicator"
             data-state={state}
         >
-            <span className="inline-flex items-center gap-2 font-medium text-slate-700 dark:text-slate-200">
+            <span className="inline-flex items-center gap-2 font-medium text-ink dark:text-slate-200">
                 <span
                     className={cn('inline-block h-2.5 w-2.5 rounded-full', dotClasses[state])}
                     aria-hidden="true"
@@ -36,7 +36,7 @@ export function SaveIndicator({ state, lastSavedAt, autosaveActive, hint }: Save
                 {saveStateLabels[state]}
                 {savedAt}
             </span>
-            <span className="text-xs text-slate-500 dark:text-slate-400">
+            <span className="text-xs text-graphite dark:text-slate-400">
                 {hint ??
                     (autosaveActive
                         ? 'Автосохранение включено для SEO и блоков'

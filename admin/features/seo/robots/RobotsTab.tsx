@@ -165,7 +165,7 @@ function RobotsEditor({ savedBody, defaultBody, environment }: RobotsEditorProps
                     </p>
                 ) : null}
                 {preview === null && !previewFailed ? (
-                    <p className="text-sm text-slate-500">Проверка...</p>
+                    <p className="text-sm text-graphite dark:text-slate-500">Проверка...</p>
                 ) : null}
                 {preview !== null ? (
                     <div className="grid gap-2" aria-live="polite">
@@ -212,7 +212,7 @@ function RobotsEditor({ savedBody, defaultBody, environment }: RobotsEditorProps
                 }
             >
                 <pre
-                    className="max-h-72 overflow-auto rounded-lg bg-slate-50 p-3 font-mono text-xs dark:bg-slate-950"
+                    className="max-h-72 overflow-auto rounded-lg bg-surface p-3 font-mono text-xs dark:bg-slate-950"
                     aria-label="Предпросмотр robots.txt"
                     data-testid="robots-preview"
                 >

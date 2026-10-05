@@ -8,7 +8,7 @@
 
         <article class="grid gap-10 lg:grid-cols-[1fr_360px]">
             <div>
-                <p class="text-sm font-semibold uppercase tracking-wide text-emerald-700">Товар</p>
+                <p class="text-sm font-semibold uppercase tracking-wide text-brand-700">Товар</p>
                 <h1 class="mt-2 text-4xl font-bold tracking-tight text-ink">{{ product.name }}</h1>
                 {% if product.summary %}
                     <p class="mt-4 max-w-3xl text-lg leading-8 text-ink">{{ product.summary }}</p>
@@ -29,7 +29,7 @@
                             <div class="rounded-xl border border-line p-4">
                                 <p class="font-semibold text-ink">{{ variant.title }}</p>
                                 <p class="mt-1 text-sm text-graphite">SKU: {{ variant.sku }}</p>
-                                <p class="mt-3 text-lg font-bold text-emerald-700">
+                                <p class="mt-3 text-lg font-bold text-brand-700">
                                     {{ (variant.priceCents / 100)|number_format(2, ',', ' ') }} {{ variant.currency }}
                                 </p>
                             </div>

@@ -17,15 +17,12 @@ function scalarText(value: DiffScalar): string {
 
 function ChangeRow({ change }: { change: DiffChange }) {
     return (
-        <li
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-            data-testid="diff-change"
-        >
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+        <li className="rounded-lg border border-line px-3 py-2 text-sm" data-testid="diff-change">
+            <p className="text-xs font-semibold uppercase tracking-wide text-graphite">
                 {fieldLabel(change.field)}
             </p>
             {change.textDiff ? (
-                <p className="mt-1 whitespace-pre-wrap break-words text-slate-800">
+                <p className="mt-1 whitespace-pre-wrap break-words text-ink">
                     {change.textDiff.map((part, index) => {
                         if (part.op === 'insert') {
                             return (
@@ -49,7 +46,7 @@ function ChangeRow({ change }: { change: DiffChange }) {
                     })}
                 </p>
             ) : (
-                <p className="mt-1 break-words text-slate-800">
+                <p className="mt-1 break-words text-ink">
                     <del className="bg-red-100 text-red-800">{scalarText(change.before)}</del>
                     {' → '}
                     <ins className="bg-brand-100 text-brand-900 no-underline">
@@ -66,7 +63,7 @@ function ChangeSection({ title, changes }: { title: string; changes: DiffChange[
 
     return (
         <section className="space-y-2">
-            <h4 className="text-sm font-semibold text-slate-900">{title}</h4>
+            <h4 className="text-sm font-semibold text-ink">{title}</h4>
             <ul className="space-y-2">
                 {changes.map((change) => (
                     <ChangeRow key={change.field} change={change} />
@@ -82,20 +79,20 @@ function BlockSection({ blocks }: { blocks: BlockDiff[] }) {
 
     return (
         <section className="space-y-2">
-            <h4 className="text-sm font-semibold text-slate-900">Блоки</h4>
+            <h4 className="text-sm font-semibold text-ink">Блоки</h4>
             <ul className="space-y-3">
                 {visible.map((block, index) => (
                     <li
                         key={`${block.type}-${index}`}
-                        className="rounded-xl border border-slate-200 p-3"
+                        className="rounded-xl border border-line p-3"
                         data-testid="diff-block"
                     >
-                        <p className="text-sm font-medium text-slate-900">
+                        <p className="text-sm font-medium text-ink">
                             {block.name || block.type}{' '}
-                            <span className="text-xs font-normal text-slate-500">
+                            <span className="text-xs font-normal text-graphite">
                                 ({block.type})
                             </span>
-                            <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700">
+                            <span className="ml-2 rounded-full bg-surface-strong px-2 py-0.5 text-xs font-medium text-ink">
                                 {blockStatusLabels[block.status]}
                             </span>
                         </p>
@@ -118,16 +115,16 @@ export function RevisionDiffView({ diff }: { diff: RevisionDiff }) {
 
     return (
         <div className="space-y-4">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-graphite">
                 {sideLabel(diff.from)} → {sideLabel(diff.to)}
             </p>
             {!diff.hasChanges ? (
-                <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                <p className="rounded-lg bg-surface px-3 py-2 text-sm text-graphite">
                     Различий нет.
                 </p>
             ) : (
                 <>
-                    <p className="text-sm text-slate-600" data-testid="diff-summary">
+                    <p className="text-sm text-graphite" data-testid="diff-summary">
                         Поля: {summary.fields} · SEO: {summary.seo} · Настройки: {summary.settings}{' '}
                         · Блоки: +{summary.blocksAdded} / −{summary.blocksRemoved} / ~
                         {summary.blocksChanged}

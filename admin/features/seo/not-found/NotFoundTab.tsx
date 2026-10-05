@@ -93,13 +93,13 @@ export function NotFoundTab() {
           </div>
 
           {data !== undefined ? (
-            <p className="text-sm text-slate-600 dark:text-slate-300">
+            <p className="text-sm text-graphite dark:text-slate-300">
               Адресов: {formatNumber(data.total)} · обращений: {formatNumber(data.totalHits)}
             </p>
           ) : null}
 
           {notFoundQuery.isError ? <ErrorState title="Не удалось загрузить журнал 404" description="Проверьте endpoint /admin/api/seo/not-found." /> : null}
-          {notFoundQuery.isPending ? <p className="text-sm text-slate-500">Загрузка...</p> : null}
+          {notFoundQuery.isPending ? <p className="text-sm text-graphite dark:text-slate-500">Загрузка...</p> : null}
 
           {data !== undefined && data.items.length === 0 ? (
             <EmptyState title="Журнал пуст" description="Ошибок 404 на публичной части сайта пока не зафиксировано." />
@@ -111,7 +111,7 @@ export function NotFoundTab() {
                 head={(
                   <tr>
                     {['Адрес', 'Обращений', 'Последнее', 'Источник перехода', 'Действия'].map((title) => (
-                      <th key={title} className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</th>
+                      <th key={title} className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-graphite dark:text-slate-500">{title}</th>
                     ))}
                   </tr>
                 )}

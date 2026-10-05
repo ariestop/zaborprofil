@@ -22,9 +22,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
                 size === 'sm' ? 'h-8 px-3 text-sm' : 'h-10 px-4 text-sm',
                 variant === 'default' && 'bg-brand-600 text-white hover:bg-brand-700',
                 variant === 'outline' &&
-                    'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800',
+                    'border border-line-strong bg-white text-ink hover:bg-surface dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800',
                 variant === 'ghost' &&
-                    'bg-transparent text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800',
+                    'bg-transparent text-ink hover:bg-surface-strong dark:text-slate-200 dark:hover:bg-slate-800',
                 variant === 'danger' && 'bg-red-600 text-white hover:bg-red-700',
                 className,
             )}

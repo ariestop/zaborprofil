@@ -16,11 +16,11 @@ export function Toast({ message, onOpenChange }: ToastProps) {
     <ToastPrimitive.Root
       open
       onOpenChange={onOpenChange}
-      className="rounded-lg border border-slate-200 bg-white p-3 shadow-lg dark:border-slate-700 dark:bg-slate-900"
+      className="rounded-lg border border-line bg-white p-3 shadow-lg dark:border-slate-700 dark:bg-slate-900"
     >
       <ToastPrimitive.Title className="text-sm font-semibold">{message.title}</ToastPrimitive.Title>
       {message.description !== undefined ? (
-        <ToastPrimitive.Description className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+        <ToastPrimitive.Description className="mt-1 text-xs text-graphite dark:text-slate-400">
           {message.description}
         </ToastPrimitive.Description>
       ) : null}

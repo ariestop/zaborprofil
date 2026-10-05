@@ -132,7 +132,9 @@ export function PageCanvas({
                 <div className="overflow-hidden rounded-b-xl border border-line-strong bg-white text-ink dark:border-slate-700">
                     <div className="px-8 pb-2 pt-8">
                         {/* В админке заголовок страницы — в шапке редактора; здесь только его вид на сайте, без второго h1. */}
-                        <p className="text-3xl font-bold tracking-tight text-slate-950">{pageH1}</p>
+                        <p className="text-3xl font-bold tracking-tight text-ink dark:text-slate-950">
+                            {pageH1}
+                        </p>
                     </div>
                     {blocks.map((block, index) => {
                         const selected = block.id === selectedBlockId
@@ -257,10 +259,10 @@ export function PageCanvas({
                     })}
                     {hasInlineForm ? null : (
                         <div
-                            className="border-t border-dashed border-slate-200 opacity-70"
+                            className="border-t border-dashed border-line dark:border-slate-200 opacity-70"
                             title="Общая форма заявки выводится внизу каждой страницы, если среди блоков нет своей формы"
                         >
-                            <span className="block px-8 pt-4 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                            <span className="block px-8 pt-4 text-xs font-semibold uppercase tracking-wide text-graphite dark:text-slate-400">
                                 Общая форма внизу страницы
                             </span>
                             <LeadFormPreview title="" />
