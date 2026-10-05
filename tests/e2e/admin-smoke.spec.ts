@@ -51,7 +51,7 @@ test.describe('Admin smoke flow', () => {
 
     await page.getByRole('button', { name: BUILDER_SELECTORS.addBlockButtonName, exact: true }).first().click()
     const dialog = page.getByRole('dialog', { name: BUILDER_SELECTORS.addBlockDialogTitle })
-    await dialog.getByRole('button', { name: /^Цены/ }).click()
+    await dialog.getByRole('listitem').getByRole('button', { name: /^Цены/ }).click()
     await expect(dialog).toBeHidden()
 
     const rows = page.getByTestId(BUILDER_SELECTORS.structureRowTestId)
