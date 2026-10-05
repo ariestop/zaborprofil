@@ -1,0 +1,127 @@
+{#
+    Конфигуратор забора (бренд-система «Периметр», docs/50-brand-system.md, раздел 8).
+    Сумма = длина × цена за погонный метр материала × коэффициент высоты + ворота, округление до 100 ₽.
+    Первая сумма считается здесь — она видна без JS и поисковикам; assets/site/configurator.ts пересчитывает её при выборе.
+#}
+{# Тысячи и ₽ — через неразрывный пробел (брендбук, раздел 5), как formatMoney() в assets/site/ui.ts. #}
+{% macro money(value) %}{{ value|number_format(0, ',', ' ') }} ₽{% endmacro %}
+
+{% set c = block.content %}
+{% set materials = (c.materials ?? [])|filter(m => (m.title ?? '') is not empty) %}
+{% if materials|length > 0 %}
+    {% set heights = (c.heights ?? [])|filter(h => (h.label ?? '') is not empty and (h.factor ?? 0) > 0) %}
+    {% set colors = (c.colors ?? [])|filter(col => (col.hex ?? '') matches '/^#[0-9A-Fa-f]{6}$/') %}
+    {% set length = c.length ?? {} %}
+    {% set length_min = max(1, (length.min ?? 10) + 0) %}
+    {% set length_max = max(length_min, (length.max ?? 200) + 0) %}
+    {% set length_value = min(length_max, max(length_min, (length.default ?? 40) + 0)) %}
+    {% set gate_price = max(0, (c.gate.price ?? 0) + 0) %}
+    {% set patterns = ['profnastil', 'profnastil-wide', 'shtaketnik', 'jaluzi', 'setka'] %}
+
+    {# Базовая высота — с коэффициентом 1, иначе первая. #}
+    {% set height_index = 0 %}
+    {% for h in heights %}{% if (h.factor + 0) == 1 and height_index == 0 %}{% set height_index = loop.index0 %}{% endif %}{% endfor %}
+
+    {% set material = materials|first %}
+    {% set factor = heights is empty ? 1 : (heights[height_index].factor + 0) %}
+    {% set total = ((length_value * (material.pricePerMeter ?? 0) * factor) / 100)|round * 100 %}
+    {% set color = colors is empty ? null : colors|first %}
+    {% set pattern = material.pattern ?? 'profnastil' %}
+    {% if pattern not in patterns %}{% set pattern = 'profnastil' %}{% endif %}
+    {% set fence_height = heights|length > 1 ? 36 + 18 * height_index / (heights|length - 1) : 46 %}
+
+    {% set config = {
+        materials: materials|map(m => {title: m.title, price: (m.pricePerMeter ?? 0) + 0, pattern: (m.pattern ?? 'profnastil') in patterns ? (m.pattern ?? 'profnastil') : 'profnastil'}),
+        heights: heights|map(h => {label: h.label, factor: h.factor + 0}),
+        colors: colors|map(col => {ral: col.ral ?? '', name: col.name ?? '', hex: col.hex}),
+        gate: gate_price,
+    } %}
+
+    <section class="zp-section" data-block-type="fence-configurator" {% if (block.settings.anchor ?? '') is not empty %}id="{{ block.settings.anchor }}"{% endif %}>
+        <div class="zp-container grid items-start gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-10">
+            <div>
+                <h2 class="zp-h2">{{ (c.title ?? '') is not empty ? c.title : 'Соберите забор и узнайте цену' }}</h2>
+                {% if (c.subtitle ?? '') is not empty %}
+                    <p class="zp-lead">{{ c.subtitle }}</p>
+                {% endif %}
+            </div>
+
+            <form class="zp-cfg" data-fence-configurator data-config="{{ config|json_encode(constant('JSON_UNESCAPED_UNICODE'))|e('html_attr') }}">
+                <div class="zp-scene" data-cfg-scene data-pattern="{{ pattern }}" style="--ral: {{ color.hex ?? '#373f43' }}; --fh: {{ fence_height }}%" aria-hidden="true">
+                    <span class="zp-scene__tree"></span>
+                    <span class="zp-scene__house"></span>
+                    <span class="zp-scene__ground"></span>
+                    <span class="zp-scene__fence"></span>
+                </div>
+                {% if color is not null %}
+                    <p class="zp-cfg__caption" data-cfg-caption>RAL {{ color.ral }}{% if (color.name ?? '') is not empty %} · {{ color.name }}{% endif %}{% if heights is not empty %} · {{ heights[height_index].label }}{% endif %}</p>
+                {% endif %}
+
+                {% if materials|length > 1 %}
+                    <fieldset class="zp-cfg__group">
+                        <legend class="zp-cfg__label">Материал</legend>
+                        <div class="zp-cfg-seg">
+                            {% for m in materials %}
+                                <label><input type="radio" name="material" value="{{ loop.index0 }}" {% if loop.first %}checked{% endif %}><span>{{ m.title }}</span></label>
+                            {% endfor %}
+                        </div>
+                    </fieldset>
+                {% else %}
+                    <input type="hidden" name="material" value="0">
+                {% endif %}
+
+                {% if colors|length > 0 %}
+                    <fieldset class="zp-cfg__group">
+                        <legend class="zp-cfg__label">Цвет: <span data-cfg-color-name>RAL {{ color.ral }}{% if (color.name ?? '') is not empty %} · {{ color.name }}{% endif %}</span></legend>
+                        <div class="zp-swatches">
+                            {% for col in colors %}
+                                <label class="zp-swatch" style="--swatch: {{ col.hex }}" title="RAL {{ col.ral }}{% if (col.name ?? '') is not empty %} · {{ col.name }}{% endif %}">
+                                    <input type="radio" name="color" value="{{ loop.index0 }}" {% if loop.first %}checked{% endif %}>
+                                    <span class="sr-only">RAL {{ col.ral }} {{ col.name ?? '' }}</span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                        <p class="zp-cfg__hint">Оттенок на экране может отличаться от краски.</p>
+                    </fieldset>
+                {% endif %}
+
+                {% if heights|length > 1 %}
+                    <fieldset class="zp-cfg__group">
+                        <legend class="zp-cfg__label">Высота</legend>
+                        <div class="zp-cfg-seg">
+                            {% for h in heights %}
+                                <label><input type="radio" name="height" value="{{ loop.index0 }}" {% if loop.index0 == height_index %}checked{% endif %}><span>{{ h.label }}</span></label>
+                            {% endfor %}
+                        </div>
+                    </fieldset>
+                {% elseif heights|length == 1 %}
+                    <input type="hidden" name="height" value="0">
+                {% endif %}
+
+                <div class="zp-cfg__row">
+                    <label class="zp-cfg__group grow">
+                        <span class="zp-cfg__label">Длина забора: <output class="text-ink" data-cfg-length-out>{{ length_value }} м</output></span>
+                        <input class="zp-range" type="range" name="length" min="{{ length_min }}" max="{{ length_max }}" step="1" value="{{ length_value }}">
+                    </label>
+                    {% if gate_price > 0 %}
+                        <label class="zp-check">
+                            <input type="checkbox" name="gate">
+                            <span>{{ (c.gate.label ?? '') is not empty ? c.gate.label : 'Ворота и калитка' }}</span>
+                        </label>
+                    {% endif %}
+                </div>
+
+                <div class="zp-cfg__sum">
+                    <div>
+                        <p class="text-sm text-graphite">Примерно, с материалом и монтажом</p>
+                        <p class="zp-price text-4xl text-ink" data-cfg-total>{% if total > 0 %}≈ {{ _self.money(total) }}{% else %}Цена по запросу{% endif %}</p>
+                    </div>
+                    <a class="zp-btn zp-btn--primary" href="#lead-form" data-cfg-cta data-lead-plan="Конфигуратор: {{ material.title }}{% if color is not null %}, RAL {{ color.ral }}{% endif %}{% if heights is not empty %}, высота {{ heights[height_index].label }}{% endif %}, длина {{ length_value }} м{% if total > 0 %}, примерно {{ _self.money(total) }}{% endif %}">{{ (c.cta ?? '') is not empty ? c.cta : 'Зафиксировать цену' }}</a>
+                </div>
+                {% if (c.note ?? '') is not empty %}
+                    <p class="zp-cfg__hint">{{ c.note }}</p>
+                {% endif %}
+            </form>
+        </div>
+    </section>
+{% endif %}

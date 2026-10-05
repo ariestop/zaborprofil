@@ -25,6 +25,23 @@
             </nav>
         {% endif %}
 
+        {# Переключатель «Частным клиентам / Бизнесу»: показывается, только если на странице есть блоки для бизнеса. #}
+        {% set has_b2b = false %}
+        {% for block in blocks %}
+            {% if 'data-audience="b2b"' in (block ~ '') %}{% set has_b2b = true %}{% endif %}
+        {% endfor %}
+        {% if has_b2b %}
+            <div class="zp-audience-bar">
+                <div class="zp-container flex flex-wrap items-center gap-x-4 gap-y-2 py-2.5">
+                    <span class="text-sm text-graphite" id="audience-label">Для кого:</span>
+                    <div class="zp-audience" role="group" aria-labelledby="audience-label" data-audience-switch>
+                        <button type="button" data-audience-value="b2c" aria-pressed="true">Частным клиентам</button>
+                        <button type="button" data-audience-value="b2b" aria-pressed="false">Бизнесу</button>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
         {# Если страница начинается с первого экрана, H1 выводится внутри него. #}
         {% if not h1_in_block %}
             <div class="zp-container pt-8 md:pt-12">

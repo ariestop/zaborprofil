@@ -467,3 +467,173 @@
         @apply inline-flex min-h-10 items-center rounded-full bg-surface-strong px-4 text-sm font-semibold whitespace-nowrap text-ink transition-colors hover:bg-brand-100 hover:text-brand-900 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
     }
 }
+
+@layer components {
+    /* ---------- Конфигуратор забора (fence-configurator) ---------- */
+    .zp-cfg {
+        @apply grid gap-4 rounded-[var(--radius-card)] bg-white p-4 ring-1 ring-line md:p-5;
+    }
+    .zp-cfg__group {
+        @apply grid min-w-0 gap-2;
+    }
+    .zp-cfg__label {
+        @apply text-sm font-medium text-graphite;
+    }
+    .zp-cfg__caption {
+        @apply -mt-2 font-cond text-sm font-semibold tracking-wide text-graphite;
+    }
+    .zp-cfg__hint {
+        @apply text-sm text-graphite;
+    }
+    .zp-cfg__row {
+        @apply flex flex-wrap items-end gap-4;
+    }
+    .zp-cfg__sum {
+        @apply flex flex-wrap items-center justify-between gap-4 border-t border-line pt-4;
+    }
+    .zp-cfg-seg {
+        @apply flex flex-wrap gap-1.5 rounded-[var(--radius-btn)] bg-surface-strong p-1.5;
+    }
+    .zp-cfg-seg label {
+        @apply relative flex-1;
+    }
+    .zp-cfg-seg input {
+        @apply absolute inset-0 opacity-0;
+    }
+    .zp-cfg-seg span {
+        @apply flex min-h-11 cursor-pointer items-center justify-center rounded-lg px-3 text-center text-sm font-semibold whitespace-nowrap text-graphite transition-colors;
+    }
+    .zp-cfg-seg input:checked + span {
+        @apply bg-white text-ink shadow-sm;
+    }
+    .zp-cfg-seg input:focus-visible + span {
+        @apply outline-3 outline-offset-2 outline-brand-600;
+    }
+    .zp-swatches {
+        @apply flex flex-wrap gap-2.5;
+    }
+    .zp-swatch {
+        @apply relative size-11 cursor-pointer rounded-lg ring-1 ring-black/15;
+        background: var(--swatch);
+    }
+    .zp-swatch input {
+        @apply absolute inset-0 opacity-0;
+    }
+    .zp-swatch:has(input:checked) {
+        @apply ring-2 ring-brand-700 ring-offset-2;
+    }
+    .zp-swatch:has(input:focus-visible) {
+        @apply outline-3 outline-offset-4 outline-brand-600;
+    }
+    .zp-range {
+        @apply h-11 w-full accent-brand-700;
+    }
+    .zp-check {
+        @apply flex min-h-11 cursor-pointer items-center gap-2.5 text-base text-ink;
+    }
+    .zp-check input {
+        @apply size-5 accent-brand-700;
+    }
+
+    /* Сцена: небо, дом, дерево, земля и забор в цвете RAL (--ral); высота забора — --fh. */
+    .zp-scene {
+        @apply relative aspect-[16/8] w-full overflow-hidden rounded-lg;
+        background: linear-gradient(#bcd9ee, #e6f1f8 70%);
+    }
+    .zp-scene__house {
+        @apply absolute bottom-[14%] left-1/2 h-[44%] w-[34%];
+        background: #e4ded4;
+    }
+    .zp-scene__house::before {
+        content: '';
+        @apply absolute -right-[10%] bottom-full -left-[10%] h-[60%];
+        background: #7c838b;
+        clip-path: polygon(50% 0, 100% 100%, 0 100%);
+    }
+    .zp-scene__tree {
+        @apply absolute bottom-[14%] left-[12%] aspect-square w-[16%] rounded-full;
+        background: #6e9a5b;
+    }
+    .zp-scene__ground {
+        @apply absolute inset-x-0 bottom-0 h-[15%];
+        background: #86ae70;
+    }
+    .zp-scene__fence {
+        --l: color-mix(in srgb, var(--ral), #fff 26%);
+        --d: color-mix(in srgb, var(--ral), #000 35%);
+        --post: linear-gradient(90deg, #4b5056 0 7px, transparent 7px) 30px 0 / 150px 100% repeat-x;
+        @apply absolute inset-x-0 bottom-[11%] transition-[height] duration-300 motion-reduce:transition-none;
+        height: var(--fh, 46%);
+        background:
+            var(--post),
+            repeating-linear-gradient(
+                90deg,
+                var(--ral) 0 9px,
+                var(--l) 9px 12px,
+                var(--ral) 12px 20px,
+                var(--d) 20px 23px
+            );
+    }
+    .zp-scene[data-pattern='profnastil-wide'] .zp-scene__fence {
+        background:
+            var(--post),
+            repeating-linear-gradient(
+                90deg,
+                var(--ral) 0 15px,
+                var(--l) 15px 20px,
+                var(--ral) 20px 33px,
+                var(--d) 33px 38px
+            );
+    }
+    .zp-scene[data-pattern='shtaketnik'] .zp-scene__fence {
+        background:
+            var(--post),
+            repeating-linear-gradient(
+                90deg,
+                var(--ral) 0 12px,
+                var(--l) 12px 14px,
+                var(--ral) 14px 22px,
+                transparent 22px 32px
+            ),
+            linear-gradient(#4b5056, #4b5056) 0 16% / 100% 5px no-repeat,
+            linear-gradient(#4b5056, #4b5056) 0 80% / 100% 5px no-repeat;
+    }
+    .zp-scene[data-pattern='jaluzi'] .zp-scene__fence {
+        background:
+            var(--post),
+            repeating-linear-gradient(
+                180deg,
+                var(--ral) 0 9px,
+                var(--d) 9px 11px,
+                var(--l) 11px 12px
+            );
+    }
+    .zp-scene[data-pattern='setka'] .zp-scene__fence {
+        background:
+            var(--post), repeating-linear-gradient(90deg, var(--ral) 0 3px, transparent 3px 22px),
+            repeating-linear-gradient(180deg, var(--ral) 0 3px, transparent 3px 34px);
+    }
+}
+
+@layer components {
+    /* ---------- Режим «Частным клиентам / Бизнесу» (settings.audience блока) ---------- */
+    html:not([data-audience-mode='b2b']) [data-audience='b2b'],
+    html[data-audience-mode='b2b'] [data-audience='b2c'] {
+        display: none;
+    }
+    .zp-audience-bar {
+        @apply border-b border-line bg-white;
+    }
+    .zp-audience {
+        @apply inline-flex gap-1 rounded-[var(--radius-btn)] bg-surface-strong p-1;
+    }
+    .zp-audience button {
+        @apply min-h-11 rounded-lg px-4 text-sm font-semibold text-graphite transition-colors hover:text-ink;
+    }
+    .zp-audience button[aria-pressed='true'] {
+        @apply bg-white text-ink shadow-sm;
+    }
+    .zp-audience button:focus-visible {
+        @apply outline-3 outline-offset-2 outline-brand-600;
+    }
+}

@@ -15,6 +15,11 @@ final readonly class TwigBlockRenderer
      */
     private const array HEADING_BLOCK_TYPES = ['hero.classic', 'hero', 'hero.minimal'];
 
+    /**
+     * Для кого показывать блок: пусто — всем.
+     */
+    private const array AUDIENCES = ['b2c', 'b2b'];
+
     public function __construct(private Environment $twig)
     {
     }
@@ -40,9 +45,25 @@ final readonly class TwigBlockRenderer
         ];
 
         try {
-            return $this->twig->render($template, $context);
+            $html = $this->twig->render($template, $context);
         } catch (Error) {
-            return $this->twig->render('public/blocks/default.html.twig', $context);
+            $html = $this->twig->render('public/blocks/default.html.twig', $context);
         }
+
+        return $this->wrapForAudience($block, $html);
+    }
+
+    /**
+     * Блок только для частных клиентов (b2c) или только для бизнеса (b2b) получает обёртку с data-audience:
+     * переключатель «Частным клиентам / Бизнесу» на странице показывает нужные блоки (docs/50-brand-system.md, раздел 8).
+     */
+    private function wrapForAudience(PageBlockView $block, string $html): string
+    {
+        $audience = $block->settings['audience'] ?? null;
+        if (!\is_string($audience) || !\in_array($audience, self::AUDIENCES, true) || trim($html) === '') {
+            return $html;
+        }
+
+        return \sprintf('<div data-audience="%s">%s</div>', $audience, $html);
     }
 }

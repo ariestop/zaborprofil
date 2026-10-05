@@ -63,6 +63,7 @@ final class PublicBlockTemplatesTest extends KernelTestCase
         yield 'contacts-map' => ['contacts-map', ['title' => 'Контакты'], [], 'tel:+78452988808'];
         yield 'hero.minimal' => ['hero.minimal', ['title' => 'Контакты', 'subtitle' => 'Позвоните нам'], [], 'data-block-type="hero.minimal"'];
         yield 'image' => ['image', ['src' => '/uploads/a.jpg', 'alt' => 'Картинка'], [], 'alt="Картинка"'];
+        yield 'fence-configurator' => ['fence-configurator', ['materials' => [['title' => 'Профнастил С8', 'pricePerMeter' => 1000]]], [], 'data-fence-configurator'];
     }
 
     public function testGalleryHidesExtraPhotosBehindButtonAndSupportsPortraitMode(): void
@@ -126,6 +127,60 @@ final class PublicBlockTemplatesTest extends KernelTestCase
         self::assertStringContainsString('data-map-embed="https://widgets.2gis.com/widget?type=firmsonmap"', $html);
         self::assertStringContainsString('data-copy="6452128198"', $html);
         self::assertSame(1, substr_count($html, 'aria-label="Скопировать: '), 'Реквизит без значения не выводится.');
+    }
+
+    public function testFenceConfiguratorCalculatesFirstPriceOnServer(): void
+    {
+        $html = $this->render('fence-configurator', [
+            'title' => 'Соберите забор',
+            'materials' => [
+                ['title' => 'Профнастил С8', 'pricePerMeter' => 1290, 'pattern' => 'profnastil'],
+                ['title' => 'Евроштакетник', 'pricePerMeter' => 2050, 'pattern' => 'shtaketnik'],
+            ],
+            'heights' => [['label' => '1,5 м', 'factor' => 0.88], ['label' => '1,8 м', 'factor' => 1]],
+            'colors' => [
+                ['ral' => '6005', 'name' => 'зелёный мох', 'hex' => '#0F4336'],
+                ['ral' => '9999', 'name' => 'не цвет', 'hex' => 'red;background:url(x)'],
+            ],
+            'gate' => ['label' => 'Ворота и калитка', 'price' => 38000],
+            'length' => ['min' => 10, 'max' => 200, 'default' => 40],
+        ]);
+
+        // 40 м × 1290 ₽ × коэффициент базовой высоты 1 = 51 600 ₽ (ворота по умолчанию не выбраны).
+        self::assertStringContainsString("≈ 51\u{00A0}600\u{00A0}₽", $html);
+        self::assertMatchesRegularExpression('/name="height" value="1" checked/u', $html, 'По умолчанию выбрана высота с коэффициентом 1.');
+        self::assertStringContainsString('--ral: #0F4336', $html);
+        self::assertStringNotContainsString('url(x)', $html, 'Цвет не из HEX в стиль не попадает.');
+        self::assertStringContainsString('data-lead-plan="Конфигуратор: Профнастил С8, RAL 6005, высота 1,8 м, длина 40 м', $html);
+        self::assertStringContainsString('Ворота и калитка', $html);
+    }
+
+    public function testFenceConfiguratorWithoutPriceAsksForRequest(): void
+    {
+        $html = $this->render('fence-configurator', ['materials' => [['title' => 'Жалюзи', 'pricePerMeter' => 0, 'pattern' => 'jaluzi']]]);
+
+        self::assertStringContainsString('Цена по запросу', $html);
+        self::assertStringContainsString('data-pattern="jaluzi"', $html);
+        self::assertStringNotContainsString('name="gate"', $html, 'Без цены ворот пункт не показывается.');
+    }
+
+    public function testAudienceSettingWrapsBlockForTheSwitch(): void
+    {
+        $items = ['items' => [['title' => 'Заявка']]];
+
+        self::assertStringStartsWith('<div data-audience="b2b">', $this->render('steps', $items, ['audience' => 'b2b']));
+        self::assertStringStartsWith('<div data-audience="b2c">', $this->render('steps', $items, ['audience' => 'b2c']));
+        self::assertStringNotContainsString('data-audience', $this->render('steps', $items, ['audience' => '']), 'Блок для всех не оборачивается.');
+        self::assertStringNotContainsString('data-audience', $this->render('steps', $items, ['audience' => 'admins']), 'Неизвестное значение игнорируется.');
+        self::assertSame('', trim($this->render('steps', ['items' => []], ['audience' => 'b2b'])), 'Пустой блок не превращается в пустую обёртку.');
+    }
+
+    public function testStepsShowBrandIconInsteadOfNumber(): void
+    {
+        $html = $this->render('steps', ['items' => [['title' => 'Замер', 'icon' => 'measure'], ['title' => 'Монтаж', 'icon' => 'unknown']]]);
+
+        self::assertStringContainsString('href="#i-zp-measure"', $html);
+        self::assertStringNotContainsString('#i-zp-unknown', $html, 'Неизвестная иконка не выводится, остаётся номер.');
     }
 
     public function testPriceMatrixRendersFirstProfilePricesAndFullTable(): void

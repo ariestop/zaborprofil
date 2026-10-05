@@ -26,6 +26,8 @@ const simpleSettingsSchema = z.object({
   className: z.string().default(''),
   /** Якорь секции для ссылок вида /#catalog (необязательно). */
   anchor: z.string().default(''),
+  /** Для кого показывать: пусто — всем, b2c — частным клиентам, b2b — бизнесу (переключатель на странице). */
+  audience: z.enum(['', 'b2c', 'b2b']).default(''),
 })
 
 const priceMatrixGroupSchema = z.object({
@@ -195,7 +197,7 @@ const structuredBlockRegistry: BlockDefinition[] = [
   def('article-section', 'Секция статьи', 'content', 30, 'Секция статьи.', z.object({ ...textSchema.shape })),
   def('quote', 'Цитата', 'content', 40, 'Цитата.', z.object({ quote: z.string().default('Цитата'), author: z.string().default('') })),
   def('faq', 'FAQ', 'content', 50, 'Список вопросов и ответов.', z.object({ title: z.string().default(''), items: z.array(z.object({ question: z.string(), answer: z.string() })).default([]) })),
-  def('steps', 'Шаги', 'content', 60, 'Пошаговый блок.', z.object({ title: z.string().default(''), items: z.array(z.object({ title: z.string(), text: z.string() })).default([]) })),
+  def('steps', 'Шаги', 'content', 60, 'Пошаговый блок. У шага можно выбрать фирменную иконку: замер, доставка, монтаж, гарантия.', z.object({ title: z.string().default(''), items: z.array(z.object({ title: z.string(), text: z.string(), icon: z.enum(['', 'measure', 'truck', 'fence', 'shield']).default('') })).default([]) })),
   def('benefits', 'Преимущества', 'content', 70, 'Преимущества.', z.object({ items: z.array(z.object({ title: z.string(), text: z.string() })).default([]) })),
   def('features', 'Особенности', 'content', 80, 'Фичи/особенности.', z.object({ title: z.string().default(''), items: z.array(z.object({ title: z.string(), text: z.string() })).default([]) })),
   def('icons-list', 'Список с иконками', 'content', 90, 'Список с иконками.', z.object({ items: z.array(z.object({ icon: z.string(), text: z.string() })).default([]) })),
@@ -253,6 +255,36 @@ const structuredBlockRegistry: BlockDefinition[] = [
       subtitle: z.string().default(''),
       unit: z.string().default('₽/м²'),
       groups: z.array(priceMatrixGroupSchema).default([]),
+    }),
+  ),
+  def(
+    'fence-configurator',
+    'Конфигуратор забора',
+    'conversion',
+    45,
+    'Посетитель выбирает материал, цвет RAL, высоту и длину — видит забор и примерную сумму; кнопка передаёт параметры в заявку.',
+    z.object({
+      title: z.string().default('Соберите забор и узнайте цену'),
+      subtitle: z.string().default(''),
+      materials: z
+        .array(
+          z.object({
+            title: z.string(),
+            /** Цена за погонный метр забора под ключ для высоты с коэффициентом 1. */
+            pricePerMeter: z.number().min(0).default(0),
+            pattern: z.enum(['profnastil', 'profnastil-wide', 'shtaketnik', 'jaluzi', 'setka']).default('profnastil'),
+          }),
+        )
+        .default([]),
+      heights: z.array(z.object({ label: z.string(), factor: z.number().positive().default(1) })).default([]),
+      /** Цвета продукции RAL: hex — экранное приближение для картинки. */
+      colors: z.array(z.object({ ral: z.string(), name: z.string().default(''), hex: z.string().regex(/^#[0-9A-Fa-f]{6}$/) })).default([]),
+      gate: z.object({ label: z.string().default('Ворота и калитка'), price: z.number().min(0).default(0) }).default({ label: 'Ворота и калитка', price: 0 }),
+      length: z
+        .object({ min: z.number().int().min(1).default(10), max: z.number().int().min(1).default(200), default: z.number().int().min(1).default(40) })
+        .default({ min: 10, max: 200, default: 40 }),
+      cta: z.string().default('Зафиксировать цену'),
+      note: z.string().default(''),
     }),
   ),
   def(

@@ -16,8 +16,25 @@ export type FieldSpec =
   | { kind: 'table', label: string }
   | { kind: 'strings', key: string, label: string, addLabel: string }
   | { kind: 'checkbox', key: string, label: string }
-  | { kind: 'number', key: string, label: string }
+  | { kind: 'number', key: string, label: string, help?: string, step?: number }
+  | { kind: 'select', key: string, label: string, options: Array<{ value: string, label: string }>, help?: string }
   | { kind: 'note', text: string }
+
+const STEP_ICONS = [
+  { value: '', label: 'Без иконки (номер)' },
+  { value: 'measure', label: 'Замер' },
+  { value: 'truck', label: 'Доставка' },
+  { value: 'fence', label: 'Монтаж' },
+  { value: 'shield', label: 'Гарантия' },
+]
+
+const FENCE_PATTERNS = [
+  { value: 'profnastil', label: 'Профнастил' },
+  { value: 'profnastil-wide', label: 'Профнастил с широкой волной' },
+  { value: 'shtaketnik', label: 'Евроштакетник' },
+  { value: 'jaluzi', label: 'Жалюзи' },
+  { value: 'setka', label: '3D сетка' },
+]
 
 const optionalTitle: FieldSpec = { kind: 'text', key: 'title', label: 'Заголовок блока', help: 'Необязательно: без заголовка блок идёт сразу после предыдущего.' }
 
@@ -44,10 +61,41 @@ const SPECS: Partial<Record<BuilderBlockType, FieldSpec[]>> = {
   ],
   steps: [
     optionalTitle,
-    { kind: 'items', key: 'items', label: 'Шаги', itemLabel: 'Шаг', addLabel: 'Добавить шаг', newItem: { title: '', text: '' }, fields: [
+    { kind: 'items', key: 'items', label: 'Шаги', itemLabel: 'Шаг', addLabel: 'Добавить шаг', newItem: { title: '', text: '', icon: '' }, fields: [
       { kind: 'text', key: 'title', label: 'Название шага' },
       { kind: 'textarea', key: 'text', label: 'Что происходит', rows: 2 },
+      { kind: 'select', key: 'icon', label: 'Иконка', help: 'Фирменная иконка вместо номера шага', options: STEP_ICONS },
     ] },
+  ],
+  'fence-configurator': [
+    { kind: 'text', key: 'title', label: 'Заголовок', required: true },
+    { kind: 'textarea', key: 'subtitle', label: 'Подзаголовок', rows: 2 },
+    { kind: 'note', text: 'Сумма = длина × цена за метр материала × коэффициент высоты + ворота. Цены — за погонный метр забора под ключ; без них посетитель увидит неверный расчёт.' },
+    { kind: 'items', key: 'materials', label: 'Материалы', itemLabel: 'Материал', addLabel: 'Добавить материал', newItem: { title: '', pricePerMeter: 0, pattern: 'profnastil' }, fields: [
+      { kind: 'text', key: 'title', label: 'Название', required: true },
+      { kind: 'number', key: 'pricePerMeter', label: 'Цена за погонный метр, ₽', help: 'Для высоты с коэффициентом 1' },
+      { kind: 'select', key: 'pattern', label: 'Рисунок на картинке', options: FENCE_PATTERNS },
+    ] },
+    { kind: 'items', key: 'heights', label: 'Высоты', itemLabel: 'Высота', addLabel: 'Добавить высоту', newItem: { label: '', factor: 1 }, fields: [
+      { kind: 'text', key: 'label', label: 'Подпись', help: 'Например, «1,8 м»' },
+      { kind: 'number', key: 'factor', label: 'Коэффициент к цене', step: 0.01, help: '1 — базовая высота; 1,12 — на 12% дороже' },
+    ] },
+    { kind: 'items', key: 'colors', label: 'Цвета RAL', itemLabel: 'Цвет', addLabel: 'Добавить цвет', newItem: { ral: '', name: '', hex: '' }, fields: [
+      { kind: 'text', key: 'ral', label: 'Номер RAL', help: 'Например, 6005' },
+      { kind: 'text', key: 'name', label: 'Название', help: 'Например, «зелёный мох»' },
+      { kind: 'text', key: 'hex', label: 'Цвет на экране (HEX)', help: 'Приближение для картинки, например #0F4336' },
+    ] },
+    { kind: 'group', key: 'gate', label: 'Ворота', fields: [
+      { kind: 'text', key: 'label', label: 'Подпись', help: 'Например, «Ворота и калитка»' },
+      { kind: 'number', key: 'price', label: 'Цена, ₽', help: '0 — пункт не показывается' },
+    ] },
+    { kind: 'group', key: 'length', label: 'Длина забора, м', fields: [
+      { kind: 'number', key: 'min', label: 'Минимум' },
+      { kind: 'number', key: 'max', label: 'Максимум' },
+      { kind: 'number', key: 'default', label: 'По умолчанию' },
+    ] },
+    { kind: 'text', key: 'cta', label: 'Текст кнопки', help: 'Кнопка ведёт к форме заявки и подставляет выбранные параметры' },
+    { kind: 'textarea', key: 'note', label: 'Пояснение под суммой', rows: 2 },
   ],
   faq: [
     optionalTitle,

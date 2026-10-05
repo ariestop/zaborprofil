@@ -77,6 +77,23 @@ function TextareaField({ spec, value, onChange, error }: { spec: Extract<FieldSp
   )
 }
 
+function SelectField({ spec, value, onChange }: { spec: Extract<FieldSpec, { kind: 'select' }>, value: string, onChange: (next: string) => void }) {
+  const id = useId()
+
+  return (
+    <FieldShell id={id} label={spec.label} help={spec.help}>
+      <select
+        id={id}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-10 w-full rounded-lg border border-line-strong bg-white px-3 text-sm text-ink dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+      >
+        {spec.options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+      </select>
+    </FieldShell>
+  )
+}
+
 function LinkField({ label, value, onChange }: { label: string, value: string, onChange: (next: string) => void }) {
   const selectId = useId()
   const inputId = useId()
@@ -355,10 +372,12 @@ export function BlockFields({ specs, value, onChange, errors, resetKey }: BlockF
             )
           case 'number':
             return (
-              <FieldShell key={spec.key} label={spec.label}>
-                <Input type="number" aria-label={spec.label} value={typeof value[spec.key] === 'number' ? String(value[spec.key]) : ''} onChange={(event) => set(spec.key, event.target.value === '' ? 0 : Number(event.target.value))} />
+              <FieldShell key={spec.key} label={spec.label} help={spec.help}>
+                <Input type="number" step={spec.step} aria-label={spec.label} value={typeof value[spec.key] === 'number' ? String(value[spec.key]) : ''} onChange={(event) => set(spec.key, event.target.value === '' ? 0 : Number(event.target.value))} />
               </FieldShell>
             )
+          case 'select':
+            return <SelectField key={spec.key} spec={spec} value={asString(value[spec.key])} onChange={(next) => set(spec.key, next)} />
           case 'note':
             return <p key={`note-${index}`} className="rounded-[10px] bg-surface p-3 text-[13px] text-graphite dark:bg-slate-800/60 dark:text-slate-300">{spec.text}</p>
           default:
