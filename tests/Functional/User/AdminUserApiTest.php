@@ -200,6 +200,42 @@ final class AdminUserApiTest extends WebTestCase
         self::assertStringNotContainsString($created->getPassword(), json_encode($entries[0]->newValues(), JSON_THROW_ON_ERROR));
     }
 
+    public function testAdminCanSetClearAndValidateUserName(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+        $admin = $this->createAdminUser('admin-name@example.test', ['ROLE_ADMIN']);
+        $client->loginUser($admin);
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/users', [
+            'name' => '  Игорь  ',
+            'email' => 'igor@example.test',
+            'password' => 'long-enough-password',
+            'roles' => ['ROLE_EDITOR'],
+        ]);
+        self::assertResponseStatusCodeSame(201);
+        $created = $this->decode($client);
+        self::assertSame('Игорь', $created['name'] ?? null);
+        $id = $created['id'] ?? null;
+        self::assertIsString($id);
+
+        $this->jsonRequestWithCsrf($client, 'PATCH', '/admin/api/users/'.$id.'/name', ['name' => 'Игорь Петров']);
+        self::assertResponseIsSuccessful();
+        self::assertSame('Игорь Петров', $this->decode($client)['name'] ?? null);
+
+        $this->jsonRequestWithCsrf($client, 'PATCH', '/admin/api/users/'.$id.'/name', ['name' => str_repeat('я', 121)]);
+        self::assertResponseStatusCodeSame(422);
+
+        $this->jsonRequestWithCsrf($client, 'PATCH', '/admin/api/users/'.$id.'/name', ['name' => '   ']);
+        self::assertResponseIsSuccessful();
+        self::assertNull($this->decode($client)['name'] ?? 'missing');
+
+        $client->request('GET', '/admin/api/users');
+        $users = $this->decode($client)['users'] ?? null;
+        self::assertIsArray($users);
+        self::assertArrayHasKey('name', $users[0]);
+    }
+
     public function testCreateUserRejectsDuplicateWeakPasswordAndUnknownRole(): void
     {
         $client = self::createClient();

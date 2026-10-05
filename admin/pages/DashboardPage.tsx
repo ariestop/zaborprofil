@@ -62,6 +62,7 @@ export default function DashboardPage() {
   const navigate = useNavigate()
   const { push } = useToast()
   const permissions = useAuthStore((state) => state.permissions)
+  const userName = useAuthStore((state) => state.userName)
   const canViewLeads = permissions.includes('leads.view')
   const canManageLeads = permissions.includes('leads.manage')
   const canViewPages = permissions.includes('pages.view')
@@ -172,7 +173,7 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-5 p-4 sm:p-7">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="m-0 text-[26px] font-bold tracking-[-0.01em]">{greeting()}</h1>
+            <h1 className="m-0 text-[26px] font-bold tracking-[-0.01em]">{greeting(new Date(), userName)}</h1>
             <p className={cn('mt-1', dashMuted)}>
               {todayLabel()}
               {newCount === undefined ? '' : ` · новых заявок: ${newCount}`}

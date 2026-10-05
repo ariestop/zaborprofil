@@ -9,6 +9,11 @@ describe('greeting', () => {
     expect(greeting(new Date(2026, 9, 4, 2))).toBe('Доброй ночи')
   })
 
+  it('adds the name when it is known', () => {
+    expect(greeting(new Date(2026, 9, 4, 19), 'Игорь')).toBe('Добрый вечер, Игорь')
+    expect(greeting(new Date(2026, 9, 4, 19), '  ')).toBe('Добрый вечер')
+  })
+
   it('writes the date with a capital weekday', () => {
     expect(todayLabel(new Date(2026, 9, 4))).toBe('Воскресенье, 4 октября')
   })

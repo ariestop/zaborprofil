@@ -4,6 +4,7 @@ import { apiRequest } from '../../shared/api/client'
 export interface AdminUserItem {
   id: string
   email: string
+  name: string | null
   roles: string[]
   active: boolean
   createdAt: string
@@ -46,8 +47,14 @@ function useUsersMutation<TVariables, TResult>(mutationFn: (variables: TVariable
 }
 
 export function useCreateUserMutation() {
-  return useUsersMutation(({ email, password, roles }: { email: string, password: string, roles: string[] }) =>
-    apiRequest<AdminUserItem>('/admin/api/users', { method: 'POST', body: { email, password, roles } }),
+  return useUsersMutation(({ email, password, roles, name }: { email: string, password: string, roles: string[], name?: string }) =>
+    apiRequest<AdminUserItem>('/admin/api/users', { method: 'POST', body: { email, password, roles, name: name === undefined || name.trim() === '' ? null : name.trim() } }),
+  )
+}
+
+export function useRenameUserMutation() {
+  return useUsersMutation(({ userId, name }: { userId: string, name: string }) =>
+    apiRequest<AdminUserItem>(`/admin/api/users/${userId}/name`, { method: 'PATCH', body: { name: name.trim() === '' ? null : name.trim() } }),
   )
 }
 

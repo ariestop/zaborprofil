@@ -3,6 +3,8 @@ import { isAdminPermission, type AdminPermission } from '../entities/user/permis
 
 export interface AdminAuthState {
   userEmail: string
+  /** Отображаемое имя; пустая строка, если не задано. */
+  userName: string
   logoutUrl: string
   logoutToken: string
   roles: string[]
@@ -15,6 +17,7 @@ interface AdminAuthStore extends AdminAuthState {
 
 const defaultState: AdminAuthState = {
   userEmail: '',
+  userName: '',
   logoutUrl: '/admin/logout',
   logoutToken: '',
   roles: [],
@@ -26,6 +29,7 @@ export const useAuthStore = create<AdminAuthStore>((set) => ({
   initialize: (payload) => {
     set({
       userEmail: payload.userEmail,
+      userName: payload.userName ?? '',
       logoutUrl: payload.logoutUrl,
       logoutToken: payload.logoutToken,
       roles: payload.roles ?? [],

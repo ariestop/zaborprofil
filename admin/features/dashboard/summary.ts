@@ -1,20 +1,12 @@
 import type { LeadDashboard } from '../../entities/lead/model'
 import type { ContentPageItem, SystemObservabilityResponse } from '../../types/api'
 
-/** Приветствие по времени суток: «Доброе утро», «Добрый день», «Добрый вечер», «Доброй ночи». */
-export function greeting(now: Date = new Date()): string {
+/** Приветствие по времени суток («Добрый вечер, Игорь»); без имени — только приветствие. */
+export function greeting(now: Date = new Date(), name = ''): string {
   const hour = now.getHours()
-  if (hour >= 5 && hour < 12) {
-    return 'Доброе утро'
-  }
-  if (hour >= 12 && hour < 18) {
-    return 'Добрый день'
-  }
-  if (hour >= 18 && hour < 23) {
-    return 'Добрый вечер'
-  }
+  const text = hour >= 5 && hour < 12 ? 'Доброе утро' : hour >= 12 && hour < 18 ? 'Добрый день' : hour >= 18 && hour < 23 ? 'Добрый вечер' : 'Доброй ночи'
 
-  return 'Доброй ночи'
+  return name.trim() === '' ? text : `${text}, ${name.trim()}`
 }
 
 /** «Воскресенье, 4 октября». */

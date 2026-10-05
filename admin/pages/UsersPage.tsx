@@ -9,6 +9,7 @@ import {
   useChangeOwnPasswordMutation,
   useCreateUserMutation,
   useDeleteUserMutation,
+  useRenameUserMutation,
   useResetUserPasswordMutation,
   useSetUserActiveMutation,
   useUpdateUserRolesMutation,
@@ -17,6 +18,8 @@ import {
 import { useToast } from '../app/providers/toast-provider'
 import { ApiError } from '../shared/api/client'
 import { applyServerValidationErrors } from '../shared/api/validation'
+import { NameCell } from '../features/users/NameCell'
+import { formatDateTimeLong } from '../shared/lib/format'
 import { useAuthStore } from '../stores/auth'
 
 const MIN_PASSWORD_LENGTH = 12
@@ -30,6 +33,7 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 const createUserSchema = z.object({
+  name: z.string().max(120, 'Имя не длиннее 120 символов'),
   email: z.string().email('Укажите корректный email'),
   password: z.string().min(MIN_PASSWORD_LENGTH, `Пароль должен содержать не менее ${MIN_PASSWORD_LENGTH} символов`),
 })
@@ -74,6 +78,7 @@ export default function UsersPage() {
   const setActiveMutation = useSetUserActiveMutation()
   const resetPasswordMutation = useResetUserPasswordMutation()
   const deleteMutation = useDeleteUserMutation()
+  const renameMutation = useRenameUserMutation()
   const ownPasswordMutation = useChangeOwnPasswordMutation()
   const { push } = useToast()
 
@@ -83,7 +88,7 @@ export default function UsersPage() {
 
   const createForm = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserSchema),
-    defaultValues: { email: '', password: '' },
+    defaultValues: { name: '', email: '', password: '' },
   })
   const ownPasswordForm = useForm<OwnPasswordFormData>({
     resolver: zodResolver(ownPasswordSchema),
@@ -96,9 +101,9 @@ export default function UsersPage() {
 
   const submitCreate = createForm.handleSubmit(async (values) => {
     try {
-      await createMutation.mutateAsync({ email: values.email, password: values.password, roles: [newRole] })
+      await createMutation.mutateAsync({ email: values.email, password: values.password, roles: [newRole], name: values.name })
       createForm.reset()
-      push({ title: 'Пользователь создан', description: `${values.email}: ${roleLabel(newRole)}.` })
+      push({ title: 'Пользователь создан', description: `${values.name.trim() === '' ? values.email : values.name.trim()}: ${roleLabel(newRole)}.` })
     } catch (error) {
       applyServerValidationErrors(error, createForm.setError)
       push({ title: 'Не удалось создать пользователя', description: errorMessage(error, 'Проверьте данные и права users.manage.') })
@@ -141,6 +146,16 @@ export default function UsersPage() {
     }
   }
 
+  const renameUser = async (user: AdminUserItem, name: string) => {
+    try {
+      await renameMutation.mutateAsync({ userId: user.id, name })
+      push({ title: name === '' ? 'Имя удалено' : 'Имя сохранено', description: name === '' ? user.email : `${user.email}: ${name}` })
+    } catch (error) {
+      push({ title: 'Не удалось сохранить имя', description: errorMessage(error, 'Проверьте права users.manage.') })
+      throw error
+    }
+  }
+
   const toggleActive = async (user: AdminUserItem) => {
     try {
       await setActiveMutation.mutateAsync({ userId: user.id, active: !user.active })
@@ -169,6 +184,10 @@ export default function UsersPage() {
   const availableRoles = usersQuery.data?.availableRoles ?? []
   const roleOptions = availableRoles.map((role) => ({ value: role, label: roleLabel(role) }))
   const columns = [
+    columnHelper.accessor('name', {
+      header: 'Имя',
+      cell: ({ row }) => <NameCell name={row.original.name} email={row.original.email} onSave={(name) => renameUser(row.original, name)} />,
+    }),
     columnHelper.accessor('email', { header: 'Email' }),
     columnHelper.accessor('roles', {
       header: 'Роль',
@@ -187,7 +206,8 @@ export default function UsersPage() {
       header: 'Активен',
       cell: ({ getValue }) => (getValue() ? 'Да' : 'Нет'),
     }),
-    columnHelper.accessor('updatedAt', { header: 'Обновлён' }),
+    columnHelper.accessor('createdAt', { header: 'Создан', cell: ({ getValue }) => formatDateTimeLong(getValue()) }),
+    columnHelper.accessor('updatedAt', { header: 'Обновлён', cell: ({ getValue }) => formatDateTimeLong(getValue()) }),
     columnHelper.display({
       id: 'actions',
       header: 'Действия',
@@ -225,6 +245,12 @@ export default function UsersPage() {
       <PageHeader title="Пользователи и роли" description="Создание пользователей, роли, пароли и деактивация. Все изменения пишутся в журнал аудита." />
       <Card title="Новый пользователь">
         <form className="grid gap-3 lg:grid-cols-2" onSubmit={submitCreate}>
+          <div>
+            <Input placeholder="Имя (например, Игорь)" autoComplete="off" {...createForm.register('name')} />
+            {createForm.formState.errors.name?.message !== undefined ? (
+              <p className="mt-1 text-xs text-red-600">{createForm.formState.errors.name.message}</p>
+            ) : null}
+          </div>
           <div>
             <Input placeholder="Email пользователя" autoComplete="off" {...createForm.register('email')} />
             {createForm.formState.errors.email?.message !== undefined ? (
