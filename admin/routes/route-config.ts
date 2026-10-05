@@ -44,7 +44,7 @@ export interface AdminRouteDefinition {
 }
 
 export const adminRoutes: AdminRouteDefinition[] = [
-  { key: 'dashboard', path: '/admin/dashboard', title: 'Сводка', section: 'system', navGroup: 'main', icon: 'dashboard', keywords: ['главная', 'панель управления', 'дашборд'] },
+  { key: 'dashboard', path: '/admin/dashboard', title: 'Сводка', section: 'system', navGroup: 'main', icon: 'dashboard', keywords: ['главная', 'панель управления', 'дашборд'], fullBleed: true },
   { key: 'crm', path: '/admin/crm', title: 'Заявки', section: 'system', navGroup: 'main', icon: 'leads', keywords: ['crm', 'лиды', 'клиенты'], fullBleed: true, permission: 'leads.view' },
   { key: 'leadDetail', path: '/admin/crm/:leadId', title: 'Заявка', parentKey: 'crm', section: 'system', fullBleed: true, permission: 'leads.view' },
   { key: 'pages', path: '/admin/pages', title: 'Страницы', section: 'content', navGroup: 'content', icon: 'pages', keywords: ['контент', 'конструктор', 'блоки'], permission: 'pages.view' },

@@ -278,6 +278,8 @@ export interface LeadItem {
   spamScore: number
   b2b: boolean
   readAt: string | null
+  /** Страница сайта, с которой отправлена форма. */
+  pageUrl: string | null
   messagePreview: string | null
   createdAt: string
   updatedAt: string

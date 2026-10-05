@@ -38,4 +38,16 @@ interface LeadRepositoryInterface
      * @return list<string>
      */
     public function distinctSources(): array;
+
+    /**
+     * Сколько заявок переведено в «завершена» и изменялось не раньше $since.
+     */
+    public function countDoneSince(\DateTimeImmutable $since): int;
+
+    /**
+     * Даты создания заявок (без спама) не раньше $since, от старых к новым.
+     *
+     * @return list<\DateTimeImmutable>
+     */
+    public function createdAtSince(\DateTimeImmutable $since): array;
 }

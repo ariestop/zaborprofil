@@ -44,6 +44,14 @@ export interface LeadSummary {
   statuses: LeadStatus[]
 }
 
+/** Данные для сводки: заявки по дням, завершённые за неделю и самая давняя новая заявка. */
+export interface LeadDashboard {
+  daily: Array<{ date: string, count: number }>
+  createdLast14Days: number
+  doneLastWeek: number
+  oldestNewAt: string | null
+}
+
 export interface LeadAssigneeOption {
   id: string
   email: string

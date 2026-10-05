@@ -116,6 +116,34 @@ final class DoctrineLeadRepository extends ServiceEntityRepository implements Le
         return array_map(static fn (array $row): string => $row['source'], $rows);
     }
 
+    public function countDoneSince(\DateTimeImmutable $since): int
+    {
+        return (int) $this->createQueryBuilder('lead')
+            ->select('COUNT(lead.id)')
+            ->andWhere('lead.status = :done')
+            ->andWhere('lead.updatedAt >= :since')
+            ->setParameter('done', LeadStatus::DONE)
+            ->setParameter('since', $since, Types::DATETIME_IMMUTABLE)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function createdAtSince(\DateTimeImmutable $since): array
+    {
+        /** @var list<array{createdAt: \DateTimeImmutable}> $rows */
+        $rows = $this->createQueryBuilder('lead')
+            ->select('lead.createdAt AS createdAt')
+            ->andWhere('lead.status <> :spam')
+            ->andWhere('lead.createdAt >= :since')
+            ->setParameter('spam', LeadStatus::SPAM)
+            ->setParameter('since', $since, Types::DATETIME_IMMUTABLE)
+            ->orderBy('lead.createdAt', 'ASC')
+            ->getQuery()
+            ->getArrayResult();
+
+        return array_map(static fn (array $row): \DateTimeImmutable => $row['createdAt'], $rows);
+    }
+
     private function filtered(LeadSearchCriteria $criteria): QueryBuilder
     {
         $builder = $this->createQueryBuilder('lead');
