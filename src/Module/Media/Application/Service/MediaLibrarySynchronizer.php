@@ -152,6 +152,8 @@ final readonly class MediaLibrarySynchronizer
             $largest = max($largest, (int) $variant['width']);
         }
 
-        return $largest < max(MediaOptimizer::targetWidths($width));
+        $needed = MediaOptimizer::targetWidths($width);
+
+        return $needed !== [] && $largest < max($needed);
     }
 }

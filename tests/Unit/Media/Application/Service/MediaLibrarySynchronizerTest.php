@@ -118,7 +118,7 @@ final class MediaLibrarySynchronizerTest extends TestCase
      */
     private function synchronizer(InMemoryMediaAssets $assets, array $paths): MediaLibrarySynchronizer
     {
-        $provider = new class($paths) implements MediaUsageProviderInterface {
+        $provider = new class ($paths) implements MediaUsageProviderInterface {
             /**
              * @param list<string> $paths
              */
@@ -126,6 +126,9 @@ final class MediaLibrarySynchronizerTest extends TestCase
             {
             }
 
+            /**
+             * @return iterable<MediaUsageReference>
+             */
             public function references(): iterable
             {
                 foreach ($this->paths as $path) {
