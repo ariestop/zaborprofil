@@ -44,13 +44,16 @@ export function initMobileNav(root: ParentNode = document): void {
 }
 
 /**
- * Нижняя панель «Позвонить / Рассчитать» на телефоне. Пока на экране первый экран страницы (там свои кнопки)
- * или уже сама форма заявки, панель убирается, чтобы не дублировать призыв и не закрывать контент.
+ * Нижняя панель «Позвонить / Рассчитать» на телефоне. Пока на экране первый экран страницы (там свои кнопки),
+ * сама форма заявки или блок со своей нижней панелью (data-callbar-hide, например конфигуратор с итогом),
+ * панель убирается, чтобы не дублировать призыв и не закрывать контент.
  */
 export function initCallbar(root: ParentNode = document): void {
     const bar = root.querySelector<HTMLElement>('[data-callbar]')
     const targets = Array.from(
-        root.querySelectorAll<HTMLElement>('[data-lead-form-section], .zp-hero'),
+        root.querySelectorAll<HTMLElement>(
+            '[data-lead-form-section], [data-callbar-hide], .zp-hero',
+        ),
     )
     if (bar === null || targets.length === 0 || !('IntersectionObserver' in window)) {
         return

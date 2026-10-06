@@ -469,55 +469,94 @@
 }
 
 @layer components {
-    /* ---------- Конфигуратор забора (fence-configurator) ---------- */
+    /* ---------- Конфигуратор забора (fence-configurator): сцена + параметры слева, смета справа ---------- */
+    .zp-cfg-head {
+        @apply mb-5 flex flex-wrap items-end justify-between gap-x-8 gap-y-2;
+    }
+    .zp-cfg-head .zp-h2 {
+        @apply mb-0;
+    }
+    .zp-cfg-head .zp-lead {
+        @apply mt-0 max-w-xl;
+    }
     .zp-cfg {
-        @apply grid min-w-0 gap-4 rounded-[var(--radius-card)] bg-white p-4 ring-1 ring-line md:p-5;
+        @apply grid min-w-0 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_21rem];
+    }
+    .zp-cfg__main {
+        @apply min-w-0 rounded-[var(--radius-card)] bg-white p-3 ring-1 ring-line;
+    }
+    .zp-cfg__stage {
+        @apply relative overflow-hidden rounded-[10px];
+    }
+    .zp-cfg__pill {
+        @apply absolute top-2.5 left-2.5 max-w-[calc(100%-1.25rem)] truncate rounded-full bg-white/90 px-3 py-1.5 font-cond text-xs font-semibold tracking-wide text-ink md:right-3 md:left-auto md:text-sm;
+    }
+    .zp-cfg__controls {
+        @apply grid gap-x-5 gap-y-4 px-1.5 pt-4 pb-1.5 md:grid-cols-3;
     }
     .zp-cfg__group {
-        @apply grid min-w-0 gap-2;
+        @apply grid min-w-0 content-start gap-2;
+    }
+    .zp-cfg__group--wide {
+        @apply md:col-span-2;
     }
     .zp-cfg__label {
-        @apply text-sm font-medium text-graphite;
-    }
-    .zp-cfg__caption {
-        @apply -mt-2 font-cond text-sm font-semibold tracking-wide text-graphite;
+        @apply text-sm font-semibold text-graphite;
     }
     .zp-cfg__hint {
         @apply text-sm text-graphite;
     }
-    .zp-cfg__row {
-        @apply flex flex-wrap items-end gap-4;
-    }
-    .zp-cfg__sum {
-        @apply flex flex-wrap items-center justify-between gap-4 border-t border-line pt-4;
-    }
-    /* Длинная надпись кнопки не должна раздвигать блок на телефоне. */
-    .zp-cfg__sum .zp-btn {
-        @apply w-full py-3 text-center leading-snug whitespace-normal sm:w-auto;
-    }
     .zp-cfg-seg {
-        @apply flex flex-wrap gap-1.5 rounded-[var(--radius-btn)] bg-surface-strong p-1.5;
+        @apply flex gap-1 rounded-[var(--radius-btn)] bg-surface-strong p-1;
     }
     .zp-cfg-seg label {
-        @apply relative flex-1;
+        @apply relative min-w-0 flex-1;
     }
     .zp-cfg-seg input {
         @apply absolute inset-0 opacity-0;
     }
     .zp-cfg-seg span {
-        @apply flex min-h-12 cursor-pointer items-center justify-center rounded-lg px-3 text-center text-sm font-semibold whitespace-nowrap text-graphite transition-colors;
+        @apply flex min-h-12 cursor-pointer flex-col items-center justify-center rounded-lg px-2 text-center text-base leading-tight font-semibold text-graphite transition-colors;
+    }
+    .zp-cfg-seg small {
+        @apply text-xs font-medium;
     }
     .zp-cfg-seg input:checked + span {
         @apply bg-white text-ink shadow-sm;
     }
-    .zp-cfg-seg input:focus-visible + span {
+    .zp-cfg-seg input:focus-visible + span,
+    .zp-cfg-grades input:focus-visible + span {
         @apply outline-3 outline-offset-2 outline-brand-600;
     }
+    .zp-cfg-grades {
+        @apply grid grid-cols-2 gap-1.5 sm:grid-cols-4;
+    }
+    .zp-cfg-grades label {
+        @apply relative;
+    }
+    .zp-cfg-grades label[hidden] {
+        @apply hidden;
+    }
+    .zp-cfg-grades input {
+        @apply absolute inset-0 opacity-0;
+    }
+    .zp-cfg-grades span {
+        @apply flex min-h-13 cursor-pointer flex-col justify-center rounded-[var(--radius-btn)] px-2.5 py-1.5 leading-tight ring-1 ring-line-strong transition-colors;
+    }
+    .zp-cfg-grades b {
+        @apply text-sm font-semibold text-ink;
+    }
+    .zp-cfg-grades small {
+        @apply text-sm text-graphite;
+    }
+    .zp-cfg-grades input:checked + span {
+        @apply bg-brand-50 ring-2 ring-brand-700;
+    }
     .zp-swatches {
-        @apply flex flex-wrap gap-2.5;
+        @apply flex flex-wrap gap-2;
     }
     .zp-swatch {
-        @apply relative size-12 cursor-pointer rounded-lg ring-1 ring-black/15;
+        @apply relative size-12 cursor-pointer rounded-[10px] ring-1 ring-black/15;
         background: var(--swatch);
     }
     .zp-swatch input {
@@ -529,8 +568,18 @@
     .zp-swatch:has(input:focus-visible) {
         @apply outline-3 outline-offset-4 outline-brand-600;
     }
-    .zp-range {
-        @apply h-11 w-full accent-brand-700;
+    .zp-stepper {
+        @apply flex h-12 overflow-hidden rounded-[var(--radius-btn)] bg-white ring-1 ring-line-strong;
+    }
+    .zp-stepper button {
+        @apply w-12 shrink-0 cursor-pointer bg-surface-strong text-2xl text-ink transition-colors hover:bg-brand-100;
+    }
+    .zp-stepper button:focus-visible,
+    .zp-stepper input:focus-visible {
+        @apply outline-3 -outline-offset-3 outline-brand-600;
+    }
+    .zp-stepper input {
+        @apply w-full min-w-0 [appearance:textfield] bg-transparent text-center font-cond text-2xl font-bold text-ink [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none;
     }
     .zp-check {
         @apply flex min-h-12 cursor-pointer items-center gap-2.5 text-base text-ink;
@@ -539,83 +588,93 @@
         @apply size-5 accent-brand-700;
     }
 
-    /* Сцена: небо, дом, дерево, земля и забор в цвете RAL (--ral); высота забора — --fh. */
+    /* Смета: справа и «прилипает» при прокрутке на широком экране. */
+    .zp-cfg__est {
+        @apply grid gap-2.5 rounded-[var(--radius-card)] bg-white p-5 ring-1 ring-line lg:sticky lg:top-36;
+    }
+    .zp-cfg__est-title {
+        @apply text-lg font-bold text-ink;
+    }
+    .zp-cfg__est-meta {
+        @apply -mt-2 font-cond text-sm font-semibold tracking-wide text-graphite;
+    }
+    .zp-cfg__rows {
+        @apply border-t border-line;
+    }
+    .zp-cfg__rows li {
+        @apply flex justify-between gap-3 border-b border-dashed border-line-strong py-2.5;
+    }
+    .zp-cfg__rows b {
+        @apply block text-sm font-semibold text-ink;
+    }
+    .zp-cfg__rows span {
+        @apply text-xs text-graphite;
+    }
+    .zp-cfg__rows em {
+        @apply text-xl whitespace-nowrap text-ink not-italic;
+    }
+    .zp-cfg__rows em.is-free {
+        @apply text-base font-semibold text-brand-700;
+    }
+    .zp-cfg__rows em.is-tbd {
+        @apply text-base font-semibold text-graphite;
+    }
+    .zp-cfg__total {
+        @apply flex items-baseline justify-between gap-3;
+    }
+    .zp-cfg__total span {
+        @apply text-base text-graphite;
+    }
+    .zp-cfg__total strong {
+        @apply text-[2rem] leading-none whitespace-nowrap text-ink;
+    }
+    .zp-cfg__per-meter {
+        @apply -mt-2 text-right text-sm text-graphite;
+    }
+    .zp-cfg__est .zp-btn {
+        @apply w-full py-3 text-center leading-snug whitespace-normal;
+    }
+
+    /* Итог под пальцем на телефоне. */
+    .zp-cfg__bar {
+        @apply sticky bottom-0 z-20 -mx-4 flex items-center justify-between gap-3 border-t border-line bg-white/95 px-4 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden;
+    }
+    .zp-cfg__bar span {
+        @apply block text-xs text-graphite;
+    }
+    .zp-cfg__bar strong {
+        @apply text-2xl whitespace-nowrap text-ink;
+    }
+
+    /* Сцена (templates/public/blocks/_fence-scene.svg.twig). На телефоне картинка выше и обрезана справа. */
     .zp-scene {
-        @apply relative aspect-[16/8] w-full overflow-hidden rounded-lg;
-        background: linear-gradient(#bcd9ee, #e6f1f8 70%);
+        @apply block aspect-[1200/470] h-auto w-full max-md:aspect-[1200/760];
     }
-    .zp-scene__house {
-        @apply absolute bottom-[14%] left-1/2 h-[44%] w-[34%];
-        background: #e4ded4;
+    .zp-scene [data-fence-body],
+    .zp-scene [data-fence-top] {
+        transition:
+            y 0.25s ease,
+            height 0.25s ease,
+            transform 0.25s ease;
     }
-    .zp-scene__house::before {
-        content: '';
-        @apply absolute -right-[10%] bottom-full -left-[10%] h-[60%];
-        background: #7c838b;
-        clip-path: polygon(50% 0, 100% 100%, 0 100%);
+    .zp-scene[data-finish='matte'] .zp-scene__shade {
+        opacity: 0.65;
     }
-    .zp-scene__tree {
-        @apply absolute bottom-[14%] left-[12%] aspect-square w-[16%] rounded-full;
-        background: #6e9a5b;
+    .zp-scene__wood {
+        display: none;
+        opacity: 0.4;
     }
-    .zp-scene__ground {
-        @apply absolute inset-x-0 bottom-0 h-[15%];
-        background: #86ae70;
+    .zp-scene[data-finish='wood'] .zp-scene__wood {
+        display: inline;
     }
-    .zp-scene__fence {
-        --l: color-mix(in srgb, var(--ral), #fff 26%);
-        --d: color-mix(in srgb, var(--ral), #000 35%);
-        --post: linear-gradient(90deg, #4b5056 0 7px, transparent 7px) 30px 0 / 150px 100% repeat-x;
-        @apply absolute inset-x-0 bottom-[11%] transition-[height] duration-300 motion-reduce:transition-none;
-        height: var(--fh, 46%);
-        background:
-            var(--post),
-            repeating-linear-gradient(
-                90deg,
-                var(--ral) 0 9px,
-                var(--l) 9px 12px,
-                var(--ral) 12px 20px,
-                var(--d) 20px 23px
-            );
+    .zp-scene[data-finish='wood'] .zp-scene__shade {
+        opacity: 0.6;
     }
-    .zp-scene[data-pattern='profnastil-wide'] .zp-scene__fence {
-        background:
-            var(--post),
-            repeating-linear-gradient(
-                90deg,
-                var(--ral) 0 15px,
-                var(--l) 15px 20px,
-                var(--ral) 20px 33px,
-                var(--d) 33px 38px
-            );
-    }
-    .zp-scene[data-pattern='shtaketnik'] .zp-scene__fence {
-        background:
-            var(--post),
-            repeating-linear-gradient(
-                90deg,
-                var(--ral) 0 12px,
-                var(--l) 12px 14px,
-                var(--ral) 14px 22px,
-                transparent 22px 32px
-            ),
-            linear-gradient(#4b5056, #4b5056) 0 16% / 100% 5px no-repeat,
-            linear-gradient(#4b5056, #4b5056) 0 80% / 100% 5px no-repeat;
-    }
-    .zp-scene[data-pattern='jaluzi'] .zp-scene__fence {
-        background:
-            var(--post),
-            repeating-linear-gradient(
-                180deg,
-                var(--ral) 0 9px,
-                var(--d) 9px 11px,
-                var(--l) 11px 12px
-            );
-    }
-    .zp-scene[data-pattern='setka'] .zp-scene__fence {
-        background:
-            var(--post), repeating-linear-gradient(90deg, var(--ral) 0 3px, transparent 3px 22px),
-            repeating-linear-gradient(180deg, var(--ral) 0 3px, transparent 3px 34px);
+    @media (prefers-reduced-motion: reduce) {
+        .zp-scene [data-fence-body],
+        .zp-scene [data-fence-top] {
+            transition: none;
+        }
     }
 }
 

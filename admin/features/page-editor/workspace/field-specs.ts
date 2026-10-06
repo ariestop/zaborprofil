@@ -59,11 +59,18 @@ const STEP_ICONS = [
 ]
 
 const FENCE_PATTERNS = [
+    { value: 'jaluzi', label: 'Жалюзи: наклон в одну сторону' },
+    { value: 'jaluzi-double', label: 'Жалюзи: наклон в обе стороны' },
     { value: 'profnastil', label: 'Профнастил' },
     { value: 'profnastil-wide', label: 'Профнастил с широкой волной' },
     { value: 'shtaketnik', label: 'Евроштакетник' },
-    { value: 'jaluzi', label: 'Жалюзи' },
     { value: 'setka', label: '3D сетка' },
+]
+
+const FENCE_FINISHES = [
+    { value: 'gloss', label: 'Глянец (гладкий)' },
+    { value: 'matte', label: 'Мат (велюр)' },
+    { value: 'wood', label: 'Под дерево' },
 ]
 
 const optionalTitle: FieldSpec = {
@@ -150,22 +157,40 @@ const SPECS: Partial<Record<BuilderBlockType, FieldSpec[]>> = {
         { kind: 'textarea', key: 'subtitle', label: 'Подзаголовок', rows: 2 },
         {
             kind: 'note',
-            text: 'Сумма = длина × цена за метр материала × коэффициент высоты + ворота. Цены — за погонный метр забора под ключ; без них посетитель увидит неверный расчёт.',
+            text: 'Смета = площадь (длина × высота) × цена покрытия за м² + площадь × цена монтажа серии за м², итог округляется до 100 ₽. Без цен посетитель увидит «Цена по запросу».',
+        },
+        {
+            kind: 'text',
+            key: 'materialLabel',
+            label: 'Как называть материал в смете',
+            help: 'Например, «Ламели» или «Профлист»',
         },
         {
             kind: 'items',
-            key: 'materials',
-            label: 'Материалы',
-            itemLabel: 'Материал',
-            addLabel: 'Добавить материал',
-            newItem: { title: '', pricePerMeter: 0, pattern: 'profnastil' },
+            key: 'series',
+            label: 'Серии',
+            itemLabel: 'Серия',
+            addLabel: 'Добавить серию',
+            newItem: { title: '', hint: '', montagePerSqm: 0, pattern: 'jaluzi' },
             fields: [
-                { kind: 'text', key: 'title', label: 'Название', required: true },
+                {
+                    kind: 'text',
+                    key: 'title',
+                    label: 'Название',
+                    required: true,
+                    help: 'Например, Largo',
+                },
+                {
+                    kind: 'text',
+                    key: 'hint',
+                    label: 'Подпись',
+                    help: 'Например, «наклон в одну сторону»',
+                },
                 {
                     kind: 'number',
-                    key: 'pricePerMeter',
-                    label: 'Цена за погонный метр, ₽',
-                    help: 'Для высоты с коэффициентом 1',
+                    key: 'montagePerSqm',
+                    label: 'Монтаж, ₽ за м²',
+                    help: '0 — строки монтажа в смете нет',
                 },
                 {
                     kind: 'select',
@@ -177,19 +202,54 @@ const SPECS: Partial<Record<BuilderBlockType, FieldSpec[]>> = {
         },
         {
             kind: 'items',
+            key: 'grades',
+            label: 'Покрытия и цены',
+            itemLabel: 'Покрытие',
+            addLabel: 'Добавить покрытие',
+            newItem: { series: '', title: '', pricePerSqm: 0, finish: 'matte', details: '' },
+            fields: [
+                {
+                    kind: 'text',
+                    key: 'series',
+                    label: 'Серия',
+                    help: 'Точно как в списке серий; пусто — если серий нет',
+                },
+                {
+                    kind: 'text',
+                    key: 'title',
+                    label: 'Покрытие',
+                    required: true,
+                    help: 'Например, «Премиум»',
+                },
+                { kind: 'number', key: 'pricePerSqm', label: 'Цена материала, ₽ за м²' },
+                {
+                    kind: 'select',
+                    key: 'finish',
+                    label: 'Поверхность на картинке',
+                    options: FENCE_FINISHES,
+                },
+                {
+                    kind: 'text',
+                    key: 'details',
+                    label: 'Характеристики',
+                    help: 'Через « · »: «матовый велюр · металл 0,50 мм · гарантия 40 лет»',
+                },
+            ],
+        },
+        {
+            kind: 'items',
             key: 'heights',
             label: 'Высоты',
             itemLabel: 'Высота',
             addLabel: 'Добавить высоту',
-            newItem: { label: '', factor: 1 },
+            newItem: { meters: 1.8 },
             fields: [
-                { kind: 'text', key: 'label', label: 'Подпись', help: 'Например, «1,8 м»' },
                 {
                     kind: 'number',
-                    key: 'factor',
-                    label: 'Коэффициент к цене',
-                    step: 0.01,
-                    help: '1 — базовая высота; 1,12 — на 12% дороже',
+                    key: 'meters',
+                    label: 'Высота, м',
+                    step: 0.1,
+                    help: 'По умолчанию выбрана 1,8 м',
                 },
             ],
         },
@@ -213,25 +273,6 @@ const SPECS: Partial<Record<BuilderBlockType, FieldSpec[]>> = {
         },
         {
             kind: 'group',
-            key: 'gate',
-            label: 'Ворота',
-            fields: [
-                {
-                    kind: 'text',
-                    key: 'label',
-                    label: 'Подпись',
-                    help: 'Например, «Ворота и калитка»',
-                },
-                {
-                    kind: 'number',
-                    key: 'price',
-                    label: 'Цена, ₽',
-                    help: '0 — пункт не показывается',
-                },
-            ],
-        },
-        {
-            kind: 'group',
             key: 'length',
             label: 'Длина забора, м',
             fields: [
@@ -241,12 +282,52 @@ const SPECS: Partial<Record<BuilderBlockType, FieldSpec[]>> = {
             ],
         },
         {
+            kind: 'group',
+            key: 'gate',
+            label: 'Ворота',
+            fields: [
+                {
+                    kind: 'checkbox',
+                    key: 'enabled',
+                    label: 'Показывать пункт «Ворота» (в смете — «по замеру»)',
+                },
+                {
+                    kind: 'text',
+                    key: 'label',
+                    label: 'Подпись',
+                    help: 'Например, «Ворота и калитка»',
+                },
+            ],
+        },
+        {
+            kind: 'items',
+            key: 'freeItems',
+            label: 'Бесплатно в смете',
+            itemLabel: 'Пункт',
+            addLabel: 'Добавить пункт',
+            newItem: { title: '', note: '' },
+            fields: [
+                {
+                    kind: 'text',
+                    key: 'title',
+                    label: 'Что',
+                    help: 'Например, «Замер и образцы цвета»',
+                },
+                {
+                    kind: 'text',
+                    key: 'note',
+                    label: 'Пояснение',
+                    help: 'Например, «выезд по Саратову и области»',
+                },
+            ],
+        },
+        {
             kind: 'text',
             key: 'cta',
             label: 'Текст кнопки',
             help: 'Кнопка ведёт к форме заявки и подставляет выбранные параметры',
         },
-        { kind: 'textarea', key: 'note', label: 'Пояснение под суммой', rows: 2 },
+        { kind: 'textarea', key: 'note', label: 'Пояснение под сметой', rows: 2 },
     ],
     faq: [
         optionalTitle,
