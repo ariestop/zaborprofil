@@ -703,31 +703,45 @@ const structuredBlockRegistry: BlockDefinition[] = [
         'Конфигуратор забора',
         'conversion',
         45,
-        'Посетитель выбирает материал, цвет RAL, высоту и длину — видит забор и примерную сумму; кнопка передаёт параметры в заявку.',
+        'Посетитель выбирает серию, покрытие, цвет RAL, высоту и длину — видит забор и ориентировочную смету; кнопка передаёт параметры в заявку.',
         z.object({
-            title: z.string().default('Соберите забор и узнайте цену'),
+            title: z.string().default('Соберите забор и получите смету'),
             subtitle: z.string().default(''),
-            materials: z
+            materialLabel: z.string().default('Материал'),
+            series: z
                 .array(
                     z.object({
                         title: z.string(),
-                        /** Цена за погонный метр забора под ключ для высоты с коэффициентом 1. */
-                        pricePerMeter: z.number().min(0).default(0),
+                        hint: z.string().default(''),
+                        /** Цена монтажа за м². */
+                        montagePerSqm: z.number().min(0).default(0),
                         pattern: z
                             .enum([
+                                'jaluzi',
+                                'jaluzi-double',
                                 'profnastil',
                                 'profnastil-wide',
                                 'shtaketnik',
-                                'jaluzi',
                                 'setka',
                             ])
-                            .default('profnastil'),
+                            .default('jaluzi'),
                     }),
                 )
                 .default([]),
-            heights: z
-                .array(z.object({ label: z.string(), factor: z.number().positive().default(1) }))
+            grades: z
+                .array(
+                    z.object({
+                        /** Название серии из списка series; пусто — серий нет. */
+                        series: z.string().default(''),
+                        title: z.string(),
+                        /** Цена материала за м². */
+                        pricePerSqm: z.number().min(0).default(0),
+                        finish: z.enum(['gloss', 'matte', 'wood']).default('matte'),
+                        details: z.string().default(''),
+                    }),
+                )
                 .default([]),
+            heights: z.array(z.object({ meters: z.number().positive().max(5) })).default([]),
             /** Цвета продукции RAL: hex — экранное приближение для картинки. */
             colors: z
                 .array(
@@ -740,10 +754,13 @@ const structuredBlockRegistry: BlockDefinition[] = [
                 .default([]),
             gate: z
                 .object({
+                    enabled: z.boolean().default(false),
                     label: z.string().default('Ворота и калитка'),
-                    price: z.number().min(0).default(0),
                 })
-                .default({ label: 'Ворота и калитка', price: 0 }),
+                .default({ enabled: false, label: 'Ворота и калитка' }),
+            freeItems: z
+                .array(z.object({ title: z.string(), note: z.string().default('') }))
+                .default([]),
             length: z
                 .object({
                     min: z.number().int().min(1).default(10),
@@ -751,7 +768,7 @@ const structuredBlockRegistry: BlockDefinition[] = [
                     default: z.number().int().min(1).default(40),
                 })
                 .default({ min: 10, max: 200, default: 40 }),
-            cta: z.string().default('Зафиксировать цену'),
+            cta: z.string().default('Зафиксировать цену и вызвать замерщика'),
             note: z.string().default(''),
         }),
     ),

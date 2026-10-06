@@ -64,7 +64,7 @@ final class PublicBlockTemplatesTest extends KernelTestCase
         yield 'hero.minimal' => ['hero.minimal', ['title' => 'Контакты', 'subtitle' => 'Позвоните нам'], [], 'data-block-type="hero.minimal"'];
         yield 'image' => ['image', ['src' => '/uploads/a.jpg', 'alt' => 'Картинка'], [], 'alt="Картинка"'];
         yield 'reviews' => ['reviews', ['items' => [['author' => 'Андрей', 'text' => 'Поставили быстро.']]], [], 'data-block-type="reviews"'];
-        yield 'fence-configurator' => ['fence-configurator', ['materials' => [['title' => 'Профнастил С8', 'pricePerMeter' => 1000]]], [], 'data-fence-configurator'];
+        yield 'fence-configurator' => ['fence-configurator', ['grades' => [['title' => 'Полиэстер', 'pricePerSqm' => 1000]]], [], 'data-fence-configurator'];
     }
 
     public function testGalleryHidesExtraPhotosBehindButtonAndSupportsPortraitMode(): void
@@ -130,39 +130,61 @@ final class PublicBlockTemplatesTest extends KernelTestCase
         self::assertSame(1, substr_count($html, 'aria-label="Скопировать: '), 'Реквизит без значения не выводится.');
     }
 
-    public function testFenceConfiguratorCalculatesFirstPriceOnServer(): void
+    public function testFenceConfiguratorBuildsFirstEstimateOnServer(): void
     {
         $html = $this->render('fence-configurator', [
             'title' => 'Соберите забор',
-            'materials' => [
-                ['title' => 'Профнастил С8', 'pricePerMeter' => 1290, 'pattern' => 'profnastil'],
-                ['title' => 'Евроштакетник', 'pricePerMeter' => 2050, 'pattern' => 'shtaketnik'],
+            'materialLabel' => 'Ламели',
+            'series' => [
+                ['title' => 'Largo', 'hint' => 'наклон в одну сторону', 'montagePerSqm' => 3800, 'pattern' => 'jaluzi'],
+                ['title' => 'Doppio', 'hint' => 'наклон в обе стороны', 'montagePerSqm' => 2500, 'pattern' => 'jaluzi-double'],
             ],
-            'heights' => [['label' => '1,5 м', 'factor' => 0.88], ['label' => '1,8 м', 'factor' => 1]],
+            'grades' => [
+                ['series' => 'Largo', 'title' => 'Стандарт', 'pricePerSqm' => 3400, 'finish' => 'gloss', 'details' => 'гладкий · металл 0,45 мм'],
+                ['series' => 'Doppio', 'title' => 'Стандарт', 'pricePerSqm' => 5600, 'finish' => 'gloss', 'details' => ''],
+                ['series' => 'Нет такой', 'title' => 'Потерянное', 'pricePerSqm' => 1],
+            ],
+            'heights' => [['meters' => 1.5], ['meters' => 1.8], ['meters' => 2.0]],
             'colors' => [
-                ['ral' => '6005', 'name' => 'зелёный мох', 'hex' => '#0F4336'],
+                ['ral' => '7024', 'name' => 'Графит', 'hex' => '#373f43'],
                 ['ral' => '9999', 'name' => 'не цвет', 'hex' => 'red;background:url(x)'],
             ],
-            'gate' => ['label' => 'Ворота и калитка', 'price' => 38000],
-            'length' => ['min' => 10, 'max' => 200, 'default' => 40],
+            'gate' => ['enabled' => true, 'label' => 'Ворота и калитка'],
+            'freeItems' => [['title' => 'Замер и образцы цвета', 'note' => 'выезд по Саратову']],
+            'length' => ['min' => 5, 'max' => 150, 'default' => 30],
         ]);
 
-        // 40 м × 1290 ₽ × коэффициент базовой высоты 1 = 51 600 ₽ (ворота по умолчанию не выбраны).
-        self::assertStringContainsString("≈ 51\u{00A0}600\u{00A0}₽", $html);
-        self::assertMatchesRegularExpression('/name="height" value="1" checked/u', $html, 'По умолчанию выбрана высота с коэффициентом 1.');
-        self::assertStringContainsString('--ral: #0F4336', $html);
+        // 30 × 1,8 = 54 м²: ламели 54 × 3 400 = 183 600, монтаж 54 × 3 800 = 205 200, итого 388 800.
+        self::assertStringContainsString("≈ 388\u{00A0}800\u{00A0}₽", $html);
+        self::assertStringContainsString("54\u{00A0}м² × 3\u{00A0}400\u{00A0}₽", $html);
+        self::assertStringContainsString("205\u{00A0}200\u{00A0}₽", $html);
+        self::assertStringContainsString('бесплатно', $html);
+        self::assertStringContainsString("≈ 12\u{00A0}960\u{00A0}₽ за погонный метр", $html);
+        self::assertMatchesRegularExpression('/name="height" value="1" checked/u', $html, 'По умолчанию выбрана высота 1,8 м.');
+        self::assertMatchesRegularExpression('/<label data-series="1"\s+hidden>/u', $html, 'Покрытия второй серии скрыты до её выбора.');
+        self::assertStringNotContainsString('Потерянное', $html, 'Покрытие несуществующей серии не выводится.');
+        self::assertStringContainsString('--ral: #373f43', $html);
+        self::assertStringContainsString('data-pattern="jaluzi"', $html);
+        self::assertStringContainsString('fill="url(#zpcfg-b1-jaluzi)"', $html);
         self::assertStringNotContainsString('url(x)', $html, 'Цвет не из HEX в стиль не попадает.');
-        self::assertStringContainsString('data-lead-plan="Конфигуратор: Профнастил С8, RAL 6005, высота 1,8 м, длина 40 м', $html);
-        self::assertStringContainsString('Ворота и калитка', $html);
+        self::assertStringContainsString('data-lead-plan="Конфигуратор: Largo Стандарт, RAL 7024, высота 1,8 м, длина 30 м', $html);
+        self::assertStringContainsString('name="gate"', $html);
+        self::assertStringContainsString('data-callbar-hide', $html);
     }
 
     public function testFenceConfiguratorWithoutPriceAsksForRequest(): void
     {
-        $html = $this->render('fence-configurator', ['materials' => [['title' => 'Жалюзи', 'pricePerMeter' => 0, 'pattern' => 'jaluzi']]]);
+        $html = $this->render('fence-configurator', ['grades' => [['title' => 'Жалюзи', 'pricePerSqm' => 0]], 'pattern' => 'setka']);
 
         self::assertStringContainsString('Цена по запросу', $html);
-        self::assertStringContainsString('data-pattern="jaluzi"', $html);
-        self::assertStringNotContainsString('name="gate"', $html, 'Без цены ворот пункт не показывается.');
+        self::assertStringContainsString('data-pattern="setka"', $html, 'Без серий рисунок берётся из content.pattern.');
+        self::assertStringNotContainsString('name="gate"', $html, 'Ворота показываются, только если включены.');
+        self::assertStringNotContainsString('type="radio" name="series"', $html, 'Без серий нет переключателя серии.');
+    }
+
+    public function testFenceConfiguratorIsHiddenWithoutGrades(): void
+    {
+        self::assertStringNotContainsString('data-fence-configurator', $this->render('fence-configurator', ['grades' => []]));
     }
 
     public function testAudienceSettingWrapsBlockForTheSwitch(): void

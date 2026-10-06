@@ -1,91 +1,135 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import {
-    fenceHeightPercent,
+    clampLength,
+    fenceEstimate,
     fenceLeadPlan,
-    fenceTotal,
+    fenceTop,
+    formatArea,
+    gradeForSeries,
     initFenceConfigurators,
+    SCENE_GROUND,
     type FenceConfig,
 } from './configurator'
 
 const config: FenceConfig = {
-    materials: [
-        { title: 'Профнастил С8', price: 1290, pattern: 'profnastil' },
-        { title: 'Евроштакетник', price: 2050, pattern: 'shtaketnik' },
-        { title: 'Без цены', price: 0, pattern: 'jaluzi' },
+    materialLabel: 'Ламели',
+    series: [
+        { title: 'Largo', hint: 'наклон в одну сторону', montage: 3800, pattern: 'jaluzi' },
+        { title: 'Doppio', hint: 'наклон в обе стороны', montage: 2500, pattern: 'jaluzi-double' },
     ],
-    heights: [
-        { label: '1,5 м', factor: 0.88 },
-        { label: '1,8 м', factor: 1 },
-        { label: '2,0 м', factor: 1.12 },
+    grades: [
+        {
+            series: 0,
+            title: 'Стандарт',
+            price: 3400,
+            finish: 'gloss',
+            details: 'гладкий · металл 0,45 мм',
+        },
+        {
+            series: 0,
+            title: 'Премиум',
+            price: 4500,
+            finish: 'matte',
+            details: 'матовый велюр · металл 0,50 мм',
+        },
+        {
+            series: 1,
+            title: 'Стандарт',
+            price: 5600,
+            finish: 'gloss',
+            details: 'гладкий · металл 0,45 мм',
+        },
+        { series: 1, title: 'Платинум', price: 9200, finish: 'wood', details: 'матовый «Дерево»' },
+        { series: 1, title: 'Без цены', price: 0, finish: 'matte', details: '' },
     ],
+    heights: [1.5, 1.8, 2],
     colors: [
-        { ral: '6005', name: 'зелёный мох', hex: '#0F4336' },
-        { ral: '8017', name: 'шоколад', hex: '#45322E' },
+        { ral: '7024', name: 'Графит', hex: '#373f43' },
+        { ral: '8017', name: 'Шоколад', hex: '#45322e' },
     ],
-    gate: 38000,
+    gate: { enabled: true, label: 'Ворота и калитка' },
+    free: [{ title: 'Замер и образцы цвета', note: 'выезд по Саратову' }],
 }
 
-describe('fenceTotal', () => {
-    it('multiplies length, price per meter and height factor, rounds to 100 ₽', () => {
-        expect(
-            fenceTotal(config, { material: 0, height: 1, color: 0, length: 40, gate: false }),
-        ).toBe(51600)
-        // 40 × 2050 × 1.12 = 91 840 → 91 800
-        expect(
-            fenceTotal(config, { material: 1, height: 2, color: 0, length: 40, gate: false }),
-        ).toBe(91800)
+const base = { grade: 1, height: 1, color: 0, length: 30, gate: false }
+
+describe('fenceEstimate', () => {
+    it('counts material and montage by area and rounds the total to 100 ₽', () => {
+        const estimate = fenceEstimate(config, base)
+
+        // 30 × 1,8 = 54 м²: ламели 54 × 4 500 = 243 000, монтаж 54 × 3 800 = 205 200.
+        expect(estimate.area).toBe(54)
+        expect(estimate.rows.map((row) => [row.title, row.kind, row.amount])).toEqual([
+            ['Ламели Largo Премиум', 'sum', 243000],
+            ['Монтаж под ключ', 'sum', 205200],
+            ['Замер и образцы цвета', 'free', 0],
+        ])
+        expect(estimate.rows[0]?.note).toBe('54 м² × 4 500 ₽')
+        expect(estimate.total).toBe(448200)
+        expect(estimate.perMeter).toBe(14940)
     })
 
-    it('adds the gate only when it is chosen and priced', () => {
+    it('adds the gate as «по замеру» without changing the sum', () => {
+        const estimate = fenceEstimate(config, { ...base, gate: true })
+
+        expect(estimate.rows.at(-1)).toMatchObject({ title: 'Ворота и калитка', kind: 'tbd' })
+        expect(estimate.total).toBe(448200)
         expect(
-            fenceTotal(config, { material: 0, height: 1, color: 0, length: 40, gate: true }),
-        ).toBe(89600)
-        expect(
-            fenceTotal(
-                { ...config, gate: 0 },
-                { material: 0, height: 1, color: 0, length: 40, gate: true },
-            ),
-        ).toBe(51600)
+            fenceEstimate(
+                { ...config, gate: { enabled: false, label: '' } },
+                { ...base, gate: true },
+            ).rows,
+        ).toHaveLength(3)
     })
 
-    it('returns 0 when the material has no price', () => {
-        expect(
-            fenceTotal(config, { material: 2, height: 1, color: 0, length: 40, gate: true }),
-        ).toBe(0)
+    it('uses the montage price of the grade series and fractional areas', () => {
+        // 25 × 1,5 = 37,5 м²: 37,5 × 9 200 = 345 000 + 37,5 × 2 500 = 93 750 → 438 750 → 438 800.
+        const estimate = fenceEstimate(config, { ...base, grade: 3, height: 0, length: 25 })
+
+        expect(estimate.area).toBe(37.5)
+        expect(estimate.rows[0]?.note).toBe('37,5 м² × 9 200 ₽')
+        expect(estimate.total).toBe(438800)
     })
 
-    it('treats a missing height as factor 1', () => {
-        expect(
-            fenceTotal(
-                { ...config, heights: [] },
-                { material: 0, height: 0, color: 0, length: 10, gate: false },
-            ),
-        ).toBe(12900)
+    it('returns no rows and 0 when the grade has no price', () => {
+        expect(fenceEstimate(config, { ...base, grade: 4 })).toMatchObject({ rows: [], total: 0 })
+        expect(fenceEstimate(config, { ...base, grade: 99 }).total).toBe(0)
     })
 })
 
-describe('fenceHeightPercent', () => {
-    it('spreads heights between 36% and 54% of the scene', () => {
-        expect(fenceHeightPercent(0, 3)).toBe(36)
-        expect(fenceHeightPercent(1, 3)).toBe(45)
-        expect(fenceHeightPercent(2, 3)).toBe(54)
-        expect(fenceHeightPercent(0, 1)).toBe(46)
+describe('helpers', () => {
+    it('keeps the grade with the same title when the series changes', () => {
+        expect(gradeForSeries(config, 1, 0)).toBe(2)
+        expect(gradeForSeries(config, 1, 1)).toBe(2)
+        expect(gradeForSeries(config, 0, 3)).toBe(0)
+        expect(gradeForSeries(config, 5, 0)).toBe(-1)
+    })
+
+    it('formats area and clamps length', () => {
+        expect(formatArea(54)).toBe('54 м²')
+        expect(formatArea(1234.5)).toBe('1 234,5 м²')
+        expect(clampLength(Number.NaN, 5, 150)).toBe(5)
+        expect(clampLength(400, 5, 150)).toBe(150)
+        expect(clampLength(12.4, 5, 150)).toBe(12)
+    })
+
+    it('puts the fence top higher for a taller fence', () => {
+        expect(fenceTop(0)).toBe(SCENE_GROUND)
+        expect(fenceTop(2)).toBeLessThan(fenceTop(1.5))
     })
 })
 
 describe('fenceLeadPlan', () => {
-    it('lists the chosen parameters and the approximate sum', () => {
-        expect(
-            fenceLeadPlan(config, { material: 0, height: 1, color: 1, length: 40, gate: true }),
-        ).toBe(
-            'Конфигуратор: Профнастил С8, RAL 8017, высота 1,8 м, длина 40 м, ворота, примерно 89\u00a0600\u00a0₽',
+    it('lists the chosen parameters, the gate and the approximate sum', () => {
+        expect(fenceLeadPlan(config, { ...base, color: 1, gate: true })).toBe(
+            'Конфигуратор: Largo Премиум, RAL 8017, высота 1,8 м, длина 30 м, ворота и калитка — по замеру, примерно 448 200 ₽',
         )
     })
 
     it('omits the sum when the price is not set', () => {
-        expect(
-            fenceLeadPlan(config, { material: 2, height: 0, color: 0, length: 25, gate: false }),
-        ).toBe('Конфигуратор: Без цены, RAL 6005, высота 1,5 м, длина 25 м')
+        expect(fenceLeadPlan(config, { ...base, grade: 4, height: 0, length: 25 })).toBe(
+            'Конфигуратор: Doppio Без цены, RAL 7024, высота 1,5 м, длина 25 м',
+        )
     })
 })
 
@@ -95,17 +139,27 @@ describe('initFenceConfigurators', () => {
     })
 
     function mount(): HTMLFormElement {
+        const grades = config.grades
+            .map(
+                (grade, index) =>
+                    `<label data-series="${grade.series}" ${grade.series === 0 ? '' : 'hidden'}><input type="radio" name="grade" value="${index}" ${index === 0 ? 'checked' : ''}></label>`,
+            )
+            .join('')
         document.body.innerHTML = `
             <form data-fence-configurator data-config='${JSON.stringify(config)}'>
-                <div data-cfg-scene data-pattern="profnastil" style="--ral: #0F4336; --fh: 45%"></div>
-                <p data-cfg-caption></p>
-                <span data-cfg-color-name></span>
-                <input type="radio" name="material" value="0" checked><input type="radio" name="material" value="1">
+                <svg data-cfg-scene data-pattern="jaluzi" data-finish="gloss" style="--ral: #373f43">
+                    <rect data-fence-body data-fill-prefix="u1" y="228" height="186" fill="url(#u1-jaluzi)"/>
+                    <g data-fence-top transform="translate(0 228)"><text data-cfg-height-tag>1,8 м</text></g>
+                </svg>
+                <p data-cfg-caption></p><p data-cfg-details></p><p data-cfg-color-name></p><p data-cfg-meta></p>
+                <input type="radio" name="series" value="0" checked><input type="radio" name="series" value="1">
+                ${grades}
                 <input type="radio" name="color" value="0" checked><input type="radio" name="color" value="1">
                 <input type="radio" name="height" value="0"><input type="radio" name="height" value="1" checked><input type="radio" name="height" value="2">
-                <input type="range" name="length" min="10" max="200" value="40"><output data-cfg-length-out></output>
+                <button type="button" data-cfg-step="-1"></button><input type="number" name="length" min="5" max="150" value="30"><button type="button" data-cfg-step="1"></button>
                 <input type="checkbox" name="gate">
-                <p data-cfg-total></p>
+                <ul data-cfg-rows></ul>
+                <strong data-cfg-total></strong><strong data-cfg-total-bar></strong><p data-cfg-per-meter></p>
                 <a href="#lead-form" data-cfg-cta data-lead-plan="">Зафиксировать цену</a>
             </form>`
         initFenceConfigurators(document)
@@ -113,44 +167,88 @@ describe('initFenceConfigurators', () => {
         return document.querySelector('form') as HTMLFormElement
     }
 
-    it('shows the initial sum, caption and lead plan', () => {
+    const pick = (form: HTMLFormElement, name: string, value: string): void => {
+        const input = form.querySelector<HTMLInputElement>(
+            `input[name="${name}"][value="${value}"]`,
+        )!
+        input.checked = true
+        input.dispatchEvent(new Event('change', { bubbles: true }))
+    }
+
+    it('shows the initial estimate, caption and lead plan', () => {
         const form = mount()
-        expect(form.querySelector('[data-cfg-total]')?.textContent).toBe('≈ 51\u00a0600\u00a0₽')
+
+        expect(form.querySelector('[data-cfg-total]')?.textContent).toBe('≈ 388 800 ₽')
+        expect(form.querySelector('[data-cfg-total-bar]')?.textContent).toBe('≈ 388 800 ₽')
+        expect(form.querySelector('[data-cfg-per-meter]')?.textContent).toBe(
+            '≈ 12 960 ₽ за погонный метр',
+        )
+        expect(form.querySelectorAll('[data-cfg-rows] li')).toHaveLength(3)
         expect(form.querySelector('[data-cfg-caption]')?.textContent).toBe(
-            'RAL 6005 · зелёный мох · 1,8 м',
+            'Largo Стандарт · гладкий · RAL 7024 · Графит',
+        )
+        expect(form.querySelector('[data-cfg-meta]')?.textContent).toBe(
+            'Largo Стандарт · RAL 7024 · 1,8 м × 30 м',
         )
         expect(form.querySelector<HTMLAnchorElement>('[data-cfg-cta]')?.dataset.leadPlan).toContain(
-            'Профнастил С8',
+            'Largo Стандарт',
         )
     })
 
-    it('recalculates when the visitor changes material, colour, height, length and gate', () => {
+    it('switches series, keeps the grade title and redraws the fence', () => {
         const form = mount()
-        const pick = (name: string, value: string): void => {
-            const input = form.querySelector<HTMLInputElement>(
-                `input[name="${name}"][value="${value}"]`,
-            )!
-            input.checked = true
-            input.dispatchEvent(new Event('change', { bubbles: true }))
-        }
-        pick('material', '1')
-        pick('color', '1')
-        pick('height', '2')
-        const length = form.querySelector<HTMLInputElement>('input[name="length"]')!
-        length.value = '50'
-        length.dispatchEvent(new Event('input', { bubbles: true }))
+        pick(form, 'series', '1')
+
+        const visible = Array.from(form.querySelectorAll<HTMLElement>('[data-series]')).filter(
+            (label) => !label.hidden,
+        )
+        expect(visible.map((label) => label.dataset.series)).toEqual(['1', '1', '1'])
+        expect(form.querySelector<HTMLInputElement>('input[name="grade"]:checked')?.value).toBe('2')
+        const scene = form.querySelector<SVGSVGElement>('[data-cfg-scene]')!
+        expect(scene.dataset.pattern).toBe('jaluzi-double')
+        expect(scene.querySelector('[data-fence-body]')?.getAttribute('fill')).toBe(
+            'url(#u1-jaluzi-double)',
+        )
+        // 54 × (5 600 + 2 500) = 437 400
+        expect(form.querySelector('[data-cfg-total]')?.textContent).toBe('≈ 437 400 ₽')
+    })
+
+    it('recalculates on grade, colour, height, length steps and gate', () => {
+        const form = mount()
+        pick(form, 'grade', '1')
+        pick(form, 'color', '1')
+        pick(form, 'height', '2')
+        form.querySelector<HTMLButtonElement>('[data-cfg-step="1"]')!.click()
         const gate = form.querySelector<HTMLInputElement>('input[name="gate"]')!
         gate.checked = true
         gate.dispatchEvent(new Event('change', { bubbles: true }))
 
-        // 50 × 2050 × 1.12 = 114 800 + 38 000
-        expect(form.querySelector('[data-cfg-total]')?.textContent).toBe('≈ 152\u00a0800\u00a0₽')
-        expect(form.querySelector('[data-cfg-length-out]')?.textContent).toBe('50 м')
-        const scene = form.querySelector<HTMLElement>('[data-cfg-scene]')!
-        expect(scene.dataset.pattern).toBe('shtaketnik')
-        expect(scene.style.getPropertyValue('--ral')).toBe('#45322E')
-        expect(scene.style.getPropertyValue('--fh')).toBe('54%')
-        expect(form.querySelector('[data-cfg-color-name]')?.textContent).toBe('RAL 8017 · шоколад')
+        // 31 × 2 = 62 м²: 62 × (4 500 + 3 800) = 514 600; ворота — по замеру.
+        expect(form.querySelector('[data-cfg-total]')?.textContent).toBe('≈ 514 600 ₽')
+        expect(form.querySelector<HTMLInputElement>('input[name="length"]')?.value).toBe('31')
+        expect(form.querySelector('[data-cfg-rows] li:last-child em')?.textContent).toBe(
+            'по замеру',
+        )
+        const scene = form.querySelector<SVGSVGElement>('[data-cfg-scene]')!
+        expect(scene.dataset.finish).toBe('matte')
+        expect(scene.style.getPropertyValue('--ral')).toBe('#45322e')
+        expect(scene.querySelector('[data-fence-body]')?.getAttribute('y')).toBe(
+            String(fenceTop(2)),
+        )
+        expect(scene.querySelector('[data-fence-top]')?.getAttribute('transform')).toBe(
+            `translate(0 ${fenceTop(2)})`,
+        )
+        expect(scene.querySelector('[data-cfg-height-tag]')?.textContent).toBe('2,0 м')
+        expect(form.querySelector('[data-cfg-color-name]')?.textContent).toBe('RAL 8017 · Шоколад')
+    })
+
+    it('clamps a typed length when the field loses focus', () => {
+        const form = mount()
+        const length = form.querySelector<HTMLInputElement>('input[name="length"]')!
+        length.value = '900'
+        length.dispatchEvent(new Event('change', { bubbles: true }))
+
+        expect(length.value).toBe('150')
     })
 
     it('ignores a broken config instead of throwing', () => {
