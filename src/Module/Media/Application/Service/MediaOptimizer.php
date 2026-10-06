@@ -11,7 +11,7 @@ final readonly class MediaOptimizer
     /**
      * @var list<int>
      */
-    private const array THUMBNAIL_WIDTHS = [320, 768, 1280];
+    private const array THUMBNAIL_WIDTHS = [320, 480, 768, 1024, 1280];
 
     public function optimize(string $absolutePath, string $publicPath, string $mimeType, ?int $width, ?int $height): MediaOptimizationResult
     {
@@ -100,6 +100,14 @@ final readonly class MediaOptimizer
         }
 
         return $variants;
+    }
+
+    /**
+     * Умеет ли PHP делать превью (WebP или AVIF). Без этого пересоздавать их бессмысленно.
+     */
+    public function canCreateVariants(): bool
+    {
+        return \function_exists('imagewebp') || \function_exists('imageavif');
     }
 
     /**
