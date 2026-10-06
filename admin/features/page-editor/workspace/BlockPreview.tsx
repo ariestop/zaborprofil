@@ -1,5 +1,6 @@
 import type { BuilderBlock } from '../../../modules/page-builder/types'
 import { asItems, asString, canonicalType, isRecord, plainText } from './block-kinds'
+import { fenceSummary, formatMeters, formatRub } from './fence-summary'
 
 /**
  * Предпросмотр блока в редакторе: повторяет вёрстку templates/public/blocks/*.html.twig,
@@ -340,6 +341,156 @@ export function LeadFormPreview({ title }: { title: string }) {
     )
 }
 
+/** Конфигуратор забора: не картинка, а сводка цен — то, что редактор правит в полях и должен перепроверить. */
+export function FenceConfiguratorPreview({ content }: { content: Record<string, unknown> }) {
+    const summary = fenceSummary(content)
+    const grades = summary.series.flatMap((group) => group.grades)
+    if (grades.length === 0) {
+        return (
+            <EmptyMedia
+                title="В конфигураторе нет покрытий"
+                text={
+                    summary.warnings[0] ??
+                    'Добавьте покрытие с ценой — без него блок на сайт не выводится'
+                }
+            />
+        )
+    }
+    const { example } = summary
+
+    return (
+        <span className="block px-8 py-7">
+            <Heading text={asString(content.title)} />
+            {asString(content.subtitle) !== '' ? (
+                <span className="-mt-3 mb-5 block text-sm text-graphite dark:text-slate-600">
+                    {asString(content.subtitle)}
+                </span>
+            ) : null}
+            <span className="flex flex-col gap-4">
+                {summary.series.map((group, groupIndex) => (
+                    <span
+                        key={`${group.title}-${groupIndex}`}
+                        className="block overflow-hidden rounded-xl border border-line text-sm dark:border-slate-200"
+                    >
+                        <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1 bg-surface px-3 py-2.5 dark:bg-slate-50">
+                            {group.title !== '' ? (
+                                <span className="font-semibold text-ink dark:text-slate-950">
+                                    {group.title}
+                                </span>
+                            ) : null}
+                            {group.hint !== '' ? (
+                                <span className="text-graphite dark:text-slate-600">
+                                    {group.hint}
+                                </span>
+                            ) : null}
+                            <span className="ml-auto text-graphite dark:text-slate-600">
+                                {group.montage > 0
+                                    ? `монтаж ${formatRub(group.montage)}/м²`
+                                    : 'монтаж не задан'}
+                            </span>
+                        </span>
+                        <span className="grid grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))]">
+                            {['Покрытие', 'Материал', 'Монтаж', 'Итого за м²'].map((label) => (
+                                <span
+                                    key={label}
+                                    className="border-t border-surface-strong px-3 py-1.5 text-xs font-semibold text-graphite dark:border-slate-100 dark:text-slate-600"
+                                >
+                                    {label}
+                                </span>
+                            ))}
+                            {group.grades.map((grade, index) => (
+                                <span key={`${grade.title}-${index}`} className="contents">
+                                    <span className="border-t border-surface-strong px-3 py-2 dark:border-slate-100">
+                                        <span className="block font-semibold text-ink dark:text-slate-950">
+                                            {grade.title}
+                                        </span>
+                                        {grade.details !== '' ? (
+                                            <span className="block text-xs text-graphite dark:text-slate-600">
+                                                {grade.details}
+                                            </span>
+                                        ) : null}
+                                    </span>
+                                    <span className="border-t border-surface-strong px-3 py-2 text-ink dark:border-slate-100 dark:text-slate-700">
+                                        {grade.price > 0 ? formatRub(grade.price) : '—'}
+                                    </span>
+                                    <span className="border-t border-surface-strong px-3 py-2 text-ink dark:border-slate-100 dark:text-slate-700">
+                                        {group.montage > 0 ? formatRub(group.montage) : '—'}
+                                    </span>
+                                    <span className="border-t border-surface-strong px-3 py-2 font-semibold text-ink dark:border-slate-100 dark:text-slate-950">
+                                        {grade.total > 0 ? formatRub(grade.total) : 'по запросу'}
+                                    </span>
+                                </span>
+                            ))}
+                        </span>
+                    </span>
+                ))}
+            </span>
+            <span className="mt-4 grid gap-2 text-sm text-graphite dark:text-slate-600">
+                <span>
+                    <b className="font-semibold text-ink dark:text-slate-950">Высоты: </b>
+                    {summary.heights.length > 0
+                        ? summary.heights.map(formatMeters).join(' · ')
+                        : '1,8 м (не заданы — используется по умолчанию)'}
+                    {' · '}
+                    <b className="font-semibold text-ink dark:text-slate-950">Длина: </b>
+                    {`${summary.length.min}–${summary.length.max} м, по умолчанию ${summary.length.default} м`}
+                </span>
+                <span className="flex flex-wrap items-center gap-2">
+                    <b className="font-semibold text-ink dark:text-slate-950">Цвета: </b>
+                    {summary.colors.length === 0 ? 'не заданы' : null}
+                    {summary.colors.map((color) => (
+                        <span
+                            key={color.hex + color.label}
+                            className="inline-flex items-center gap-1.5"
+                        >
+                            <span
+                                className="size-4 rounded border border-black/15"
+                                style={{ background: color.hex }}
+                                aria-hidden="true"
+                            />
+                            {color.label}
+                        </span>
+                    ))}
+                </span>
+                <span>
+                    <b className="font-semibold text-ink dark:text-slate-950">Ворота: </b>
+                    {summary.gateEnabled
+                        ? 'пункт показывается, в смете «по замеру»'
+                        : 'не показываются'}
+                    {summary.freeItems.length > 0 ? (
+                        <>
+                            {' · '}
+                            <b className="font-semibold text-ink dark:text-slate-950">
+                                Бесплатно:{' '}
+                            </b>
+                            {summary.freeItems.join(', ')}
+                        </>
+                    ) : null}
+                </span>
+            </span>
+            {example !== null ? (
+                <span className="mt-4 block rounded-xl bg-brand-50 px-4 py-3 text-sm text-ink dark:text-slate-950">
+                    Пример сметы: {example.title}, {formatMeters(example.height)} × {example.length}{' '}
+                    м = {example.area.toLocaleString('ru-RU')} м² →{' '}
+                    <b className="font-semibold">≈ {formatRub(example.total)}</b>
+                </span>
+            ) : null}
+            {summary.warnings.length > 0 ? (
+                <span className="mt-4 block rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                    <b className="font-semibold">Проверьте:</b>
+                    <span className="mt-1 block">
+                        {summary.warnings.map((warning) => (
+                            <span key={warning} className="block">
+                                • {warning}
+                            </span>
+                        ))}
+                    </span>
+                </span>
+            ) : null}
+        </span>
+    )
+}
+
 function Generic({ block }: { block: BuilderBlock }) {
     const texts = Object.values(block.content)
         .filter((value): value is string => typeof value === 'string')
@@ -397,6 +548,8 @@ export function BlockPreview({ block }: { block: BuilderBlock }) {
             return <PriceTable content={content} />
         case 'cta':
             return <Cta content={content} />
+        case 'fence-configurator':
+            return <FenceConfiguratorPreview content={content} />
         case 'contact-form':
             return <LeadFormPreview title={asString(content.title)} />
         default:
