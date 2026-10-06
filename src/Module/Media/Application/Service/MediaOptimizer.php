@@ -52,7 +52,17 @@ final readonly class MediaOptimizer
             default => false,
         };
 
-        return $image instanceof GdImage ? $image : null;
+        if (!$image instanceof GdImage) {
+            return null;
+        }
+
+        // Без этого imagepng/imagewebp/imageavif при пересохранении оригинала сбрасывают прозрачность.
+        if ($mimeType !== 'image/jpeg') {
+            imagealphablending($image, false);
+            imagesavealpha($image, true);
+        }
+
+        return $image;
     }
 
     private function rewriteOriginal(GdImage $image, string $absolutePath, string $mimeType): void

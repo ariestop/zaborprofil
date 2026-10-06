@@ -69,6 +69,32 @@ final class MediaOptimizerTest extends TestCase
         rmdir($directory);
     }
 
+    public function testKeepsTransparencyOfPngAndWebpOriginals(): void
+    {
+        self::assertNotNull($this->temporaryDirectory);
+
+        foreach (['png' => 'image/png', 'webp' => 'image/webp'] as $extension => $mimeType) {
+            $path = $this->temporaryDirectory.'/cutout.'.$extension;
+            $image = imagecreatetruecolor(40, 60);
+            imagealphablending($image, false);
+            imagesavealpha($image, true);
+            imagefill($image, 0, 0, (int) imagecolorallocatealpha($image, 255, 255, 255, 127));
+            imagefilledrectangle($image, 10, 10, 29, 49, (int) imagecolorallocatealpha($image, 20, 30, 40, 0));
+            if ($extension === 'png') {
+                imagepng($image, $path);
+            } else {
+                imagewebp($image, $path, 90);
+            }
+
+            (new MediaOptimizer())->optimize($path, '/uploads/media/cutout.'.$extension, $mimeType, 40, 60);
+
+            $stored = $extension === 'png' ? imagecreatefrompng($path) : imagecreatefromwebp($path);
+            self::assertInstanceOf(\GdImage::class, $stored);
+            self::assertSame(127, (imagecolorat($stored, 2, 2) >> 24) & 0x7F, $extension.': фон остаётся прозрачным');
+            self::assertSame(0, (imagecolorat($stored, 20, 30) >> 24) & 0x7F, $extension.': фигура остаётся непрозрачной');
+        }
+    }
+
     public function testTargetWidthsIncludeOriginalUpToLargestPreview(): void
     {
         self::assertSame([320, 480, 640], MediaOptimizer::targetWidths(640));
