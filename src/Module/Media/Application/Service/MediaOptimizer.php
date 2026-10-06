@@ -27,7 +27,6 @@ final readonly class MediaOptimizer
         $this->rewriteOriginal($source, $absolutePath, $mimeType);
 
         $variants = $this->createVariants($source, $absolutePath, $publicPath, $width, $height);
-        imagedestroy($source);
 
         return new MediaOptimizationResult((int) filesize($absolutePath), $width, $height, $variants);
     }
@@ -95,8 +94,6 @@ final readonly class MediaOptimizer
                 imageavif($thumbnail, $variantPath, 55);
                 $variants[] = $this->variant($publicPath, $variantPath, $targetWidth, $targetHeight, 'avif', 'image/avif');
             }
-
-            imagedestroy($thumbnail);
         }
 
         return $variants;
