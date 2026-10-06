@@ -108,6 +108,11 @@ final readonly class MediaLibrarySynchronizer
 
     private function createMissingVariants(MediaSyncReport $report, bool $dryRun): void
     {
+        // Без WebP/AVIF в PHP превью не появятся, а оригиналы зря перекодировались бы при каждом деплое.
+        if (!$this->optimizer->canCreateVariants()) {
+            return;
+        }
+
         foreach ($this->assets->findLatest(100_000) as $asset) {
             if (!$this->needsPreviews($asset)) {
                 continue;
@@ -137,8 +142,8 @@ final readonly class MediaLibrarySynchronizer
     }
 
     /**
-     * Превью нужны картинке без вариантов или такой, у которой самое крупное превью меньше нужного
-     * (загружена до того, как оригинал до 1280 px стал попадать в превью).
+     * Превью нужны картинке, у которой нет хотя бы одной из нужных ширин
+     * (загружена до того, как появились 480/1024 px или оригинал до 1280 px стал попадать в превью).
      */
     private function needsPreviews(MediaAsset $asset): bool
     {
@@ -147,13 +152,11 @@ final readonly class MediaLibrarySynchronizer
             return false;
         }
 
-        $largest = 0;
+        $existing = [];
         foreach ($asset->variants() as $variant) {
-            $largest = max($largest, (int) $variant['width']);
+            $existing[(int) $variant['width']] = true;
         }
 
-        $needed = MediaOptimizer::targetWidths($width);
-
-        return $needed !== [] && $largest < max($needed);
+        return array_any(MediaOptimizer::targetWidths($width), static fn (int $target): bool => !isset($existing[$target]));
     }
 }

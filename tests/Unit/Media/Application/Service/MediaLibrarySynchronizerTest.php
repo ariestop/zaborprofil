@@ -72,7 +72,7 @@ final class MediaLibrarySynchronizerTest extends TestCase
         self::assertNotNull($imported->fileHash());
         if (\function_exists('imagewebp')) {
             $webp = array_values(array_filter($imported->variants(), static fn (array $variant): bool => $variant['mimeType'] === 'image/webp'));
-            self::assertSame([320, 768, 1280], array_map(static fn (array $variant): ?int => $variant['width'], $webp));
+            self::assertSame([320, 480, 768, 1024, 1280], array_map(static fn (array $variant): ?int => $variant['width'], $webp));
             self::assertFileExists($this->dir.'/variants/fence-1280.webp');
         }
 
