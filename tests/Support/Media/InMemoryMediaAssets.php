@@ -82,6 +82,8 @@ final class InMemoryMediaAssets implements MediaAssetRepositoryInterface
     }
 
     /**
+     * @phpstan-impure
+     *
      * @return list<MediaAsset>
      */
     public function all(): array
@@ -89,6 +91,9 @@ final class InMemoryMediaAssets implements MediaAssetRepositoryInterface
         return array_values($this->assets);
     }
 
+    /**
+     * @phpstan-impure
+     */
     public function byPath(string $path): ?MediaAsset
     {
         return $this->findByPublicPaths([$path])[0] ?? null;

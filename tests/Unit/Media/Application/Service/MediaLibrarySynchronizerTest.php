@@ -140,6 +140,11 @@ final class MediaLibrarySynchronizerTest extends TestCase
         return new MediaLibrarySynchronizer($assets, new MediaUsageFinder([$provider]), new MediaOptimizer(), $this->dir);
     }
 
+    /**
+     * @param int<1, max>  $width
+     * @param int<1, max>  $height
+     * @param int<0, 215>  $seed
+     */
     private function jpeg(string $name, int $width, int $height, int $seed = 0): void
     {
         $image = imagecreatetruecolor($width, $height);
