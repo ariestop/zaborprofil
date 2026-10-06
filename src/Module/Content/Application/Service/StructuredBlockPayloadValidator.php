@@ -22,7 +22,7 @@ final readonly class StructuredBlockPayloadValidator
             BlockType::RichText => $this->requireString($content, 'html'),
             BlockType::Features => $this->requireObjectList($content, 'items'),
             BlockType::Faq, BlockType::SchemaFaq => $this->requireFaqItems($content),
-            BlockType::Gallery, BlockType::Portfolio => $this->requireObjectList($content, 'items'),
+            BlockType::Gallery, BlockType::Portfolio, BlockType::Reviews => $this->requireObjectList($content, 'items'),
             BlockType::Cta => $this->requireString($content, 'title'),
             BlockType::ContactForm => $this->requireString($content, 'title'),
             BlockType::PriceTable => $this->requirePriceTable($content),

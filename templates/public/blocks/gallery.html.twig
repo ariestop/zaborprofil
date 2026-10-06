@@ -3,13 +3,20 @@
 {% set visible = block.settings.visible ?? 8 %}
 {% set portrait = (block.settings.aspect ?? 'landscape') == 'portrait' %}
 {% set contain = (block.settings.fit ?? 'cover') == 'contain' %}
-{% set grid_class = portrait ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' %}
-{% set img_class = (portrait ? 'aspect-3/4' : 'aspect-4/3') ~ ' w-full ' ~ (contain ? 'object-contain bg-surface' : 'object-cover') ~ ' transition duration-300 group-hover:scale-105' %}
+{# Документы (fit = contain, до 4 штук: патенты, сертификаты) — один ровный ряд по центру, вертикальный кадр, без пустых ячеек. #}
+{% set documents = contain and images|length <= 4 %}
+{% set document_cols = {1: 'grid-cols-1 max-w-xs', 2: 'grid-cols-2 max-w-xl', 3: 'grid-cols-3 max-w-3xl', 4: 'grid-cols-2 sm:grid-cols-4 max-w-4xl'} %}
+{% if documents %}
+    {% set grid_class = document_cols[images|length] ~ ' mx-auto' %}
+{% else %}
+    {% set grid_class = portrait ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4' %}
+{% endif %}
+{% set img_class = (portrait or documents ? 'aspect-3/4' : 'aspect-4/3') ~ ' w-full ' ~ (contain ? 'object-contain bg-surface' : 'object-cover') ~ ' transition duration-300 group-hover:scale-105' %}
 {% if images|length > 0 %}
     <section class="zp-section" data-block-type="gallery" data-gallery>
         <div class="zp-container">
             {% if (block.content.title ?? '') is not empty %}
-                <h2 class="zp-h2 mb-6 md:mb-8">{{ block.content.title }}</h2>
+                <h2 class="zp-h2 mb-6 md:mb-8 {{ documents ? 'text-center' : '' }}">{{ block.content.title }}</h2>
             {% endif %}
             <div class="grid {{ grid_class }} gap-2 sm:gap-3">
                 {% for item in images %}
@@ -25,7 +32,7 @@
                             }) }}
                         </a>
                         {% if (item.caption ?? '') is not empty %}
-                            <figcaption class="mt-1.5 text-sm text-graphite">{{ item.caption }}</figcaption>
+                            <figcaption class="mt-1.5 text-graphite {{ documents ? 'text-center text-xs leading-snug sm:text-sm' : 'text-sm' }}">{{ item.caption }}</figcaption>
                         {% endif %}
                     </figure>
                 {% endfor %}

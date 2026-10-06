@@ -471,7 +471,7 @@
 @layer components {
     /* ---------- Конфигуратор забора (fence-configurator) ---------- */
     .zp-cfg {
-        @apply grid gap-4 rounded-[var(--radius-card)] bg-white p-4 ring-1 ring-line md:p-5;
+        @apply grid min-w-0 gap-4 rounded-[var(--radius-card)] bg-white p-4 ring-1 ring-line md:p-5;
     }
     .zp-cfg__group {
         @apply grid min-w-0 gap-2;
@@ -490,6 +490,10 @@
     }
     .zp-cfg__sum {
         @apply flex flex-wrap items-center justify-between gap-4 border-t border-line pt-4;
+    }
+    /* Длинная надпись кнопки не должна раздвигать блок на телефоне. */
+    .zp-cfg__sum .zp-btn {
+        @apply w-full py-3 text-center leading-snug whitespace-normal sm:w-auto;
     }
     .zp-cfg-seg {
         @apply flex flex-wrap gap-1.5 rounded-[var(--radius-btn)] bg-surface-strong p-1.5;

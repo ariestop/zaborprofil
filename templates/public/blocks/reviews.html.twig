@@ -1,0 +1,41 @@
+{#
+    Отзывы клиентов: фото объекта, текст, имя, район и что заказали.
+    Разметку Review для поисковиков намеренно не выводим: отзывы вносит редактор вручную,
+    а Яндекс и Google требуют для такой разметки отзывы, собранные на самом сайте.
+#}
+{% set reviews = (block.content.items ?? [])|filter(item => (item.text ?? '') is not empty) %}
+{% if reviews|length > 0 %}
+    <section class="zp-section zp-section--alt" data-block-type="reviews" {% if (block.settings.anchor ?? '') is not empty %}id="{{ block.settings.anchor }}"{% endif %}>
+        <div class="zp-container">
+            <h2 class="zp-h2">{{ (block.content.title ?? '') is not empty ? block.content.title : 'Отзывы клиентов' }}</h2>
+            {% if (block.content.subtitle ?? '') is not empty %}
+                <p class="zp-lead">{{ block.content.subtitle }}</p>
+            {% endif %}
+            <div class="mt-6 grid gap-4 md:mt-8 md:grid-cols-3">
+                {% for item in reviews %}
+                    <figure class="flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-line bg-white">
+                        {% if (item.image ?? '') is not empty %}
+                            {{ responsive_image(item.image, {
+                                alt: item.imageAlt ?? null,
+                                fallback_alt: 'Объект: ' ~ (item.author ?? 'клиент'),
+                                class: 'aspect-4/3 w-full object-cover',
+                                sizes: '(min-width: 1152px) 360px, (min-width: 768px) 33vw, 100vw'
+                            }) }}
+                        {% endif %}
+                        <div class="flex grow flex-col gap-4 p-5">
+                            <blockquote class="grow text-ink">
+                                <p>«{{ item.text }}»</p>
+                            </blockquote>
+                            <figcaption class="border-t border-line pt-3">
+                                <span class="block font-semibold text-ink">{{ (item.author ?? '') is not empty ? item.author : 'Клиент' }}{% if (item.place ?? '') is not empty %}, {{ item.place }}{% endif %}</span>
+                                {% if (item.details ?? '') is not empty %}
+                                    <span class="mt-0.5 block text-sm text-graphite">{{ item.details }}</span>
+                                {% endif %}
+                            </figcaption>
+                        </div>
+                    </figure>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+{% endif %}

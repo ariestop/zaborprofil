@@ -553,9 +553,22 @@ const structuredBlockRegistry: BlockDefinition[] = [
         'Отзывы',
         'conversion',
         70,
-        'Отзывы.',
+        'Отзывы клиентов: фото объекта, текст, имя, район и что заказали.',
         z.object({
-            items: z.array(z.object({ author: z.string(), text: z.string() })).default([]),
+            title: z.string().default('Отзывы клиентов'),
+            subtitle: z.string().default(''),
+            items: z
+                .array(
+                    z.object({
+                        author: z.string(),
+                        text: z.string(),
+                        place: z.string().default(''),
+                        details: z.string().default(''),
+                        image: z.string().default(''),
+                        imageAlt: z.string().default(''),
+                    }),
+                )
+                .default([]),
         }),
     ),
     def(
