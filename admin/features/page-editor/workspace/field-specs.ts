@@ -72,9 +72,9 @@ const FENCE_PATTERNS = [
 ]
 
 const FENCE_FINISHES = [
-    { value: 'gloss', label: 'Глянец (гладкий)' },
+    { value: 'gloss', label: 'Полуглянец (полиэстер)' },
     { value: 'matte', label: 'Мат (велюр)' },
-    { value: 'wood', label: 'Под дерево' },
+    { value: 'wood', label: 'Декор под дерево (матовый)' },
 ]
 
 const optionalTitle: FieldSpec = {
@@ -211,7 +211,14 @@ const SPECS: Partial<Record<BuilderBlockType, FieldSpec[]>> = {
             label: 'Покрытия и цены',
             itemLabel: 'Покрытие',
             addLabel: 'Добавить покрытие',
-            newItem: { series: '', title: '', pricePerSqm: 0, finish: 'matte', details: '' },
+            newItem: {
+                series: '',
+                title: '',
+                pricePerSqm: 0,
+                finish: 'matte',
+                details: '',
+                decor: '',
+            },
             itemTitle: (item) =>
                 [asString(item.series), asString(item.title)]
                     .filter((part) => part !== '')
@@ -244,6 +251,12 @@ const SPECS: Partial<Record<BuilderBlockType, FieldSpec[]>> = {
                     key: 'details',
                     label: 'Характеристики',
                     help: 'Через « · »: «матовый велюр · металл 0,50 мм · гарантия 40 лет»',
+                },
+                {
+                    kind: 'text',
+                    key: 'decor',
+                    label: 'Декор',
+                    help: 'Только для поверхности «Дерево»: например, «Античный дуб». Цвет задаёт декор — RAL на сайте не выбирается',
                 },
             ],
         },

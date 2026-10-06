@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import {
     clampLength,
     fenceEstimate,
+    fenceColor,
     fenceLeadPlan,
     fenceTop,
     formatArea,
@@ -39,7 +40,14 @@ const config: FenceConfig = {
             finish: 'gloss',
             details: 'гладкий · металл 0,45 мм',
         },
-        { series: 1, title: 'Платинум', price: 9200, finish: 'wood', details: 'матовый «Дерево»' },
+        {
+            series: 1,
+            title: 'Платинум',
+            price: 9200,
+            finish: 'wood',
+            details: 'матовый «Античный дуб»',
+            decor: 'Античный дуб',
+        },
         { series: 1, title: 'Без цены', price: 0, finish: 'matte', details: '' },
     ],
     heights: [1.5, 1.8, 2],
@@ -126,6 +134,22 @@ describe('fenceLeadPlan', () => {
         )
     })
 
+    it('names the decor instead of RAL for a wood grade', () => {
+        expect(fenceLeadPlan(config, { ...base, grade: 3, height: 0, length: 25 })).toBe(
+            'Конфигуратор: Doppio Платинум, Античный дуб, высота 1,5 м, длина 25 м, примерно 438 800 ₽',
+        )
+        expect(fenceColor(config, { ...base, grade: 3 })).toEqual({
+            long: 'Античный дуб',
+            short: 'Античный дуб',
+            decor: 'Античный дуб',
+        })
+        expect(fenceColor(config, { ...base, color: 1 })).toEqual({
+            long: 'RAL 8017 · Шоколад',
+            short: 'RAL 8017',
+            decor: '',
+        })
+    })
+
     it('omits the sum when the price is not set', () => {
         expect(fenceLeadPlan(config, { ...base, grade: 4, height: 0, length: 25 })).toBe(
             'Конфигуратор: Doppio Без цены, RAL 7024, высота 1,5 м, длина 25 м',
@@ -150,12 +174,13 @@ describe('initFenceConfigurators', () => {
                 <svg data-cfg-scene data-pattern="jaluzi" data-finish="gloss" style="--ral: #373f43">
                     <rect data-fence-body data-fill-prefix="u1" y="228" height="186" fill="url(#u1-jaluzi)"/>
                     <rect data-fill-prefix="u1" data-fill-suffix="-zoom" fill="url(#u1-jaluzi-zoom)"/>
+                    <rect data-fill-prefix="u1" data-fill-suffix="-shade" fill="url(#u1-jaluzi-shade)"/>
                     <g data-fence-top transform="translate(0 228)"><text data-cfg-height-tag>1,8 м</text></g>
                 </svg>
                 <p data-cfg-caption></p><p data-cfg-details></p><p data-cfg-color-name></p><p data-cfg-meta></p>
                 <input type="radio" name="series" value="0" checked><input type="radio" name="series" value="1">
                 ${grades}
-                <input type="radio" name="color" value="0" checked><input type="radio" name="color" value="1">
+                <fieldset data-cfg-colors><input type="radio" name="color" value="0" checked><input type="radio" name="color" value="1"></fieldset>
                 <input type="radio" name="height" value="0"><input type="radio" name="height" value="1" checked><input type="radio" name="height" value="2">
                 <button type="button" data-cfg-step="-1"></button><input type="number" name="length" min="5" max="150" value="30"><button type="button" data-cfg-step="1"></button>
                 <input type="checkbox" name="gate">
@@ -244,6 +269,34 @@ describe('initFenceConfigurators', () => {
         )
         expect(scene.querySelector('[data-cfg-height-tag]')?.textContent).toBe('2,0 м')
         expect(form.querySelector('[data-cfg-color-name]')?.textContent).toBe('RAL 8017 · Шоколад')
+    })
+
+    it('locks the RAL colours for the oak decor and unlocks them again', () => {
+        const form = mount()
+        pick(form, 'series', '1')
+        pick(form, 'grade', '3')
+
+        const colors = form.querySelector<HTMLFieldSetElement>('[data-cfg-colors]')!
+        const scene = form.querySelector<SVGSVGElement>('[data-cfg-scene]')!
+        expect(colors.disabled).toBe(true)
+        expect(scene.dataset.finish).toBe('wood')
+        expect(scene.querySelector('[data-fill-suffix="-shade"]')?.getAttribute('fill')).toBe(
+            'url(#u1-jaluzi-double-shade)',
+        )
+        expect(form.querySelector('[data-cfg-color-name]')?.textContent).toBe(
+            'Декор «Античный дуб» — цвет RAL не выбирается',
+        )
+        expect(form.querySelector('[data-cfg-caption]')?.textContent).toBe(
+            'Doppio Платинум · матовый «Античный дуб»',
+        )
+        expect(form.querySelector('[data-cfg-meta]')?.textContent).toBe(
+            'Doppio Платинум · Античный дуб · 1,8 м × 30 м',
+        )
+        expect(scene.getAttribute('aria-label')).toContain('Античный дуб')
+
+        pick(form, 'grade', '2')
+        expect(colors.disabled).toBe(false)
+        expect(form.querySelector('[data-cfg-color-name]')?.textContent).toBe('RAL 7024 · Графит')
     })
 
     it('clamps a typed length when the field loses focus', () => {

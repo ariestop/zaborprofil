@@ -62,6 +62,13 @@
     video {
         height: auto;
     }
+
+    /* Заголовки — Golos Text (docs/50-brand-system.md, раздел 5), текст и интерфейс — Onest. */
+    h1,
+    h2,
+    h3 {
+        font-family: var(--font-heading);
+    }
 }
 
 @layer components {
@@ -568,6 +575,13 @@
     .zp-swatch:has(input:focus-visible) {
         @apply outline-3 outline-offset-4 outline-brand-600;
     }
+    /* У декора под дерево цвет RAL не выбирается: образцы приглушены. */
+    [data-cfg-colors]:disabled .zp-swatch {
+        @apply cursor-not-allowed opacity-35 ring-offset-0;
+    }
+    [data-cfg-colors]:disabled .zp-swatch:has(input:checked) {
+        @apply ring-1 ring-black/15;
+    }
     .zp-stepper {
         @apply flex h-12 overflow-hidden rounded-[var(--radius-btn)] bg-white ring-1 ring-line-strong;
     }
@@ -649,6 +663,11 @@
     /* Сцена (templates/public/blocks/_fence-scene.svg.twig). На телефоне картинка выше и обрезана справа. */
     .zp-scene {
         @apply relative block aspect-[1200/470] h-auto w-full max-md:aspect-[1200/760];
+        --fence: var(--ral);
+    }
+    /* Декор под дерево («Античный дуб») — печатный рисунок со своим цветом: RAL на него не действует. */
+    .zp-scene[data-finish='wood'] {
+        --fence: var(--oak);
     }
     .zp-scene [data-fence-body],
     .zp-scene [data-fence-top] {
@@ -659,7 +678,7 @@
     }
     /*
      * Покрытие меняет только отражение, не тон: полиэстер (gloss) — полуглянцевые блики,
-     * велюр (matte) — матовое зерно без бликов, wood — рисунок дерева. Цвет задаёт только --ral.
+     * велюр (matte) — матовая мелкая структура без бликов, wood — матовый рисунок дуба. Цвет задаёт только --fence.
      */
     .zp-scene__grain,
     .zp-scene__wood,
@@ -684,7 +703,7 @@
     .zp-scene[data-finish='wood'] .zp-scene__spec {
         opacity: 0;
     }
-    /* П-планка секции: Doppio — 100 мм, остальные — 60 мм. */
+    /* П-планка секции: Doppio — 100 мм, Largo и остальные — 80 мм. */
     .zp-scene__u--wide,
     .zp-scene[data-pattern='jaluzi-double'] .zp-scene__u--narrow {
         display: none;

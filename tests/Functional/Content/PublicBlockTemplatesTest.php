@@ -187,6 +187,22 @@ final class PublicBlockTemplatesTest extends KernelTestCase
         self::assertStringContainsString('1,7 м', $html);
     }
 
+    public function testFenceConfiguratorWoodDecorReplacesRal(): void
+    {
+        $html = $this->render('fence-configurator', [
+            'grades' => [['title' => 'Платинум', 'pricePerSqm' => 5800, 'finish' => 'wood', 'details' => 'матовый «Античный дуб»', 'decor' => 'Античный дуб']],
+            'colors' => [['ral' => '6005', 'name' => 'Зелёный мох', 'hex' => '#0f4336']],
+        ]);
+
+        self::assertStringContainsString('data-finish="wood"', $html);
+        self::assertStringContainsString('data-cfg-colors disabled', $html, 'У декора RAL не выбирается.');
+        self::assertStringContainsString('Декор «Античный дуб» — цвет RAL не выбирается', $html);
+        self::assertStringContainsString('data-lead-plan="Конфигуратор: Платинум, Античный дуб, высота', $html);
+        self::assertStringNotContainsString(', RAL 6005', $html);
+        self::assertStringContainsString('filter="url(#zpcfg-b1-oak)"', $html);
+        self::assertStringContainsString('fill="url(#zpcfg-b1-profnastil-shade)"', $html);
+    }
+
     public function testFenceConfiguratorWithoutPriceAsksForRequest(): void
     {
         $html = $this->render('fence-configurator', ['grades' => [['title' => 'Жалюзи', 'pricePerSqm' => 0]], 'pattern' => 'setka']);
