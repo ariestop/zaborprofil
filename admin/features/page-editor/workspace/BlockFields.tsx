@@ -166,7 +166,7 @@ function SelectField({
                 id={id}
                 value={value}
                 onChange={(event) => onChange(event.target.value)}
-                className="h-10 w-full rounded-lg border border-line-strong bg-white px-3 text-sm text-ink dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                className="h-12 w-full rounded-lg border border-line-strong bg-white px-3 text-sm text-ink dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
             >
                 {spec.options.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -202,7 +202,7 @@ function LinkField({
                 onChange={(event) =>
                     onChange(event.target.value === 'lead' ? LEAD_FORM_ANCHOR : '')
                 }
-                className="h-10 w-full rounded-lg border border-line-strong bg-white px-3 text-sm text-ink dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                className="h-12 w-full rounded-lg border border-line-strong bg-white px-3 text-sm text-ink dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
             >
                 <option value="lead">К форме заявки на этой странице</option>
                 <option value="custom">На другую страницу или адрес</option>

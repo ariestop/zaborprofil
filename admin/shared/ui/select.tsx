@@ -14,7 +14,7 @@ interface SelectProps {
 export function Select({ value, onValueChange, options }: SelectProps) {
   return (
     <SelectPrimitive.Root value={value} onValueChange={onValueChange}>
-      <SelectPrimitive.Trigger className="inline-flex h-10 min-w-48 items-center justify-between rounded-lg border border-line-strong bg-white px-3 text-sm text-ink dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+      <SelectPrimitive.Trigger className="inline-flex h-12 min-w-48 items-center justify-between rounded-lg border border-line-strong bg-white px-3 text-sm text-ink dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
         <SelectPrimitive.Value />
       </SelectPrimitive.Trigger>
       <SelectPrimitive.Portal>

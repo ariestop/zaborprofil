@@ -252,7 +252,7 @@ export function PageEditor({
                                         type="button"
                                         aria-label="Другие действия со страницей"
                                         className={cn(
-                                            'inline-flex h-10 w-10 items-center justify-center focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500',
+                                            'inline-flex h-12 w-12 items-center justify-center focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500',
                                             publishVisible
                                                 ? 'rounded-r-lg border-l border-brand-800 bg-brand-700 text-white hover:bg-brand-800'
                                                 : 'rounded-lg border border-line-strong bg-white text-ink hover:bg-surface dark:hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100',

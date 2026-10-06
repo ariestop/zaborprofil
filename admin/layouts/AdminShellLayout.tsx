@@ -68,7 +68,7 @@ function SidebarContent({ collapsed, onToggleCollapsed, onClose }: SidebarConten
                         onClick={onToggleCollapsed}
                         aria-label={collapsed ? 'Развернуть меню' : 'Свернуть меню'}
                         title={collapsed ? 'Развернуть меню' : 'Свернуть меню'}
-                        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-graphite hover:bg-surface-strong focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-slate-400 dark:hover:bg-slate-800"
+                        className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-lg text-graphite hover:bg-surface-strong focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-slate-400 dark:hover:bg-slate-800"
                     >
                         <NavIcon name="sidebar" />
                     </button>
@@ -78,7 +78,7 @@ function SidebarContent({ collapsed, onToggleCollapsed, onClose }: SidebarConten
                         type="button"
                         onClick={onClose}
                         aria-label="Закрыть меню"
-                        className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-graphite hover:bg-surface-strong dark:text-slate-400 dark:hover:bg-slate-800"
+                        className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-lg text-graphite hover:bg-surface-strong dark:text-slate-400 dark:hover:bg-slate-800"
                     >
                         <NavIcon name="close" />
                     </button>
@@ -119,7 +119,7 @@ function SidebarContent({ collapsed, onToggleCollapsed, onClose }: SidebarConten
                             type="submit"
                             aria-label="Выйти"
                             title="Выйти"
-                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-graphite hover:bg-surface-strong focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-slate-400 dark:hover:bg-slate-800"
+                            className="inline-flex h-12 w-12 items-center justify-center rounded-lg text-graphite hover:bg-surface-strong focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-slate-400 dark:hover:bg-slate-800"
                         >
                             <NavIcon name="logout" />
                         </button>

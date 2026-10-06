@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { ApiError, apiRequest } from '../shared/api/client'
 import type { AssetBuildStatus } from '../types/api'
 
-const widgetStateStorageKey = 'admin.assetBuildWidget.state'
+const widgetStateStorageKey = 'admin.assetBuildWidget.state.v2'
 const defaultBuildTargets = [
     {
         id: 'all',
@@ -49,7 +49,7 @@ function formatAssetBuildHeadline(selectedTargets: string[]): string {
 function initialWidgetState(): WidgetState {
     const fallback = {
         isExpanded: false,
-        isCollapsed: false,
+        isCollapsed: true,
     }
 
     try {
