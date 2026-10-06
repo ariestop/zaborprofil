@@ -8,6 +8,7 @@ use App\Kernel;
 use App\Module\Admin\Application\Service\AssetBuildRunner;
 use App\Module\Admin\UI\Admin\AssetBuildApiController;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
@@ -18,7 +19,7 @@ final class AssetBuildApiControllerTest extends TestCase
         $response = $this->controller(enabled: false)->status();
 
         self::assertSame(404, $response->getStatusCode());
-        self::assertSame('ASSET_BUILD_DISABLED', $this->decode($response->getContent())['code']);
+        self::assertSame('ASSET_BUILD_DISABLED', $this->errorCode($response));
     }
 
     public function testRunIsNotFoundWhenBuildIsDisabled(): void
@@ -26,7 +27,7 @@ final class AssetBuildApiControllerTest extends TestCase
         $response = $this->controller(enabled: false)->run(new Request(content: '{"targets":["all"]}'));
 
         self::assertSame(404, $response->getStatusCode());
-        self::assertSame('ASSET_BUILD_DISABLED', $this->decode($response->getContent())['code']);
+        self::assertSame('ASSET_BUILD_DISABLED', $this->errorCode($response));
     }
 
     public function testAccessDeniedWinsOverDisabled(): void
@@ -56,13 +57,17 @@ final class AssetBuildApiControllerTest extends TestCase
         );
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    private function decode(string|false $json): array
+    private function errorCode(JsonResponse $response): string
     {
-        self::assertIsString($json);
+        $content = $response->getContent();
+        self::assertIsString($content);
 
-        return json_decode($json, true, 512, \JSON_THROW_ON_ERROR);
+        $data = json_decode($content, true, 512, \JSON_THROW_ON_ERROR);
+        self::assertIsArray($data);
+
+        $code = $data['code'] ?? null;
+        self::assertIsString($code);
+
+        return $code;
     }
 }
