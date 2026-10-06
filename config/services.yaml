@@ -2,6 +2,10 @@ parameters:
     empty_string: ''
     app.asset_build_default_command: npm run build
     app.asset_build_command: '%env(default:app.asset_build_default_command:APP_ASSET_BUILD_COMMAND)%'
+    # Кнопка «Перекомпилировать» в админке: по умолчанию только при APP_DEBUG=1 (локальная разработка).
+    # На staging и production фронтенд собирает CI; принудительно включить — APP_ASSET_BUILD_ENABLED=1.
+    app.asset_build_enabled_default: '%kernel.debug%'
+    app.asset_build_enabled: '%env(bool:default:app.asset_build_enabled_default:APP_ASSET_BUILD_ENABLED)%'
     app.site_url: '%env(SITE_URL)%'
     app.vite.manifest_path: '%kernel.project_dir%/public_html/build/.vite/manifest.json'
     app.vite.public_build_path: /build
@@ -97,6 +101,7 @@ services:
     App\Module\Admin\Application\Service\AssetBuildRunner:
         arguments:
             $command: '%app.asset_build_command%'
+            $enabled: '%app.asset_build_enabled%'
 
     App\Module\Admin\Application\Service\WhitelistCommandRunner:
         arguments:

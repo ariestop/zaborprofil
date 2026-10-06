@@ -394,7 +394,7 @@ export default function CrmPage() {
                         type="button"
                         disabled={exporting}
                         onClick={() => void exportCsv()}
-                        className="h-10 rounded-[10px] border border-line-strong bg-white px-3.5 text-sm font-semibold text-graphite transition hover:bg-surface dark:hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                        className="h-12 rounded-[10px] border border-line-strong bg-white px-3.5 text-sm font-semibold text-graphite transition hover:bg-surface dark:hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                     >
                         Экспорт CSV
                     </button>
@@ -403,7 +403,7 @@ export default function CrmPage() {
                     <button
                         type="button"
                         onClick={() => setCreateOpen(true)}
-                        className="inline-flex h-10 items-center gap-1.5 rounded-[10px] bg-brand-700 px-3.5 text-sm font-semibold text-white transition hover:bg-brand-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                        className="inline-flex h-12 items-center gap-1.5 rounded-[10px] bg-brand-700 px-3.5 text-sm font-semibold text-white transition hover:bg-brand-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
                     >
                         <NavIcon name="plus" size={16} strokeWidth={2} />
                         Заявка после звонка
@@ -451,7 +451,7 @@ export default function CrmPage() {
                             })}
                         </div>
 
-                        <label className="flex h-10 items-center gap-2 rounded-[10px] border border-line-strong px-3 text-graphite focus-within:ring-2 focus-within:ring-brand-500 dark:border-slate-700 dark:text-slate-400">
+                        <label className="flex h-12 items-center gap-2 rounded-[10px] border border-line-strong px-3 text-graphite focus-within:ring-2 focus-within:ring-brand-500 dark:border-slate-700 dark:text-slate-400">
                             <NavIcon name="search" size={16} />
                             <input
                                 type="search"
@@ -517,7 +517,7 @@ export default function CrmPage() {
                                         aria-label="Дата от"
                                         value={params.from}
                                         onChange={(event) => update({ from: event.target.value })}
-                                        className="h-9 rounded-lg border border-line-strong bg-white px-2 text-[13px] text-ink dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                                        className="h-12 rounded-lg border border-line-strong bg-white px-2 text-[13px] text-ink dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                                     />
                                 </label>
                                 <label className="grid gap-1 text-xs text-graphite dark:text-slate-400">
@@ -527,7 +527,7 @@ export default function CrmPage() {
                                         aria-label="Дата до"
                                         value={params.to}
                                         onChange={(event) => update({ to: event.target.value })}
-                                        className="h-9 rounded-lg border border-line-strong bg-white px-2 text-[13px] text-ink dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                                        className="h-12 rounded-lg border border-line-strong bg-white px-2 text-[13px] text-ink dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                                     />
                                 </label>
                             </div>
@@ -617,12 +617,12 @@ export default function CrmPage() {
                                     autoFocus
                                     value={viewName}
                                     onChange={(event) => setViewName(event.target.value)}
-                                    className="h-9 min-w-0 flex-1 rounded-lg border border-line-strong bg-white px-2.5 text-[13px] dark:border-slate-700 dark:bg-slate-900"
+                                    className="h-12 min-w-0 flex-1 rounded-lg border border-line-strong bg-white px-2.5 text-[13px] dark:border-slate-700 dark:bg-slate-900"
                                 />
                                 <button
                                     type="submit"
                                     disabled={viewName.trim() === ''}
-                                    className="h-9 rounded-lg bg-brand-700 px-3 text-[13px] font-semibold text-white disabled:opacity-60"
+                                    className="h-12 rounded-lg bg-brand-700 px-3 text-[13px] font-semibold text-white disabled:opacity-60"
                                 >
                                     Сохранить
                                 </button>

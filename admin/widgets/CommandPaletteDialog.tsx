@@ -130,7 +130,7 @@ export function CommandPaletteDialog() {
                   onMouseEnter={() => setActiveIndex(index)}
                   onClick={() => go(item)}
                   className={cn(
-                    'flex min-h-10 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm',
+                    'flex min-h-12 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm',
                     index === safeIndex ? 'bg-surface-strong dark:bg-slate-800' : 'hover:bg-surface dark:hover:bg-slate-800/60',
                   )}
                 >

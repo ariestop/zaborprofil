@@ -82,10 +82,10 @@ export function SidebarNav({ collapsed = false, onNavigate }: SidebarNavProps) {
                     cn(
                         'group relative flex items-center gap-3 rounded-lg text-sm font-medium transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500',
                         collapsed
-                            ? 'h-11 justify-center'
+                            ? 'h-12 justify-center'
                             : nested
-                              ? 'min-h-9 px-3 py-1.5'
-                              : 'min-h-10 px-3 py-2',
+                              ? 'min-h-10 px-3 py-1.5'
+                              : 'min-h-12 px-3 py-2',
                         isActive
                             ? 'bg-brand-50 text-brand-800 dark:bg-brand-900/30 dark:text-brand-300'
                             : 'text-ink hover:bg-surface-strong dark:text-slate-300 dark:hover:bg-slate-800',
@@ -132,7 +132,7 @@ export function SidebarNav({ collapsed = false, onNavigate }: SidebarNavProps) {
                                 title={group.title ?? first.title}
                                 onClick={onNavigate}
                                 className={cn(
-                                    'mt-3 flex h-11 items-center justify-center rounded-lg transition hover:bg-surface-strong dark:hover:bg-slate-800',
+                                    'mt-3 flex h-12 items-center justify-center rounded-lg transition hover:bg-surface-strong dark:hover:bg-slate-800',
                                     inServerSection
                                         ? 'bg-brand-50 text-brand-800 dark:bg-brand-900/30 dark:text-brand-300'
                                         : 'text-ink dark:text-slate-300',
@@ -153,7 +153,7 @@ export function SidebarNav({ collapsed = false, onNavigate }: SidebarNavProps) {
                                 aria-expanded={serverExpanded}
                                 aria-controls={`nav-group-${group.key}`}
                                 onClick={() => setServerOpen(!serverExpanded)}
-                                className="flex min-h-10 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium text-ink transition hover:bg-surface-strong focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-slate-300 dark:hover:bg-slate-800"
+                                className="flex min-h-12 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium text-ink transition hover:bg-surface-strong focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-slate-300 dark:hover:bg-slate-800"
                             >
                                 <NavIcon name={group.icon ?? 'server'} />
                                 <span className="flex-1">{group.title}</span>

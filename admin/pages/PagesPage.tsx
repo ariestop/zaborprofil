@@ -220,7 +220,7 @@ export default function PagesPage({ creating = false }: { creating?: boolean }) 
                 {canCreate ? (
                     <Link
                         to="/admin/pages/new"
-                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-brand-700 font-semibold text-white hover:bg-brand-800 sm:h-10 sm:w-auto sm:rounded-[10px] sm:px-3.5 sm:text-sm"
+                        className="inline-flex h-12 w-12 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-brand-700 font-semibold text-white hover:bg-brand-800 sm:h-12 sm:w-auto sm:rounded-[10px] sm:px-3.5 sm:text-sm"
                     >
                         <NavIcon name="plus" size={18} />
                         <span className="sr-only sm:not-sr-only">Создать страницу</span>
@@ -267,7 +267,7 @@ export default function PagesPage({ creating = false }: { creating?: boolean }) 
                     })}
                 </div>
                 <div className="order-1 flex w-full items-center gap-2.5 sm:order-2 sm:w-auto sm:flex-[1_1_440px]">
-                    <label className="flex h-11 min-w-0 flex-1 items-center gap-2 rounded-xl border border-line-strong bg-white px-3 text-graphite focus-within:ring-2 focus-within:ring-brand-500 sm:h-[42px] sm:min-w-[220px] sm:max-w-[360px] sm:rounded-[10px] dark:border-slate-700 dark:bg-slate-900">
+                    <label className="flex h-12 min-w-0 flex-1 items-center gap-2 rounded-xl border border-line-strong bg-white px-3 text-graphite focus-within:ring-2 focus-within:ring-brand-500 sm:h-12 sm:min-w-[220px] sm:max-w-[360px] sm:rounded-[10px] dark:border-slate-700 dark:bg-slate-900">
                         <NavIcon name="search" size={16} />
                         <input
                             type="search"

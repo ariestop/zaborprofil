@@ -247,7 +247,7 @@ export function PageCanvas({
                                         <button
                                             type="button"
                                             onClick={() => onInsertAfter(block.id)}
-                                            className="flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-brand-400 bg-white text-[13px] font-semibold text-brand-700 dark:bg-slate-900"
+                                            className="flex h-12 w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-brand-400 bg-white text-[13px] font-semibold text-brand-700 dark:bg-slate-900"
                                         >
                                             <NavIcon name="plus" size={14} strokeWidth={2} />
                                             Добавить блок после «{title}»

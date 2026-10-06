@@ -19,7 +19,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
             ref={ref}
             className={cn(
                 'inline-flex items-center justify-center rounded-lg font-medium transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-60',
-                size === 'sm' ? 'h-8 px-3 text-sm' : 'h-10 px-4 text-sm',
+                size === 'sm' ? 'h-10 px-3.5 text-sm' : 'h-12 px-5 text-sm',
                 variant === 'default' && 'bg-brand-600 text-white hover:bg-brand-700',
                 variant === 'outline' &&
                     'border border-line-strong bg-white text-ink hover:bg-surface dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800',

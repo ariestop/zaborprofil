@@ -23,7 +23,7 @@ final readonly class AssetBuildRunner
     private string $logPath;
     private string $scriptPath;
 
-    public function __construct(Kernel $kernel, string $command = self::DEFAULT_COMMAND)
+    public function __construct(Kernel $kernel, string $command = self::DEFAULT_COMMAND, private bool $enabled = true)
     {
         $this->projectDir = $kernel->getProjectDir();
         $this->command = trim($command) !== '' ? trim($command) : self::DEFAULT_COMMAND;
@@ -31,6 +31,15 @@ final readonly class AssetBuildRunner
         $this->statusPath = $this->stateDir . '/status.json';
         $this->logPath = $this->stateDir . '/build.log';
         $this->scriptPath = $this->stateDir . '/run-build.sh';
+    }
+
+    /**
+     * Пересборка из админки включена только там, где на сервере есть Node.js (локальная разработка).
+     * На staging и production фронтенд собирает CI, а не PHP-FPM.
+     */
+    public function isEnabled(): bool
+    {
+        return $this->enabled;
     }
 
     /**

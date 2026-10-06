@@ -77,7 +77,7 @@ const USAGE_OPTIONS: Array<{ value: MediaUsageFilter; label: string }> = [
 const PER_PAGE_OPTIONS = [24, 48, 96]
 
 const SELECT_CLASS =
-    'h-10 rounded-lg border border-line-strong bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-900'
+    'h-12 rounded-lg border border-line-strong bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-900'
 
 const TYPE_OPTIONS: Array<{ value: MediaTypeFilter; label: string }> = [
     { value: '', label: 'Все файлы' },
@@ -827,7 +827,7 @@ export function MediaLibrary({
                     <Input
                         type="date"
                         aria-label="Загружены с"
-                        className="h-10 w-40"
+                        className="h-12 w-40"
                         value={dateFrom}
                         max={dateTo || undefined}
                         onChange={(event) => resetPage(setDateFrom)(event.target.value)}
@@ -838,7 +838,7 @@ export function MediaLibrary({
                     <Input
                         type="date"
                         aria-label="Загружены по"
-                        className="h-10 w-40"
+                        className="h-12 w-40"
                         value={dateTo}
                         min={dateFrom || undefined}
                         onChange={(event) => resetPage(setDateTo)(event.target.value)}

@@ -200,7 +200,7 @@ export function AddBlockDialog({
         >
             <div className="flex flex-col gap-4">
                 <div className="flex flex-wrap items-center gap-2.5">
-                    <label className="flex h-10 min-w-56 flex-1 items-center gap-2 rounded-[10px] border border-line-strong px-3 text-graphite focus-within:ring-2 focus-within:ring-brand-500 dark:border-slate-700">
+                    <label className="flex h-12 min-w-56 flex-1 items-center gap-2 rounded-[10px] border border-line-strong px-3 text-graphite focus-within:ring-2 focus-within:ring-brand-500 dark:border-slate-700">
                         <NavIcon name="search" size={16} />
                         <input
                             type="search"
