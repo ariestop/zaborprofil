@@ -28,6 +28,10 @@ final readonly class AssetBuildApiController
             return $this->accessDenied();
         }
 
+        if (!$this->buildRunner->isEnabled()) {
+            return $this->disabled();
+        }
+
         return new JsonResponse($this->buildRunner->status());
     }
 
@@ -36,6 +40,10 @@ final readonly class AssetBuildApiController
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SYSTEM_MANAGE)) {
             return $this->accessDenied();
+        }
+
+        if (!$this->buildRunner->isEnabled()) {
+            return $this->disabled();
         }
 
         try {
@@ -68,6 +76,14 @@ final readonly class AssetBuildApiController
             'error' => $message,
             'code' => 'INVALID_REQUEST',
         ], 400);
+    }
+
+    private function disabled(): JsonResponse
+    {
+        return new JsonResponse([
+            'error' => 'Asset build from the admin panel is disabled in this environment.',
+            'code' => 'ASSET_BUILD_DISABLED',
+        ], 404);
     }
 
     private function accessDenied(): JsonResponse

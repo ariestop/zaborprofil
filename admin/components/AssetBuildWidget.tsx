@@ -198,7 +198,10 @@ export default function AssetBuildWidget() {
             syncPolling(loaded)
             scheduleReloadAfterSuccess(loaded)
         } catch (exception) {
-            if (exception instanceof ApiError && exception.status === 403) {
+            if (
+                exception instanceof ApiError &&
+                (exception.status === 403 || exception.status === 404)
+            ) {
                 setIsAvailable(false)
                 stopPolling()
                 return
