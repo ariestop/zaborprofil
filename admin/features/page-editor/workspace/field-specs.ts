@@ -1,5 +1,5 @@
 import type { BuilderBlockType } from '../../../modules/page-builder/types'
-import { canonicalType, isRecord } from './block-kinds'
+import { asString, canonicalType, isRecord } from './block-kinds'
 
 /**
  * Описание полей блока для формы редактора. Для основных видов поля заданы вручную (порядок, подписи, подсказки),
@@ -36,6 +36,8 @@ export type FieldSpec =
           fields: FieldSpec[]
           newItem: Record<string, unknown>
           media?: 'src' | 'image'
+          /** Заголовок карточки по её содержимому («Largo · Стандарт»); пусто — «Пункт 1». */
+          itemTitle?: (item: Record<string, unknown>) => string
       }
     | { kind: 'table'; label: string }
     | { kind: 'strings'; key: string; label: string; addLabel: string }
@@ -47,6 +49,8 @@ export type FieldSpec =
           label: string
           options: Array<{ value: string; label: string }>
           help?: string
+          /** Варианты из другого списка блока: content[key][].valueKey (например, названия серий). */
+          optionsFrom?: { key: string; valueKey: string }
       }
     | { kind: 'note'; text: string }
 
@@ -172,6 +176,7 @@ const SPECS: Partial<Record<BuilderBlockType, FieldSpec[]>> = {
             itemLabel: 'Серия',
             addLabel: 'Добавить серию',
             newItem: { title: '', hint: '', montagePerSqm: 0, pattern: 'jaluzi' },
+            itemTitle: (item) => asString(item.title),
             fields: [
                 {
                     kind: 'text',
@@ -207,12 +212,18 @@ const SPECS: Partial<Record<BuilderBlockType, FieldSpec[]>> = {
             itemLabel: 'Покрытие',
             addLabel: 'Добавить покрытие',
             newItem: { series: '', title: '', pricePerSqm: 0, finish: 'matte', details: '' },
+            itemTitle: (item) =>
+                [asString(item.series), asString(item.title)]
+                    .filter((part) => part !== '')
+                    .join(' · '),
             fields: [
                 {
-                    kind: 'text',
+                    kind: 'select',
                     key: 'series',
                     label: 'Серия',
-                    help: 'Точно как в списке серий; пусто — если серий нет',
+                    options: [{ value: '', label: 'Без серии' }],
+                    optionsFrom: { key: 'series', valueKey: 'title' },
+                    help: 'Список — из серий выше',
                 },
                 {
                     kind: 'text',
@@ -243,6 +254,10 @@ const SPECS: Partial<Record<BuilderBlockType, FieldSpec[]>> = {
             itemLabel: 'Высота',
             addLabel: 'Добавить высоту',
             newItem: { meters: 1.8 },
+            itemTitle: (item) =>
+                typeof item.meters === 'number' && item.meters > 0
+                    ? `${item.meters.toFixed(1).replace('.', ',')} м`
+                    : '',
             fields: [
                 {
                     kind: 'number',
@@ -260,6 +275,12 @@ const SPECS: Partial<Record<BuilderBlockType, FieldSpec[]>> = {
             itemLabel: 'Цвет',
             addLabel: 'Добавить цвет',
             newItem: { ral: '', name: '', hex: '' },
+            itemTitle: (item) =>
+                asString(item.ral) !== ''
+                    ? [`RAL ${asString(item.ral)}`, asString(item.name)]
+                          .filter((part) => part !== '')
+                          .join(' · ')
+                    : '',
             fields: [
                 { kind: 'text', key: 'ral', label: 'Номер RAL', help: 'Например, 6005' },
                 { kind: 'text', key: 'name', label: 'Название', help: 'Например, «зелёный мох»' },
@@ -306,6 +327,7 @@ const SPECS: Partial<Record<BuilderBlockType, FieldSpec[]>> = {
             itemLabel: 'Пункт',
             addLabel: 'Добавить пункт',
             newItem: { title: '', note: '' },
+            itemTitle: (item) => asString(item.title),
             fields: [
                 {
                     kind: 'text',

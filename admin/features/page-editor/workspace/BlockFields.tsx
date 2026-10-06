@@ -18,6 +18,8 @@ interface BlockFieldsProps {
     errors: Record<string, string>
     /** Меняется при выборе другого блока: сбрасывает неконтролируемый редактор текста. */
     resetKey: string
+    /** Всё содержимое блока — для полей внутри списков, которым нужны соседние списки (select с optionsFrom). */
+    root?: Content
 }
 
 const fieldLabelClass = 'text-[13px] font-semibold text-graphite dark:text-slate-200'
@@ -149,16 +151,46 @@ function TextareaField({
     )
 }
 
+/**
+ * Варианты выпадающего списка: заданные в спецификации и взятые из другого списка блока (без повторов).
+ * Значение, которого нет среди вариантов (опечатка, удалённая серия), не теряется: оно добавляется с пометкой и missing = true.
+ */
+export function selectOptions(
+    spec: Extract<FieldSpec, { kind: 'select' }>,
+    root: Content,
+    value: string,
+): { options: Array<{ value: string; label: string }>; missing: boolean } {
+    const options = [...spec.options]
+    if (spec.optionsFrom !== undefined) {
+        const { key, valueKey } = spec.optionsFrom
+        for (const item of asItems(root[key])) {
+            const option = asString(item[valueKey]).trim()
+            if (option !== '' && !options.some((known) => known.value === option)) {
+                options.push({ value: option, label: option })
+            }
+        }
+    }
+    const missing = value !== '' && !options.some((option) => option.value === value)
+    if (missing) {
+        options.push({ value, label: `«${value}» — нет в списке` })
+    }
+
+    return { options, missing }
+}
+
 function SelectField({
     spec,
     value,
     onChange,
+    root,
 }: {
     spec: Extract<FieldSpec, { kind: 'select' }>
     value: string
     onChange: (next: string) => void
+    root: Content
 }) {
     const id = useId()
+    const { options, missing } = selectOptions(spec, root, value)
 
     return (
         <FieldShell id={id} label={spec.label} help={spec.help}>
@@ -168,12 +200,17 @@ function SelectField({
                 onChange={(event) => onChange(event.target.value)}
                 className="h-12 w-full rounded-lg border border-line-strong bg-white px-3 text-sm text-ink dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
             >
-                {spec.options.map((option) => (
+                {options.map((option) => (
                     <option key={option.value} value={option.value}>
                         {option.label}
                     </option>
                 ))}
             </select>
+            {missing ? (
+                <p className="text-xs text-red-600" role="alert">
+                    Такого значения нет в списке — выберите вариант, иначе пункт не попадёт на сайт
+                </p>
+            ) : null}
         </FieldShell>
     )
 }
@@ -288,6 +325,7 @@ function ItemsField({
     errors,
     path,
     resetKey,
+    root,
 }: {
     spec: Extract<FieldSpec, { kind: 'items' }>
     value: unknown
@@ -295,6 +333,7 @@ function ItemsField({
     errors: Record<string, string>
     path: string
     resetKey: string
+    root: Content
 }) {
     const [pickerOpen, setPickerOpen] = useState(false)
     const items = asItems(value)
@@ -312,8 +351,8 @@ function ItemsField({
                         className="rounded-[10px] border border-line p-2.5 dark:border-slate-700"
                     >
                         <div className="mb-2 flex items-center gap-1">
-                            <span className="flex-1 text-xs font-semibold text-graphite dark:text-slate-400">
-                                {spec.itemLabel} {index + 1}
+                            <span className="flex-1 truncate text-xs font-semibold text-graphite dark:text-slate-400">
+                                {spec.itemTitle?.(item) || `${spec.itemLabel} ${index + 1}`}
                             </span>
                             <button
                                 type="button"
@@ -351,6 +390,7 @@ function ItemsField({
                         <BlockFields
                             specs={spec.fields}
                             value={item}
+                            root={root}
                             resetKey={`${resetKey}:${index}`}
                             errors={Object.fromEntries(
                                 Object.entries(errors)
@@ -595,8 +635,9 @@ function StringsField({
 }
 
 /** Форма полей блока по описанию FieldSpec. Рекурсивна: группы и элементы списков рендерятся той же формой. */
-export function BlockFields({ specs, value, onChange, errors, resetKey }: BlockFieldsProps) {
+export function BlockFields({ specs, value, onChange, errors, resetKey, root }: BlockFieldsProps) {
     const set = (key: string, next: unknown) => onChange({ ...value, [key]: next })
+    const blockContent = root ?? value
 
     return (
         <div className="flex flex-col gap-4">
@@ -678,6 +719,7 @@ export function BlockFields({ specs, value, onChange, errors, resetKey }: BlockF
                                 <BlockFields
                                     specs={spec.fields}
                                     value={group}
+                                    root={blockContent}
                                     resetKey={`${resetKey}:${spec.key}`}
                                     errors={Object.fromEntries(
                                         Object.entries(errors)
@@ -701,6 +743,7 @@ export function BlockFields({ specs, value, onChange, errors, resetKey }: BlockF
                                 errors={errors}
                                 path={spec.key}
                                 resetKey={resetKey}
+                                root={blockContent}
                                 onChange={(next) => set(spec.key, next)}
                             />
                         )
@@ -763,6 +806,7 @@ export function BlockFields({ specs, value, onChange, errors, resetKey }: BlockF
                                 key={spec.key}
                                 spec={spec}
                                 value={asString(value[spec.key])}
+                                root={blockContent}
                                 onChange={(next) => set(spec.key, next)}
                             />
                         )
