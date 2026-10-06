@@ -269,7 +269,7 @@ final readonly class BlockSchemaRegistry
             BlockType::ContactForm, BlockType::LeadForm, BlockType::CallbackForm => ['title' => 'Свяжитесь с нами'],
             BlockType::CalculatorPlaceholderStructured => ['title' => 'Калькулятор скоро будет доступен', 'text' => 'Пока оставьте заявку для расчета менеджером.'],
             BlockType::Pricing => ['items' => [['title' => 'Базовый', 'price' => 'от 3 500 ₽/м', 'features' => ['Монтаж', 'Гарантия']]]],
-            BlockType::Reviews => ['items' => [['author' => 'Иван', 'text' => 'Отличная работа и сервис.']]],
+            BlockType::Reviews => ['title' => 'Отзывы клиентов', 'items' => [['author' => 'Имя клиента', 'place' => 'Район', 'details' => 'Что заказали', 'text' => 'Текст отзыва.', 'image' => '']]],
             BlockType::TrustBadges => ['items' => [['title' => 'Гарантия 5 лет', 'text' => 'На материалы и монтаж']]],
             BlockType::FenceTypes => ['items' => [['title' => 'Забор жалюзи', 'text' => 'Современный внешний вид', 'image' => '']]],
             BlockType::Materials => ['items' => [['title' => 'Металл', 'text' => 'Оцинкованный профиль']]],

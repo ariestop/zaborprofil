@@ -276,6 +276,31 @@ const SPECS: Partial<Record<BuilderBlockType, FieldSpec[]>> = {
             fields: [{ kind: 'image', key: 'src', altKey: 'alt', label: 'Фото' }],
         },
     ],
+    reviews: [
+        optionalTitle,
+        { kind: 'textarea', key: 'subtitle', label: 'Подзаголовок', rows: 2 },
+        {
+            kind: 'items',
+            key: 'items',
+            label: 'Отзывы',
+            itemLabel: 'Отзыв',
+            addLabel: 'Добавить отзыв',
+            media: 'image',
+            newItem: { author: '', place: '', details: '', text: '', image: '', imageAlt: '' },
+            fields: [
+                { kind: 'image', key: 'image', altKey: 'imageAlt', label: 'Фото объекта' },
+                { kind: 'textarea', key: 'text', label: 'Текст отзыва', rows: 4 },
+                { kind: 'text', key: 'author', label: 'Имя клиента' },
+                { kind: 'text', key: 'place', label: 'Район или населённый пункт' },
+                {
+                    kind: 'text',
+                    key: 'details',
+                    label: 'Что заказали',
+                    help: 'Например: 28 м, Largo, RAL 7024',
+                },
+            ],
+        },
+    ],
     portfolio: [
         optionalTitle,
         {

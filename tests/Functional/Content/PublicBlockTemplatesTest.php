@@ -63,6 +63,7 @@ final class PublicBlockTemplatesTest extends KernelTestCase
         yield 'contacts-map' => ['contacts-map', ['title' => 'Контакты'], [], 'tel:+78452988808'];
         yield 'hero.minimal' => ['hero.minimal', ['title' => 'Контакты', 'subtitle' => 'Позвоните нам'], [], 'data-block-type="hero.minimal"'];
         yield 'image' => ['image', ['src' => '/uploads/a.jpg', 'alt' => 'Картинка'], [], 'alt="Картинка"'];
+        yield 'reviews' => ['reviews', ['items' => [['author' => 'Андрей', 'text' => 'Поставили быстро.']]], [], 'data-block-type="reviews"'];
         yield 'fence-configurator' => ['fence-configurator', ['materials' => [['title' => 'Профнастил С8', 'pricePerMeter' => 1000]]], [], 'data-fence-configurator'];
     }
 
@@ -173,6 +174,21 @@ final class PublicBlockTemplatesTest extends KernelTestCase
         self::assertStringNotContainsString('data-audience', $this->render('steps', $items, ['audience' => '']), 'Блок для всех не оборачивается.');
         self::assertStringNotContainsString('data-audience', $this->render('steps', $items, ['audience' => 'admins']), 'Неизвестное значение игнорируется.');
         self::assertSame('', trim($this->render('steps', ['items' => []], ['audience' => 'b2b'])), 'Пустой блок не превращается в пустую обёртку.');
+    }
+
+    public function testReviewsShowAuthorPlaceAndDetailsWithoutReviewMarkup(): void
+    {
+        $html = $this->render('reviews', ['title' => 'Отзывы', 'items' => [
+            ['author' => 'Андрей', 'place' => 'Заводской район', 'details' => '28 м, Largo', 'text' => 'Поставили за два дня.', 'image' => '/uploads/a.jpg'],
+            ['author' => 'Без текста', 'text' => ''],
+        ]]);
+
+        self::assertStringContainsString('Андрей, Заводской район', $html);
+        self::assertStringContainsString('28 м, Largo', $html);
+        self::assertStringContainsString('«Поставили за два дня.»', $html);
+        self::assertStringNotContainsString('Без текста', $html, 'Отзыв без текста не выводится.');
+        self::assertStringNotContainsString('"@type":"Review"', $html, 'Разметку Review для ручных отзывов не выводим.');
+        self::assertSame('', trim($this->render('reviews', ['items' => []])), 'Пустой блок не выводится.');
     }
 
     public function testStepsShowBrandIconInsteadOfNumber(): void
