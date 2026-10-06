@@ -20,6 +20,8 @@ export interface FenceGrade {
     price: number
     finish: 'gloss' | 'matte' | 'wood'
     details: string
+    /** Печатный декор (фактура «Дерево»), например «Античный дуб»: цвет задаёт он, RAL не выбирается. */
+    decor?: string
 }
 
 export interface FenceConfig {
@@ -143,6 +145,24 @@ function colorLabel(color: { ral: string; name: string } | undefined): string {
     return color.name !== '' ? `RAL ${color.ral} · ${color.name}` : `RAL ${color.ral}`
 }
 
+/** Цвет выбранного забора: декор покрытия или RAL — полностью (long) и коротко для сметы и заявки (short). */
+export function fenceColor(
+    config: FenceConfig,
+    selection: FenceSelection,
+): { long: string; short: string; decor: string } {
+    const decor = config.grades[selection.grade]?.decor ?? ''
+    if (decor !== '') {
+        return { long: decor, short: decor, decor }
+    }
+    const color = config.colors[selection.color]
+
+    return {
+        long: colorLabel(color),
+        short: color !== undefined && color.ral !== '' ? `RAL ${color.ral}` : '',
+        decor: '',
+    }
+}
+
 function gradeName(config: FenceConfig, grade: FenceGrade | undefined): string {
     if (grade === undefined) {
         return ''
@@ -155,11 +175,10 @@ function gradeName(config: FenceConfig, grade: FenceGrade | undefined): string {
 
 /** Строка для заявки: «Конфигуратор: Largo Премиум, RAL 7024, высота 1,8 м, длина 30 м, ворота и калитка — по замеру, примерно 448 200 ₽». */
 export function fenceLeadPlan(config: FenceConfig, selection: FenceSelection): string {
-    const parts = [gradeName(config, config.grades[selection.grade])]
-    const color = config.colors[selection.color]
-    if (color !== undefined && color.ral !== '') {
-        parts.push(`RAL ${color.ral}`)
-    }
+    const parts = [
+        gradeName(config, config.grades[selection.grade]),
+        fenceColor(config, selection).short,
+    ]
     const height = config.heights[selection.height]
     if (height !== undefined) {
         parts.push(`высота ${formatMeters(height).replace(' ', ' ')}`)
@@ -282,9 +301,10 @@ function updateScene(scene: SVGSVGElement, config: FenceConfig, selection: Fence
     const series = grade !== undefined ? config.series[grade.series] : undefined
     const color = config.colors[selection.color]
     const height = config.heights[selection.height]
+    const label = fenceColor(config, selection).long
     if (series !== undefined) {
         scene.dataset.pattern = series.pattern
-        // Забор и лупа: у лупы тот же рисунок с суффиксом -zoom.
+        // Забор и лупа: у лупы тот же рисунок с суффиксом -zoom, у светотени поверх дуба — -shade.
         scene.querySelectorAll<SVGElement>('[data-fill-prefix]').forEach((element) => {
             const prefix = element.dataset.fillPrefix ?? ''
             const suffix = element.dataset.fillSuffix ?? ''
@@ -314,7 +334,7 @@ function updateScene(scene: SVGSVGElement, config: FenceConfig, selection: Fence
     }
     scene.setAttribute(
         'aria-label',
-        `Забор ${gradeName(config, grade)}, высота ${formatMeters(height)}${color !== undefined && color.ral !== '' ? `, ${colorLabel(color)}` : ''}`,
+        `Забор ${gradeName(config, grade)}, высота ${formatMeters(height)}${label !== '' ? `, ${label}` : ''}`,
     )
 }
 
@@ -330,6 +350,7 @@ export function initFenceConfigurators(root: ParentNode = document): void {
         const caption = find<HTMLElement>('[data-cfg-caption]')
         const details = find<HTMLElement>('[data-cfg-details]')
         const colorName = find<HTMLElement>('[data-cfg-color-name]')
+        const colors = find<HTMLFieldSetElement>('[data-cfg-colors]')
         const meta = find<HTMLElement>('[data-cfg-meta]')
         const rows = find<HTMLElement>('[data-cfg-rows]')
         const totalOut = find<HTMLElement>('[data-cfg-total]')
@@ -341,31 +362,37 @@ export function initFenceConfigurators(root: ParentNode = document): void {
         const update = (): void => {
             const selection = readSelection(form)
             const grade = config.grades[selection.grade]
-            const color = config.colors[selection.color]
             const height = config.heights[selection.height]
             const estimate = fenceEstimate(config, selection)
             const name = gradeName(config, grade)
-            const label = colorLabel(color)
+            const color = fenceColor(config, selection)
+            const label = color.long
 
             if (scene !== null) {
                 updateScene(scene, config, selection)
             }
             if (caption !== null) {
                 const texture = grade?.details.split(' · ')[0] ?? ''
-                caption.textContent = [name, texture, label]
+                // Декор уже назван в фактуре («матовый «Античный дуб»») — не повторяем.
+                const tail = color.decor !== '' && texture.includes(color.decor) ? '' : label
+                caption.textContent = [name, texture, tail]
                     .filter((part) => part !== '')
                     .join(' · ')
             }
             if (details !== null) {
                 details.textContent = grade?.details ?? ''
             }
+            if (colors !== null) {
+                colors.disabled = color.decor !== ''
+            }
             if (colorName !== null) {
-                colorName.textContent = label
+                colorName.textContent =
+                    color.decor !== '' ? `Декор «${color.decor}» — цвет RAL не выбирается` : label
             }
             if (meta !== null) {
                 meta.textContent = [
                     name,
-                    color !== undefined && color.ral !== '' ? `RAL ${color.ral}` : '',
+                    color.short,
                     height !== undefined ? `${formatMeters(height)} × ${selection.length} м` : '',
                 ]
                     .filter((part) => part !== '')

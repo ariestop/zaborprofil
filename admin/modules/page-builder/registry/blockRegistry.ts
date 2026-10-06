@@ -738,6 +738,8 @@ const structuredBlockRegistry: BlockDefinition[] = [
                         pricePerSqm: z.number().min(0).default(0),
                         finish: z.enum(['gloss', 'matte', 'wood']).default('matte'),
                         details: z.string().default(''),
+                        /** Печатный декор для finish wood («Античный дуб»): цвет задаёт он, RAL не выбирается. */
+                        decor: z.string().default(''),
                     }),
                 )
                 .default([]),
