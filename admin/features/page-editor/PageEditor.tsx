@@ -305,7 +305,7 @@ export function PageEditor({
                                 aria-selected={active}
                                 to={pageEditorTabPath(page.id, item.value)}
                                 className={cn(
-                                    'flex h-[42px] items-center gap-1.5 px-3.5 text-sm transition',
+                                    'flex h-12 items-center gap-1.5 px-3.5 text-sm transition',
                                     active
                                         ? 'font-semibold text-ink shadow-[inset_0_-2px_0_var(--color-brand-700)] dark:text-slate-100'
                                         : 'font-medium text-graphite hover:text-ink dark:text-slate-400 dark:hover:text-slate-100',

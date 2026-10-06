@@ -31,7 +31,7 @@ import { useCan } from '../stores/auth'
 import type { ContentPageItem } from '../types/api'
 
 const selectClass =
-    'h-[42px] rounded-[10px] border border-line-strong bg-white px-2.5 text-sm text-graphite outline-hidden focus:ring-2 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200'
+    'h-12 rounded-[10px] border border-line-strong bg-white px-2.5 text-sm text-graphite outline-hidden focus:ring-2 focus:ring-brand-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200'
 
 function StatusPill({ status }: { status: PageStatus }) {
     return (
