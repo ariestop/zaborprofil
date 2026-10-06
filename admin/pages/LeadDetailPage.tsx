@@ -33,7 +33,7 @@ const sectionTitle =
     'm-0 text-xs font-semibold uppercase tracking-[0.06em] text-graphite dark:text-slate-400'
 const card = 'rounded-[14px] border border-line bg-white dark:border-slate-800 dark:bg-slate-900'
 const outlineAction =
-    'inline-flex h-[42px] items-center gap-2 rounded-[11px] border border-line-strong bg-white px-3.5 text-sm font-semibold text-ink no-underline transition hover:bg-surface hover:text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800'
+    'inline-flex h-12 items-center gap-2 rounded-[11px] border border-line-strong bg-white px-3.5 text-sm font-semibold text-ink no-underline transition hover:bg-surface hover:text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800'
 
 function phoneHref(phone: string): string {
     return `tel:${phone.replace(/[^\d+]/g, '')}`
@@ -311,7 +311,7 @@ export default function LeadDetailPage({
                             type="button"
                             disabled={statusMutation.isPending}
                             onClick={() => void changeStatus(nextAction.status)}
-                            className="h-[42px] rounded-[11px] bg-brand-700 px-4 text-sm font-bold text-white transition hover:bg-brand-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="h-12 rounded-[11px] bg-brand-700 px-4 text-sm font-bold text-white transition hover:bg-brand-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                             {nextAction.label}
                         </button>
@@ -355,7 +355,7 @@ export default function LeadDetailPage({
                             value={lead.assignee?.id ?? NO_ASSIGNEE}
                             disabled={!canManage || assigneeMutation.isPending}
                             onChange={(event) => void changeAssignee(event.target.value)}
-                            className="h-[42px] rounded-[10px] border border-line-strong bg-white px-2.5 text-sm text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                            className="h-12 rounded-[10px] border border-line-strong bg-white px-2.5 text-sm text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                         >
                             {assigneeOptions.map((option) => (
                                 <option key={option.value} value={option.value}>
@@ -478,7 +478,7 @@ export default function LeadDetailPage({
                                 type="button"
                                 disabled={note.trim() === '' || noteMutation.isPending}
                                 onClick={() => void submitNote()}
-                                className="h-[38px] rounded-[10px] border border-line-strong bg-white px-3.5 text-[13px] font-semibold text-ink transition hover:bg-surface dark:hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                                className="h-12 rounded-[10px] border border-line-strong bg-white px-3.5 text-[13px] font-semibold text-ink transition hover:bg-surface dark:hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                             >
                                 Добавить заметку
                             </button>

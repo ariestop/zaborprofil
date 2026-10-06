@@ -45,7 +45,7 @@ interface CreateValues {
 }
 
 const inputClass =
-    'h-[42px] w-full rounded-[10px] border border-line-strong bg-white px-3 text-[15px] text-ink outline-hidden focus:border-brand-600 focus:ring-2 focus:ring-brand-500/30 aria-[invalid=true]:border-red-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100'
+    'h-12 w-full rounded-[10px] border border-line-strong bg-white px-3 text-[15px] text-ink outline-hidden focus:border-brand-600 focus:ring-2 focus:ring-brand-500/30 aria-[invalid=true]:border-red-500 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100'
 
 function TemplateThumb({ template }: { template: PageTemplateItem | null }) {
     const bars = template === null ? [] : templateBars(template)
@@ -305,7 +305,7 @@ export function PageCreateDialog({ onClose }: { onClose: () => void }) {
                                         <NativeSelect
                                             id={id}
                                             aria-describedby={describedBy}
-                                            className="h-[42px] rounded-[10px] text-[15px]"
+                                            className="h-12 rounded-[10px] text-[15px]"
                                             {...parentField}
                                             onChange={(event) => {
                                                 void parentField.onChange(event)
@@ -415,7 +415,7 @@ export function PageCreateDialog({ onClose }: { onClose: () => void }) {
                                                 <NativeSelect
                                                     id={id}
                                                     aria-describedby={describedBy}
-                                                    className="h-[42px] rounded-[10px] text-[15px]"
+                                                    className="h-12 rounded-[10px] text-[15px]"
                                                     {...register('type')}
                                                 >
                                                     {Object.entries(pageTypeLabels).map(
@@ -454,7 +454,7 @@ export function PageCreateDialog({ onClose }: { onClose: () => void }) {
                             <DialogPrimitive.Close asChild>
                                 <button
                                     type="button"
-                                    className="hidden h-[42px] rounded-[10px] border border-line-strong bg-white px-3.5 text-sm font-semibold text-graphite hover:bg-surface dark:hover:bg-slate-50 sm:block dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                                    className="hidden h-12 rounded-[10px] border border-line-strong bg-white px-3.5 text-sm font-semibold text-graphite hover:bg-surface dark:hover:bg-slate-50 sm:block dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                                 >
                                     Отмена
                                 </button>
@@ -462,7 +462,7 @@ export function PageCreateDialog({ onClose }: { onClose: () => void }) {
                             <button
                                 type="submit"
                                 disabled={createMutation.isPending}
-                                className="h-12 flex-1 rounded-xl bg-brand-700 px-4 text-[15px] font-semibold text-white hover:bg-brand-800 disabled:opacity-60 sm:h-[42px] sm:flex-none sm:rounded-[10px] sm:text-sm"
+                                className="h-12 flex-1 rounded-xl bg-brand-700 px-4 text-[15px] font-semibold text-white hover:bg-brand-800 disabled:opacity-60 sm:h-12 sm:flex-none sm:rounded-[10px] sm:text-sm"
                             >
                                 {createMutation.isPending ? 'Создаём…' : 'Создать и открыть'}
                             </button>

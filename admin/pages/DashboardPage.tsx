@@ -255,7 +255,7 @@ export default function DashboardPage() {
                                     to={action.href}
                                     className={cn(
                                         dashOutlineButton,
-                                        'h-[38px] gap-1.5 rounded-[10px] bg-white px-3 text-[13px] dark:bg-slate-900',
+                                        'h-12 gap-1.5 rounded-[10px] bg-white px-3 text-[13px] dark:bg-slate-900',
                                     )}
                                 >
                                     <NavIcon name={action.icon} size={16} />

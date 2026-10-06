@@ -108,7 +108,7 @@ export function NewLeadsCard({
                                     href={telHref(lead.phone)}
                                     className={cn(
                                         dashOutlineButton,
-                                        'h-[38px] gap-1.5 px-3 text-[13px]',
+                                        'h-12 gap-1.5 px-3 text-[13px]',
                                     )}
                                     aria-label={`Позвонить: ${lead.name}`}
                                 >
@@ -121,7 +121,7 @@ export function NewLeadsCard({
                                         disabled={busyLeadId === lead.id}
                                         onClick={() => onTake(lead)}
                                         aria-label={`Взять в работу: ${lead.name}`}
-                                        className="h-[38px] rounded-[9px] bg-brand-700 px-3 text-[13px] font-semibold text-white transition hover:bg-brand-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:opacity-60"
+                                        className="h-12 rounded-[9px] bg-brand-700 px-3 text-[13px] font-semibold text-white transition hover:bg-brand-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:opacity-60"
                                     >
                                         В работу
                                     </button>
