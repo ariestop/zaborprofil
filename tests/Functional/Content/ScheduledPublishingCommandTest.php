@@ -37,7 +37,7 @@ final class ScheduledPublishingCommandTest extends AdminApiTestCase
 
         $this->travel('+2 days');
 
-        $tester = $this->runCommand();
+        $tester = $this->runPublishCommand();
         self::assertSame(Command::SUCCESS, $tester->getStatusCode());
         self::assertStringContainsString('published: 1', $tester->getDisplay());
         self::assertFalse($this->cachePool()->getItem($cacheKey)->isHit(), 'Cache entry must be invalidated on scheduled publish.');
@@ -45,7 +45,7 @@ final class ScheduledPublishingCommandTest extends AdminApiTestCase
         $client->request('GET', '/scheduled-ok/');
         self::assertResponseIsSuccessful();
 
-        $again = $this->runCommand();
+        $again = $this->runPublishCommand();
         self::assertSame(Command::SUCCESS, $again->getStatusCode());
         self::assertStringContainsString('Nothing to do.', $again->getDisplay());
 
@@ -64,7 +64,7 @@ final class ScheduledPublishingCommandTest extends AdminApiTestCase
         $pageId = $this->createScheduledPage($client, 'scheduled-dry', '+1 day', null);
         $this->travel('+2 days');
 
-        $tester = $this->runCommand(['--dry-run' => true]);
+        $tester = $this->runPublishCommand(['--dry-run' => true]);
         self::assertSame(Command::SUCCESS, $tester->getStatusCode());
         self::assertStringContainsString('would_publish', $tester->getDisplay());
 
@@ -78,12 +78,12 @@ final class ScheduledPublishingCommandTest extends AdminApiTestCase
         $pageId = $this->createScheduledPage($client, 'scheduled-window', '+1 day', '+3 days');
 
         $this->travel('+2 days');
-        self::assertSame(Command::SUCCESS, $this->runCommand()->getStatusCode());
+        self::assertSame(Command::SUCCESS, $this->runPublishCommand()->getStatusCode());
         $client->request('GET', '/scheduled-window/');
         self::assertResponseIsSuccessful();
 
         $this->travel('+4 days');
-        $tester = $this->runCommand();
+        $tester = $this->runPublishCommand();
         self::assertSame(Command::SUCCESS, $tester->getStatusCode());
         self::assertStringContainsString('unpublished: 1', $tester->getDisplay());
 
@@ -105,11 +105,11 @@ final class ScheduledPublishingCommandTest extends AdminApiTestCase
         $this->entityManager()->clear();
         $this->travel('+2 days');
 
-        $tester = $this->runCommand();
+        $tester = $this->runPublishCommand();
         self::assertSame(Command::FAILURE, $tester->getStatusCode());
         self::assertStringContainsString('rejected: 1', $tester->getDisplay());
 
-        $retry = $this->runCommand();
+        $retry = $this->runPublishCommand();
         self::assertSame(Command::SUCCESS, $retry->getStatusCode());
         self::assertStringContainsString('Nothing to do.', $retry->getDisplay());
 
@@ -126,7 +126,7 @@ final class ScheduledPublishingCommandTest extends AdminApiTestCase
         $pageId = $this->createScheduledPage($client, 'scheduled-missed', '+1 day', '+2 days');
         $this->travel('+5 days');
 
-        $tester = $this->runCommand();
+        $tester = $this->runPublishCommand();
         self::assertSame(Command::FAILURE, $tester->getStatusCode());
 
         $client->request('GET', '/scheduled-missed/');
@@ -148,7 +148,7 @@ final class ScheduledPublishingCommandTest extends AdminApiTestCase
         self::assertTrue(flock($handle, LOCK_EX | LOCK_NB));
 
         try {
-            $tester = $this->runCommand();
+            $tester = $this->runPublishCommand();
             self::assertSame(Command::SUCCESS, $tester->getStatusCode());
             self::assertStringContainsString('skipping', $tester->getDisplay());
         } finally {
@@ -161,8 +161,8 @@ final class ScheduledPublishingCommandTest extends AdminApiTestCase
     {
         $this->adminClient();
 
-        self::assertSame(Command::INVALID, $this->runCommand(['--limit' => '0'])->getStatusCode());
-        self::assertSame(Command::INVALID, $this->runCommand(['--limit' => 'abc'])->getStatusCode());
+        self::assertSame(Command::INVALID, $this->runPublishCommand(['--limit' => '0'])->getStatusCode());
+        self::assertSame(Command::INVALID, $this->runPublishCommand(['--limit' => 'abc'])->getStatusCode());
     }
 
     private function createScheduledPage(KernelBrowser $client, string $slug, string $publishAt, ?string $unpublishAt): string
@@ -208,7 +208,7 @@ final class ScheduledPublishingCommandTest extends AdminApiTestCase
     /**
      * @param array<string, mixed> $options
      */
-    private function runCommand(array $options = []): CommandTester
+    private function runPublishCommand(array $options = []): CommandTester
     {
         $application = new Application(self::bootKernel());
         $tester = new CommandTester($application->find('app:content:publish-scheduled'));
