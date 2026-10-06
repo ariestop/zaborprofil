@@ -157,12 +157,6 @@ final readonly class MediaLibrarySynchronizer
             $existing[(int) $variant['width']] = true;
         }
 
-        foreach (MediaOptimizer::targetWidths($width) as $target) {
-            if (!isset($existing[$target])) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any(MediaOptimizer::targetWidths($width), static fn (int $target): bool => !isset($existing[$target]));
     }
 }
