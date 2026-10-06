@@ -35,7 +35,6 @@ final class MediaOptimizerTest extends TestCase
         $path = $this->temporaryDirectory.'/source.png';
         $image = imagecreatetruecolor(640, 480);
         imagepng($image, $path);
-        imagedestroy($image);
 
         $result = (new MediaOptimizer())->optimize($path, '/uploads/media/source.png', 'image/png', 640, 480);
 
