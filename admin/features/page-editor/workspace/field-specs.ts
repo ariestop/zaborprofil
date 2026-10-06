@@ -294,6 +294,30 @@ const SPECS: Partial<Record<BuilderBlockType, FieldSpec[]>> = {
         },
         {
             kind: 'group',
+            key: 'scene',
+            label: 'Картинка',
+            fields: [
+                {
+                    kind: 'note',
+                    text: 'Фото участка: дом с деревьями, снятый с улицы с высоты глаз, горизонтальное, от 1600 px. Забор рисуется поверх нижней части фото. Без фото — рисованный участок.',
+                },
+                { kind: 'image', key: 'photo', label: 'Фото участка (фон)' },
+                {
+                    kind: 'note',
+                    text: 'Человек для масштаба: фото в полный рост на прозрачном фоне (PNG или WebP), обрезанное по макушке и подошвам. Без фото — силуэт.',
+                },
+                { kind: 'image', key: 'person', label: 'Человек в полный рост' },
+                {
+                    kind: 'number',
+                    key: 'personHeight',
+                    label: 'Рост человека, м',
+                    step: 0.01,
+                    help: 'По умолчанию 1,65',
+                },
+            ],
+        },
+        {
+            kind: 'group',
             key: 'length',
             label: 'Длина забора, м',
             fields: [

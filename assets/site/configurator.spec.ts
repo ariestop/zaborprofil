@@ -149,6 +149,7 @@ describe('initFenceConfigurators', () => {
             <form data-fence-configurator data-config='${JSON.stringify(config)}'>
                 <svg data-cfg-scene data-pattern="jaluzi" data-finish="gloss" style="--ral: #373f43">
                     <rect data-fence-body data-fill-prefix="u1" y="228" height="186" fill="url(#u1-jaluzi)"/>
+                    <rect data-fill-prefix="u1" data-fill-suffix="-zoom" fill="url(#u1-jaluzi-zoom)"/>
                     <g data-fence-top transform="translate(0 228)"><text data-cfg-height-tag>1,8 м</text></g>
                 </svg>
                 <p data-cfg-caption></p><p data-cfg-details></p><p data-cfg-color-name></p><p data-cfg-meta></p>
@@ -208,6 +209,9 @@ describe('initFenceConfigurators', () => {
         expect(scene.dataset.pattern).toBe('jaluzi-double')
         expect(scene.querySelector('[data-fence-body]')?.getAttribute('fill')).toBe(
             'url(#u1-jaluzi-double)',
+        )
+        expect(scene.querySelector('[data-fill-suffix]')?.getAttribute('fill')).toBe(
+            'url(#u1-jaluzi-double-zoom)',
         )
         // 54 × (5 600 + 2 500) = 437 400
         expect(form.querySelector('[data-cfg-total]')?.textContent).toBe('≈ 437 400 ₽')
