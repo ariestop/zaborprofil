@@ -69,4 +69,12 @@ final class MediaOptimizerTest extends TestCase
 
         rmdir($directory);
     }
+
+    public function testTargetWidthsIncludeOriginalUpToLargestPreview(): void
+    {
+        self::assertSame([320, 640], MediaOptimizer::targetWidths(640));
+        self::assertSame([320, 768, 1280], MediaOptimizer::targetWidths(1280));
+        self::assertSame([320, 768, 1280], MediaOptimizer::targetWidths(1600), 'Крупнее 1280 px оригинал в превью не попадает.');
+        self::assertSame([200], MediaOptimizer::targetWidths(200));
+    }
 }

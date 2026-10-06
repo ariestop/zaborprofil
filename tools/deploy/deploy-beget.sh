@@ -458,6 +458,11 @@ main() {
 
   log "Прогрев кэша"
   console cache:warmup --env=staging
+
+  # Картинки из контента — в медиатеку с WebP-превью, чтобы сайт всегда отдавал <picture> со srcset.
+  # Повторный запуск ничего не меняет; ошибка не срывает деплой: страницы просто отдадут оригиналы.
+  log "Медиатека: адаптивные превью"
+  console app:media:sync --env=staging || warn "app:media:sync завершился с ошибкой: часть картинок отдаётся без превью."
   run_health_check
 
   ROLLBACK_ARMED=0

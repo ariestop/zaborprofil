@@ -222,6 +222,21 @@ final class MediaAsset
     }
 
     /**
+     * Новые превью после повторной оптимизации файла (например, когда при загрузке в PHP не было WebP).
+     *
+     * @param array<mixed> $variants
+     */
+    public function replaceVariants(array $variants, int $size): void
+    {
+        if ($size <= 0) {
+            throw new InvalidArgumentException('Media asset size must be positive.');
+        }
+
+        $this->variants = self::normalizeVariants($variants);
+        $this->size = $size;
+    }
+
+    /**
      * @return list<array{type: string, publicPath: string, width: int|null, height: int|null, mimeType: string, size: int}>
      */
     public function variants(): array
