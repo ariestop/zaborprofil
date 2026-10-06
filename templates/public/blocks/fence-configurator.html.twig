@@ -119,6 +119,8 @@
                             photo: scene_photo is not empty,
                             person: scene.person ?? '',
                             person_height: min(2.1, max(1.2, (scene.personHeight ?? 1.65) + 0)),
+                            person_x: min(1200, max(0, (scene.personX ?? 672) + 0)),
+                            scale: min(200, max(60, (scene.scale ?? 103.4) + 0)),
                         } only %}
                         <p class="zp-cfg__pill" data-cfg-caption>{{ full_title }}{% set texture = grade.details is not empty ? grade.details|split(' · ')|first : '' %}{% if texture is not empty %} · {{ texture }}{% endif %}{% if color_label is not empty and not (grade.decor is not empty and grade.decor in texture) %} · {{ color_label }}{% endif %}</p>
                     </div>

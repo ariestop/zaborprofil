@@ -13,18 +13,20 @@
     assets/site/configurator.ts меняет у [data-fence-body] y/height, у [data-fence-top] сдвиг (константы GROUND и SCALE),
     у [data-fill-prefix] — рисунок, у сцены — data-pattern, data-finish и --ral.
     Цвета неба, дома и земли — иллюстрация, а не интерфейс (исключение из запрета HEX, docs/50-brand-system.md).
-    Параметры: uid, pattern, finish, ral (HEX), height (м), label, photo (bool), person (URL), person_height (м).
+    Параметры: uid, pattern, finish, ral (HEX), height (м), label, photo (bool), person (URL), person_height (м),
+    scale (px на метр на плоскости забора, по умолчанию 103,4; для фото подбирается по росту человека на снимке),
+    person_x (центр человека по x в единицах сцены 0…1200, по умолчанию 672).
 #}
 {% set ground = 414 %}
-{% set scale = 103.4 %}
+{% set scale = max(60, min(200, (scale ?? 103.4) + 0)) %}
 {% set top = ground - height * scale %}
 {% set posts = [124, 383, 641, 900, 1158] %}
 {% set height_label = height|number_format(1, ',', '') ~ ' м' %}
 {% set person_height = (person_height ?? 1.65) + 0 %}
 {% set ph = person_height * scale * 1.06 %}
 {% set p_base = ground + 10.3 %}
-{% set px = 672 %}
-<svg class="zp-scene{% if photo %} zp-scene--photo{% endif %}" viewBox="0 0 1200 470" preserveAspectRatio="xMinYMax slice" data-cfg-scene data-pattern="{{ pattern }}" data-finish="{{ finish }}" style="--ral: {{ ral }}; --oak: #74502f" role="img" aria-label="{{ label }}">
+{% set px = (person_x ?? 672) + 0 %}
+<svg class="zp-scene{% if photo %} zp-scene--photo{% endif %}" viewBox="0 0 1200 470" preserveAspectRatio="xMinYMax slice" data-cfg-scene data-scale="{{ scale }}" data-pattern="{{ pattern }}" data-finish="{{ finish }}" style="--ral: {{ ral }}; --oak: #74502f" role="img" aria-label="{{ label }}">
     <defs>
         <linearGradient id="{{ uid }}-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#93c1e2"/><stop offset="1" stop-color="#e6f0f6"/></linearGradient>
         <linearGradient id="{{ uid }}-glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient>
@@ -218,7 +220,9 @@
     </g>
 
     {# Человек для масштаба. #}
-    <ellipse cx="{{ px }}" cy="{{ p_base }}" rx="{{ 0.28 * scale }}" ry="4.5" fill="#000" fill-opacity=".28"/>
+    {% if not (photo and person is defined and person is not empty) %}
+        <ellipse cx="{{ px }}" cy="{{ p_base }}" rx="{{ 0.28 * scale }}" ry="4.5" fill="#000" fill-opacity=".28"/>
+    {% endif %}
     {% if person is defined and person is not empty %}
         <image href="{{ person }}" x="{{ px - 0.5 * scale }}" y="{{ p_base - ph }}" width="{{ scale }}" height="{{ ph }}" preserveAspectRatio="xMidYMax meet"/>
     {% else %}
@@ -240,9 +244,9 @@
 
     {# Линейка и подпись высоты. #}
     <g class="zp-scene__ruler">
-        <rect x="18" y="186" width="48" height="232" rx="8" fill="#fff" fill-opacity="{{ photo ? '.72' : '0' }}"/>
+        <rect x="18" y="{{ ground - 2.2 * scale }}" width="48" height="{{ 2.2 * scale + 4 }}" rx="8" fill="#fff" fill-opacity="{{ photo ? '.72' : '0' }}"/>
         <g stroke="#23272d" stroke-opacity=".7" stroke-width="2">
-            <line x1="51.7" y1="414" x2="51.7" y2="191.7"/>
+            <line x1="51.7" y1="414" x2="51.7" y2="{{ ground - 2.15 * scale }}"/>
             {% for m in [0.5, 1, 1.5, 2] %}
                 <line x1="44.7" y1="{{ ground - m * scale }}" x2="58.7" y2="{{ ground - m * scale }}"/>
             {% endfor %}

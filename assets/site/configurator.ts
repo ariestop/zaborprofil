@@ -77,9 +77,9 @@ export function formatArea(value: number): string {
     return `${text} м²`
 }
 
-/** Верх забора на картинке для высоты в метрах. */
-export function fenceTop(meters: number): number {
-    return SCENE_GROUND - meters * SCENE_SCALE
+/** Верх забора на картинке для высоты в метрах; scale — px на метр сцены (у фото подбирается по росту человека). */
+export function fenceTop(meters: number, scale: number = SCENE_SCALE): number {
+    return SCENE_GROUND - meters * scale
 }
 
 /** При смене серии оставляем покрытие с тем же названием, иначе — первое покрытие серии. */
@@ -320,7 +320,7 @@ function updateScene(scene: SVGSVGElement, config: FenceConfig, selection: Fence
     if (height === undefined) {
         return
     }
-    const top = fenceTop(height)
+    const top = fenceTop(height, Number(scene.dataset.scale) || SCENE_SCALE)
     scene.querySelectorAll<SVGElement>('[data-fence-body]').forEach((element) => {
         element.setAttribute('y', String(top))
         element.setAttribute('height', String(SCENE_GROUND - top))

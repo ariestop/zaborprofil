@@ -125,6 +125,11 @@ describe('helpers', () => {
         expect(fenceTop(0)).toBe(SCENE_GROUND)
         expect(fenceTop(2)).toBeLessThan(fenceTop(1.5))
     })
+
+    it('uses the scene scale of a photo: more px per metre raise the top', () => {
+        expect(fenceTop(1.8, 118.4)).toBeCloseTo(SCENE_GROUND - 1.8 * 118.4)
+        expect(fenceTop(1.8, 118.4)).toBeLessThan(fenceTop(1.8))
+    })
 })
 
 describe('fenceLeadPlan', () => {
@@ -297,6 +302,17 @@ describe('initFenceConfigurators', () => {
         pick(form, 'grade', '2')
         expect(colors.disabled).toBe(false)
         expect(form.querySelector('[data-cfg-color-name]')?.textContent).toBe('RAL 7024 · Графит')
+    })
+
+    it('draws the fence height by the scale of the scene', () => {
+        const form = mount()
+        const scene = form.querySelector<SVGSVGElement>('[data-cfg-scene]')!
+        scene.dataset.scale = '118.4'
+        pick(form, 'height', '2')
+
+        expect(scene.querySelector('[data-fence-body]')?.getAttribute('y')).toBe(
+            String(fenceTop(2, 118.4)),
+        )
     })
 
     it('clamps a typed length when the field loses focus', () => {

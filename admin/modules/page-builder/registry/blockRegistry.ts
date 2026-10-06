@@ -769,8 +769,12 @@ const structuredBlockRegistry: BlockDefinition[] = [
                     photo: z.string().default(''),
                     person: z.string().default(''),
                     personHeight: z.number().min(1.2).max(2.1).default(1.65),
+                    /** Центр человека по x в единицах сцены (ширина 1200). */
+                    personX: z.number().min(0).max(1200).default(672),
+                    /** Масштаб плоскости забора, px на метр (ширина сцены 1200). */
+                    scale: z.number().min(60).max(200).default(103.4),
                 })
-                .default({ photo: '', person: '', personHeight: 1.65 }),
+                .default({ photo: '', person: '', personHeight: 1.65, personX: 672, scale: 103.4 }),
             length: z
                 .object({
                     min: z.number().int().min(1).default(10),
