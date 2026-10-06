@@ -284,9 +284,12 @@ function updateScene(scene: SVGSVGElement, config: FenceConfig, selection: Fence
     const height = config.heights[selection.height]
     if (series !== undefined) {
         scene.dataset.pattern = series.pattern
-        const body = scene.querySelector<SVGElement>('[data-fill-prefix]')
-        const prefix = body?.dataset.fillPrefix ?? ''
-        body?.setAttribute('fill', `url(#${prefix}-${series.pattern})`)
+        // Забор и лупа: у лупы тот же рисунок с суффиксом -zoom.
+        scene.querySelectorAll<SVGElement>('[data-fill-prefix]').forEach((element) => {
+            const prefix = element.dataset.fillPrefix ?? ''
+            const suffix = element.dataset.fillSuffix ?? ''
+            element.setAttribute('fill', `url(#${prefix}-${series.pattern}${suffix})`)
+        })
     }
     if (grade !== undefined) {
         scene.dataset.finish = grade.finish

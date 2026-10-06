@@ -96,6 +96,11 @@
             <form class="zp-cfg" data-fence-configurator data-config="{{ config|json_encode(constant('JSON_UNESCAPED_UNICODE'))|e('html_attr') }}">
                 <div class="zp-cfg__main">
                     <div class="zp-cfg__stage">
+                        {% set scene = c.scene ?? {} %}
+                        {% set scene_photo = (scene.photo ?? '') is not empty ? scene.photo : '' %}
+                        {% if scene_photo is not empty %}
+                            {{ responsive_image(scene_photo, {class: 'zp-cfg__photo', decorative: true, sizes: '(min-width: 1152px) 780px, 100vw'}) }}
+                        {% endif %}
                         {% include 'public/blocks/_fence-scene.svg.twig' with {
                             uid: uid,
                             pattern: s0.pattern,
@@ -103,6 +108,9 @@
                             ral: color.hex,
                             height: height,
                             label: ('Забор ' ~ full_title ~ ', высота ' ~ _self.meters(height) ~ (color_label is not empty ? ', ' ~ color_label : ''))|trim,
+                            photo: scene_photo is not empty,
+                            person: scene.person ?? '',
+                            person_height: min(2.1, max(1.2, (scene.personHeight ?? 1.65) + 0)),
                         } only %}
                         <p class="zp-cfg__pill" data-cfg-caption>{{ full_title }}{% if grade.details is not empty %} · {{ grade.details|split(' · ')|first }}{% endif %}{% if color_label is not empty %} · {{ color_label }}{% endif %}</p>
                     </div>

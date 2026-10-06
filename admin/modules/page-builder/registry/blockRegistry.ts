@@ -761,6 +761,14 @@ const structuredBlockRegistry: BlockDefinition[] = [
             freeItems: z
                 .array(z.object({ title: z.string(), note: z.string().default('') }))
                 .default([]),
+            /** Фото участка (фон) и человек для масштаба; без них — рисунок. */
+            scene: z
+                .object({
+                    photo: z.string().default(''),
+                    person: z.string().default(''),
+                    personHeight: z.number().min(1.2).max(2.1).default(1.65),
+                })
+                .default({ photo: '', person: '', personHeight: 1.65 }),
             length: z
                 .object({
                     min: z.number().int().min(1).default(10),

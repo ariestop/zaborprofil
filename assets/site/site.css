@@ -648,7 +648,7 @@
 
     /* Сцена (templates/public/blocks/_fence-scene.svg.twig). На телефоне картинка выше и обрезана справа. */
     .zp-scene {
-        @apply block aspect-[1200/470] h-auto w-full max-md:aspect-[1200/760];
+        @apply relative block aspect-[1200/470] h-auto w-full max-md:aspect-[1200/760];
     }
     .zp-scene [data-fence-body],
     .zp-scene [data-fence-top] {
@@ -657,18 +657,45 @@
             height 0.25s ease,
             transform 0.25s ease;
     }
-    .zp-scene[data-finish='matte'] .zp-scene__shade {
-        opacity: 0.65;
-    }
-    .zp-scene__wood {
+    /*
+     * Покрытие меняет только отражение, не тон: полиэстер (gloss) — полуглянцевые блики,
+     * велюр (matte) — матовое зерно без бликов, wood — рисунок дерева. Цвет задаёт только --ral.
+     */
+    .zp-scene__grain,
+    .zp-scene__wood,
+    .zp-scene__sheen {
         display: none;
-        opacity: 0.4;
     }
+    .zp-scene__sheen {
+        opacity: 0.036;
+    }
+    .zp-scene[data-pattern='jaluzi-double'] .zp-scene__sheen {
+        opacity: 0.041;
+    }
+    .zp-scene[data-finish='matte'] .zp-scene__sheen,
+    .zp-scene[data-finish='wood'] .zp-scene__sheen {
+        display: inline;
+    }
+    .zp-scene[data-finish='matte'] .zp-scene__grain,
     .zp-scene[data-finish='wood'] .zp-scene__wood {
         display: inline;
     }
-    .zp-scene[data-finish='wood'] .zp-scene__shade {
-        opacity: 0.6;
+    .zp-scene[data-finish='matte'] .zp-scene__spec,
+    .zp-scene[data-finish='wood'] .zp-scene__spec {
+        opacity: 0;
+    }
+    /* П-планка секции: Doppio — 100 мм, остальные — 60 мм. */
+    .zp-scene__u--wide,
+    .zp-scene[data-pattern='jaluzi-double'] .zp-scene__u--narrow {
+        display: none;
+    }
+    .zp-scene[data-pattern='jaluzi-double'] .zp-scene__u--wide {
+        display: inline;
+    }
+    /* Фото участка под прозрачной сценой. */
+    .zp-cfg__photo,
+    .zp-cfg__photo img {
+        @apply absolute inset-0 size-full object-cover object-bottom;
     }
     @media (prefers-reduced-motion: reduce) {
         .zp-scene [data-fence-body],

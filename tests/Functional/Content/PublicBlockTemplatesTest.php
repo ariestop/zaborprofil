@@ -170,6 +170,21 @@ final class PublicBlockTemplatesTest extends KernelTestCase
         self::assertStringContainsString('data-lead-plan="Конфигуратор: Largo Стандарт, RAL 7024, высота 1,8 м, длина 30 м', $html);
         self::assertStringContainsString('name="gate"', $html);
         self::assertStringContainsString('data-callbar-hide', $html);
+        self::assertStringContainsString('fill="url(#zpcfg-b1-jaluzi-zoom)"', $html, 'Лупа показывает ламель выбранной серии крупно.');
+        self::assertStringNotContainsString('zp-cfg__photo', $html, 'Без фото участка — рисованный фон.');
+    }
+
+    public function testFenceConfiguratorUsesSitePhotoAndPersonWhenSet(): void
+    {
+        $html = $this->render('fence-configurator', [
+            'grades' => [['title' => 'Полиэстер', 'pricePerSqm' => 1000]],
+            'scene' => ['photo' => '/uploads/media/yard.jpg', 'person' => '/uploads/media/woman.webp', 'personHeight' => 1.7],
+        ]);
+
+        self::assertStringContainsString('zp-cfg__photo', $html);
+        self::assertStringContainsString('zp-scene--photo', $html);
+        self::assertStringContainsString('<image href="/uploads/media/woman.webp"', $html);
+        self::assertStringContainsString('1,7 м', $html);
     }
 
     public function testFenceConfiguratorWithoutPriceAsksForRequest(): void
