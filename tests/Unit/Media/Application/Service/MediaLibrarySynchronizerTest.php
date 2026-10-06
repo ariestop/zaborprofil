@@ -118,11 +118,11 @@ final class MediaLibrarySynchronizerTest extends TestCase
      */
     private function synchronizer(InMemoryMediaAssets $assets, array $paths): MediaLibrarySynchronizer
     {
-        $provider = new class ($paths) implements MediaUsageProviderInterface {
+        $provider = new readonly class ($paths) implements MediaUsageProviderInterface {
             /**
              * @param list<string> $paths
              */
-            public function __construct(private readonly array $paths)
+            public function __construct(private array $paths)
             {
             }
 
