@@ -178,13 +178,16 @@ final class PublicBlockTemplatesTest extends KernelTestCase
     {
         $html = $this->render('fence-configurator', [
             'grades' => [['title' => 'Полиэстер', 'pricePerSqm' => 1000]],
-            'scene' => ['photo' => '/uploads/media/yard.jpg', 'person' => '/uploads/media/woman.webp', 'personHeight' => 1.7],
+            'scene' => ['photo' => '/uploads/media/yard.jpg', 'person' => '/uploads/media/woman.webp', 'personHeight' => 1.7, 'personX' => 657.2, 'scale' => 118.4],
         ]);
 
         self::assertStringContainsString('zp-cfg__photo', $html);
         self::assertStringContainsString('zp-scene--photo', $html);
         self::assertStringContainsString('<image href="/uploads/media/woman.webp"', $html);
         self::assertStringContainsString('1,7 м', $html);
+        self::assertStringContainsString('data-scale="118.4"', $html);
+        self::assertStringContainsString('<image href="/uploads/media/woman.webp" x="'.(657.2 - 0.5 * 118.4).'"', $html, 'Человек стоит в заданной точке сцены.');
+        self::assertStringNotContainsString('<ellipse', $html, 'У фото человека своя тень, нарисованная не нужна.');
     }
 
     public function testFenceConfiguratorWoodDecorReplacesRal(): void

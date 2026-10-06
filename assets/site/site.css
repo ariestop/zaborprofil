@@ -714,7 +714,7 @@
     /* Фото участка под прозрачной сценой. */
     .zp-cfg__photo,
     .zp-cfg__photo img {
-        @apply absolute inset-0 size-full object-cover object-bottom;
+        @apply absolute inset-0 size-full object-cover object-left-bottom;
     }
     @media (prefers-reduced-motion: reduce) {
         .zp-scene [data-fence-body],
