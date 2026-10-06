@@ -24,6 +24,16 @@ final class MediaUsageIndex
     }
 
     /**
+     * Все пути `/uploads/media/...`, на которые ссылается контент.
+     *
+     * @return list<string>
+     */
+    public function paths(): array
+    {
+        return array_map(strval(...), array_keys($this->byPath));
+    }
+
+    /**
      * @param list<string> $paths
      *
      * @return list<MediaUsageReference>

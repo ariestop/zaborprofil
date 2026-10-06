@@ -78,10 +78,7 @@ final readonly class MediaOptimizer
             return [];
         }
 
-        foreach (self::THUMBNAIL_WIDTHS as $targetWidth) {
-            if ($targetWidth >= $width) {
-                continue;
-            }
+        foreach (self::targetWidths($width) as $targetWidth) {
 
             $targetHeight = max(1, (int) round($height * ($targetWidth / $width)));
             $thumbnail = $this->resample($source, $targetWidth, $targetHeight);
@@ -103,6 +100,22 @@ final readonly class MediaOptimizer
         }
 
         return $variants;
+    }
+
+    /**
+     * Ширины превью: стандартные меньше оригинала и сам оригинал, если он не шире самого большого превью.
+     * Иначе у картинки 1280 px самым крупным WebP было бы 768 px, и на широком экране она расплывалась бы.
+     *
+     * @return list<int>
+     */
+    public static function targetWidths(int $width): array
+    {
+        $widths = array_values(array_filter(self::THUMBNAIL_WIDTHS, static fn (int $target): bool => $target < $width));
+        if ($width <= max(self::THUMBNAIL_WIDTHS)) {
+            $widths[] = $width;
+        }
+
+        return $widths;
     }
 
     private function resample(GdImage $source, int $width, int $height): GdImage
