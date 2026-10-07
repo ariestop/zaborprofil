@@ -32,7 +32,7 @@ when@test:
             # См. docs/17-doctrine-and-database.md §13.1.
             schema_filter: '~^(?!messenger_messages$)~'
 
-when@prod:
+when@prod: &prod_doctrine
     doctrine:
         orm:
             query_cache_driver:
@@ -49,3 +49,6 @@ when@prod:
                     adapter: cache.app
                 doctrine.system_cache_pool:
                     adapter: cache.system
+
+# staging (APP_ENV=staging, dev.zaborprofil.ru) получает ту же конфигурацию, что и prod: стенд проверяет prod-настройки перед выкладкой.
+when@staging: *prod_doctrine

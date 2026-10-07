@@ -26,7 +26,7 @@
 
 > Staging на Beget (`dev.zaborprofil.ru`) запускается с литеральным `APP_ENV=staging` и `STAGING_AUTH_*` (см. [49-beget-staging-deploy](49-beget-staging-deploy.md)); `DATABASE_URL` — только `mysql://`, `REDIS_URL` не используется.
 
-> Symfony знает только `dev`/`test`/`prod` как ключи. `staging` — это `APP_ENV=prod` + отдельная инфраструктура и `.env.staging` в shared.
+> Отдельных ключей конфигурации для `staging` нет: каждый блок `when@prod` в `config/` объявлен YAML-якорем и повторён как `when@staging: *prod_…`, поэтому staging собирается с prod-настройками (логирование, кэши Doctrine, запрет dev-сервера Vite). Отличия staging задаёт код по `kernel.environment`: Basic Auth (`StagingAccessSubscriber`), `noindex`, отсутствие HTTP-кэша и HSTS. Паритет проверяет `tests/Unit/Config/StagingConfigParityTest.php`.
 
 ## Обязательные переменные
 
