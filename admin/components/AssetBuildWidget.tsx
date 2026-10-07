@@ -194,7 +194,7 @@ export default function AssetBuildWidget() {
             setStatus(loaded)
             setSelectedTargets(loaded.selectedTargets.length > 0 ? loaded.selectedTargets : ['all'])
             setError(null)
-            setIsAvailable(true)
+            setIsAvailable(loaded.enabled !== false)
             syncPolling(loaded)
             scheduleReloadAfterSuccess(loaded)
         } catch (exception) {

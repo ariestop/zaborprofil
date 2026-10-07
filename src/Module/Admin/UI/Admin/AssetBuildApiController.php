@@ -7,6 +7,7 @@ namespace App\Module\Admin\UI\Admin;
 use App\Module\Admin\Application\Service\AssetBuildRunner;
 use App\Module\Auth\Domain\Security\AdminPermission;
 use JsonException;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -18,6 +19,8 @@ final readonly class AssetBuildApiController
     public function __construct(
         private AssetBuildRunner $buildRunner,
         private AuthorizationCheckerInterface $authorizationChecker,
+        #[Autowire('%app.admin.web_asset_build_enabled%')]
+        private bool $webBuildEnabled,
     ) {
     }
 
@@ -28,7 +31,7 @@ final readonly class AssetBuildApiController
             return $this->accessDenied();
         }
 
-        return new JsonResponse($this->buildRunner->status());
+        return new JsonResponse([...$this->buildRunner->status(), 'enabled' => $this->webBuildEnabled]);
     }
 
     #[Route('/run', name: 'admin_api_system_assets_build_run', methods: ['POST'])]
@@ -36,6 +39,14 @@ final readonly class AssetBuildApiController
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SYSTEM_MANAGE)) {
             return $this->accessDenied();
+        }
+
+        // Сборка из веб-админки меняет файлы релиза и запускает npm на сервере: на staging/production её собирает деплой.
+        if (!$this->webBuildEnabled) {
+            return new JsonResponse([
+                'error' => 'Asset build from the web admin is disabled. Assets are built during deploy.',
+                'code' => 'ASSET_BUILD_DISABLED',
+            ], 403);
         }
 
         try {
@@ -59,7 +70,7 @@ final readonly class AssetBuildApiController
 
         $status = $this->buildRunner->start($targets);
 
-        return new JsonResponse($status, $status['status'] === 'running' ? 202 : 200);
+        return new JsonResponse([...$status, 'enabled' => true], $status['status'] === 'running' ? 202 : 200);
     }
 
     private function badRequest(string $message): JsonResponse

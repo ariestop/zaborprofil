@@ -14,6 +14,9 @@ parameters:
     # Запуск Doctrine-миграций из веб-админки. По умолчанию выключен; на production миграции выполняет только CLI при деплое.
     env(ADMIN_WEB_MIGRATIONS_ENABLED): '0'
     app.admin.web_migrations_enabled: '%env(bool:ADMIN_WEB_MIGRATIONS_ENABLED)%'
+    # Сборка фронтенда (npm run build) из веб-админки. Включена только в dev; на staging/production ассеты собирает деплой.
+    env(ADMIN_WEB_ASSET_BUILD_ENABLED): '0'
+    app.admin.web_asset_build_enabled: '%env(bool:ADMIN_WEB_ASSET_BUILD_ENABLED)%'
     # HTTP-кэш публичных страниц (Cache-Control/ETag). Включается по умолчанию только в prod.
     env(PUBLIC_HTTP_CACHE_ENABLED): '0'
     # Браузер каждый раз сверяет ETag (после публикации редактор сразу видит новую версию),
@@ -223,6 +226,10 @@ services:
             $hub: '@Sentry\State\HubInterface'
             $level: 'error'
             $fillExtraContext: true
+
+when@dev:
+    parameters:
+        env(ADMIN_WEB_ASSET_BUILD_ENABLED): '1'
 
 when@test:
     parameters:
