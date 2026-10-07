@@ -13,6 +13,7 @@
     "test:e2e:smoke": "playwright test tests/e2e/admin-smoke.spec.ts",
     "test:e2e": "playwright test",
     "lint:admin": "eslint \"admin/{app,routes,layouts,pages,modules,features,entities,widgets,shared}/**/*.{ts,tsx}\"",
+    "lint:site": "eslint \"assets/**/*.{ts,tsx}\"",
     "lint:frontend": "eslint \"{assets,admin}/**/*.{ts,tsx}\"",
     "check:chunks": "node tools/perf/check-admin-chunks.mjs",
     "format:check": "prettier --check \"assets/**/*.{ts,tsx,scss,css}\" \"admin/**/*.{ts,tsx,scss,css}\" \"docs/**/*.md\""
