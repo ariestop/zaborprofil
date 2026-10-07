@@ -8,6 +8,7 @@ use App\Module\Content\Application\Journal\PageWorkflowEvent;
 use App\Module\Content\Application\Journal\PageWorkflowJournalInterface;
 use App\Module\Content\Domain\Entity\Page;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
+use App\Shared\Application\Exception\ClientErrorClassifier;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
@@ -88,10 +89,16 @@ final readonly class ScheduledPagePublisher
                 $details + ['revisionId' => (string) $revision->id(), 'version' => $revision->version()],
             ));
             $report->add($pageId, $page->path(), ScheduledPublishingReport::OUTCOME_PUBLISHED);
-        } catch (InvalidArgumentException $exception) {
-            $this->abandonSchedule($page, $exception->getMessage(), $details);
-            $report->add($pageId, $page->path(), ScheduledPublishingReport::OUTCOME_FAILED, $exception->getMessage());
         } catch (Throwable $exception) {
+            // Отказ чек-листа или неверное расписание — отменяем публикацию. Исключения Doctrine с тем же
+            // базовым типом — сбой программы: расписание сохраняется, ошибка уходит в лог.
+            if ($exception instanceof InvalidArgumentException && ClientErrorClassifier::isValidationError($exception)) {
+                $this->abandonSchedule($page, $exception->getMessage(), $details);
+                $report->add($pageId, $page->path(), ScheduledPublishingReport::OUTCOME_FAILED, $exception->getMessage());
+
+                return;
+            }
+
             $this->logger->error('Scheduled publication crashed.', ['page_id' => $pageId, 'exception' => $exception]);
             $report->add($pageId, $page->path(), ScheduledPublishingReport::OUTCOME_ERROR, $exception->getMessage());
         }

@@ -38,6 +38,8 @@ use App\Module\Content\Domain\Repository\PageBlockRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageSearchCriteria;
 use App\Module\Content\Domain\ValueObject\PageVisibility;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -52,6 +54,8 @@ final readonly class PageApiController
         private JsonRequest $jsonRequest,
         private ContentApiResponder $responder,
         private AuthorizationCheckerInterface $authorizationChecker,
+        #[Autowire(service: 'monolog.logger.admin')]
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -108,7 +112,12 @@ final readonly class PageApiController
 
         try {
             return $comparison->hasUnpublishedChanges($page);
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            $this->logger->error('Page revision comparison failed while building the page list.', [
+                'page_id' => (string) $page->id(),
+                'exception' => $exception,
+            ]);
+
             return false;
         }
     }

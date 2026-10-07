@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace App\Shared\UI\Http;
 
-use App\Shared\Domain\Exception\ClientSafeExceptionInterface;
+use App\Shared\Application\Exception\ClientErrorClassifier;
 use App\Shared\Domain\Exception\NotFoundExceptionInterface;
-use InvalidArgumentException;
 use JsonException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -14,13 +13,13 @@ use Symfony\Component\HttpFoundation\Exception\RequestExceptionInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Throwable;
-use ValueError;
 
 /**
  * Единый формат ошибок Admin API: `{"error": string, "code": string}`.
  *
  * Тексты доменных ошибок (валидация, «не найдено») попадают в ответ как есть,
  * любые другие исключения заменяются на «Internal server error» и пишутся в лог канала `admin`.
+ * Что считать ошибкой валидации, решает {@see ClientErrorClassifier}.
  */
 final readonly class AdminApiErrorResponder
 {
@@ -47,11 +46,7 @@ final readonly class AdminApiErrorResponder
             return $this->accessDenied();
         }
 
-        if (
-            $exception instanceof InvalidArgumentException
-            || $exception instanceof ValueError
-            || $exception instanceof ClientSafeExceptionInterface
-        ) {
+        if (ClientErrorClassifier::isValidationError($exception)) {
             return $this->validation($exception->getMessage());
         }
 

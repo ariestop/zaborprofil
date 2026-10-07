@@ -10,11 +10,12 @@ use App\Module\Content\Application\Service\ContentId;
 use App\Module\Content\Application\Service\PublicPageCacheInvalidator;
 use App\Module\Content\Domain\Repository\PagePublicationRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
-use App\Shared\Domain\Exception\ClientSafeExceptionInterface;
+use App\Shared\Application\Exception\ClientErrorClassifier;
 use App\Shared\Domain\Exception\NotFoundExceptionInterface;
 use InvalidArgumentException;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Throwable;
-use ValueError;
 
 /**
  * Пакетные операции над страницами. Каждая страница обрабатывается независимо:
@@ -30,6 +31,8 @@ final readonly class BulkUpdatePagesHandler
         private ContentId $contentId,
         private ChangePageStatusHandler $changeStatus,
         private PublicPageCacheInvalidator $publicPageCache,
+        #[Autowire(service: 'monolog.logger.admin')]
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -57,9 +60,17 @@ final readonly class BulkUpdatePagesHandler
                     default => $this->applyIndexable($id, (bool) $command->indexable),
                 };
                 $results[] = ['id' => $id, 'ok' => true, 'error' => null];
-            } catch (InvalidArgumentException|ValueError|ClientSafeExceptionInterface|NotFoundExceptionInterface $exception) {
-                $results[] = ['id' => $id, 'ok' => false, 'error' => $exception->getMessage()];
-            } catch (Throwable) {
+            } catch (Throwable $exception) {
+                if ($exception instanceof NotFoundExceptionInterface || ClientErrorClassifier::isValidationError($exception)) {
+                    $results[] = ['id' => $id, 'ok' => false, 'error' => $exception->getMessage()];
+                    continue;
+                }
+
+                $this->logger->error('Bulk page update failed for a page.', [
+                    'page_id' => $id,
+                    'action' => $command->action,
+                    'exception' => $exception,
+                ]);
                 $results[] = ['id' => $id, 'ok' => false, 'error' => 'Internal error.'];
             }
         }

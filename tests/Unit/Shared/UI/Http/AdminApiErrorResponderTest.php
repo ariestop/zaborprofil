@@ -8,6 +8,7 @@ use App\Module\Content\Domain\Exception\ContentNotFoundException;
 use App\Shared\Infrastructure\Upload\UploadSecurityException;
 use App\Shared\UI\Http\AdminApiErrorResponder;
 use App\Tests\Support\Logging\RecordingLogger;
+use Doctrine\ORM\ORMInvalidArgumentException;
 use InvalidArgumentException;
 use JsonException;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -76,6 +77,19 @@ final class AdminApiErrorResponderTest extends TestCase
         self::assertCount(1, $logger->records);
         self::assertSame('error', $logger->records[0]['level']);
         self::assertStringContainsString('Admin Menu API', $logger->records[0]['message']);
+        self::assertSame($exception, $logger->records[0]['context']['exception'] ?? null);
+    }
+
+    public function testDoctrineInvalidArgumentIsTreatedAsInternalError(): void
+    {
+        $logger = new RecordingLogger();
+        $exception = new ORMInvalidArgumentException('A new entity was found through the relationship App\Module\Content\Domain\Entity\Page#parent.');
+
+        $response = (new AdminApiErrorResponder($logger))->fromThrowable($exception);
+
+        self::assertSame(500, $response->getStatusCode());
+        self::assertSame(['error' => 'Internal server error', 'code' => 'INTERNAL'], $this->payload($response));
+        self::assertCount(1, $logger->records);
         self::assertSame($exception, $logger->records[0]['context']['exception'] ?? null);
     }
 
