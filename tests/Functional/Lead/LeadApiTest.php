@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional\Lead;
 
+use App\Module\Lead\Domain\Entity\Lead;
 use App\Module\Lead\Domain\Repository\LeadRepositoryInterface;
 use App\Tests\Support\Database\SchemaTestHelper;
 use Doctrine\ORM\EntityManagerInterface;
@@ -103,6 +104,44 @@ final class LeadApiTest extends WebTestCase
             ['error' => 'Consent is required.', 'code' => 'VALIDATION'],
             json_decode($client->getResponse()->getContent() ?: '{}', true, flags: JSON_THROW_ON_ERROR),
         );
+    }
+
+    public function testPublicFormRejectsTooLongNameWithValidationErrorAndStoresNothing(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+
+        $client->jsonRequest('POST', '/api/leads', [
+            'source' => 'public_page_form',
+            'name' => str_repeat('я', Lead::NAME_MAX_LENGTH + 1),
+            'phone' => '+79990000000',
+            'consent' => true,
+            'formLoadedAt' => (new \DateTimeImmutable('-10 seconds'))->format(DATE_ATOM),
+        ], server: ['REMOTE_ADDR' => '127.0.0.14']);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame(
+            ['error' => 'Lead name must not exceed 180 characters.', 'code' => 'VALIDATION'],
+            json_decode($client->getResponse()->getContent() ?: '{}', true, flags: JSON_THROW_ON_ERROR),
+        );
+        self::assertSame([], $this->leads()->findLatest(1));
+    }
+
+    public function testPublicFormRejectsPhoneWithoutEnoughDigits(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+
+        $client->jsonRequest('POST', '/api/leads', [
+            'source' => 'public_page_form',
+            'name' => 'Иван',
+            'phone' => '12-34',
+            'consent' => true,
+            'formLoadedAt' => (new \DateTimeImmutable('-10 seconds'))->format(DATE_ATOM),
+        ], server: ['REMOTE_ADDR' => '127.0.0.15']);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame([], $this->leads()->findLatest(1));
     }
 
     private function entityManager(): EntityManagerInterface
