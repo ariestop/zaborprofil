@@ -258,6 +258,21 @@ final class PublicBlockTemplatesTest extends KernelTestCase
     }
 
     /**
+     * HTML, сохранённый до появления санитайзера или в обход конструктора, очищается при выводе.
+     */
+    public function testRichTextHtmlIsSanitizedOnRender(): void
+    {
+        $html = $this->render('rich-text', ['html' => '<p style="text-align: center" onclick=\'alert(1)\'>Абзац <a href=\'javascript:alert(2)\'>ссылка</a></p>'
+            .'<a href="/contacts/" onmouseover = "alert(3)">Контакты</a><img src="x" onerror="alert(4)"><script>alert(5)</script>']);
+
+        self::assertStringNotContainsString('alert', $html);
+        self::assertStringNotContainsString('<script', $html);
+        self::assertStringNotContainsString('<img', $html);
+        self::assertStringContainsString('<p style="text-align: center">Абзац', $html);
+        self::assertStringContainsString('<a href="/contacts/">Контакты</a>', $html);
+    }
+
+    /**
      * @param array<string, mixed> $content
      * @param array<string, mixed> $settings
      */

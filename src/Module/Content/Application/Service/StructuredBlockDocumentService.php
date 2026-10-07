@@ -11,6 +11,12 @@ use Symfony\Component\Uid\Ulid;
 final readonly class StructuredBlockDocumentService
 {
     private const array RICH_TEXT_KEYS = ['html', 'text', 'answer', 'description'];
+
+    /**
+     * Типы, чьи `html`/`text` шаблон выводит как разметку (public/blocks/rich-text.html.twig и его include).
+     */
+    private const array MARKUP_BLOCK_TYPES = [BlockType::RichText, BlockType::Text, BlockType::SeoText];
+    private const array MARKUP_KEYS = ['html', 'text'];
     private const int NAME_MAX_LENGTH = 180;
 
     public function __construct(
@@ -49,7 +55,7 @@ final readonly class StructuredBlockDocumentService
 
         $contentRaw = $blockPayload['content'] ?? [];
         $content = $this->normalizeObject($contentRaw, 'Block "content" must be an object.');
-        $content = $this->sanitizeRichTextValues($content);
+        $content = $this->sanitizeContent($type, $content);
 
         $settingsRaw = $blockPayload['settings'] ?? [];
         $settings = $this->normalizeObject($settingsRaw, 'Block "settings" must be an object.');
@@ -105,6 +111,30 @@ final readonly class StructuredBlockDocumentService
     }
 
     /**
+     * Очистка содержимого блока перед сохранением — общая для конструктора и API отдельных блоков.
+     *
+     * @param array<string, mixed> $content
+     *
+     * @return array<string, mixed>
+     */
+    public function sanitizeContent(BlockType $type, array $content): array
+    {
+        $content = $this->sanitizeRichTextValues($content);
+        if (!\in_array($type, self::MARKUP_BLOCK_TYPES, true)) {
+            return $content;
+        }
+
+        foreach (self::MARKUP_KEYS as $key) {
+            $value = $content[$key] ?? null;
+            if (\is_string($value)) {
+                $content[$key] = $this->richTextSanitizer->sanitizeHtml($value);
+            }
+        }
+
+        return $content;
+    }
+
+    /**
      * @param array<string, mixed> $value
      * @return array<string, mixed>
      */
@@ -120,7 +150,7 @@ final readonly class StructuredBlockDocumentService
             }
 
             if (\is_string($item) && \in_array($key, self::RICH_TEXT_KEYS, true)) {
-                $sanitized[$key] = $this->richTextSanitizer->sanitize($item);
+                $sanitized[$key] = $this->richTextSanitizer->sanitizeText($item);
                 continue;
             }
 

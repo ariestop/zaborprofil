@@ -183,7 +183,7 @@ password_hashers:
 ## XSS
 
 - Twig auto-escaping (по умолчанию `html`). Не отключать `|raw` без причины.
-- HTML-входы из админки — sanitize (`HTMLPurifier` или `symfony/html-sanitizer` — целевое).
+- HTML-входы из админки — `symfony/html-sanitizer` (профиль `app.rich_text_sanitizer`), при сохранении и при выводе; подробности — [admin/rich-text-editor](admin/rich-text-editor.md).
 - JSON — `json_encode($v, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)`.
 
 ## SQL Injection
