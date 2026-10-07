@@ -212,8 +212,10 @@ final readonly class MediaApiController
                 }
             }
 
-            $this->removeAssetFiles($asset);
+            // Сначала запись в БД: если удаление не удалось, файлы остаются на месте и ссылки не ломаются.
+            // Обратный порядок оставлял запись без файлов («битое» изображение в библиотеке и на сайте).
             $this->assets->remove($asset);
+            $this->removeAssetFiles($asset);
 
             return new JsonResponse(null, 204);
         } catch (Throwable $exception) {
