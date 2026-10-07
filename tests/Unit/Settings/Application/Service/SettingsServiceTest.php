@@ -37,6 +37,15 @@ final class SettingsServiceTest extends TestCase
         $service->set('site', 'name', 'New');
         self::assertSame('New', $service->get('site', 'name'));
     }
+
+    public function testDefaultOfOneCallerIsNotCachedForOthers(): void
+    {
+        $service = new SettingsService(new InMemorySettingRepository(), new ArrayAdapter(), new BusinessEventLogger(new NullLogger()));
+
+        self::assertSame('first', $service->get('seo', 'site_name', 'first'));
+        self::assertSame('second', $service->get('seo', 'site_name', 'second'));
+        self::assertNull($service->get('seo', 'site_name'));
+    }
 }
 
 final class InMemorySettingRepository implements SettingRepositoryInterface

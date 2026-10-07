@@ -59,7 +59,7 @@
 | `MYSQL_DATABASE`/`MYSQL_USER`/`MYSQL_PASSWORD`/`MYSQL_ROOT_PASSWORD`/`MYSQL_PORT` | для Docker Compose | Compose |
 | `HTTP_PORT` | хост-порт nginx для проброса `host:container` (Compose). Можно задать привязку к интерфейсу: `8081` (все интерфейсы) или `127.0.0.1:8081` (только loopback хоста; удобно на сервере, для доступа с ноутбука — SSH `-L` / Remote Ports) | Compose |
 | `MAILPIT_PORT`/`ADMINER_PORT`/`VITE_PORT` | хост-порты | Compose, dev only |
-| `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | для critical alerts | `TelegramErrorHandler` |
+| `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | для critical alerts; читаются через контейнер (`.env.local` или `secrets:set`), отправляет worker `messenger:consume async` | `TelegramErrorHandler`, `SendTelegramLogMessageHandler` |
 | `RELEASE_TAG` | версия для логов/Sentry | `ReleaseProcessor` |
 | `LEAD_NOTIFICATION_EMAIL` / `LEAD_TELEGRAM_BOT_TOKEN` / `LEAD_TELEGRAM_CHAT_ID` | куда уходят уведомления о новых заявках; если доставка не удалась ни по одному каналу, пишется `error` в канал `observability` (алерт) | `LeadNotifier` |
 | `SENTRY_DSN` | DSN Sentry или self-hosted (GlitchTip); пусто — error tracking выключен. Персональные данные не отправляются ([28-logging-observability](28-logging-observability.md)) | `sentry/sentry-symfony` |
