@@ -10,6 +10,8 @@ use App\Module\Media\Application\Usage\MediaUsageFinder;
 use App\Module\Media\Application\Usage\MediaUsageProviderInterface;
 use App\Module\Media\Application\Usage\MediaUsageReference;
 use App\Module\Media\Domain\Entity\MediaAsset;
+use App\Shared\Infrastructure\Upload\UploadValidator;
+use App\Tests\Support\Logging\RecordingLogger;
 use App\Tests\Support\Media\InMemoryMediaAssets;
 use PHPUnit\Framework\TestCase;
 
@@ -17,12 +19,15 @@ final class MediaLibrarySynchronizerTest extends TestCase
 {
     private string $dir;
 
+    private RecordingLogger $logger;
+
     protected function setUp(): void
     {
         if (!\function_exists('imagecreatetruecolor') || !\function_exists('imagejpeg')) {
             self::markTestSkipped('GD is not available.');
         }
 
+        $this->logger = new RecordingLogger();
         $this->dir = sys_get_temp_dir().'/media-sync-'.bin2hex(random_bytes(4));
         mkdir($this->dir.'/variants', 0775, true);
     }
@@ -113,6 +118,42 @@ final class MediaLibrarySynchronizerTest extends TestCase
         self::assertSame([], $report->imported);
     }
 
+    public function testFailureOfOneFileDoesNotStopTheRest(): void
+    {
+        $this->jpeg('a-broken.jpg', 640, 480, 1);
+        $this->jpeg('b-fine.jpg', 640, 480, 2);
+        $assets = new InMemoryMediaAssets();
+        $assets->failOnSave('/uploads/media/a-broken.jpg');
+
+        $report = $this->synchronizer($assets, ['/uploads/media/a-broken.jpg', '/uploads/media/b-fine.jpg'])->sync();
+
+        self::assertSame(['/uploads/media/b-fine.jpg'], $report->imported, 'Файл после упавшего обработан.');
+        self::assertSame(['/uploads/media/a-broken.jpg'], array_keys($report->failed));
+        self::assertStringContainsString('Simulated storage failure.', $report->failed['/uploads/media/a-broken.jpg']);
+        self::assertCount(1, $this->logger->records);
+        self::assertSame('error', $this->logger->records[0]['level']);
+        self::assertSame('/uploads/media/a-broken.jpg', $this->logger->records[0]['context']['path'] ?? null);
+    }
+
+    public function testImagesAboveUploadLimitsAreNotDecoded(): void
+    {
+        $this->jpeg('panorama.jpg', UploadValidator::MAX_IMAGE_WIDTH + 1, 2);
+        $this->jpeg('huge-old.jpg', 40, 30);
+        $assets = new InMemoryMediaAssets();
+        // Ассет медиатеки с разрешением больше лимита (занесён до появления лимитов) — превью не пересоздаются.
+        $assets->save(new MediaAsset('huge-old.jpg', 'huge-old.jpg', '/uploads/media/huge-old.jpg', 'image/jpeg', 100, UploadValidator::MAX_IMAGE_WIDTH + 1, 30));
+
+        $report = $this->synchronizer($assets, ['/uploads/media/panorama.jpg'])->sync();
+
+        self::assertSame([], $report->imported);
+        self::assertSame([], $report->failed);
+        self::assertContains('/uploads/media/panorama.jpg', $report->tooLarge);
+        if (\function_exists('imagewebp') || \function_exists('imageavif')) {
+            self::assertContains('/uploads/media/huge-old.jpg', $report->tooLarge);
+        }
+        self::assertCount(1, $assets->all());
+    }
+
     /**
      * @param list<string> $paths
      */
@@ -137,7 +178,7 @@ final class MediaLibrarySynchronizerTest extends TestCase
             }
         };
 
-        return new MediaLibrarySynchronizer($assets, new MediaUsageFinder([$provider]), new MediaOptimizer(), $this->dir);
+        return new MediaLibrarySynchronizer($assets, new MediaUsageFinder([$provider]), new MediaOptimizer(), $this->dir, $this->logger);
     }
 
     /**
