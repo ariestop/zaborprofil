@@ -72,13 +72,16 @@ final readonly class PageApiController
             return $this->paginatedIndex($request, $pages, $names);
         }
 
+        $all = $pages->findAllForAdmin();
+        $changed = $this->unpublishedChanges($all, $comparison);
+
         return new JsonResponse([
             'pages' => array_map(
                 fn (Page $page): array => [
                     ...$this->listItem($page, $names),
-                    'hasUnpublishedChanges' => $this->hasUnpublishedChanges($page, $comparison),
+                    'hasUnpublishedChanges' => $changed[(string) $page->id()] ?? false,
                 ],
-                $pages->findAllForAdmin(),
+                $all,
             ),
         ]);
     }
@@ -101,25 +104,23 @@ final readonly class PageApiController
     }
 
     /**
-     * Маркер «есть неопубликованные правки» для списка страниц: только у опубликованных,
-     * сбой сравнения одной страницы не ломает весь список.
+     * Маркер «есть неопубликованные правки» для списка страниц: только у опубликованных, данные для сравнения
+     * загружаются пачкой (без N+1); сбой сравнения одной страницы не ломает весь список.
+     *
+     * @param list<Page> $pages
+     *
+     * @return array<string, bool>
      */
-    private function hasUnpublishedChanges(Page $page, PageRevisionComparison $comparison): bool
+    private function unpublishedChanges(array $pages, PageRevisionComparison $comparison): array
     {
-        if ($page->status() !== PageStatus::Published) {
-            return false;
-        }
+        $published = array_values(array_filter($pages, static fn (Page $page): bool => $page->status() === PageStatus::Published));
 
-        try {
-            return $comparison->hasUnpublishedChanges($page);
-        } catch (Throwable $exception) {
+        return $comparison->unpublishedChangesFor($published, function (Page $page, Throwable $exception): void {
             $this->logger->error('Page revision comparison failed while building the page list.', [
                 'page_id' => (string) $page->id(),
                 'exception' => $exception,
             ]);
-
-            return false;
-        }
+        });
     }
 
     /**

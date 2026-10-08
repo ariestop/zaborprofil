@@ -15,5 +15,14 @@ interface PagePublicationRepositoryInterface
 
     public function findByPage(string $pageId): ?PagePublication;
 
+    /**
+     * Публикации сразу нескольких страниц вместе с опубликованными ревизиями — одним запросом.
+     *
+     * @param list<string> $pageIds
+     *
+     * @return array<string, PagePublication> id страницы => публикация (страницы без публикации отсутствуют)
+     */
+    public function findByPages(array $pageIds): array;
+
     public function findPublishedByPath(string $path): ?PagePublication;
 }

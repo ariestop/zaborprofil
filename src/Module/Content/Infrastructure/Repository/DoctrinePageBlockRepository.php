@@ -8,6 +8,7 @@ use App\Module\Content\Domain\Entity\PageBlock;
 use App\Module\Content\Domain\Exception\ContentNotFoundException;
 use App\Module\Content\Domain\Repository\PageBlockRepositoryInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Uid\Ulid;
 
@@ -63,5 +64,27 @@ final class DoctrinePageBlockRepository extends ServiceEntityRepository implemen
     public function findByPage(string $pageId): array
     {
         return $this->findBy(['page' => Ulid::fromString($pageId)], ['position' => 'ASC']);
+    }
+
+    public function findByPages(array $pageIds): array
+    {
+        if ($pageIds === []) {
+            return [];
+        }
+
+        /** @var list<PageBlock> $blocks */
+        $blocks = $this->createQueryBuilder('block')
+            ->andWhere('block.page IN (:pageIds)')
+            ->setParameter('pageIds', array_map(static fn (string $id): string => Ulid::fromString($id)->toBinary(), $pageIds), ArrayParameterType::BINARY)
+            ->orderBy('block.position', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        $byPage = [];
+        foreach ($blocks as $block) {
+            $byPage[(string) $block->page()->id()][] = $block;
+        }
+
+        return $byPage;
     }
 }
