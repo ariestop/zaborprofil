@@ -6,6 +6,7 @@ namespace App\Shared\UI\Http;
 
 use App\Shared\Application\Exception\ClientErrorClassifier;
 use App\Shared\Domain\Exception\NotFoundExceptionInterface;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use JsonException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -19,7 +20,9 @@ use Throwable;
  *
  * Тексты доменных ошибок (валидация, «не найдено») попадают в ответ как есть,
  * любые другие исключения заменяются на «Internal server error» и пишутся в лог канала `admin`.
- * Что считать ошибкой валидации, решает {@see ClientErrorClassifier}.
+ * Что считать ошибкой валидации, решает {@see ClientErrorClassifier}. Нарушение уникального индекса —
+ * это одновременное изменение тех же данных другим запросом (например, два сохранения ревизии с одним
+ * номером версии): ответ 409 с предложением повторить, запись в лог с уровнем warning.
  */
 final readonly class AdminApiErrorResponder
 {
@@ -52,6 +55,14 @@ final readonly class AdminApiErrorResponder
 
         if ($exception instanceof RequestExceptionInterface || $exception instanceof JsonException) {
             return $this->badRequest('Request body is invalid.');
+        }
+
+        if ($exception instanceof UniqueConstraintViolationException) {
+            $this->logger->warning(\sprintf('%s hit a unique constraint, probably a concurrent change.', $operation), [
+                'exception' => $exception,
+            ]);
+
+            return $this->conflict('The data was changed by another request. Reload and try again.');
         }
 
         return $this->internal($exception, $operation);

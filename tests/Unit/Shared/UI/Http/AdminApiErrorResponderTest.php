@@ -8,6 +8,8 @@ use App\Module\Content\Domain\Exception\ContentNotFoundException;
 use App\Shared\Infrastructure\Upload\UploadSecurityException;
 use App\Shared\UI\Http\AdminApiErrorResponder;
 use App\Tests\Support\Logging\RecordingLogger;
+use Doctrine\DBAL\Driver\AbstractException;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\ORMInvalidArgumentException;
 use InvalidArgumentException;
 use JsonException;
@@ -90,6 +92,23 @@ final class AdminApiErrorResponderTest extends TestCase
         self::assertSame(500, $response->getStatusCode());
         self::assertSame(['error' => 'Internal server error', 'code' => 'INTERNAL'], $this->payload($response));
         self::assertCount(1, $logger->records);
+        self::assertSame($exception, $logger->records[0]['context']['exception'] ?? null);
+    }
+
+    public function testUniqueConstraintViolationBecomesConflictWithoutSqlDetails(): void
+    {
+        $logger = new RecordingLogger();
+        $driverException = new class ("SQLSTATE[23000]: Duplicate entry 'x-3' for key 'uniq_content_page_revisions_page_version'", '23000', 1062) extends AbstractException {
+        };
+        $exception = new UniqueConstraintViolationException($driverException, null);
+
+        $response = (new AdminApiErrorResponder($logger))->fromThrowable($exception, 'Admin Content API');
+
+        self::assertSame(409, $response->getStatusCode());
+        self::assertSame('CONFLICT', $this->payload($response)['code'] ?? null);
+        self::assertStringNotContainsString('Duplicate', (string) $response->getContent());
+        self::assertCount(1, $logger->records);
+        self::assertSame('warning', $logger->records[0]['level']);
         self::assertSame($exception, $logger->records[0]['context']['exception'] ?? null);
     }
 

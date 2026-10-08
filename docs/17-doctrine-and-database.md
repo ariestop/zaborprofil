@@ -217,6 +217,7 @@ private Collection $blocks;
 - Вложенный `run()` становится частью внешней транзакции (DBAL оформляет его точкой сохранения); `flush()` внутри репозиториев допустим.
 - В отличие от `EntityManager::wrapInTransaction()` исключение операции не закрывает EntityManager: пакетные операции и планировщик продолжают работу после ошибки валидации на одном элементе. Ошибка самого `flush()` EntityManager закрывает (так устроен Doctrine).
 - Сброс кэша и внешние вызовы — через `TransactionRunnerInterface::afterCommit()`: выполняются после фиксации внешней транзакции и не выполняются при откате. `PublicPageCacheInvalidator` делает это сам.
+- Транзакция не сериализует одновременные запросы. Где значение вычисляется по уже сохранённым строкам (номер версии ревизии = `MAX(version) + 1`), целостность держит уникальный индекс (`uniq_content_page_revisions_page_version`). Нарушение уникального индекса Admin API возвращает как 409 `CONFLICT` с предложением повторить (`AdminApiErrorResponder`).
 
 ```php
 // Application/Handler/PublishPageHandler.php

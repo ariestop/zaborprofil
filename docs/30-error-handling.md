@@ -125,7 +125,7 @@ try {
 
 ## Централизованная обработка Admin API (фактическое)
 
-- `App\Shared\UI\Http\AdminApiErrorResponder` — единая точка превращения `\Throwable` в JSON `{error, code}` (422 `VALIDATION`, 404 `NOT_FOUND`, 400 `BAD_REQUEST`, 500 `INTERNAL`).
+- `App\Shared\UI\Http\AdminApiErrorResponder` — единая точка превращения `\Throwable` в JSON `{error, code}` (422 `VALIDATION`, 404 `NOT_FOUND`, 400 `BAD_REQUEST`, 409 `CONFLICT` при нарушении уникального индекса — одновременное изменение, лог `warning`; 500 `INTERNAL`).
 - `App\Module\Admin\Infrastructure\Http\AdminApiExceptionSubscriber` на `kernel.exception` для `^/admin/api` перехватывает всё необработанное и отдаёт тот же формат без текста исключения.
 - Готовые ответы без логирования (403 `ACCESS_DENIED` «Access denied.», 422, 404, 400, 409) — статические `App\Shared\UI\Http\AdminApiResponses`; контроллеры не собирают JSON ошибок вручную.
 - JSON-тело запроса разбирает `App\Shared\UI\Http\JsonRequest`: `payload()` (строго), `optionalPayload()` (пустое тело — пустой объект), `lenientPayload()` (для системных действий: невалидное тело — пустой объект).

@@ -10,7 +10,7 @@ use Symfony\Component\Uid\Ulid;
 
 #[ORM\Entity(repositoryClass: \App\Module\Content\Infrastructure\Repository\DoctrinePageRevisionRepository::class)]
 #[ORM\Table(name: 'content_page_revisions')]
-#[ORM\Index(name: 'idx_content_page_revisions_page_version', columns: ['page_id', 'version'])]
+#[ORM\UniqueConstraint(name: 'uniq_content_page_revisions_page_version', columns: ['page_id', 'version'])]
 #[ORM\Index(name: 'idx_content_page_revisions_created_at', columns: ['created_at'])]
 final class PageRevision
 {
