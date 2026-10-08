@@ -11,6 +11,8 @@ use App\Module\Seo\Application\Robots\RobotsTxtValidator;
 use App\Module\Seo\Application\Service\RobotsTxtManager;
 use App\Module\Settings\Application\Service\SettingsService;
 use App\Shared\UI\Http\AdminApiErrorResponder;
+use App\Shared\UI\Http\AdminApiResponses;
+use App\Shared\UI\Http\JsonRequest;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -28,6 +30,7 @@ final readonly class RobotsApiController
         private AuthorizationCheckerInterface $authorizationChecker,
         private PublicPageCacheInvalidator $publicPageCache,
         private AdminApiErrorResponder $errors,
+        private JsonRequest $jsonRequest,
     ) {
     }
 
@@ -35,7 +38,7 @@ final readonly class RobotsApiController
     public function show(): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SEO_EDIT)) {
-            return AccessDeniedResponse::create();
+            return AdminApiResponses::accessDenied();
         }
 
         return $this->current();
@@ -45,11 +48,11 @@ final readonly class RobotsApiController
     public function preview(Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SEO_EDIT)) {
-            return AccessDeniedResponse::create();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
-            $body = JsonPayload::fromRequest($request)->nullableString('body');
+            $body = $this->jsonRequest->nullableString($this->jsonRequest->payload($request), 'body');
             $issues = [];
             $normalized = null;
             try {
@@ -79,11 +82,11 @@ final readonly class RobotsApiController
     public function update(Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SEO_EDIT)) {
-            return AccessDeniedResponse::create();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
-            $body = JsonPayload::fromRequest($request)->nullableString('body');
+            $body = $this->jsonRequest->nullableString($this->jsonRequest->payload($request), 'body');
             $normalized = $this->robots->normalizeEditableBody($body);
             if ($normalized !== null) {
                 $details = [];

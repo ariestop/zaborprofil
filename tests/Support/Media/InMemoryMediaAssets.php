@@ -9,6 +9,7 @@ use App\Module\Media\Domain\Repository\MediaAssetRepositoryInterface;
 use App\Module\Media\Domain\ValueObject\MediaAssetCriteria;
 use App\Module\Media\Domain\ValueObject\MediaAssetPage;
 use LogicException;
+use RuntimeException;
 
 /**
  * Медиатека в памяти для unit-тестов.
@@ -18,8 +19,23 @@ final class InMemoryMediaAssets implements MediaAssetRepositoryInterface
     /** @var array<string, MediaAsset> */
     private array $assets = [];
 
+    /** @var list<string> */
+    private array $failingPaths = [];
+
+    /**
+     * Сохранение ассета с этим публичным путём будет падать — для проверки, что сбой одного файла не останавливает остальные.
+     */
+    public function failOnSave(string $publicPath): void
+    {
+        $this->failingPaths[] = $publicPath;
+    }
+
     public function save(MediaAsset $asset): void
     {
+        if (\in_array($asset->publicPath(), $this->failingPaths, true)) {
+            throw new RuntimeException('Simulated storage failure.');
+        }
+
         $this->assets[(string) $asset->id()] = $asset;
     }
 

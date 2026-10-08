@@ -43,16 +43,9 @@ final readonly class LeadWorkflow
      */
     public function createManual(string $name, string $phone, ?string $email, ?string $message, LeadActor $actor): Lead
     {
-        $name = trim($name);
-        $phone = trim($phone);
+        // Длины и минимум цифр телефона проверяет сама заявка ({@see Lead}); здесь — только правила ручного ввода.
         $email = $email === null ? null : trim($email);
-        if ($name === '' || mb_strlen($name) > 180) {
-            throw new InvalidArgumentException('Lead name must be between 1 and 180 characters.');
-        }
-        if (mb_strlen($phone) > 40 || \strlen(PhoneNumber::digits($phone)) < 6) {
-            throw new InvalidArgumentException('Lead phone must contain at least 6 digits.');
-        }
-        if ($email !== null && $email !== '' && (mb_strlen($email) > 180 || filter_var($email, FILTER_VALIDATE_EMAIL) === false)) {
+        if ($email !== null && $email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
             throw new InvalidArgumentException('Lead email is not valid.');
         }
         if ($message !== null && mb_strlen($message) > self::NOTE_MAX_LENGTH) {

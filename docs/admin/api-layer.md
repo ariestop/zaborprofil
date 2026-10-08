@@ -23,7 +23,8 @@
 
 - `status` (HTTP статус);
 - `payload` (тело ответа);
-- `code` (нормализованный enum-подобный код: `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `VALIDATION_ERROR`, `SERVER_ERROR`, `UNKNOWN`).
+- `code` (класс ошибки по HTTP-статусу: `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `VALIDATION_ERROR`, `SERVER_ERROR`, `UNKNOWN`);
+- `serverCode` (код из ответа сервера `{error, code}`: `VALIDATION`, `ACCESS_DENIED`, `EDIT_CONFLICT`, `MEDIA_IN_USE`… или `null`) — для различения ошибок с одним HTTP-статусом.
 
 ## Query foundation
 

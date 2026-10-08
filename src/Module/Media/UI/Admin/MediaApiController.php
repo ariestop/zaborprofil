@@ -13,6 +13,7 @@ use App\Module\Media\Domain\Entity\MediaAsset;
 use App\Module\Media\Domain\Repository\MediaAssetRepositoryInterface;
 use App\Shared\Infrastructure\Upload\UploadValidator;
 use App\Shared\UI\Http\AdminApiErrorResponder;
+use App\Shared\UI\Http\AdminApiResponses;
 use InvalidArgumentException;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -40,7 +41,7 @@ final readonly class MediaApiController
     public function index(Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::MEDIA_UPLOAD)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -69,7 +70,7 @@ final readonly class MediaApiController
     public function folders(): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::MEDIA_UPLOAD)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -83,7 +84,7 @@ final readonly class MediaApiController
     public function usages(string $id): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::MEDIA_UPLOAD)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -99,7 +100,7 @@ final readonly class MediaApiController
     public function upload(Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::MEDIA_UPLOAD)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -166,7 +167,7 @@ final readonly class MediaApiController
     public function update(string $id, Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::MEDIA_UPLOAD)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -196,7 +197,7 @@ final readonly class MediaApiController
     public function delete(string $id, Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::MEDIA_DELETE)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -212,8 +213,10 @@ final readonly class MediaApiController
                 }
             }
 
-            $this->removeAssetFiles($asset);
+            // Сначала запись в БД: если удаление не удалось, файлы остаются на месте и ссылки не ломаются.
+            // Обратный порядок оставлял запись без файлов («битое» изображение в библиотеке и на сайте).
             $this->assets->remove($asset);
+            $this->removeAssetFiles($asset);
 
             return new JsonResponse(null, 204);
         } catch (Throwable $exception) {
@@ -291,13 +294,6 @@ final readonly class MediaApiController
         return $value;
     }
 
-    private function accessDenied(): JsonResponse
-    {
-        return new JsonResponse([
-            'error' => 'Access denied.',
-            'code' => 'ACCESS_DENIED',
-        ], 403);
-    }
 
     private function removeAssetFiles(MediaAsset $asset): void
     {

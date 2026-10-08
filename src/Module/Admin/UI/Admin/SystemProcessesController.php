@@ -9,6 +9,7 @@ use App\Module\Admin\Application\Service\DangerousActionConfirmationService;
 use App\Module\Admin\Application\Service\ProcessManagerService;
 use App\Module\Auth\Domain\Security\AdminPermission;
 use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Shared\UI\Http\AdminApiResponses;
 use InvalidArgumentException;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -34,7 +35,7 @@ final readonly class SystemProcessesController
     public function index(): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SYSTEM_VIEW)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         return new JsonResponse($this->processManager->status());
@@ -61,7 +62,7 @@ final readonly class SystemProcessesController
             !$this->authorizationChecker->isGranted(AdminPermission::SYSTEM_MANAGE)
             || !$this->authorizationChecker->isGranted(AdminPermission::SYSTEM_DANGEROUS)
         ) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         $payload = $this->jsonPayload($request);
@@ -74,7 +75,7 @@ final readonly class SystemProcessesController
 
         $actorId = $this->actorId();
         if ($actorId === null) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         $this->auditLogger->log(

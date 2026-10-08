@@ -17,14 +17,21 @@ TipTap используется **только как редактор rich-text
 
 ## Безопасность
 
-На backend rich-text проходит sanitize-процедуру через
-`StructuredRichTextSanitizer`:
+HTML блоков `rich-text`, `text` и `seo_text` (поля `html` и `text`) очищается allowlist-санитайзером
+`symfony/html-sanitizer` с профилем `app.rich_text_sanitizer` (`config/packages/html_sanitizer.yaml`):
 
-- удаляются `<script>` теги;
-- удаляются inline-обработчики (`on*="..."`).
+- при сохранении — `StructuredRichTextSanitizer::sanitizeHtml()` из `StructuredBlockDocumentService::sanitizeContent()`,
+  общего для конструктора и API отдельных блоков;
+- при выводе — фильтр `|sanitize_html('app.rich_text_sanitizer')` в `public/blocks/rich-text.html.twig`,
+  поэтому безопасен и HTML, сохранённый раньше.
 
-Это не заменяет полноценный allowlist sanitizer, но закрывает базовый риск XSS
-на первом этапе Structured Builder.
+Разрешены `p`, `br`, `strong`/`b`, `em`/`i`, `u`, списки, `h2`–`h4` (с `style` для выравнивания), `blockquote`,
+`span` и ссылки `a` (`href` со схемами http/https/mailto/tel и относительные, `title`, `target`, `rel`).
+Обработчики событий, `javascript:`-ссылки, `script`/`style`, изображения и прочие теги удаляются; у обёрток
+вроде `div`, `h1`, `mark` удаляется только тег, текст остаётся. Лимит входа — 500 000 байт.
+
+Остальные текстовые поля блоков шаблоны выводят с экранированием Twig; для них сохранена прежняя очистка тегов
+(`sanitizeText()`), HtmlSanitizer к ним не применяется, чтобы `&` и кавычки не превращались в сущности.
 
 ## Ограничения этапа 1
 

@@ -21,6 +21,7 @@ use App\Module\Content\Domain\Repository\PagePublicationRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRevisionRepositoryInterface;
 use App\Module\Content\Domain\ValueObject\PageVisibility;
+use App\Shared\Application\Transaction\TransactionRunnerInterface;
 use InvalidArgumentException;
 
 final readonly class RollbackPageRevisionHandler
@@ -36,10 +37,17 @@ final readonly class RollbackPageRevisionHandler
         private PublicPageCacheInvalidator $publicPageCache,
         private CurrentAdminActor $actor,
         private PageWorkflowJournalInterface $journal,
+        private TransactionRunnerInterface $transactions,
     ) {
     }
 
     public function __invoke(RollbackPageRevisionCommand $command): PageOutput
+    {
+        // Все записи use case — одной транзакцией: при ошибке на любом шаге не остаётся половины изменений.
+        return $this->transactions->run(fn (): PageOutput => $this->handle($command));
+    }
+
+    private function handle(RollbackPageRevisionCommand $command): PageOutput
     {
         $page = $this->pages->get($this->contentId->fromString($command->pageId));
         $revision = $this->revisions->get($this->contentId->fromString($command->revisionId));

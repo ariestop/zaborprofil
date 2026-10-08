@@ -8,19 +8,20 @@
 
 | Модуль | Реализован | Назначение |
 |---|---|---|
-| `Admin` | да | Admin shell, dashboard, CSRF/Origin/NoIndex subscriber’ы |
+| `Admin` | да | Admin shell, dashboard, системные разделы (здоровье, логи, очереди, кэш, деплой, бэкапы, сборка фронтенда), CSRF/Origin/NoIndex/exception subscriber’ы |
 | `Auth` | да | Логин админа, voter `AdminPermissionVoter`, `AdminUserChecker`, enum `AdminPermission` |
-| `Content` | да | `Page`, `PageBlock`, Admin API, публичный SSR-рендер |
-| `Seo` | да | `Redirect`, `SitemapController`, `RobotsController`, `PagePathChangeListener` |
-| `Settings` | да | Settings registry/service + Twig extension |
-| `User` | да | `AdminUser` Doctrine entity, `AdminUserRepository` |
-| `Media` | целевое | Media library, безопасные uploads |
-| `Menu` | целевое | Управляемые меню |
-| `Lead` | целевое | Заявки |
-| `Portfolio` | целевое | Портфолио проектов |
-| `Redirect` | целевое (отдельный от Seo, опц.) | Если редиректы вырастут в самостоятельный домен |
-| `AuditLog` | целевое | Лог критичных действий |
-| `Catalog`/`Order`/`Partner` | зарезервировано | E-commerce/B2B |
+| `User` | да | `AdminUser` Doctrine entity, `AdminUserRepository`, управление пользователями |
+| `Content` | да | `Page`, `PageBlock`, ревизии и публикация, конструктор, Admin API, публичный SSR-рендер |
+| `Seo` | да | `Redirect`, журнал 404, `SitemapController`, `RobotsController`, `PagePathChangeListener`, SEO-проверки перед публикацией |
+| `Settings` | да | Settings registry/service, Twig extension, веб-запуск миграций |
+| `Media` | да | Медиатека, безопасные uploads, варианты изображений, учёт использования |
+| `Menu` | да | Управляемые меню, хлебные крошки |
+| `Lead` | да | Заявки: публичная форма, CRM в админке |
+| `AuditLog` | да | Журнал критичных действий |
+| `Catalog` | да | Категории, товары, варианты; публичный каталог |
+| `Portfolio` | зарезервировано (только README) | Портфолио проектов |
+| `Redirect` | зарезервировано (только README) | Если редиректы вырастут в самостоятельный домен (сейчас — в `Seo`) |
+| `Order`/`Partner` | зарезервировано (только README) | E-commerce/B2B |
 
 ## Внутренняя структура модуля
 
@@ -73,17 +74,49 @@ flowchart LR
     Lead -->|publishes domain event| Eventbus
     Eventbus -->|subscribed| Notifier[Notification module]
     Eventbus -->|subscribed| Audit[AuditLog module]
-    Content -->|reads via interface| Seo
-    Seo -->|reads via interface| Content
 ```
 
 ## Циклические зависимости
 
-Запрещены. Если модуль A нуждается в данных модуля B и наоборот, это означает:
+Новые циклы запрещены. Если модуль A нуждается в данных модуля B и наоборот, это означает:
 
 1. Либо смешаны bounded contexts (нужно перепроектировать);
 2. Либо общий концепт нужно вынести в `Shared`;
 3. Либо общение должно идти через события, а не прямые вызовы.
+
+### Фактический граф и известные циклы
+
+Направление зависимостей проверяет `tests/Unit/Architecture/ModuleDependencyTest.php`: он сканирует `src/` на ссылки `App\Module\<X>\…` и сверяет их со списком `ALLOWED`. Тест падает, если:
+
+- `src/Shared` ссылается на любой модуль;
+- появилась зависимость, которой нет в списке (нужна — добавить в `ALLOWED` и в таблицу ниже осознанно, в том же PR);
+- зависимость из списка исчезла (убрать её из `ALLOWED` и таблицы, чтобы она не вернулась незаметно);
+- появился цикл, которого нет в `KNOWN_CYCLES`.
+
+| Модуль | Зависит от |
+|---|---|
+| `Admin` | AuditLog, Auth, User |
+| `AuditLog` | Auth, Content, Seo, Settings, User |
+| `Auth` | User |
+| `Catalog` | Auth, Media, Seo |
+| `Content` | Auth, Media, Menu, Seo, Settings, User |
+| `Lead` | Admin, Auth, Content, User |
+| `Media` | Auth, Content |
+| `Menu` | Auth, Content, Media |
+| `Seo` | Auth, Catalog, Content, Settings |
+| `Settings` | Admin, Auth, Content, Media, User |
+| `User` | Auth |
+
+Существующие циклы и их причина. Разбирать их сейчас не требуется — только если начнут мешать изменениям:
+
+| Цикл | Откуда |
+|---|---|
+| Auth ↔ User | `AdminUserChecker` читает `AdminUser`; `UserApiController` проверяет `AdminPermission` |
+| Catalog ↔ Seo | каталог использует `SchemaOrgBuilder`/`CanonicalUrlGuard`; sitemap читает товары |
+| Content ↔ Media | Content публикует `MediaUsageProviderInterface`; Media использует `ContentNotFoundException` |
+| Content ↔ Menu | рендер страницы строит хлебные крошки (`BreadcrumbBuilder`); меню читает страницы и сбрасывает их кэш |
+| Content ↔ Seo | публикация вызывает SEO-проверки и `SeoTitleResolver`; Seo читает страницы и сбрасывает их кэш |
+| Content ↔ Settings | Content читает `SettingsRegistry`; сохранение настроек сбрасывает кэш страниц |
 
 ## Что положить в `Shared`, а не в модуль
 
@@ -104,7 +137,8 @@ flowchart LR
 5. Если есть admin API — повесить под `/admin/api/<module>/...`, проверить voter и CSRF.
 6. Добавить миграцию.
 7. Добавить тесты (unit + integration минимум).
-8. Обновить [05-domain-model](05-domain-model.md), [03-project-structure](03-project-structure.md), [00-overview](00-overview.md), [48-documentation-normalization](48-documentation-normalization.md) при изменении карты legacy->NN.
+8. Добавить зависимости модуля в `ModuleDependencyTest::ALLOWED` и в таблицу «Фактический граф» выше.
+9. Обновить [05-domain-model](05-domain-model.md), [03-project-structure](03-project-structure.md), [00-overview](00-overview.md), [48-documentation-normalization](48-documentation-normalization.md) при изменении карты legacy->NN.
 
 ## Как удалить модуль
 

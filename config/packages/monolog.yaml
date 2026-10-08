@@ -70,7 +70,7 @@ monolog:
             process_psr_3_messages: false
             channels: ['!event', '!doctrine', '!console']
 
-when@prod:
+when@prod: &prod_monolog
     monolog:
         handlers:
             main:
@@ -84,3 +84,6 @@ when@prod:
                 path: '%kernel.logs_dir%/critical.log'
                 level: debug
                 formatter: monolog.formatter.json
+
+# staging (APP_ENV=staging, dev.zaborprofil.ru) получает ту же конфигурацию, что и prod: стенд проверяет prod-настройки перед выкладкой.
+when@staging: *prod_monolog

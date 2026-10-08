@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace App\Module\Menu\UI\Admin;
 
 use App\Module\Auth\Domain\Security\AdminPermission;
-use App\Module\Content\UI\Admin\JsonRequest;
 use App\Module\Menu\Application\Service\MenuProvider;
 use App\Module\Menu\Domain\Entity\MenuItem;
 use App\Module\Menu\Domain\Repository\MenuItemRepositoryInterface;
 use App\Module\Menu\Domain\ValueObject\MenuPosition;
 use App\Shared\UI\Http\AdminApiErrorResponder;
+use App\Shared\UI\Http\AdminApiResponses;
+use App\Shared\UI\Http\JsonRequest;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -33,7 +34,7 @@ final readonly class MenuApiController
     public function index(): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SEO_EDIT)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         return new JsonResponse([
@@ -46,7 +47,7 @@ final readonly class MenuApiController
     public function create(Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SEO_EDIT)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -71,7 +72,7 @@ final readonly class MenuApiController
     public function update(string $id, Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SEO_EDIT)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -99,7 +100,7 @@ final readonly class MenuApiController
     public function delete(string $id): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SEO_EDIT)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -114,11 +115,4 @@ final readonly class MenuApiController
         }
     }
 
-    private function accessDenied(): JsonResponse
-    {
-        return new JsonResponse([
-            'error' => 'Access denied.',
-            'code' => 'ACCESS_DENIED',
-        ], 403);
-    }
 }

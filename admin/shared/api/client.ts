@@ -3,7 +3,13 @@ import { resolveApiErrorCode, type ApiErrorCode } from './errors'
 export type ApiMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
 export class ApiError extends Error {
+  /** Класс ошибки по HTTP-статусу. */
   public readonly code: ApiErrorCode
+  /**
+   * Код из ответа сервера (`{"error", "code"}`): `VALIDATION`, `EDIT_CONFLICT`, `MEDIA_IN_USE`, `ACCESS_DENIED`…
+   * Точнее статуса различает ошибки одного HTTP-кода; null, если сервер код не прислал.
+   */
+  public readonly serverCode: string | null
 
   constructor(
     message: string,
@@ -13,7 +19,18 @@ export class ApiError extends Error {
     super(message)
     this.name = 'ApiError'
     this.code = resolveApiErrorCode(status)
+    this.serverCode = resolveServerCode(payload)
   }
+}
+
+function resolveServerCode(payload: unknown): string | null {
+  if (typeof payload !== 'object' || payload === null || !('code' in payload)) {
+    return null
+  }
+
+  const code = (payload as { code: unknown }).code
+
+  return typeof code === 'string' && code !== '' ? code : null
 }
 
 function csrfHeaderName(): string {

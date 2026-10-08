@@ -9,6 +9,7 @@ use App\Module\Content\Domain\Entity\PagePublication;
 use App\Module\Content\Domain\Enum\PageStatus;
 use App\Module\Content\Domain\Repository\PagePublicationRepositoryInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Uid\Ulid;
 
@@ -41,6 +42,29 @@ final class DoctrinePagePublicationRepository extends ServiceEntityRepository im
     public function findByPage(string $pageId): ?PagePublication
     {
         return $this->findOneBy(['page' => Ulid::fromString($pageId)]);
+    }
+
+    public function findByPages(array $pageIds): array
+    {
+        if ($pageIds === []) {
+            return [];
+        }
+
+        /** @var list<PagePublication> $publications */
+        $publications = $this->createQueryBuilder('publication')
+            ->leftJoin('publication.publishedRevision', 'revision')
+            ->addSelect('revision')
+            ->andWhere('publication.page IN (:pageIds)')
+            ->setParameter('pageIds', array_map(static fn (string $id): string => Ulid::fromString($id)->toBinary(), $pageIds), ArrayParameterType::BINARY)
+            ->getQuery()
+            ->getResult();
+
+        $byPage = [];
+        foreach ($publications as $publication) {
+            $byPage[(string) $publication->page()->id()] = $publication;
+        }
+
+        return $byPage;
     }
 
     public function findPublishedByPath(string $path): ?PagePublication

@@ -184,9 +184,11 @@ $this->mediaLogger->error('media.upload.failed', [
 
 - Срабатывает на `error+` в каналах кроме `event`/`doctrine`/`console`.
 - Складывает в очередь `SendTelegramLogMessage`.
-- Worker отправляет в Telegram bot API.
+- Worker (`messenger:consume async`) отправляет в Telegram bot API через `TelegramMessageSender`.
+- Токен и чат — `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` из контейнера (`.env.local` или `secrets:set`). Через `getenv()` их не читать: значения из `.env.local` в окружение процесса не попадают.
 - На стороне Telegram — отдельная группа alerts.
-- Если Telegram недоступен — сообщение остаётся в Doctrine queue до retry.
+- Если Telegram недоступен, отправка не повторяется: алерт теряется, повтор с тем же fingerprint не раньше чем через 5 минут.
+- Без запущенного worker алерты копятся в таблице `messenger_messages` и не отправляются.
 
 ## Logrotate
 

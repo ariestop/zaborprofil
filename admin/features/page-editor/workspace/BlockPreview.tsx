@@ -1,6 +1,7 @@
 import type { BuilderBlock } from '../../../modules/page-builder/types'
 import { asItems, asString, canonicalType, isRecord, plainText } from './block-kinds'
 import { fenceSummary, formatMeters, formatRub } from './fence-summary'
+import { sanitizeRichTextHtml } from '../../../shared/lib/sanitize-html'
 
 /**
  * Предпросмотр блока в редакторе: повторяет вёрстку templates/public/blocks/*.html.twig,
@@ -70,14 +71,14 @@ function RichText({ html, title }: { html: string; title: string }) {
     return (
         <span className="block px-8 py-7">
             <Heading text={title} />
-            {/* HTML блока очищается сервером при сохранении (StructuredRichTextSanitizer), здесь он показывается как на сайте. */}
+            {/* Сервер очищает HTML при сохранении, но в канве бывает и ранее сохранённый, и ещё не отправленный HTML. */}
             <span
                 className="prose block max-w-none"
                 dangerouslySetInnerHTML={{
                     __html:
                         html === ''
                             ? '<p class="text-graphite dark:text-slate-400">Пустой текст</p>'
-                            : html,
+                            : sanitizeRichTextHtml(html),
                 }}
             />
         </span>

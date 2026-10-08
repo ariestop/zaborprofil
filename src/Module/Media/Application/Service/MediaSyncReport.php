@@ -23,4 +23,14 @@ final class MediaSyncReport
 
     /** @var list<string> не картинки или форматы, которые PHP не умеет уменьшать */
     public array $skipped = [];
+
+    /** @var list<string> картинки больше лимитов загрузки (размер файла или разрешение): GD их не обрабатывает */
+    public array $tooLarge = [];
+
+    /**
+     * Файлы, на которых обработка упала; остальные файлы синхронизация продолжает.
+     *
+     * @var array<string, string> путь => класс и текст исключения
+     */
+    public array $failed = [];
 }

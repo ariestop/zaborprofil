@@ -14,6 +14,8 @@ use App\Module\Content\Application\Handler\DeletePageBlockHandler;
 use App\Module\Content\Application\Handler\ReorderPageBlocksHandler;
 use App\Module\Content\Application\Handler\UpdatePageBlockHandler;
 use App\Module\Content\Domain\ValueObject\PageVisibility;
+use App\Shared\UI\Http\AdminApiResponses;
+use App\Shared\UI\Http\JsonRequest;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -34,7 +36,7 @@ final readonly class PageBlockApiController
     public function create(string $pageId, Request $request, CreatePageBlockHandler $handler): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::BLOCKS_CREATE)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -60,7 +62,7 @@ final readonly class PageBlockApiController
     public function update(string $id, Request $request, UpdatePageBlockHandler $handler): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::BLOCKS_EDIT)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -85,7 +87,7 @@ final readonly class PageBlockApiController
     public function reorder(string $pageId, Request $request, ReorderPageBlocksHandler $handler): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::BLOCKS_REORDER)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -107,7 +109,7 @@ final readonly class PageBlockApiController
     public function delete(string $id, DeletePageBlockHandler $handler): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::BLOCKS_DELETE)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -119,11 +121,4 @@ final readonly class PageBlockApiController
         }
     }
 
-    private function accessDenied(): JsonResponse
-    {
-        return new JsonResponse([
-            'error' => 'Access denied.',
-            'code' => 'ACCESS_DENIED',
-        ], 403);
-    }
 }

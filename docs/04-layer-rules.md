@@ -117,6 +117,7 @@ Infrastructure ------|  (implements Domain/Application interfaces)
 ## Целевое state: автоматический контроль
 
 - Включить `phpstan-deprecation-rules` (уже частично).
+- Уже есть: `tests/Unit/Architecture/ModuleDependencyTest.php` проверяет зависимости **между модулями** (`Shared` → `Module` запрещено, новые зависимости и циклы — только осознанно, см. [06-module-architecture](06-module-architecture.md#фактический-граф-и-известные-циклы)). Границы слоёв внутри модуля он не проверяет.
 - Целевое: добавить deptrac или `phpat` rules-set (см. [45-roadmap-and-extension-points](45-roadmap-and-extension-points.md)) для статической проверки границ слоёв.
 - В CI добавить `phpat` job до merge.
 

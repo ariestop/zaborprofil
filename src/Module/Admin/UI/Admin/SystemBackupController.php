@@ -6,6 +6,7 @@ namespace App\Module\Admin\UI\Admin;
 
 use App\Module\Admin\Application\Service\BackupStatusService;
 use App\Module\Auth\Domain\Security\AdminPermission;
+use App\Shared\UI\Http\AdminApiResponses;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
@@ -25,7 +26,7 @@ final readonly class SystemBackupController
     public function index(): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SYSTEM_VIEW)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         return new JsonResponse($this->backupStatus->status());

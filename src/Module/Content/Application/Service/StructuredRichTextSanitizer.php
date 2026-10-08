@@ -4,13 +4,37 @@ declare(strict_types=1);
 
 namespace App\Module\Content\Application\Service;
 
-final class StructuredRichTextSanitizer
+use Symfony\Component\DependencyInjection\Attribute\Target;
+use Symfony\Component\HtmlSanitizer\HtmlSanitizerInterface;
+
+/**
+ * Очистка текстовых полей блоков перед сохранением.
+ *
+ * - {@see sanitizeHtml()} — для HTML, который выводится как разметка (блок rich-text): санитайзер
+ *   `app.rich_text_sanitizer` из config/packages/html_sanitizer.yaml. Тот же санитайзер повторно
+ *   применяется при выводе в шаблоне, поэтому ранее сохранённый HTML тоже безопасен.
+ * - {@see sanitizeText()} — для полей, которые шаблоны выводят с экранированием: прежняя очистка тегов.
+ *   Она не отвечает за безопасность (её даёт экранирование Twig) и сохранена, чтобы не менять содержимое
+ *   таких полей (HtmlSanitizer закодировал бы `&` и кавычки, и они показались бы как `&amp;`).
+ */
+final readonly class StructuredRichTextSanitizer
 {
     private const string ALLOWED_TAGS = '<p><br><strong><b><em><i><u><ul><ol><li><h2><h3><h4><blockquote><a><span>';
 
-    public function sanitize(string $html): string
+    public function __construct(
+        #[Target('app.rich_text_sanitizer')]
+        private HtmlSanitizerInterface $htmlSanitizer,
+    ) {
+    }
+
+    public function sanitizeHtml(string $html): string
     {
-        $withoutScripts = preg_replace('/<\s*script\b[^>]*>(.*?)<\s*\/\s*script>/is', '', $html) ?? '';
+        return $this->htmlSanitizer->sanitize($html);
+    }
+
+    public function sanitizeText(string $text): string
+    {
+        $withoutScripts = preg_replace('/<\s*script\b[^>]*>(.*?)<\s*\/\s*script>/is', '', $text) ?? '';
         $withoutHandlers = preg_replace('/\bon\w+="[^"]*"/i', '', $withoutScripts) ?? '';
         $stripped = strip_tags($withoutHandlers, self::ALLOWED_TAGS);
 

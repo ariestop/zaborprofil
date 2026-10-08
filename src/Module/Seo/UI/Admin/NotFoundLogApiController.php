@@ -10,6 +10,7 @@ use App\Module\Seo\Domain\Repository\NotFoundLogRepositoryInterface;
 use App\Module\Seo\Domain\Repository\NotFoundSearchCriteria;
 use App\Module\Seo\Domain\Repository\RedirectRepositoryInterface;
 use App\Shared\UI\Http\AdminApiErrorResponder;
+use App\Shared\UI\Http\AdminApiResponses;
 use DateTimeImmutable;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -34,7 +35,7 @@ final readonly class NotFoundLogApiController
     public function list(Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SEO_EDIT)) {
-            return AccessDeniedResponse::create();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -81,7 +82,7 @@ final readonly class NotFoundLogApiController
     public function delete(string $id): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SEO_EDIT)) {
-            return AccessDeniedResponse::create();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -102,7 +103,7 @@ final readonly class NotFoundLogApiController
     public function clear(Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SEO_EDIT)) {
-            return AccessDeniedResponse::create();
+            return AdminApiResponses::accessDenied();
         }
 
         try {

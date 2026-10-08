@@ -40,6 +40,7 @@ final class MediaSyncCommand extends Command
             'Referenced but missing on disk' => $report->missingFiles,
             'Same file already in library under another path' => $report->duplicates,
             'Skipped (not a supported image)' => $report->skipped,
+            'Skipped (exceeds upload limits)' => $report->tooLarge,
         ] as $title => $paths) {
             if ($paths !== []) {
                 $io->section(\sprintf('%s: %d', $title, \count($paths)));
@@ -47,14 +48,31 @@ final class MediaSyncCommand extends Command
             }
         }
 
-        $io->success(\sprintf(
-            '%sImported: %d, previews created: %d, missing: %d, duplicates: %d.',
+        $summary = \sprintf(
+            '%sImported: %d, previews created: %d, missing: %d, duplicates: %d, too large: %d, failed: %d.',
             $dryRun ? '[dry run] ' : '',
             \count($report->imported),
             \count($report->variantsCreated),
             \count($report->missingFiles),
             \count($report->duplicates),
-        ));
+            \count($report->tooLarge),
+            \count($report->failed),
+        );
+
+        if ($report->failed !== []) {
+            $io->section(\sprintf('Failed: %d', \count($report->failed)));
+            $io->listing(array_map(
+                static fn (string $path, string $reason): string => $path.' — '.$reason,
+                array_keys($report->failed),
+                array_values($report->failed),
+            ));
+            // Остальные файлы обработаны; код ошибки нужен, чтобы деплой показал предупреждение.
+            $io->error($summary);
+
+            return Command::FAILURE;
+        }
+
+        $io->success($summary);
 
         return Command::SUCCESS;
     }

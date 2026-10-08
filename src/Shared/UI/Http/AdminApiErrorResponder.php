@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Shared\UI\Http;
 
-use App\Shared\Domain\Exception\ClientSafeExceptionInterface;
+use App\Shared\Application\Exception\ClientErrorClassifier;
 use App\Shared\Domain\Exception\NotFoundExceptionInterface;
-use InvalidArgumentException;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use JsonException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -14,22 +14,24 @@ use Symfony\Component\HttpFoundation\Exception\RequestExceptionInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Throwable;
-use ValueError;
 
 /**
  * Единый формат ошибок Admin API: `{"error": string, "code": string}`.
  *
  * Тексты доменных ошибок (валидация, «не найдено») попадают в ответ как есть,
  * любые другие исключения заменяются на «Internal server error» и пишутся в лог канала `admin`.
+ * Что считать ошибкой валидации, решает {@see ClientErrorClassifier}. Нарушение уникального индекса —
+ * это одновременное изменение тех же данных другим запросом (например, два сохранения ревизии с одним
+ * номером версии): ответ 409 с предложением повторить, запись в лог с уровнем warning.
  */
 final readonly class AdminApiErrorResponder
 {
-    public const string CODE_VALIDATION = 'VALIDATION';
-    public const string CODE_NOT_FOUND = 'NOT_FOUND';
-    public const string CODE_ACCESS_DENIED = 'ACCESS_DENIED';
-    public const string CODE_BAD_REQUEST = 'BAD_REQUEST';
-    public const string CODE_CONFLICT = 'CONFLICT';
-    public const string CODE_INTERNAL = 'INTERNAL';
+    public const string CODE_VALIDATION = AdminApiResponses::CODE_VALIDATION;
+    public const string CODE_NOT_FOUND = AdminApiResponses::CODE_NOT_FOUND;
+    public const string CODE_ACCESS_DENIED = AdminApiResponses::CODE_ACCESS_DENIED;
+    public const string CODE_BAD_REQUEST = AdminApiResponses::CODE_BAD_REQUEST;
+    public const string CODE_CONFLICT = AdminApiResponses::CODE_CONFLICT;
+    public const string CODE_INTERNAL = AdminApiResponses::CODE_INTERNAL;
 
     public function __construct(
         #[Autowire(service: 'monolog.logger.admin')]
@@ -47,16 +49,20 @@ final readonly class AdminApiErrorResponder
             return $this->accessDenied();
         }
 
-        if (
-            $exception instanceof InvalidArgumentException
-            || $exception instanceof ValueError
-            || $exception instanceof ClientSafeExceptionInterface
-        ) {
+        if (ClientErrorClassifier::isValidationError($exception)) {
             return $this->validation($exception->getMessage());
         }
 
         if ($exception instanceof RequestExceptionInterface || $exception instanceof JsonException) {
             return $this->badRequest('Request body is invalid.');
+        }
+
+        if ($exception instanceof UniqueConstraintViolationException) {
+            $this->logger->warning(\sprintf('%s hit a unique constraint, probably a concurrent change.', $operation), [
+                'exception' => $exception,
+            ]);
+
+            return $this->conflict('The data was changed by another request. Reload and try again.');
         }
 
         return $this->internal($exception, $operation);
@@ -67,17 +73,17 @@ final readonly class AdminApiErrorResponder
      */
     public function validation(string $message, string $code = self::CODE_VALIDATION, array $details = []): JsonResponse
     {
-        return $this->json($message, $code, 422, $details);
+        return AdminApiResponses::validation($message, $code, $details);
     }
 
     public function notFound(string $message = 'Not found.'): JsonResponse
     {
-        return $this->json($message, self::CODE_NOT_FOUND, 404);
+        return AdminApiResponses::notFound($message);
     }
 
     public function accessDenied(): JsonResponse
     {
-        return $this->json('Access denied.', self::CODE_ACCESS_DENIED, 403);
+        return AdminApiResponses::accessDenied();
     }
 
     /**
@@ -85,12 +91,12 @@ final readonly class AdminApiErrorResponder
      */
     public function conflict(string $message, string $code = self::CODE_CONFLICT, array $extra = []): JsonResponse
     {
-        return new JsonResponse(['error' => $message, 'code' => $code, ...$extra], 409);
+        return AdminApiResponses::conflict($message, $code, $extra);
     }
 
     public function badRequest(string $message): JsonResponse
     {
-        return $this->json($message, self::CODE_BAD_REQUEST, 400);
+        return AdminApiResponses::badRequest($message);
     }
 
     public function internal(Throwable $exception, string $operation = 'Admin API'): JsonResponse
@@ -99,19 +105,6 @@ final readonly class AdminApiErrorResponder
             'exception' => $exception,
         ]);
 
-        return $this->json('Internal server error', self::CODE_INTERNAL, 500);
-    }
-
-    /**
-     * @param list<array{field: string, message: string}> $details
-     */
-    private function json(string $message, string $code, int $status, array $details = []): JsonResponse
-    {
-        $payload = ['error' => $message, 'code' => $code];
-        if ($details !== []) {
-            $payload['details'] = $details;
-        }
-
-        return new JsonResponse($payload, $status);
+        return AdminApiResponses::internal();
     }
 }

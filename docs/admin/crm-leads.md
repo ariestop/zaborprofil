@@ -1,7 +1,7 @@
 # CRM заявок (`/admin/crm`)
 
 Раздел для работы менеджеров с заявками, пришедшими с публичного сайта (`POST /api/leads`).
-Модуль: `src/Module/Lead`, frontend: `admin/pages/CrmPage.tsx`, `admin/pages/LeadDetailPage.tsx`, `admin/entities/lead`.
+Модуль: `src/Module/Lead`, frontend: `admin/pages/CrmPage.tsx`, `admin/pages/LeadDetailPage.tsx`, `admin/entities/lead`, `admin/features/leads` (фильтры в адресе — `crm-url-params.ts`, вкладки, быстрые фильтры и виды, строка списка).
 
 ## Возможности
 

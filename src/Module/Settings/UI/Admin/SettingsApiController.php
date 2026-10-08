@@ -9,6 +9,8 @@ use App\Module\Content\Application\Service\PublicPageCacheInvalidator;
 use App\Module\Settings\Application\Service\SettingsService;
 use App\Module\Settings\Domain\Entity\Setting;
 use App\Shared\UI\Http\AdminApiErrorResponder;
+use App\Shared\UI\Http\AdminApiResponses;
+use App\Shared\UI\Http\JsonRequest;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -24,6 +26,7 @@ final readonly class SettingsApiController
         private AuthorizationCheckerInterface $authorizationChecker,
         private PublicPageCacheInvalidator $publicPageCache,
         private AdminApiErrorResponder $errors,
+        private JsonRequest $jsonRequest,
     ) {
     }
 
@@ -31,7 +34,7 @@ final readonly class SettingsApiController
     public function list(Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SETTINGS_EDIT)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         $scope = $request->query->get('scope');
@@ -47,11 +50,11 @@ final readonly class SettingsApiController
     public function upsert(string $scope, string $key, Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SETTINGS_EDIT)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
-            $payload = $this->payload($request);
+            $payload = $this->jsonRequest->payload($request);
             if (!\array_key_exists('value', $payload)) {
                 throw new InvalidArgumentException('Field "value" is required.');
             }
@@ -74,7 +77,7 @@ final readonly class SettingsApiController
     public function delete(string $scope, string $key): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SETTINGS_EDIT)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         $this->settings->delete($scope, $key);
@@ -83,35 +86,6 @@ final readonly class SettingsApiController
         return new JsonResponse(null, 204);
     }
 
-    private function accessDenied(): JsonResponse
-    {
-        return new JsonResponse([
-            'error' => 'Access denied.',
-            'code' => 'ACCESS_DENIED',
-        ], 403);
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function payload(Request $request): array
-    {
-        $decoded = json_decode($request->getContent(), true);
-        if (!\is_array($decoded)) {
-            throw new InvalidArgumentException('Request body must be a JSON object.');
-        }
-
-        $payload = [];
-        foreach ($decoded as $key => $value) {
-            if (!\is_string($key)) {
-                throw new InvalidArgumentException('Request body must be a JSON object.');
-            }
-
-            $payload[$key] = $value;
-        }
-
-        return $payload;
-    }
 
     /**
      * @return array<string, mixed>

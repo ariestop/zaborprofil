@@ -183,7 +183,7 @@ password_hashers:
 ## XSS
 
 - Twig auto-escaping (по умолчанию `html`). Не отключать `|raw` без причины.
-- HTML-входы из админки — sanitize (`HTMLPurifier` или `symfony/html-sanitizer` — целевое).
+- HTML-входы из админки — `symfony/html-sanitizer` (профиль `app.rich_text_sanitizer`), при сохранении и при выводе; подробности — [admin/rich-text-editor](admin/rich-text-editor.md).
 - JSON — `json_encode($v, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)`.
 
 ## SQL Injection
@@ -201,14 +201,31 @@ password_hashers:
 
 ## Security headers
 
-`SecurityHeadersSubscriber`:
+`SecurityHeadersSubscriber` (`src/Shared/Infrastructure/Http`):
 
-- `X-Frame-Options: SAMEORIGIN`
+- `X-Frame-Options: DENY`
 - `X-Content-Type-Options: nosniff`
-- `Referrer-Policy: same-origin`
-- `Permissions-Policy: ...`
-- `Content-Security-Policy-Report-Only: ...` (целевое — full enforce)
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()`
+- `Strict-Transport-Security` — только `prod` и HTTPS.
+- `Content-Security-Policy` — см. ниже.
 - Admin area дополнительно получает `X-Robots-Tag: noindex, nofollow, noarchive`.
+
+### Content-Security-Policy
+
+Политика применяется (enforce) в `prod`, `staging` и `test`; в `dev` та же политика отправляется как `Content-Security-Policy-Report-Only` (Vite dev-сервер с inline-преамбулой React Refresh, панель профайлера). Переключатель — `CONTENT_SECURITY_POLICY_ENFORCED` (`0`/`1`); на сервере его можно выставить в `0`, чтобы аварийно вернуться к Report-Only без отката релиза (после — `cache:clear`).
+
+| Директива | Значение | Почему |
+|---|---|---|
+| `script-src` | `'self'` | Скрипты собирает Vite в файлы `/build/`; inline-скриптов и обработчиков `on*=` в шаблонах нет. Внедрённый в контент `<script>` или `onerror=` не выполнится — второй рубеж после санитайзера rich-text. |
+| `style-src` | `'self' 'unsafe-inline'` | Выравнивание в rich-text хранится в атрибуте `style`, библиотеки админки вставляют `<style>`. CSS-инъекция опаснее скриптов значительно меньше; ужесточать — только вместе с отказом от inline-стилей. |
+| `img-src` / `media-src` | `'self' data: https:` / `'self' https:` | Картинки по внешним URL в контенте и SEO. |
+| `frame-src` | `'self'` Rutube, VK Видео, 2ГИС | Видео и карта подключаются по нажатию. |
+| `font-src`, `connect-src` | `'self'` | Шрифты локальные (`@fontsource*`, docs/50), API — свой origin. |
+| `object-src` / `frame-ancestors` | `'none'` | Плагины не нужны; сайт и админку нельзя встроить во фрейм. |
+| `base-uri` / `form-action` | `'self'` | |
+
+Добавляете внешний скрипт, шрифт, iframe или запрос к другому домену — расширьте директиву в `SecurityHeadersSubscriber::contentSecurityPolicy()` и тест `SecurityHeadersSubscriberTest`. E2E (`tests/e2e/helpers/test.ts`) падает на любом нарушении CSP в консоли браузера. Nginx свой CSP не добавляет: браузер применил бы обе политики сразу.
 
 ## Nginx hardening
 

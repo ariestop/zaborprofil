@@ -1,0 +1,31 @@
+framework:
+    html_sanitizer:
+        sanitizers:
+            # HTML блоков rich-text: очищается при сохранении (StructuredRichTextSanitizer) и ещё раз при выводе
+            # (`|sanitize_html('app.rich_text_sanitizer')` в шаблонах), чтобы ранее сохранённый HTML тоже был безопасен.
+            # Набор тегов совпадает с тем, что редактор сохранял раньше; обработчики событий, `javascript:`-ссылки,
+            # script/style и прочие атрибуты удаляются.
+            app.rich_text_sanitizer:
+                allow_elements:
+                    p: ['style']
+                    br: []
+                    strong: []
+                    b: []
+                    em: []
+                    i: []
+                    u: []
+                    ul: []
+                    ol: []
+                    li: []
+                    h2: ['style']
+                    h3: ['style']
+                    h4: ['style']
+                    blockquote: []
+                    a: ['href', 'title', 'target', 'rel']
+                    span: []
+                # Неразрешённые обёртки убираются, а их текст остаётся (как раньше делал strip_tags).
+                block_elements: [div, section, article, h1, h5, h6, mark, sub, sup, s, del, ins, small, code, pre, font]
+                allowed_link_schemes: [http, https, mailto, tel]
+                allow_relative_links: true
+                # По умолчанию вход обрезается до 20 000 байт (~10 000 символов кириллицы) — мало для длинного текста.
+                max_input_length: 500000

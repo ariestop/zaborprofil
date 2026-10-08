@@ -1,4 +1,5 @@
-{# Текст из конструктора: HTML уже очищен при сохранении (StructuredRichTextSanitizer). #}
+{# Текст из конструктора: HTML очищается при сохранении (StructuredRichTextSanitizer) и ещё раз здесь —
+   для данных, сохранённых до появления санитайзера или в обход конструктора. #}
 {% set html = block.content.html ?? block.content.text ?? '' %}
 {% if html is not empty or (block.content.title ?? '') is not empty %}
     <section class="zp-section" data-block-type="rich-text">
@@ -7,7 +8,7 @@
                 {% if (block.content.title ?? '') is not empty %}
                     <h2>{{ block.content.title }}</h2>
                 {% endif %}
-                {{ html|raw }}
+                {{ html|sanitize_html('app.rich_text_sanitizer') }}
             </div>
         </div>
     </section>

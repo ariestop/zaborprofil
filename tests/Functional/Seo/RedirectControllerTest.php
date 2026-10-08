@@ -58,6 +58,52 @@ final class RedirectControllerTest extends WebTestCase
         self::assertResponseRedirects('/new-fences/', 301);
     }
 
+    public function testRenamingPageBackDoesNotCreateRedirectLoop(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+
+        $pages = $this->pageRepository();
+        $page = new Page(PageType::Landing, 'Заборы', 'fences', '/fences-a/', 'Заборы');
+        $pages->save($page);
+
+        $this->movePage($page, '/fences-b/');
+        $this->movePage($page, '/fences-a/');
+
+        $client->request('GET', '/fences-a/');
+        self::assertFalse($client->getResponse()->isRedirection(), 'Страница по текущему адресу не должна перенаправляться.');
+
+        $client->request('GET', '/fences-b/');
+        self::assertResponseRedirects('/fences-a/', 301);
+
+        // Третье переименование: правило со старого адреса перенаправляется на новый, а не теряется.
+        $this->movePage($page, '/fences-b/');
+
+        $client->request('GET', '/fences-a/');
+        self::assertResponseRedirects('/fences-b/', 301);
+        $client->request('GET', '/fences-b/');
+        self::assertFalse($client->getResponse()->isRedirection());
+    }
+
+    public function testNewPageAtOldPathIsNotShadowedByRedirect(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+
+        $pages = $this->pageRepository();
+        $page = new Page(PageType::Landing, 'Ворота', 'gates', '/gates-old/', 'Ворота');
+        $pages->save($page);
+        $this->movePage($page, '/gates-new/');
+
+        $pages->save(new Page(PageType::Landing, 'Новые ворота', 'gates-2', '/gates-old/', 'Новые ворота'));
+
+        $client->request('GET', '/gates-old/');
+        self::assertFalse($client->getResponse()->isRedirection(), 'Новая страница не должна перекрываться редиректом.');
+        $redirect = $this->redirectRepository()->findBySourcePath('/gates-old/');
+        self::assertInstanceOf(Redirect::class, $redirect);
+        self::assertFalse($redirect->isActive());
+    }
+
     public function testUpdatingRedirectInvalidatesPublicPageCache(): void
     {
         $client = self::createClient();
@@ -81,6 +127,16 @@ final class RedirectControllerTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(201);
         self::assertFalse($this->cacheItemPool($client)->getItem($key)->isHit());
+    }
+
+    /**
+     * Страница перечитывается: после запроса клиента ядро перезагружается и прежний объект уже не управляется EntityManager.
+     */
+    private function movePage(Page $page, string $path): void
+    {
+        $managed = $this->pageRepository()->get((string) $page->id());
+        $managed->update(PageType::Landing, $managed->title(), $managed->slug(), $path, $managed->h1(), 'default', 0, true);
+        $this->pageRepository()->save($managed);
     }
 
     private function createAdminUser(string $email): AdminUser

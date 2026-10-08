@@ -2,14 +2,20 @@
 
 declare(strict_types=1);
 
-namespace App\Module\Content\UI\Admin;
+namespace App\Shared\UI\Http;
 
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
 
+/**
+ * Типизированный разбор JSON-тела запросов Admin API. Ошибки типов — InvalidArgumentException,
+ * {@see AdminApiErrorResponder} превращает их в 422 VALIDATION.
+ */
 final class JsonRequest
 {
     /**
+     * Тело запроса как JSON-объект; пустое или невалидное тело — ошибка.
+     *
      * @return array<string, mixed>
      */
     public function payload(Request $request): array
@@ -21,6 +27,32 @@ final class JsonRequest
         }
 
         return $this->stringKeyedArray($decoded, 'Request body must be a JSON object.');
+    }
+
+    /**
+     * Для действий, где тело необязательно: пустое тело — пустой объект, непустое разбирается как {@see payload()}.
+     *
+     * @return array<string, mixed>
+     */
+    public function optionalPayload(Request $request): array
+    {
+        return $request->getContent() === '' ? [] : $this->payload($request);
+    }
+
+    /**
+     * Для системных действий, где нужные поля проверяются отдельно: пустое, невалидное или не объектное тело —
+     * пустой объект (дальше действие ответит «поле обязательно»), ключи-не-строки отбрасываются.
+     *
+     * @return array<string, mixed>
+     */
+    public function lenientPayload(Request $request): array
+    {
+        $decoded = json_decode($request->getContent(), true);
+        if (!\is_array($decoded)) {
+            return [];
+        }
+
+        return array_filter($decoded, \is_string(...), ARRAY_FILTER_USE_KEY);
     }
 
     /**
