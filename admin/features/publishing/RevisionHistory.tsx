@@ -46,15 +46,15 @@ export function RevisionHistory({ pageId, revisions, allowRollback = true, onRol
   })
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs" aria-label="История ревизий">
-      <h3 className="text-base font-semibold text-slate-950">{allowRollback ? 'История публикаций' : 'Сравнение с текущей версией'}</h3>
-      {revisions.length === 0 && <p className="mt-2 text-sm text-slate-500">Публикаций пока нет.</p>}
+    <section className="rounded-2xl border border-line bg-white p-6 shadow-xs" aria-label="История ревизий">
+      <h3 className="text-base font-semibold text-ink">{allowRollback ? 'История публикаций' : 'Сравнение с текущей версией'}</h3>
+      {revisions.length === 0 && <p className="mt-2 text-sm text-graphite">Публикаций пока нет.</p>}
       {error && <p role="alert" className="mt-2 text-sm text-red-700">{error}</p>}
       {revisions.map((revision) => (
-        <div key={revision.id} className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3">
+        <div key={revision.id} className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line px-4 py-3">
           <div>
-            <p className="font-medium text-slate-900">v{revision.version} · {revision.title}</p>
-            <p className="text-xs text-slate-500">{revision.path} · {formatDateTime(revision.createdAt)} · {revision.comment ?? 'без комментария'}</p>
+            <p className="font-medium text-ink">v{revision.version} · {revision.title}</p>
+            <p className="text-xs text-graphite">{revision.path} · {formatDateTime(revision.createdAt)} · {revision.comment ?? 'без комментария'}</p>
           </div>
           <div className="flex gap-2">
             <Button type="button" variant="outline" size="sm" onClick={() => setDiffRevision(revision)}>Сравнить с текущей</Button>
@@ -73,7 +73,7 @@ export function RevisionHistory({ pageId, revisions, allowRollback = true, onRol
         contentClassName="max-w-3xl max-h-[85vh] overflow-y-auto"
       >
         <div className="mt-4">
-          {diffQuery.isPending && <p className="text-sm text-slate-500">Сравнение...</p>}
+          {diffQuery.isPending && <p className="text-sm text-graphite">Сравнение...</p>}
           {diffQuery.isError && <p role="alert" className="text-sm text-red-700">Не удалось сравнить ревизии.</p>}
           {diffQuery.data && <RevisionDiffView diff={diffQuery.data} />}
           <div className="mt-4 flex justify-end">

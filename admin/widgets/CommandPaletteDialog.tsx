@@ -119,7 +119,7 @@ export function CommandPaletteDialog() {
           onKeyDown={onKeyDown}
         />
         {results.length === 0 ? (
-          <p className="px-1 py-6 text-center text-sm text-slate-500 dark:text-slate-400">Ничего не найдено</p>
+          <p className="px-1 py-6 text-center text-sm text-graphite dark:text-slate-400">Ничего не найдено</p>
         ) : (
           <ul id="command-palette-results" role="listbox" aria-label="Результаты" className="max-h-80 overflow-y-auto">
             {results.map((item, index) => (
@@ -130,12 +130,12 @@ export function CommandPaletteDialog() {
                   onMouseEnter={() => setActiveIndex(index)}
                   onClick={() => go(item)}
                   className={cn(
-                    'flex min-h-10 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm',
-                    index === safeIndex ? 'bg-slate-100 dark:bg-slate-800' : 'hover:bg-slate-50 dark:hover:bg-slate-800/60',
+                    'flex min-h-12 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm',
+                    index === safeIndex ? 'bg-surface-strong dark:bg-slate-800' : 'hover:bg-surface dark:hover:bg-slate-800/60',
                   )}
                 >
                   <span className="flex-1 font-medium">{item.title}</span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400">{item.hint}</span>
+                  <span className="text-xs text-graphite dark:text-slate-400">{item.hint}</span>
                 </button>
               </li>
             ))}

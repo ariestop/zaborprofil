@@ -225,7 +225,7 @@ export default function DashboardPage() {
                         trigger={
                             <button
                                 type="button"
-                                className="inline-flex h-10 items-center gap-1.5 rounded-[10px] bg-brand-700 px-3.5 text-sm font-semibold text-white transition hover:bg-brand-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                                className="inline-flex h-12 items-center gap-1.5 rounded-[10px] bg-brand-700 px-3.5 text-sm font-semibold text-white transition hover:bg-brand-800 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
                             >
                                 <NavIcon name="plus" size={16} strokeWidth={2} />
                                 Создать
@@ -255,7 +255,7 @@ export default function DashboardPage() {
                                     to={action.href}
                                     className={cn(
                                         dashOutlineButton,
-                                        'h-[38px] gap-1.5 rounded-[10px] bg-white px-3 text-[13px] dark:bg-slate-900',
+                                        'h-12 gap-1.5 rounded-[10px] bg-white px-3 text-[13px] dark:bg-slate-900',
                                     )}
                                 >
                                     <NavIcon name={action.icon} size={16} />

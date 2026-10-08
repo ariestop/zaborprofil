@@ -30,7 +30,7 @@ export default function SystemLogsPage() {
         </div>
       </Card>
       <Card className="mt-4" title={logsQuery.data.path}>
-        <pre className="max-h-[520px] overflow-auto rounded-lg bg-slate-950 p-3 text-xs text-slate-100">
+        <pre className="max-h-[520px] overflow-auto rounded-lg bg-night p-3 text-xs text-surface">
           {logsQuery.data.content || 'Лог пуст.'}
         </pre>
       </Card>

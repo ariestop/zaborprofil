@@ -3,6 +3,10 @@
   Бренд-система «Периметр» (брендбук 2026, вариант E) — источник значений: docs/50-brand-system.md, раздел 11.
 */
 @theme static {
+    /* Заголовки сайта. Geologica и Inter Tight — запасные, если Golos Text не загрузился и они есть в системе. */
+    --font-heading:
+        'Golos Text Variable', 'Golos Text', 'Geologica', 'Inter Tight', 'Onest Variable', 'Onest',
+        system-ui, -apple-system, 'Segoe UI', sans-serif;
     --font-sans: 'Onest Variable', 'Onest', system-ui, -apple-system, 'Segoe UI', sans-serif;
     /* Цены, телефоны, характеристики. В Sofia Sans Condensed нет знака ₽ — он берётся из Onest. */
     --font-cond: 'Sofia Sans Condensed', 'Onest Variable', 'Onest', 'Arial Narrow', sans-serif;

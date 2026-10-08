@@ -1,126 +1,230 @@
 {#
     Конфигуратор забора (бренд-система «Периметр», docs/50-brand-system.md, раздел 8).
-    Сумма = длина × цена за погонный метр материала × коэффициент высоты + ворота, округление до 100 ₽.
-    Первая сумма считается здесь — она видна без JS и поисковикам; assets/site/configurator.ts пересчитывает её при выборе.
+    Серия (рисунок и цена монтажа за м²) × покрытие (цена за м², фактура) × цвет RAL × высота × длина.
+    Покрытие с фактурой «Дерево» — печатный декор (decor, например «Античный дуб»): цвет задаёт он, RAL не выбирается.
+    Смета: материал = площадь × цена покрытия, монтаж = площадь × цена монтажа серии, бесплатные пункты, ворота — по замеру;
+    итог округляется до 100 ₽. Первую смету считает сервер — она видна без JS и поисковикам;
+    assets/site/configurator.ts пересчитывает её и картинку при выборе.
 #}
 {# Тысячи и ₽ — через неразрывный пробел (брендбук, раздел 5), как formatMoney() в assets/site/ui.ts. #}
 {% macro money(value) %}{{ value|number_format(0, ',', ' ') }} ₽{% endmacro %}
+{% macro area(value) %}{{ value == value|round ? value|number_format(0, ',', ' ') : value|number_format(1, ',', ' ') }} м²{% endmacro %}
+{% macro meters(value) %}{{ value|number_format(1, ',', '') }} м{% endmacro %}
 
 {% set c = block.content %}
-{% set materials = (c.materials ?? [])|filter(m => (m.title ?? '') is not empty) %}
-{% if materials|length > 0 %}
-    {% set heights = (c.heights ?? [])|filter(h => (h.label ?? '') is not empty and (h.factor ?? 0) > 0) %}
+{% set patterns = ['jaluzi', 'jaluzi-double', 'profnastil', 'profnastil-wide', 'shtaketnik', 'setka'] %}
+{% set finishes = ['gloss', 'matte', 'wood'] %}
+
+{# Серии; без них все покрытия относятся к одной безымянной серии. #}
+{% set series = [] %}
+{% for s in (c.series ?? []) %}
+    {% if (s.title ?? '') is not empty %}
+        {% set series = series|merge([{
+            title: s.title,
+            hint: s.hint ?? '',
+            montage: max(0, (s.montagePerSqm ?? 0) + 0),
+            pattern: (s.pattern ?? '') in patterns ? s.pattern : 'jaluzi',
+        }]) %}
+    {% endif %}
+{% endfor %}
+{% if series is empty %}
+    {% set series = [{title: '', hint: '', montage: 0, pattern: (c.pattern ?? '') in patterns ? c.pattern : 'profnastil'}] %}
+{% endif %}
+{% set series_titles = series|map(s => s.title) %}
+
+{% set grades = [] %}
+{% for g in (c.grades ?? []) %}
+    {% set series_index = series|length == 1 and series[0].title == '' ? 0 : (series_titles|filter(t => t == (g.series ?? ''))|keys|first) %}
+    {% if (g.title ?? '') is not empty and series_index is not same as(false) and series_index is not null %}
+        {% set grades = grades|merge([{
+            series: series_index,
+            title: g.title,
+            price: max(0, (g.pricePerSqm ?? 0) + 0),
+            finish: (g.finish ?? '') in finishes ? g.finish : 'matte',
+            details: g.details ?? '',
+            decor: (g.finish ?? '') == 'wood' ? ((g.decor ?? '') is not empty ? g.decor : 'Под дерево') : '',
+        }]) %}
+    {% endif %}
+{% endfor %}
+
+{% if grades|length > 0 %}
+    {% set heights = (c.heights ?? [])|map(h => (h.meters ?? 0) + 0)|filter(h => h > 0 and h <= 5) %}
+    {% if heights is empty %}{% set heights = [1.8] %}{% endif %}
+    {% set height_index = ((heights|length) / 2)|round(0, 'floor') %}
+    {% for h in heights %}{% if h == 1.8 %}{% set height_index = loop.index0 %}{% endif %}{% endfor %}
     {% set colors = (c.colors ?? [])|filter(col => (col.hex ?? '') matches '/^#[0-9A-Fa-f]{6}$/') %}
     {% set length = c.length ?? {} %}
     {% set length_min = max(1, (length.min ?? 10) + 0) %}
     {% set length_max = max(length_min, (length.max ?? 200) + 0) %}
     {% set length_value = min(length_max, max(length_min, (length.default ?? 40) + 0)) %}
-    {% set gate_price = max(0, (c.gate.price ?? 0) + 0) %}
-    {% set patterns = ['profnastil', 'profnastil-wide', 'shtaketnik', 'jaluzi', 'setka'] %}
+    {% set gate_enabled = (c.gate.enabled ?? false) == true %}
+    {% set gate_label = (c.gate.label ?? '') is not empty ? c.gate.label : 'Ворота и калитка' %}
+    {% set free = (c.freeItems ?? [])|filter(f => (f.title ?? '') is not empty) %}
+    {% set material_label = (c.materialLabel ?? '') is not empty ? c.materialLabel : 'Материал' %}
+    {% set uid = 'zpcfg-' ~ (block.id ?? 'x')|replace({'.': '-'}) %}
 
-    {# Базовая высота — с коэффициентом 1, иначе первая. #}
-    {% set height_index = 0 %}
-    {% for h in heights %}{% if (h.factor + 0) == 1 and height_index == 0 %}{% set height_index = loop.index0 %}{% endif %}{% endfor %}
-
-    {% set material = materials|first %}
-    {% set factor = heights is empty ? 1 : (heights[height_index].factor + 0) %}
-    {% set total = ((length_value * (material.pricePerMeter ?? 0) * factor) / 100)|round * 100 %}
-    {% set color = colors is empty ? null : colors|first %}
-    {% set pattern = material.pattern ?? 'profnastil' %}
-    {% if pattern not in patterns %}{% set pattern = 'profnastil' %}{% endif %}
-    {% set fence_height = heights|length > 1 ? 36 + 18 * height_index / (heights|length - 1) : 46 %}
+    {# Первое состояние: первая серия, первое её покрытие, первый цвет. #}
+    {% set grade_index = grades|filter(g => g.series == 0)|keys|first %}
+    {% set grade = grades[grade_index] %}
+    {% set s0 = series[grade.series] %}
+    {% set color = colors is empty ? {ral: '', name: '', hex: '#373f43'} : colors|first %}
+    {% set height = heights[height_index] %}
+    {% set area = length_value * height %}
+    {% set material_sum = area * grade.price %}
+    {% set montage_sum = area * s0.montage %}
+    {% set total = ((material_sum + montage_sum) / 100)|round * 100 %}
+    {% set full_title = (s0.title ~ ' ' ~ grade.title)|trim %}
+    {% set color_label = color.ral is not empty ? 'RAL ' ~ color.ral ~ ((color.name ?? '') is not empty ? ' · ' ~ color.name : '') : '' %}
+    {# Коротко для сметы и заявки: «RAL 6005» или название декора. #}
+    {% set color_short = color.ral is not empty ? 'RAL ' ~ color.ral : '' %}
+    {% if grade.decor is not empty %}
+        {% set color_label = grade.decor %}
+        {% set color_short = grade.decor %}
+    {% endif %}
 
     {% set config = {
-        materials: materials|map(m => {title: m.title, price: (m.pricePerMeter ?? 0) + 0, pattern: (m.pattern ?? 'profnastil') in patterns ? (m.pattern ?? 'profnastil') : 'profnastil'}),
-        heights: heights|map(h => {label: h.label, factor: h.factor + 0}),
+        materialLabel: material_label,
+        series: series,
+        grades: grades,
+        heights: heights,
         colors: colors|map(col => {ral: col.ral ?? '', name: col.name ?? '', hex: col.hex}),
-        gate: gate_price,
+        gate: {enabled: gate_enabled, label: gate_label},
+        free: free|map(f => {title: f.title, note: f.note ?? ''}),
     } %}
 
-    <section class="zp-section" data-block-type="fence-configurator" {% if (block.settings.anchor ?? '') is not empty %}id="{{ block.settings.anchor }}"{% endif %}>
-        <div class="zp-container grid items-start gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-10">
-            <div>
-                <h2 class="zp-h2">{{ (c.title ?? '') is not empty ? c.title : 'Соберите забор и узнайте цену' }}</h2>
+    <section class="zp-section" data-block-type="fence-configurator" data-callbar-hide {% if (block.settings.anchor ?? '') is not empty %}id="{{ block.settings.anchor }}"{% endif %}>
+        <div class="zp-container">
+            <div class="zp-cfg-head">
+                <h2 class="zp-h2">{{ (c.title ?? '') is not empty ? c.title : 'Соберите забор и получите смету' }}</h2>
                 {% if (c.subtitle ?? '') is not empty %}
                     <p class="zp-lead">{{ c.subtitle }}</p>
                 {% endif %}
             </div>
 
             <form class="zp-cfg" data-fence-configurator data-config="{{ config|json_encode(constant('JSON_UNESCAPED_UNICODE'))|e('html_attr') }}">
-                <div class="zp-scene" data-cfg-scene data-pattern="{{ pattern }}" style="--ral: {{ color.hex ?? '#373f43' }}; --fh: {{ fence_height }}%" aria-hidden="true">
-                    <span class="zp-scene__tree"></span>
-                    <span class="zp-scene__house"></span>
-                    <span class="zp-scene__ground"></span>
-                    <span class="zp-scene__fence"></span>
-                </div>
-                {% if color is not null %}
-                    <p class="zp-cfg__caption" data-cfg-caption>RAL {{ color.ral }}{% if (color.name ?? '') is not empty %} · {{ color.name }}{% endif %}{% if heights is not empty %} · {{ heights[height_index].label }}{% endif %}</p>
-                {% endif %}
+                <div class="zp-cfg__main">
+                    <div class="zp-cfg__stage">
+                        {% set scene = c.scene ?? {} %}
+                        {% set scene_photo = (scene.photo ?? '') is not empty ? scene.photo : '' %}
+                        {% if scene_photo is not empty %}
+                            {{ responsive_image(scene_photo, {class: 'zp-cfg__photo', decorative: true, sizes: '(min-width: 1152px) 780px, 100vw'}) }}
+                        {% endif %}
+                        {% include 'public/blocks/_fence-scene.svg.twig' with {
+                            uid: uid,
+                            pattern: s0.pattern,
+                            finish: grade.finish,
+                            ral: color.hex,
+                            height: height,
+                            label: ('Забор ' ~ full_title ~ ', высота ' ~ _self.meters(height) ~ (color_label is not empty ? ', ' ~ color_label : ''))|trim,
+                            photo: scene_photo is not empty,
+                            person: scene.person ?? '',
+                            person_height: min(2.1, max(1.2, (scene.personHeight ?? 1.65) + 0)),
+                            person_x: min(1200, max(0, (scene.personX ?? 672) + 0)),
+                            scale: min(200, max(60, (scene.scale ?? 103.4) + 0)),
+                        } only %}
+                        <p class="zp-cfg__pill" data-cfg-caption>{{ full_title }}{% set texture = grade.details is not empty ? grade.details|split(' · ')|first : '' %}{% if texture is not empty %} · {{ texture }}{% endif %}{% if color_label is not empty and not (grade.decor is not empty and grade.decor in texture) %} · {{ color_label }}{% endif %}</p>
+                    </div>
 
-                {% if materials|length > 1 %}
-                    <fieldset class="zp-cfg__group">
-                        <legend class="zp-cfg__label">Материал</legend>
-                        <div class="zp-cfg-seg">
-                            {% for m in materials %}
-                                <label><input type="radio" name="material" value="{{ loop.index0 }}" {% if loop.first %}checked{% endif %}><span>{{ m.title }}</span></label>
-                            {% endfor %}
-                        </div>
-                    </fieldset>
-                {% else %}
-                    <input type="hidden" name="material" value="0">
-                {% endif %}
+                    <div class="zp-cfg__controls">
+                        {% if series|length > 1 %}
+                            <fieldset class="zp-cfg__group">
+                                <legend class="zp-cfg__label">Серия</legend>
+                                <div class="zp-cfg-seg">
+                                    {% for s in series %}
+                                        <label><input type="radio" name="series" value="{{ loop.index0 }}" {% if loop.first %}checked{% endif %}><span>{{ s.title }}{% if s.hint is not empty %}<small>{{ s.hint }}</small>{% endif %}</span></label>
+                                    {% endfor %}
+                                </div>
+                            </fieldset>
+                        {% else %}
+                            <input type="hidden" name="series" value="0">
+                        {% endif %}
 
-                {% if colors|length > 0 %}
-                    <fieldset class="zp-cfg__group">
-                        <legend class="zp-cfg__label">Цвет: <span data-cfg-color-name>RAL {{ color.ral }}{% if (color.name ?? '') is not empty %} · {{ color.name }}{% endif %}</span></legend>
-                        <div class="zp-swatches">
-                            {% for col in colors %}
-                                <label class="zp-swatch" style="--swatch: {{ col.hex }}" title="RAL {{ col.ral }}{% if (col.name ?? '') is not empty %} · {{ col.name }}{% endif %}">
-                                    <input type="radio" name="color" value="{{ loop.index0 }}" {% if loop.first %}checked{% endif %}>
-                                    <span class="sr-only">RAL {{ col.ral }} {{ col.name ?? '' }}</span>
+                        <fieldset class="zp-cfg__group zp-cfg__group--wide">
+                            <legend class="zp-cfg__label">Покрытие</legend>
+                            <div class="zp-cfg-grades">
+                                {% for g in grades %}
+                                    <label data-series="{{ g.series }}" {% if g.series != 0 %}hidden{% endif %}>
+                                        <input type="radio" name="grade" value="{{ loop.index0 }}" {% if loop.index0 == grade_index %}checked{% endif %}>
+                                        <span><b>{{ g.title }}</b>{% if g.price > 0 %}<small class="zp-price">{{ _self.money(g.price) }}/м²</small>{% endif %}</span>
+                                    </label>
+                                {% endfor %}
+                            </div>
+                            <p class="zp-cfg__hint" data-cfg-details>{{ grade.details }}</p>
+                        </fieldset>
+
+                        {% if colors|length > 0 %}
+                            <fieldset class="zp-cfg__group" data-cfg-colors {% if grade.decor is not empty %}disabled{% endif %}>
+                                <legend class="zp-cfg__label">Цвет</legend>
+                                <div class="zp-swatches">
+                                    {% for col in colors %}
+                                        <label class="zp-swatch" style="--swatch: {{ col.hex }}" title="RAL {{ col.ral }}{% if (col.name ?? '') is not empty %} · {{ col.name }}{% endif %}">
+                                            <input type="radio" name="color" value="{{ loop.index0 }}" {% if loop.first %}checked{% endif %}>
+                                            <span class="sr-only">RAL {{ col.ral }} {{ col.name ?? '' }}</span>
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                                <p class="zp-cfg__hint" data-cfg-color-name>{{ grade.decor is not empty ? 'Декор «' ~ grade.decor ~ '» — цвет RAL не выбирается' : color_label }}</p>
+                            </fieldset>
+                        {% endif %}
+
+                        {% if heights|length > 1 %}
+                            <fieldset class="zp-cfg__group">
+                                <legend class="zp-cfg__label">Высота</legend>
+                                <div class="zp-cfg-seg">
+                                    {% for h in heights %}
+                                        <label><input type="radio" name="height" value="{{ loop.index0 }}" {% if loop.index0 == height_index %}checked{% endif %}><span>{{ _self.meters(h) }}</span></label>
+                                    {% endfor %}
+                                </div>
+                            </fieldset>
+                        {% else %}
+                            <input type="hidden" name="height" value="0">
+                        {% endif %}
+
+                        <div class="zp-cfg__group">
+                            <label class="zp-cfg__label" for="{{ uid }}-length">Длина, м</label>
+                            <div class="zp-stepper">
+                                <button type="button" data-cfg-step="-1" aria-label="Уменьшить длину">−</button>
+                                <input id="{{ uid }}-length" type="number" inputmode="numeric" name="length" min="{{ length_min }}" max="{{ length_max }}" step="1" value="{{ length_value }}">
+                                <button type="button" data-cfg-step="1" aria-label="Увеличить длину">+</button>
+                            </div>
+                            {% if gate_enabled %}
+                                <label class="zp-check">
+                                    <input type="checkbox" name="gate">
+                                    <span>{{ gate_label }}</span>
                                 </label>
-                            {% endfor %}
+                            {% endif %}
                         </div>
-                        <p class="zp-cfg__hint">Оттенок на экране может отличаться от краски.</p>
-                    </fieldset>
-                {% endif %}
+                    </div>
+                </div>
 
-                {% if heights|length > 1 %}
-                    <fieldset class="zp-cfg__group">
-                        <legend class="zp-cfg__label">Высота</legend>
-                        <div class="zp-cfg-seg">
-                            {% for h in heights %}
-                                <label><input type="radio" name="height" value="{{ loop.index0 }}" {% if loop.index0 == height_index %}checked{% endif %}><span>{{ h.label }}</span></label>
-                            {% endfor %}
-                        </div>
-                    </fieldset>
-                {% elseif heights|length == 1 %}
-                    <input type="hidden" name="height" value="0">
-                {% endif %}
-
-                <div class="zp-cfg__row">
-                    <label class="zp-cfg__group grow">
-                        <span class="zp-cfg__label">Длина забора: <output class="text-ink" data-cfg-length-out>{{ length_value }} м</output></span>
-                        <input class="zp-range" type="range" name="length" min="{{ length_min }}" max="{{ length_max }}" step="1" value="{{ length_value }}">
-                    </label>
-                    {% if gate_price > 0 %}
-                        <label class="zp-check">
-                            <input type="checkbox" name="gate">
-                            <span>{{ (c.gate.label ?? '') is not empty ? c.gate.label : 'Ворота и калитка' }}</span>
-                        </label>
+                <div class="zp-cfg__est" id="{{ uid }}-estimate" aria-live="polite">
+                    <p class="zp-cfg__est-title">Ориентировочная смета</p>
+                    <p class="zp-cfg__est-meta" data-cfg-meta>{{ full_title }}{% if color_short is not empty %} · {{ color_short }}{% endif %} · {{ _self.meters(height) }} × {{ length_value }} м</p>
+                    <ul class="zp-cfg__rows" data-cfg-rows>
+                        <li><div><b>{{ (material_label ~ ' ' ~ full_title)|trim }}</b><span>{{ _self.area(area) }} × {{ _self.money(grade.price) }}</span></div><em class="zp-price">{{ _self.money(material_sum) }}</em></li>
+                        {% if s0.montage > 0 %}
+                            <li><div><b>Монтаж под ключ</b><span>{{ _self.area(area) }} × {{ _self.money(s0.montage) }}</span></div><em class="zp-price">{{ _self.money(montage_sum) }}</em></li>
+                        {% endif %}
+                        {% for f in free %}
+                            <li><div><b>{{ f.title }}</b>{% if (f.note ?? '') is not empty %}<span>{{ f.note }}</span>{% endif %}</div><em class="is-free">бесплатно</em></li>
+                        {% endfor %}
+                    </ul>
+                    <div class="zp-cfg__total">
+                        <span>Итого примерно</span>
+                        <strong class="zp-price" data-cfg-total>{% if total > 0 %}≈ {{ _self.money(total) }}{% else %}Цена по запросу{% endif %}</strong>
+                    </div>
+                    <p class="zp-cfg__per-meter" data-cfg-per-meter>{% if total > 0 %}≈ {{ _self.money(total / length_value) }} за погонный метр{% endif %}</p>
+                    <a class="zp-btn zp-btn--primary" href="#lead-form" data-cfg-cta data-lead-plan="Конфигуратор: {{ full_title }}{% if color_short is not empty %}, {{ color_short }}{% endif %}, высота {{ height|number_format(1, ',', '') }} м, длина {{ length_value }} м{% if total > 0 %}, примерно {{ _self.money(total) }}{% endif %}">{{ (c.cta ?? '') is not empty ? c.cta : 'Зафиксировать цену и вызвать замерщика' }}</a>
+                    {% if (c.note ?? '') is not empty %}
+                        <p class="zp-cfg__hint">{{ c.note }}</p>
                     {% endif %}
                 </div>
 
-                <div class="zp-cfg__sum">
-                    <div>
-                        <p class="text-sm text-graphite">Примерно, с материалом и монтажом</p>
-                        <p class="zp-price text-4xl text-ink" data-cfg-total>{% if total > 0 %}≈ {{ _self.money(total) }}{% else %}Цена по запросу{% endif %}</p>
-                    </div>
-                    <a class="zp-btn zp-btn--primary" href="#lead-form" data-cfg-cta data-lead-plan="Конфигуратор: {{ material.title }}{% if color is not null %}, RAL {{ color.ral }}{% endif %}{% if heights is not empty %}, высота {{ heights[height_index].label }}{% endif %}, длина {{ length_value }} м{% if total > 0 %}, примерно {{ _self.money(total) }}{% endif %}">{{ (c.cta ?? '') is not empty ? c.cta : 'Зафиксировать цену' }}</a>
+                {# Итог под пальцем на телефоне: нижняя панель сайта на это время прячется (data-callbar-hide). #}
+                <div class="zp-cfg__bar">
+                    <div><span>Итого примерно</span><strong class="zp-price" data-cfg-total-bar>{% if total > 0 %}≈ {{ _self.money(total) }}{% else %}по запросу{% endif %}</strong></div>
+                    <a class="zp-btn zp-btn--primary" href="#{{ uid }}-estimate">Смета</a>
                 </div>
-                {% if (c.note ?? '') is not empty %}
-                    <p class="zp-cfg__hint">{{ c.note }}</p>
-                {% endif %}
             </form>
         </div>
     </section>

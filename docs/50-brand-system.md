@@ -11,7 +11,7 @@
 ## 1. Что это и что заменяет
 
 «Периметр» — обновление бренда «Забор Профиль» 2026 года (вариант E из сравнения пяти вариантов).
-Знак, логотип и полосы сохранены. Добавлены рабочие цвета для экрана, шрифты Onest и
+Знак, логотип и полосы сохранены. Добавлены рабочие цвета для экрана, шрифты Golos Text (заголовки), Onest и
 Sofia Sans Condensed, иконки, компоненты интерфейса, конфигуратор забора, режим «Бизнесу»
 и правила для полиграфии.
 
@@ -116,21 +116,23 @@ CMYK новых цветов расчётные. Для утверждения �
 
 ## 5. Типографика
 
-| Шрифт                               | Роль                                               | Подключение                        |
-| ----------------------------------- | -------------------------------------------------- | ---------------------------------- |
-| **Onest** (вариативный 100–900)     | Заголовки, текст, кнопки, поля                     | `@fontsource-variable/onest`       |
-| **Sofia Sans Condensed** (600, 800) | Цены, телефоны, характеристики, подписи заглавными | `@fontsource/sofia-sans-condensed` |
+| Шрифт                                | Роль                                               | Подключение                        |
+| ------------------------------------ | -------------------------------------------------- | ---------------------------------- |
+| **Golos Text** (вариативный 400–900) | Заголовки сайта h1–h3                              | `@fontsource-variable/golos-text`  |
+| **Onest** (вариативный 100–900)      | Текст, кнопки, поля, заголовки админки             | `@fontsource-variable/onest`       |
+| **Sofia Sans Condensed** (600, 800)  | Цены, телефоны, характеристики, подписи заглавными | `@fontsource/sofia-sans-condensed` |
 
-Оба шрифта под лицензией OFL. Наборы `cyrillic` + `latin` (+ `latin-ext` у Onest — в нём знак ₽), woff2, раздача с собственного домена через Vite. Подключение на сайте — `assets/shared/styles/fonts.css` (свои `@font-face` с `unicode-range`), импорт в `assets/site/site.css`. Админка использует Onest из `@fontsource/onest` (`admin/app.ts`). Внешние CDN (Google Fonts и др.) запрещены — см. [22-frontend-assets](22-frontend-assets.md).
+Все три шрифта под лицензией OFL. Наборы `cyrillic` + `latin` (+ `latin-ext` у Golos Text и Onest — в нём знак ₽), woff2, раздача с собственного домена через Vite. Подключение на сайте — `assets/shared/styles/fonts.css` (свои `@font-face` с `unicode-range`), импорт в `assets/site/site.css`. Админка использует Onest из `@fontsource/onest` (`admin/app.ts`). Внешние CDN (Google Fonts и др.) запрещены — см. [22-frontend-assets](22-frontend-assets.md).
+Заголовки набираются через токен `--font-heading` (правило `h1, h2, h3` в `assets/site/site.css`); запасные шрифты заголовков — Geologica и Inter Tight (если Golos Text не загрузился, а они установлены в системе), затем Onest. Сами Geologica и Inter Tight не загружаются.
 Резервные стеки: `system-ui, -apple-system, 'Segoe UI', sans-serif` и `'Onest Variable', 'Arial Narrow', sans-serif`.
 
 > В Sofia Sans Condensed **нет знака ₽**. Поэтому в стеке `--font-cond` вторым идёт Onest: в ценах «1 290 ₽» цифры набираются узким шрифтом, а рубль — Onest. Не убирать Onest из этого стека.
 
 | Роль    | Сайт, px / интерлиньяж                     | Шрифт                                    |
 | ------- | ------------------------------------------ | ---------------------------------------- |
-| H1      | 40–56 / 1,08, `letter-spacing: -0.02em`    | Onest 800                                |
-| H2      | 30–36 / 1,15                               | Onest 800                                |
-| H3      | 21–24 / 1,2                                | Onest 700                                |
+| H1      | 40–56 / 1,08, `letter-spacing: -0.02em`    | Golos Text 700                           |
+| H2      | 30–36 / 1,15                               | Golos Text 700                           |
+| H3      | 21–24 / 1,2                                | Golos Text 600–700                       |
 | Текст   | 18 / 1,55 (минимум 17)                     | Onest 400                                |
 | Мелкий  | 15 / 1,45                                  | Onest 400, `graphite`                    |
 | Цена    | 28–40 / 1                                  | Sofia Sans Condensed 800, `tabular-nums` |
@@ -188,10 +190,13 @@ CMYK новых цветов расчётные. Для утверждения �
 
 ## 11. Токены для разработки
 
-**Фактическое состояние (ветка `dev`):** токены ниже — в `assets/shared/styles/theme.css` (общие для сайта и админки), шрифты сайта — `assets/shared/styles/fonts.css`. Публичный сайт переведён на нейтрали бренда (`ink`, `graphite`, `surface`, `surface-strong`, `line`, `line-strong`, `night` вместо `slate-*`), цены и телефоны набраны Sofia Sans Condensed (класс `zp-price`), шкала текста сайта — 17/15/13 px (`@theme` в `assets/site/site.css`). Админка (`admin/`) переведена на те же токены: `emerald-*` → `brand-*`, нейтрали — `ink` / `graphite` / `surface` / `surface-strong` / `line` / `line-strong`, ошибки — `danger` / `danger-50`; статусные цвета (оранжевый, жёлтый, синий, фиолетовый) — именованная палитра Tailwind, не HEX. Тёмная тема админки сохраняет `slate-*` для фонов. Единственное исключение из запрета HEX — цвет ссылки Google `#1a0dab` в превью сниппета (`admin/features/seo/SnippetPreview.tsx`). Классы `emerald-*`, `slate-*` на светлой теме и собственные HEX в новом коде запрещены. Блок `@theme static`: все токены всегда есть в CSS как переменные, их можно использовать в инлайн-стилях (`var(--color-graphite)`).
+**Фактическое состояние (ветка `dev`):** токены ниже — в `assets/shared/styles/theme.css` (общие для сайта и админки), шрифты сайта — `assets/shared/styles/fonts.css`. Публичный сайт переведён на нейтрали бренда (`ink`, `graphite`, `surface`, `surface-strong`, `line`, `line-strong`, `night` вместо `slate-*`), цены и телефоны набраны Sofia Sans Condensed (класс `zp-price`), шкала текста сайта — 17/15/13 px (`@theme` в `assets/site/site.css`). Админка (`admin/`) переведена на те же токены: `emerald-*` → `brand-*`, нейтрали — `ink` / `graphite` / `surface` / `surface-strong` / `line` / `line-strong`, ошибки — `danger` / `danger-50`; статусные цвета (оранжевый, жёлтый, синий, фиолетовый) — именованная палитра Tailwind, не HEX. Тёмная тема админки: классы `dark:*-slate-*` остаются в разметке, но шкала `slate` в `html.dark` подменена нейтралями бренда (`assets/shared/styles/app.css`): 950 `#15181c`, 900 `#1d2126`, 800 = `night` `#2a2f35`, 700 `#4a515a`, 400 `#a0a6ad`, 100 = `surface-strong`, 50 = `surface`. Новые тёмные цвета добавляйте в эту шкалу, а не HEX в классах. Исключения из запрета HEX: цвет ссылки Google `#1a0dab` в превью сниппета (`admin/features/seo/SnippetPreview.tsx`); иллюстрация забора в конфигураторе (`templates/public/blocks/_fence-scene.svg.twig`: небо, дом, дерево, земля, силуэт человека и светотень ламелей и цвет декора «Античный дуб» `--oak` — это картинка, а не интерфейс; цвет забора — `var(--ral)`) и запасной RAL-цвет `#373f43` (= `ral-7024`) в `fence-configurator.html.twig`; `<meta name="theme-color">` в `base.html.twig` (там нельзя использовать `var()`, значение `#2d7f27` = `brand-700`). Цвет границы по умолчанию в `app.css` — токен `line`. Все кнопки, поля, сегменты и иконки-кнопки публичного сайта — от 48 px (`min-h-12`, `size-12`; в том числе `zp-btn--sm`); основная кнопка — всегда `brand-700` с белым текстом, `bg-brand-500` под белым текстом не даёт 4,5:1. Админка: `Button` (размер `md`), поля, селекты, основные действия, пункты меню и иконки-кнопки шапки — тоже от 48 px (`h-12`). Компактными остаются только чипы фильтров, вкладки-переключатели, значки в панели структуры конструктора, плавающая панель массовых действий, пункты выпадающих меню (от 38 px) и `Button size="sm"` (40 px) в строках таблиц. Круглые аватары и значки-иконки — не кнопки, правило на них не распространяется. Виджет сборки интерфейса по умолчанию свёрнут, чтобы не закрывать содержимое. Классы `emerald-*`, `slate-*` на светлой теме и собственные HEX в новом коде запрещены. Блок `@theme static`: все токены всегда есть в CSS как переменные, их можно использовать в инлайн-стилях (`var(--color-graphite)`).
 
 ```css
 @theme {
+    --font-heading:
+        'Golos Text Variable', 'Golos Text', 'Geologica', 'Inter Tight', 'Onest Variable', 'Onest',
+        system-ui, -apple-system, 'Segoe UI', sans-serif; /* заголовки h1–h3 */
     --font-sans: 'Onest Variable', 'Onest', system-ui, -apple-system, 'Segoe UI', sans-serif;
     --font-cond:
         'Sofia Sans Condensed', 'Onest Variable', 'Onest', 'Arial Narrow', sans-serif; /* ₽ — из Onest */
@@ -247,7 +252,7 @@ CMYK новых цветов расчётные. Для утверждения �
 ## 13. Чек-лист для агента перед сдачей UI-изменений
 
 - [ ] Цвета только из токенов раздела 11; нет `emerald-*`; `brand-500` не используется для текста; RAL-цвета не используются в интерфейсе.
-- [ ] Шрифты только Onest и Sofia Sans Condensed, локально, без внешних CDN.
+- [ ] Шрифты только Golos Text (заголовки), Onest и Sofia Sans Condensed, локально, без внешних CDN.
 - [ ] Логотип — файл из `docs/brand/logo/`, правильная версия по таблице раздела 3.
 - [ ] Контраст пар цветов соответствует разделу 4.2.
 - [ ] Кнопки и поля от 48 px, есть `:focus-visible`, текст от 17 px.
@@ -263,7 +268,7 @@ docs/brand/brandbook-2026.pdf      # PDF-брендбук, 18 стр., A4 аль
 docs/brand/logo/*.svg              # логотипы, знак, фавикон (вектор из исходного брендбука)
 docs/brand/source/brandbook.src.html  # исходник PDF для будущих правок
 assets/shared/styles/theme.css     # токены Tailwind 4 (сайт и админка)
-assets/shared/styles/fonts.css     # @font-face Onest и Sofia Sans Condensed (сайт)
+assets/shared/styles/fonts.css     # @font-face Golos Text, Onest и Sofia Sans Condensed (сайт)
 assets/site/site.css               # компоненты zp-* публичного сайта
 public_html/img/logo.svg, logo-compact.svg, logo-white.svg  # рабочие копии для шапки и подвала
 public_html/img/logo.png           # растр 600×90 для микроразметки Organization
@@ -272,7 +277,7 @@ public_html/favicon.svg            # фавикон
 
 Канонические SVG — в `docs/brand/logo/`. При замене логотипа обновлять копии в `public_html/img/`, `logo.png` и `public_html/favicon.svg`.
 
-Исходник PDF: плейсхолдеры `{{logo-*}}` заменяются содержимым SVG из `docs/brand/logo/`, вместо `/*FONTS*/` вставляются `@font-face` Onest и Sofia Sans Condensed, печать в PDF — через Chromium (A4 альбомная, `printBackground`).
+Исходник PDF: плейсхолдеры `{{logo-*}}` заменяются содержимым SVG из `docs/brand/logo/`, вместо `/*FONTS*/` вставляются `@font-face` Golos Text, Onest и Sofia Sans Condensed, печать в PDF — через Chromium (A4 альбомная, `printBackground`).
 
 ## Связанные документы
 

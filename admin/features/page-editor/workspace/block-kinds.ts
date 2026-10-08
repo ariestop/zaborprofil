@@ -1,3 +1,4 @@
+import { fenceSummaryLine } from './fence-summary'
 import { blockRegistryByType } from '../../../modules/page-builder/registry/blockRegistry'
 import { LEGACY_BLOCK_TYPE_ALIASES, isLegacyBlockType, type BuilderBlock, type BuilderBlockType } from '../../../modules/page-builder/types'
 
@@ -219,6 +220,8 @@ export function blockSummary(block: Pick<BuilderBlock, 'type' | 'content'>): str
     }
     case 'cta':
       return shorten(plainText(asString(content.title)) || 'Без заголовка')
+    case 'fence-configurator':
+      return shorten(fenceSummaryLine(content))
     case 'contact-form':
       return shorten(`«${plainText(asString(content.title)) || 'Оставьте заявку'}» → раздел «Заявки»`)
     default:

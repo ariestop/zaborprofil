@@ -20,15 +20,12 @@ export function Field({ label, error, hint, className, children }: FieldProps) {
 
     return (
         <div className={className}>
-            <label
-                htmlFor={id}
-                className="block text-sm font-medium text-slate-700 dark:text-slate-200"
-            >
+            <label htmlFor={id} className="block text-sm font-medium text-ink dark:text-slate-200">
                 {label}
             </label>
             <div className="mt-1">{children(id, describedBy)}</div>
             {hint !== undefined ? (
-                <p id={hintId} className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                <p id={hintId} className="mt-1 text-xs text-graphite dark:text-slate-400">
                     {hint}
                 </p>
             ) : null}
@@ -51,7 +48,7 @@ export const NativeSelect = forwardRef<HTMLSelectElement, SelectHTMLAttributes<H
             <select
                 ref={ref}
                 className={cn(
-                    'h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-hidden ring-brand-500 transition focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100',
+                    'h-12 w-full rounded-lg border border-line-strong bg-white px-3 text-sm text-ink outline-hidden ring-brand-500 transition focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100',
                     className,
                 )}
                 {...props}

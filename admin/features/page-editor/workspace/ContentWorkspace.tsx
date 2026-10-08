@@ -289,7 +289,7 @@ export default function ContentWorkspace({
                         aria-pressed={pane === item.id}
                         onClick={() => setPane(item.id)}
                         className={cn(
-                            'h-10 flex-1 rounded-[10px] text-sm font-semibold',
+                            'h-12 flex-1 rounded-[10px] text-sm font-semibold',
                             pane === item.id
                                 ? 'bg-white text-ink shadow-xs dark:bg-slate-900 dark:text-slate-100'
                                 : 'text-graphite dark:text-slate-400',

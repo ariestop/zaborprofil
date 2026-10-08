@@ -125,7 +125,7 @@ export function MonitoringCard({ tiles }: MonitoringCardProps) {
                     >
                         <Link
                             to={tile.href}
-                            className="flex items-center justify-between gap-3 px-4 py-2 text-inherit no-underline transition hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500 dark:hover:bg-slate-800/60"
+                            className="flex items-center justify-between gap-3 px-4 py-2 text-inherit no-underline transition hover:bg-surface focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500 dark:hover:bg-slate-800/60"
                         >
                             <span className="min-w-0">
                                 <span className="block truncate text-[13px] text-graphite dark:text-slate-300">

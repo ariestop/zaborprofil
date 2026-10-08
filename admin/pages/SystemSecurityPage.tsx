@@ -22,7 +22,7 @@ export default function SystemSecurityPage() {
       <PageHeader title="Безопасность" description="Защита от подделки запросов и роли текущего пользователя." />
       <Card title="Текущий пользователь">
         <p className="text-sm">{securityQuery.data.actor.identifier ?? 'не определён'}</p>
-        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{securityQuery.data.actor.roles.join(', ')}</p>
+        <p className="mt-1 text-xs text-graphite dark:text-slate-400">{securityQuery.data.actor.roles.join(', ')}</p>
       </Card>
       <Card className="mt-4" title="Политика опасных действий">
         <div className="flex flex-wrap gap-2">

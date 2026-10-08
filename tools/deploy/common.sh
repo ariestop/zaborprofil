@@ -228,6 +228,9 @@ run_release_console_tasks() {
   (cd "$release_dir" && "$PHP_BIN" bin/console doctrine:migrations:migrate --no-interaction --env="$app_env")
   (cd "$release_dir" && "$PHP_BIN" bin/console cache:clear --no-warmup --env="$app_env")
   (cd "$release_dir" && "$PHP_BIN" bin/console cache:warmup --env="$app_env")
+  # Картинки из контента — в медиатеку с WebP-превью; ошибка не срывает релиз.
+  (cd "$release_dir" && "$PHP_BIN" bin/console app:media:sync --no-interaction --env="$app_env") \
+    || log "WARNING: app:media:sync failed, some images are served without responsive previews"
 }
 
 restart_services() {

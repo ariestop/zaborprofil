@@ -70,7 +70,7 @@ export default function SettingsPage() {
             />
             <Card title="Публичный рендер блоков">
                 <div className="space-y-3">
-                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                    <p className="text-sm text-graphite dark:text-slate-300">
                         Выберите источник блоков для публичных страниц:
                         <span className="font-semibold"> snapshot ревизии</span> или{' '}
                         <span className="font-semibold">live блоки</span>.
@@ -110,7 +110,7 @@ export default function SettingsPage() {
                         >
                             {upsertSetting.isPending ? 'Сохранение...' : 'Сохранить'}
                         </Button>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                        <span className="text-xs text-graphite dark:text-slate-400">
                             Текущее значение:{' '}
                             {currentPublicBlocksSource === 'live' ? 'live' : 'snapshot'}
                         </span>

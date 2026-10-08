@@ -11,7 +11,7 @@ final readonly class MediaOptimizer
     /**
      * @var list<int>
      */
-    private const array THUMBNAIL_WIDTHS = [320, 768, 1280];
+    private const array THUMBNAIL_WIDTHS = [320, 480, 768, 1024, 1280];
 
     public function optimize(string $absolutePath, string $publicPath, string $mimeType, ?int $width, ?int $height): MediaOptimizationResult
     {
@@ -27,7 +27,6 @@ final readonly class MediaOptimizer
         $this->rewriteOriginal($source, $absolutePath, $mimeType);
 
         $variants = $this->createVariants($source, $absolutePath, $publicPath, $width, $height);
-        imagedestroy($source);
 
         return new MediaOptimizationResult((int) filesize($absolutePath), $width, $height, $variants);
     }
@@ -53,7 +52,17 @@ final readonly class MediaOptimizer
             default => false,
         };
 
-        return $image instanceof GdImage ? $image : null;
+        if (!$image instanceof GdImage) {
+            return null;
+        }
+
+        // Без этого imagepng/imagewebp/imageavif при пересохранении оригинала сбрасывают прозрачность.
+        if ($mimeType !== 'image/jpeg') {
+            imagealphablending($image, false);
+            imagesavealpha($image, true);
+        }
+
+        return $image;
     }
 
     private function rewriteOriginal(GdImage $image, string $absolutePath, string $mimeType): void
@@ -78,10 +87,7 @@ final readonly class MediaOptimizer
             return [];
         }
 
-        foreach (self::THUMBNAIL_WIDTHS as $targetWidth) {
-            if ($targetWidth >= $width) {
-                continue;
-            }
+        foreach (self::targetWidths($width) as $targetWidth) {
 
             $targetHeight = max(1, (int) round($height * ($targetWidth / $width)));
             $thumbnail = $this->resample($source, $targetWidth, $targetHeight);
@@ -98,11 +104,33 @@ final readonly class MediaOptimizer
                 imageavif($thumbnail, $variantPath, 55);
                 $variants[] = $this->variant($publicPath, $variantPath, $targetWidth, $targetHeight, 'avif', 'image/avif');
             }
-
-            imagedestroy($thumbnail);
         }
 
         return $variants;
+    }
+
+    /**
+     * Умеет ли PHP делать превью (WebP или AVIF). Без этого пересоздавать их бессмысленно.
+     */
+    public function canCreateVariants(): bool
+    {
+        return \function_exists('imagewebp') || \function_exists('imageavif');
+    }
+
+    /**
+     * Ширины превью: стандартные меньше оригинала и сам оригинал, если он не шире самого большого превью.
+     * Иначе у картинки 1280 px самым крупным WebP было бы 768 px, и на широком экране она расплывалась бы.
+     *
+     * @return list<int>
+     */
+    public static function targetWidths(int $width): array
+    {
+        $widths = array_values(array_filter(self::THUMBNAIL_WIDTHS, static fn (int $target): bool => $target < $width));
+        if ($width <= max(self::THUMBNAIL_WIDTHS)) {
+            $widths[] = $width;
+        }
+
+        return $widths;
     }
 
     private function resample(GdImage $source, int $width, int $height): GdImage

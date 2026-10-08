@@ -79,8 +79,6 @@ export interface AssetBuildStatus {
   exitCode: number | null
   progress: number
   logs: string
-  /** false — сборка из веб-админки выключена (staging/production): ассеты собирает деплой. */
-  enabled?: boolean
 }
 
 export interface AuditLogEntryItem {

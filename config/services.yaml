@@ -2,6 +2,10 @@ parameters:
     empty_string: ''
     app.asset_build_default_command: npm run build
     app.asset_build_command: '%env(default:app.asset_build_default_command:APP_ASSET_BUILD_COMMAND)%'
+    # Кнопка «Перекомпилировать» в админке: по умолчанию только при APP_DEBUG=1 (локальная разработка).
+    # На staging и production фронтенд собирает CI; принудительно включить — APP_ASSET_BUILD_ENABLED=1.
+    app.asset_build_enabled_default: '%kernel.debug%'
+    app.asset_build_enabled: '%env(bool:default:app.asset_build_enabled_default:APP_ASSET_BUILD_ENABLED)%'
     app.site_url: '%env(SITE_URL)%'
     app.vite.manifest_path: '%kernel.project_dir%/public_html/build/.vite/manifest.json'
     app.vite.public_build_path: /build
@@ -14,9 +18,6 @@ parameters:
     # Запуск Doctrine-миграций из веб-админки. По умолчанию выключен; на production миграции выполняет только CLI при деплое.
     env(ADMIN_WEB_MIGRATIONS_ENABLED): '0'
     app.admin.web_migrations_enabled: '%env(bool:ADMIN_WEB_MIGRATIONS_ENABLED)%'
-    # Сборка фронтенда (npm run build) из веб-админки. Включена только в dev; на staging/production ассеты собирает деплой.
-    env(ADMIN_WEB_ASSET_BUILD_ENABLED): '0'
-    app.admin.web_asset_build_enabled: '%env(bool:ADMIN_WEB_ASSET_BUILD_ENABLED)%'
     # HTTP-кэш публичных страниц (Cache-Control/ETag). Включается по умолчанию только в prod.
     env(PUBLIC_HTTP_CACHE_ENABLED): '0'
     # Браузер каждый раз сверяет ETag (после публикации редактор сразу видит новую версию),
@@ -100,6 +101,7 @@ services:
     App\Module\Admin\Application\Service\AssetBuildRunner:
         arguments:
             $command: '%app.asset_build_command%'
+            $enabled: '%app.asset_build_enabled%'
 
     App\Module\Admin\Application\Service\WhitelistCommandRunner:
         arguments:
@@ -226,10 +228,6 @@ services:
             $hub: '@Sentry\State\HubInterface'
             $level: 'error'
             $fillExtraContext: true
-
-when@dev:
-    parameters:
-        env(ADMIN_WEB_ASSET_BUILD_ENABLED): '1'
 
 when@test:
     parameters:

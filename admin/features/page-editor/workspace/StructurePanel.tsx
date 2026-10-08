@@ -211,7 +211,7 @@ export function StructurePanel({
             <button
                 type="button"
                 onClick={onAdd}
-                className="flex h-[42px] items-center justify-center gap-1.5 rounded-[10px] border border-dashed border-graphite/60 bg-white font-semibold text-brand-700 transition hover:bg-brand-50 dark:border-slate-600 dark:bg-slate-900 dark:text-brand-400"
+                className="flex h-12 items-center justify-center gap-1.5 rounded-[10px] border border-dashed border-graphite/60 bg-white font-semibold text-brand-700 transition hover:bg-brand-50 dark:border-slate-600 dark:bg-slate-900 dark:text-brand-400"
             >
                 <NavIcon name="plus" size={16} strokeWidth={2} />
                 Добавить блок

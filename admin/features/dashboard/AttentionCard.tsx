@@ -64,7 +64,7 @@ export function AttentionCard({ items, loading, rebuilding, onRebuild }: Attenti
                                     onClick={onRebuild}
                                     className={cn(
                                         dashOutlineButton,
-                                        'h-9 shrink-0 bg-transparent px-3 text-[13px] disabled:opacity-60',
+                                        'h-12 shrink-0 bg-transparent px-3 text-[13px] disabled:opacity-60',
                                     )}
                                 >
                                     {rebuilding ? 'Запускаю…' : item.actionLabel}
@@ -74,7 +74,7 @@ export function AttentionCard({ items, loading, rebuilding, onRebuild }: Attenti
                                     to={item.href}
                                     className={cn(
                                         dashOutlineButton,
-                                        'h-9 shrink-0 px-3 text-[13px]',
+                                        'h-12 shrink-0 px-3 text-[13px]',
                                     )}
                                 >
                                     {item.actionLabel}

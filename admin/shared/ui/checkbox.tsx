@@ -10,13 +10,13 @@ interface CheckboxProps {
 
 export function Checkbox({ checked, onCheckedChange, label, ariaLabel }: CheckboxProps) {
     return (
-        <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+        <label className="inline-flex items-center gap-2 text-sm text-ink dark:text-slate-200">
             <CheckboxPrimitive.Root
                 checked={checked}
                 aria-label={ariaLabel}
                 onCheckedChange={(value) => onCheckedChange(Boolean(value))}
                 className={cn(
-                    'h-5 w-5 rounded-sm border border-slate-400 bg-white data-[state=checked]:border-brand-600 data-[state=checked]:bg-brand-600 dark:border-slate-600 dark:bg-slate-900',
+                    'h-5 w-5 rounded-sm border border-line-strong bg-white data-[state=checked]:border-brand-600 data-[state=checked]:bg-brand-600 dark:border-slate-600 dark:bg-slate-900',
                 )}
             >
                 <CheckboxPrimitive.Indicator className="grid place-items-center text-xs text-white">

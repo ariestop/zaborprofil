@@ -197,6 +197,10 @@ make test
 
 `make npm-dev` — следить, что порт 5173 свободен. `ViteAssetExtension` определит автоматически.
 
+### В админке нет кнопки «Перекомпилировать» (виджет «Сборка интерфейса»)
+
+Пересборка из админки включена только при `APP_DEBUG=1`, то есть в локальной разработке. На staging и production фронтенд собирает CI, поэтому API `/admin/api/system/assets/build` отвечает `404 ASSET_BUILD_DISABLED`, а виджет скрыт. Принудительно включить (нужен Node.js в PHP-FPM): `APP_ASSET_BUILD_ENABLED=1` в `.env.local`. Свою команду сборки можно задать через `APP_ASSET_BUILD_COMMAND`.
+
 ### В админке «Перекомпилировать» падает с `npm ERR! EACCES ... /var/www/html/node_modules/...`
 
 Симптом в логе:

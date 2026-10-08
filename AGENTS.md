@@ -75,7 +75,7 @@ make health
 - Главный источник правил: `docs/50-brand-system.md`. Визуальная версия: `docs/brand/brandbook-2026.pdf`. При расхождении верен `.md`, PDF обновить.
 - Логотипы — только SVG из `docs/brand/logo/` (рабочие копии — `public_html/img/logo*.svg`, `public_html/favicon.svg`). На телефоне и в местах уже 200 px — `logo-compact`. Не перерисовывать и не перенабирать.
 - Цвета — только токены из `assets/shared/styles/theme.css` (раздел 11 `docs/50-brand-system.md`): действие `brand-700` `#2D7F27`, бренд `brand-500` `#45A63D` (не для текста), текст `ink` `#23272D`, подписи `graphite` `#575C63`, фон `surface` `#F3F5F2`, тёмный `night` `#2A2F35`, бейдж `badge` `#F2B13B`. Цвета RAL — только для выбора цвета товара. Классы `emerald-*` и собственные HEX в новом коде запрещены.
-- Шрифты — Onest (текст, заголовки, UI) и Sofia Sans Condensed (цены, телефоны, характеристики), локально через `@fontsource*`, без CDN. В Sofia Sans Condensed нет ₽ — Onest должен оставаться вторым в `--font-cond`. Open Sans и Cuprum в интерфейсе запрещены.
+- Шрифты — Golos Text (заголовки сайта h1–h3, токен `--font-heading`; запасные Geologica и Inter Tight), Onest (текст, UI) и Sofia Sans Condensed (цены, телефоны, характеристики), локально через `@fontsource*`, без CDN. В Sofia Sans Condensed нет ₽ — Onest должен оставаться вторым в `--font-cond`. Open Sans и Cuprum в интерфейсе запрещены.
 - Стиль — flat 2.0: плоско, но кнопки и поля от 48 px, скругление 10/12 px, видимый `:focus-visible`, текст от 17 px, контраст WCAG 2.2 AA.
 - Контакты — только из Twig-глобала `site` (`config/packages/twig.yaml`).
 - Перед сдачей UI-изменений пройти чек-лист из раздела 13 `docs/50-brand-system.md`.

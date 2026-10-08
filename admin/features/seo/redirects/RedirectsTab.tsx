@@ -143,7 +143,7 @@ export function RedirectsTab() {
           </div>
 
           {counts !== undefined ? (
-            <p className="text-sm text-slate-600 dark:text-slate-300">
+            <p className="text-sm text-graphite dark:text-slate-300">
               Всего: {formatNumber(counts.total)} · активных: {formatNumber(counts.active)} · отключённых: {formatNumber(counts.inactive)}
             </p>
           ) : null}
@@ -152,7 +152,7 @@ export function RedirectsTab() {
             <ErrorState title="Не удалось загрузить редиректы" description="Проверьте endpoint /admin/api/seo/redirects и право seo.edit." />
           ) : null}
 
-          {redirectsQuery.isPending ? <p className="text-sm text-slate-500">Загрузка...</p> : null}
+          {redirectsQuery.isPending ? <p className="text-sm text-graphite dark:text-slate-500">Загрузка...</p> : null}
 
           {data !== undefined && data.items.length === 0 ? (
             <EmptyState
@@ -167,7 +167,7 @@ export function RedirectsTab() {
                 head={(
                   <tr>
                     {['Старый URL', 'Новый URL', 'Код', 'Активен', 'Переходы', 'Последний переход', 'Действия'].map((title) => (
-                      <th key={title} className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</th>
+                      <th key={title} className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-graphite dark:text-slate-500">{title}</th>
                     ))}
                   </tr>
                 )}

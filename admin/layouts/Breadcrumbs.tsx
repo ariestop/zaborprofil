@@ -23,14 +23,14 @@ export function Breadcrumbs() {
         {parent !== null ? (
           <>
             <li className="shrink-0">
-              <Link to={parent.path} className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100">
+              <Link to={parent.path} className="text-graphite hover:text-ink dark:text-slate-400 dark:hover:text-slate-100">
                 {parent.navTitle ?? parent.title}
               </Link>
             </li>
-            <li aria-hidden="true" className="text-slate-400">/</li>
+            <li aria-hidden="true" className="text-graphite dark:text-slate-400">/</li>
           </>
         ) : null}
-        <li aria-current="page" className="truncate font-semibold text-slate-900 dark:text-slate-100">{title}</li>
+        <li aria-current="page" className="truncate font-semibold text-ink dark:text-slate-100">{title}</li>
       </ol>
     </nav>
   )

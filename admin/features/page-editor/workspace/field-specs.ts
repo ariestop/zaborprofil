@@ -1,5 +1,5 @@
 import type { BuilderBlockType } from '../../../modules/page-builder/types'
-import { canonicalType, isRecord } from './block-kinds'
+import { asString, canonicalType, isRecord } from './block-kinds'
 
 /**
  * Описание полей блока для формы редактора. Для основных видов поля заданы вручную (порядок, подписи, подсказки),
@@ -36,6 +36,8 @@ export type FieldSpec =
           fields: FieldSpec[]
           newItem: Record<string, unknown>
           media?: 'src' | 'image'
+          /** Заголовок карточки по её содержимому («Largo · Стандарт»); пусто — «Пункт 1». */
+          itemTitle?: (item: Record<string, unknown>) => string
       }
     | { kind: 'table'; label: string }
     | { kind: 'strings'; key: string; label: string; addLabel: string }
@@ -47,6 +49,8 @@ export type FieldSpec =
           label: string
           options: Array<{ value: string; label: string }>
           help?: string
+          /** Варианты из другого списка блока: content[key][].valueKey (например, названия серий). */
+          optionsFrom?: { key: string; valueKey: string }
       }
     | { kind: 'note'; text: string }
 
@@ -59,11 +63,18 @@ const STEP_ICONS = [
 ]
 
 const FENCE_PATTERNS = [
+    { value: 'jaluzi', label: 'Жалюзи: наклон в одну сторону' },
+    { value: 'jaluzi-double', label: 'Жалюзи: наклон в обе стороны' },
     { value: 'profnastil', label: 'Профнастил' },
     { value: 'profnastil-wide', label: 'Профнастил с широкой волной' },
     { value: 'shtaketnik', label: 'Евроштакетник' },
-    { value: 'jaluzi', label: 'Жалюзи' },
     { value: 'setka', label: '3D сетка' },
+]
+
+const FENCE_FINISHES = [
+    { value: 'gloss', label: 'Полуглянец (полиэстер)' },
+    { value: 'matte', label: 'Мат (велюр)' },
+    { value: 'wood', label: 'Декор под дерево (матовый)' },
 ]
 
 const optionalTitle: FieldSpec = {
@@ -150,22 +161,41 @@ const SPECS: Partial<Record<BuilderBlockType, FieldSpec[]>> = {
         { kind: 'textarea', key: 'subtitle', label: 'Подзаголовок', rows: 2 },
         {
             kind: 'note',
-            text: 'Сумма = длина × цена за метр материала × коэффициент высоты + ворота. Цены — за погонный метр забора под ключ; без них посетитель увидит неверный расчёт.',
+            text: 'Смета = площадь (длина × высота) × цена покрытия за м² + площадь × цена монтажа серии за м², итог округляется до 100 ₽. Без цен посетитель увидит «Цена по запросу».',
+        },
+        {
+            kind: 'text',
+            key: 'materialLabel',
+            label: 'Как называть материал в смете',
+            help: 'Например, «Ламели» или «Профлист»',
         },
         {
             kind: 'items',
-            key: 'materials',
-            label: 'Материалы',
-            itemLabel: 'Материал',
-            addLabel: 'Добавить материал',
-            newItem: { title: '', pricePerMeter: 0, pattern: 'profnastil' },
+            key: 'series',
+            label: 'Серии',
+            itemLabel: 'Серия',
+            addLabel: 'Добавить серию',
+            newItem: { title: '', hint: '', montagePerSqm: 0, pattern: 'jaluzi' },
+            itemTitle: (item) => asString(item.title),
             fields: [
-                { kind: 'text', key: 'title', label: 'Название', required: true },
+                {
+                    kind: 'text',
+                    key: 'title',
+                    label: 'Название',
+                    required: true,
+                    help: 'Например, Largo',
+                },
+                {
+                    kind: 'text',
+                    key: 'hint',
+                    label: 'Подпись',
+                    help: 'Например, «наклон в одну сторону»',
+                },
                 {
                     kind: 'number',
-                    key: 'pricePerMeter',
-                    label: 'Цена за погонный метр, ₽',
-                    help: 'Для высоты с коэффициентом 1',
+                    key: 'montagePerSqm',
+                    label: 'Монтаж, ₽ за м²',
+                    help: '0 — строки монтажа в смете нет',
                 },
                 {
                     kind: 'select',
@@ -177,19 +207,77 @@ const SPECS: Partial<Record<BuilderBlockType, FieldSpec[]>> = {
         },
         {
             kind: 'items',
+            key: 'grades',
+            label: 'Покрытия и цены',
+            itemLabel: 'Покрытие',
+            addLabel: 'Добавить покрытие',
+            newItem: {
+                series: '',
+                title: '',
+                pricePerSqm: 0,
+                finish: 'matte',
+                details: '',
+                decor: '',
+            },
+            itemTitle: (item) =>
+                [asString(item.series), asString(item.title)]
+                    .filter((part) => part !== '')
+                    .join(' · '),
+            fields: [
+                {
+                    kind: 'select',
+                    key: 'series',
+                    label: 'Серия',
+                    options: [{ value: '', label: 'Без серии' }],
+                    optionsFrom: { key: 'series', valueKey: 'title' },
+                    help: 'Список — из серий выше',
+                },
+                {
+                    kind: 'text',
+                    key: 'title',
+                    label: 'Покрытие',
+                    required: true,
+                    help: 'Например, «Премиум»',
+                },
+                { kind: 'number', key: 'pricePerSqm', label: 'Цена материала, ₽ за м²' },
+                {
+                    kind: 'select',
+                    key: 'finish',
+                    label: 'Поверхность на картинке',
+                    options: FENCE_FINISHES,
+                },
+                {
+                    kind: 'text',
+                    key: 'details',
+                    label: 'Характеристики',
+                    help: 'Через « · »: «матовый велюр · металл 0,50 мм · гарантия 40 лет»',
+                },
+                {
+                    kind: 'text',
+                    key: 'decor',
+                    label: 'Декор',
+                    help: 'Только для поверхности «Дерево»: например, «Античный дуб». Цвет задаёт декор — RAL на сайте не выбирается',
+                },
+            ],
+        },
+        {
+            kind: 'items',
             key: 'heights',
             label: 'Высоты',
             itemLabel: 'Высота',
             addLabel: 'Добавить высоту',
-            newItem: { label: '', factor: 1 },
+            newItem: { meters: 1.8 },
+            itemTitle: (item) =>
+                typeof item.meters === 'number' && item.meters > 0
+                    ? `${item.meters.toFixed(1).replace('.', ',')} м`
+                    : '',
             fields: [
-                { kind: 'text', key: 'label', label: 'Подпись', help: 'Например, «1,8 м»' },
                 {
                     kind: 'number',
-                    key: 'factor',
-                    label: 'Коэффициент к цене',
-                    step: 0.01,
-                    help: '1 — базовая высота; 1,12 — на 12% дороже',
+                    key: 'meters',
+                    label: 'Высота, м',
+                    step: 0.1,
+                    help: 'По умолчанию выбрана 1,8 м',
                 },
             ],
         },
@@ -200,6 +288,12 @@ const SPECS: Partial<Record<BuilderBlockType, FieldSpec[]>> = {
             itemLabel: 'Цвет',
             addLabel: 'Добавить цвет',
             newItem: { ral: '', name: '', hex: '' },
+            itemTitle: (item) =>
+                asString(item.ral) !== ''
+                    ? [`RAL ${asString(item.ral)}`, asString(item.name)]
+                          .filter((part) => part !== '')
+                          .join(' · ')
+                    : '',
             fields: [
                 { kind: 'text', key: 'ral', label: 'Номер RAL', help: 'Например, 6005' },
                 { kind: 'text', key: 'name', label: 'Название', help: 'Например, «зелёный мох»' },
@@ -207,26 +301,44 @@ const SPECS: Partial<Record<BuilderBlockType, FieldSpec[]>> = {
                     kind: 'text',
                     key: 'hex',
                     label: 'Цвет на экране (HEX)',
-                    help: 'Приближение для картинки, например #0F4336',
+                    help: 'Приближение для картинки, например #2D7F27',
                 },
             ],
         },
         {
             kind: 'group',
-            key: 'gate',
-            label: 'Ворота',
+            key: 'scene',
+            label: 'Картинка',
             fields: [
                 {
-                    kind: 'text',
-                    key: 'label',
-                    label: 'Подпись',
-                    help: 'Например, «Ворота и калитка»',
+                    kind: 'note',
+                    text: 'Фото участка: дом с деревьями, снятый с улицы с высоты глаз, пропорции 2,55 : 1 (например 1600×627), от 1600 px по ширине. Забор рисуется поверх нижней части фото, низ забора — на 414-й единице сцены из 470. Без фото — рисованный участок.',
+                },
+                { kind: 'image', key: 'photo', label: 'Фото участка (фон)' },
+                {
+                    kind: 'note',
+                    text: 'Человек для масштаба: фото в полный рост на прозрачном фоне (PNG или WebP), обрезанное по макушке и подошвам. Без фото — силуэт.',
+                },
+                { kind: 'image', key: 'person', label: 'Человек в полный рост' },
+                {
+                    kind: 'number',
+                    key: 'personHeight',
+                    label: 'Рост человека, м',
+                    step: 0.01,
+                    help: 'По умолчанию 1,65',
                 },
                 {
                     kind: 'number',
-                    key: 'price',
-                    label: 'Цена, ₽',
-                    help: '0 — пункт не показывается',
+                    key: 'personX',
+                    label: 'Положение человека по горизонтали',
+                    help: 'Центр человека в единицах сцены от 0 (слева) до 1200 (справа). По умолчанию 672',
+                },
+                {
+                    kind: 'number',
+                    key: 'scale',
+                    label: 'Масштаб сцены, px на метр',
+                    step: 0.1,
+                    help: 'Сколько единиц сцены (ширина 1200) занимает метр у забора. По умолчанию 103,4. Для фото: высота человека на снимке в единицах ÷ его рост ÷ 1,06',
                 },
             ],
         },
@@ -241,12 +353,53 @@ const SPECS: Partial<Record<BuilderBlockType, FieldSpec[]>> = {
             ],
         },
         {
+            kind: 'group',
+            key: 'gate',
+            label: 'Ворота',
+            fields: [
+                {
+                    kind: 'checkbox',
+                    key: 'enabled',
+                    label: 'Показывать пункт «Ворота» (в смете — «по замеру»)',
+                },
+                {
+                    kind: 'text',
+                    key: 'label',
+                    label: 'Подпись',
+                    help: 'Например, «Ворота и калитка»',
+                },
+            ],
+        },
+        {
+            kind: 'items',
+            key: 'freeItems',
+            label: 'Бесплатно в смете',
+            itemLabel: 'Пункт',
+            addLabel: 'Добавить пункт',
+            newItem: { title: '', note: '' },
+            itemTitle: (item) => asString(item.title),
+            fields: [
+                {
+                    kind: 'text',
+                    key: 'title',
+                    label: 'Что',
+                    help: 'Например, «Замер и образцы цвета»',
+                },
+                {
+                    kind: 'text',
+                    key: 'note',
+                    label: 'Пояснение',
+                    help: 'Например, «выезд по Саратову и области»',
+                },
+            ],
+        },
+        {
             kind: 'text',
             key: 'cta',
             label: 'Текст кнопки',
             help: 'Кнопка ведёт к форме заявки и подставляет выбранные параметры',
         },
-        { kind: 'textarea', key: 'note', label: 'Пояснение под суммой', rows: 2 },
+        { kind: 'textarea', key: 'note', label: 'Пояснение под сметой', rows: 2 },
     ],
     faq: [
         optionalTitle,
@@ -274,6 +427,31 @@ const SPECS: Partial<Record<BuilderBlockType, FieldSpec[]>> = {
             media: 'src',
             newItem: { src: '', alt: '' },
             fields: [{ kind: 'image', key: 'src', altKey: 'alt', label: 'Фото' }],
+        },
+    ],
+    reviews: [
+        optionalTitle,
+        { kind: 'textarea', key: 'subtitle', label: 'Подзаголовок', rows: 2 },
+        {
+            kind: 'items',
+            key: 'items',
+            label: 'Отзывы',
+            itemLabel: 'Отзыв',
+            addLabel: 'Добавить отзыв',
+            media: 'image',
+            newItem: { author: '', place: '', details: '', text: '', image: '', imageAlt: '' },
+            fields: [
+                { kind: 'image', key: 'image', altKey: 'imageAlt', label: 'Фото объекта' },
+                { kind: 'textarea', key: 'text', label: 'Текст отзыва', rows: 4 },
+                { kind: 'text', key: 'author', label: 'Имя клиента' },
+                { kind: 'text', key: 'place', label: 'Район или населённый пункт' },
+                {
+                    kind: 'text',
+                    key: 'details',
+                    label: 'Что заказали',
+                    help: 'Например: 28 м, Largo, RAL 7024',
+                },
+            ],
         },
     ],
     portfolio: [

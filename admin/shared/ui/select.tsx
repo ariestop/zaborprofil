@@ -14,17 +14,17 @@ interface SelectProps {
 export function Select({ value, onValueChange, options }: SelectProps) {
   return (
     <SelectPrimitive.Root value={value} onValueChange={onValueChange}>
-      <SelectPrimitive.Trigger className="inline-flex h-10 min-w-48 items-center justify-between rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
+      <SelectPrimitive.Trigger className="inline-flex h-12 min-w-48 items-center justify-between rounded-lg border border-line-strong bg-white px-3 text-sm text-ink dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100">
         <SelectPrimitive.Value />
       </SelectPrimitive.Trigger>
       <SelectPrimitive.Portal>
-        <SelectPrimitive.Content className="z-50 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-900">
+        <SelectPrimitive.Content className="z-50 overflow-hidden rounded-lg border border-line bg-white shadow-md dark:border-slate-700 dark:bg-slate-900">
           <SelectPrimitive.Viewport className="p-1">
             {options.map((option) => (
               <SelectPrimitive.Item
                 key={option.value}
                 value={option.value}
-                className="cursor-pointer rounded-sm px-2 py-1.5 text-sm text-slate-700 outline-hidden hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-800"
+                className="cursor-pointer rounded-sm px-2 py-1.5 text-sm text-ink outline-hidden hover:bg-surface-strong dark:text-slate-100 dark:hover:bg-slate-800"
               >
                 <SelectPrimitive.ItemText>{option.label}</SelectPrimitive.ItemText>
               </SelectPrimitive.Item>

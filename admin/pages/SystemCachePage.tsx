@@ -57,7 +57,7 @@ export default function SystemCachePage() {
       <PageHeader title="Кэш" description="Хранилище кэша и безопасная очистка." />
       <Card title="Хранилище кэша">
         <p className="text-sm">{cacheQuery.data.adapter}</p>
-        <p className="text-sm text-slate-500 dark:text-slate-400">Пространство имён: {cacheQuery.data.namespace || 'не задано'}</p>
+        <p className="text-sm text-graphite dark:text-slate-400">Пространство имён: {cacheQuery.data.namespace || 'не задано'}</p>
       </Card>
       <Card className="mt-4" title="Опасные действия">
         <Button variant="danger" onClick={() => void runClearCache()} disabled={clearMutation.isPending || !canRunDangerousActions}>

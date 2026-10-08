@@ -16,7 +16,7 @@ final class StagingConfigParityTest extends TestCase
     private const array PARITY_PARAMETERS = [
         'app.vite.dev_server_url',
         'env(PUBLIC_HTTP_CACHE_ENABLED)',
-        'env(ADMIN_WEB_ASSET_BUILD_ENABLED)',
+        'app.asset_build_enabled',
     ];
 
     private ?string $previousViteDevServer = null;
@@ -44,7 +44,7 @@ final class StagingConfigParityTest extends TestCase
         $prod = $this->parameters('prod');
 
         self::assertSame('', $staging['app.vite.dev_server_url']);
-        self::assertSame('0', $staging['env(ADMIN_WEB_ASSET_BUILD_ENABLED)']);
+        self::assertFalse($staging['app.asset_build_enabled']);
         self::assertSame($prod, $staging);
     }
 

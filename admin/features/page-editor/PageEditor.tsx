@@ -252,10 +252,10 @@ export function PageEditor({
                                         type="button"
                                         aria-label="Другие действия со страницей"
                                         className={cn(
-                                            'inline-flex h-10 w-10 items-center justify-center focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500',
+                                            'inline-flex h-12 w-12 items-center justify-center focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500',
                                             publishVisible
                                                 ? 'rounded-r-lg border-l border-brand-800 bg-brand-700 text-white hover:bg-brand-800'
-                                                : 'rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100',
+                                                : 'rounded-lg border border-line-strong bg-white text-ink hover:bg-surface dark:hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100',
                                         )}
                                     >
                                         <svg
@@ -305,9 +305,9 @@ export function PageEditor({
                                 aria-selected={active}
                                 to={pageEditorTabPath(page.id, item.value)}
                                 className={cn(
-                                    'flex h-[42px] items-center gap-1.5 px-3.5 text-sm transition',
+                                    'flex h-12 items-center gap-1.5 px-3.5 text-sm transition',
                                     active
-                                        ? 'font-semibold text-ink shadow-[inset_0_-2px_0_#047857] dark:text-slate-100'
+                                        ? 'font-semibold text-ink shadow-[inset_0_-2px_0_var(--color-brand-700)] dark:text-slate-100'
                                         : 'font-medium text-graphite hover:text-ink dark:text-slate-400 dark:hover:text-slate-100',
                                 )}
                             >

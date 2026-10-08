@@ -77,7 +77,7 @@ const USAGE_OPTIONS: Array<{ value: MediaUsageFilter; label: string }> = [
 const PER_PAGE_OPTIONS = [24, 48, 96]
 
 const SELECT_CLASS =
-    'h-10 rounded-lg border border-slate-300 bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-900'
+    'h-12 rounded-lg border border-line-strong bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-900'
 
 const TYPE_OPTIONS: Array<{ value: MediaTypeFilter; label: string }> = [
     { value: '', label: 'Все файлы' },
@@ -103,7 +103,7 @@ function AssetThumb({ asset, className }: { asset: MediaAssetItem; className?: s
         return (
             <div
                 className={cn(
-                    'flex items-center justify-center bg-slate-100 text-xs font-semibold uppercase text-slate-500 dark:bg-slate-800',
+                    'flex items-center justify-center bg-surface-strong text-xs font-semibold uppercase text-graphite dark:text-slate-500 dark:bg-slate-800',
                     className,
                 )}
             >
@@ -117,7 +117,7 @@ function AssetThumb({ asset, className }: { asset: MediaAssetItem; className?: s
             src={source}
             alt={asset.alt ?? asset.originalName}
             loading="lazy"
-            className={cn('bg-slate-100 object-cover dark:bg-slate-800', className)}
+            className={cn('bg-surface-strong object-cover dark:bg-slate-800', className)}
         />
     )
 }
@@ -149,12 +149,12 @@ function UploadRow({
 
     return (
         <li
-            className="rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700"
+            className="rounded-lg border border-line px-3 py-2 text-sm dark:border-slate-700"
             data-testid="upload-item"
         >
             <div className="flex items-center justify-between gap-3">
                 <span className="min-w-0 truncate font-medium">{item.file.name}</span>
-                <span className="shrink-0 text-xs text-slate-500">
+                <span className="shrink-0 text-xs text-graphite dark:text-slate-500">
                     {item.status === 'queued' ? 'В очереди' : null}
                     {item.status === 'uploading' ? `${percent}%` : null}
                     {item.status === 'done'
@@ -167,7 +167,7 @@ function UploadRow({
             </div>
             {item.status === 'uploading' || item.status === 'queued' ? (
                 <div
-                    className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800"
+                    className="mt-2 h-1.5 overflow-hidden rounded-full bg-line dark:bg-slate-800"
                     role="progressbar"
                     aria-label={`Загрузка ${item.file.name}`}
                     aria-valuemin={0}
@@ -238,17 +238,15 @@ function FocalPointPicker({
             className="space-y-1.5"
             data-testid="asset-focal-point"
         >
-            <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                Фокальная точка
-            </h3>
-            <p className="text-xs text-slate-500">
+            <h3 className="text-xs font-semibold text-ink dark:text-slate-200">Фокальная точка</h3>
+            <p className="text-xs text-graphite dark:text-slate-500">
                 Кликните по главному объекту: при обрезке на сайте он останется в кадре.
             </p>
             <button
                 type="button"
                 aria-label="Выбрать фокальную точку"
                 onClick={pick}
-                className="relative block w-full cursor-crosshair overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800"
+                className="relative block w-full cursor-crosshair overflow-hidden rounded-lg bg-surface-strong dark:bg-slate-800"
             >
                 <img
                     src={asset.publicPath}
@@ -264,7 +262,7 @@ function FocalPointPicker({
                     />
                 ) : null}
             </button>
-            <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
+            <div className="flex items-center justify-between text-xs text-graphite dark:text-slate-300">
                 <span>
                     {value === null ? 'По центру (по умолчанию)' : `X ${value.x}% · Y ${value.y}%`}
                 </span>
@@ -358,7 +356,7 @@ function AssetDetails({
 
     return (
         <aside
-            className="space-y-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700"
+            className="space-y-3 rounded-xl border border-line p-3 dark:border-slate-700"
             aria-label="Свойства файла"
             data-testid="asset-details"
         >
@@ -367,15 +365,15 @@ function AssetDetails({
                     <img
                         src={asset.publicPath}
                         alt={asset.alt ?? asset.originalName}
-                        className="max-h-56 w-full rounded-lg bg-slate-100 object-contain dark:bg-slate-800"
+                        className="max-h-56 w-full rounded-lg bg-surface-strong object-contain dark:bg-slate-800"
                     />
                 </a>
             ) : (
                 <AssetThumb asset={asset} className="h-32 w-full rounded-lg" />
             )}
 
-            <div className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
-                <p className="break-all text-sm font-semibold text-slate-900 dark:text-slate-100">
+            <div className="space-y-1 text-xs text-graphite dark:text-slate-300">
+                <p className="break-all text-sm font-semibold text-ink dark:text-slate-100">
                     {asset.originalName}
                 </p>
                 <p>
@@ -399,11 +397,11 @@ function AssetDetails({
                 className="space-y-1.5"
                 data-testid="asset-usages"
             >
-                <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-200">
+                <h3 className="text-xs font-semibold text-ink dark:text-slate-200">
                     Где используется
                 </h3>
                 {usagesQuery.isLoading ? (
-                    <p className="text-xs text-slate-500">Проверяем…</p>
+                    <p className="text-xs text-graphite dark:text-slate-500">Проверяем…</p>
                 ) : null}
                 {usagesQuery.isError ? (
                     <p className="text-xs text-red-700 dark:text-red-400" role="alert">
@@ -411,11 +409,15 @@ function AssetDetails({
                     </p>
                 ) : null}
                 {usagesQuery.isSuccess && usagesQuery.data.total === 0 ? (
-                    <p className="text-xs text-slate-500">Нигде не используется.</p>
+                    <p className="text-xs text-graphite dark:text-slate-500">
+                        Нигде не используется.
+                    </p>
                 ) : null}
                 {usagesQuery.isSuccess && usagesQuery.data.total > 0 ? (
                     <>
-                        <p className="text-xs text-slate-500">Мест: {usagesQuery.data.total}</p>
+                        <p className="text-xs text-graphite dark:text-slate-500">
+                            Мест: {usagesQuery.data.total}
+                        </p>
                         <MediaUsageList
                             usages={usagesQuery.data.usages}
                             className="max-h-40 space-y-1.5 overflow-y-auto"
@@ -424,7 +426,7 @@ function AssetDetails({
                 ) : null}
             </section>
 
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-200">
+            <label className="block text-xs font-medium text-ink dark:text-slate-200">
                 Alt (описание для SEO и доступности)
                 <Input
                     className="mt-1"
@@ -434,7 +436,7 @@ function AssetDetails({
                     placeholder="Забор из профнастила с кирпичными столбами"
                 />
             </label>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-200">
+            <label className="block text-xs font-medium text-ink dark:text-slate-200">
                 Title (всплывающая подсказка)
                 <Input
                     className="mt-1"
@@ -443,7 +445,7 @@ function AssetDetails({
                     onChange={(event) => setTitle(event.target.value)}
                 />
             </label>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-200">
+            <label className="block text-xs font-medium text-ink dark:text-slate-200">
                 Описание (для редакторов)
                 <Textarea
                     className="mt-1 min-h-16"
@@ -452,7 +454,7 @@ function AssetDetails({
                     onChange={(event) => setDescription(event.target.value)}
                 />
             </label>
-            <label className="block text-xs font-medium text-slate-700 dark:text-slate-200">
+            <label className="block text-xs font-medium text-ink dark:text-slate-200">
                 Папка
                 <Input
                     className="mt-1"
@@ -723,7 +725,7 @@ export function MediaLibrary({
                     ))}
                 </select>
                 <div
-                    className="flex overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700"
+                    className="flex overflow-hidden rounded-lg border border-line-strong dark:border-slate-700"
                     role="group"
                     aria-label="Вид"
                 >
@@ -820,23 +822,23 @@ export function MediaLibrary({
                         >{`${folder.name} (${folder.count})`}</option>
                     ))}
                 </select>
-                <label className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
+                <label className="flex items-center gap-1 text-xs text-graphite dark:text-slate-300">
                     Загружены с
                     <Input
                         type="date"
                         aria-label="Загружены с"
-                        className="h-10 w-40"
+                        className="h-12 w-40"
                         value={dateFrom}
                         max={dateTo || undefined}
                         onChange={(event) => resetPage(setDateFrom)(event.target.value)}
                     />
                 </label>
-                <label className="flex items-center gap-1 text-xs text-slate-600 dark:text-slate-300">
+                <label className="flex items-center gap-1 text-xs text-graphite dark:text-slate-300">
                     по
                     <Input
                         type="date"
                         aria-label="Загружены по"
-                        className="h-10 w-40"
+                        className="h-12 w-40"
                         value={dateTo}
                         min={dateFrom || undefined}
                         onChange={(event) => resetPage(setDateTo)(event.target.value)}
@@ -855,7 +857,7 @@ export function MediaLibrary({
             ) : null}
 
             {uploads.items.length === 0 ? (
-                <p className="rounded-xl border border-dashed border-slate-300 px-4 py-3 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+                <p className="rounded-xl border border-dashed border-line-strong px-4 py-3 text-center text-sm text-graphite dark:border-slate-700 dark:text-slate-400">
                     Перетащите файлы сюда или нажмите «Загрузить файлы». JPG, PNG, WebP, AVIF
                     {imagesOnly ? '' : ', PDF'} до 10 МБ.
                 </p>
@@ -949,7 +951,7 @@ export function MediaLibrary({
                                             'group block w-full overflow-hidden rounded-xl border text-left transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500',
                                             asset.id === selectedId
                                                 ? 'border-brand-600 ring-2 ring-brand-500'
-                                                : 'border-slate-200 hover:border-slate-400 dark:border-slate-700',
+                                                : 'border-line hover:border-line-strong dark:hover:border-slate-400 dark:border-slate-700',
                                         )}
                                         aria-pressed={asset.id === selectedId}
                                         onClick={() => activate(asset)}
@@ -961,7 +963,7 @@ export function MediaLibrary({
                                         <span className="block truncate px-2 pt-1.5 text-xs font-medium">
                                             {asset.originalName}
                                         </span>
-                                        <span className="flex items-center justify-between gap-1 px-2 pb-1.5 text-[11px] text-slate-500">
+                                        <span className="flex items-center justify-between gap-1 px-2 pb-1.5 text-[11px] text-graphite dark:text-slate-500">
                                             <span>{formatFileSize(asset.size)}</span>
                                             <UsageBadge asset={asset} />
                                         </span>
@@ -973,7 +975,7 @@ export function MediaLibrary({
 
                     {assets.length > 0 && view === 'list' ? (
                         <ul
-                            className="divide-y divide-slate-200 rounded-xl border border-slate-200 dark:divide-slate-700 dark:border-slate-700"
+                            className="divide-y divide-line rounded-xl border border-line dark:divide-slate-700 dark:border-slate-700"
                             data-testid="media-list"
                         >
                             {assets.map((asset) => (
@@ -984,7 +986,7 @@ export function MediaLibrary({
                                             'flex w-full items-center gap-3 px-3 py-2 text-left text-sm',
                                             asset.id === selectedId
                                                 ? 'bg-brand-50 dark:bg-brand-950/30'
-                                                : 'hover:bg-slate-50 dark:hover:bg-slate-800/50',
+                                                : 'hover:bg-surface dark:hover:bg-slate-800/50',
                                         )}
                                         aria-pressed={asset.id === selectedId}
                                         onClick={() => activate(asset)}
@@ -1000,21 +1002,21 @@ export function MediaLibrary({
                                             <span className="block truncate font-medium">
                                                 {asset.originalName}
                                             </span>
-                                            <span className="block truncate text-xs text-slate-500">
+                                            <span className="block truncate text-xs text-graphite dark:text-slate-500">
                                                 {asset.alt ?? 'alt не задан'}
                                             </span>
                                         </span>
                                         <UsageBadge asset={asset} />
                                         <Badge>{assetExtension(asset)}</Badge>
-                                        <span className="hidden w-24 shrink-0 text-right text-xs text-slate-500 sm:block">
+                                        <span className="hidden w-24 shrink-0 text-right text-xs text-graphite dark:text-slate-500 sm:block">
                                             {asset.width !== null && asset.height !== null
                                                 ? `${asset.width}×${asset.height}`
                                                 : '—'}
                                         </span>
-                                        <span className="hidden w-24 shrink-0 text-right text-xs text-slate-500 md:block">
+                                        <span className="hidden w-24 shrink-0 text-right text-xs text-graphite dark:text-slate-500 md:block">
                                             {new Date(asset.createdAt).toLocaleDateString('ru-RU')}
                                         </span>
-                                        <span className="w-20 shrink-0 text-right text-xs text-slate-500">
+                                        <span className="w-20 shrink-0 text-right text-xs text-graphite dark:text-slate-500">
                                             {formatFileSize(asset.size)}
                                         </span>
                                     </button>
@@ -1028,7 +1030,10 @@ export function MediaLibrary({
                             className="flex flex-wrap items-center justify-between gap-3"
                             aria-label="Страницы медиатеки"
                         >
-                            <span className="text-xs text-slate-500" data-testid="media-range">
+                            <span
+                                className="text-xs text-graphite dark:text-slate-500"
+                                data-testid="media-range"
+                            >
                                 Показано {(pagination.page - 1) * pagination.perPage + 1}–
                                 {Math.min(pagination.page * pagination.perPage, pagination.total)}{' '}
                                 из {pagination.total}
