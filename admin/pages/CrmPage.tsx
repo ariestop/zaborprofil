@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useMatch, useNavigate, useSearchParams } from 'react-router-dom'
+import { useMatch, useNavigate, useSearchParams } from 'react-router-dom'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { useToast } from '../app/providers/toast-provider'
 import {
@@ -14,24 +14,26 @@ import {
     nextLeadAction,
     type LeadFilters,
     type LeadListParams,
-    type LeadSortField,
 } from '../entities/lead/model'
-import {
-    detectPeriod,
-    formatLeadListTime,
-    leadInitials,
-    periodRange,
-    type LeadPeriod,
-} from '../entities/lead/presentation'
+import { detectPeriod, periodRange, type LeadPeriod } from '../entities/lead/presentation'
 import { CreateLeadDialog } from '../features/leads/CreateLeadDialog'
+import {
+    isLeadStatus,
+    readLeadListParams,
+    statusMatchesTab,
+    withSearch,
+    writeLeadListParams,
+} from '../features/leads/crm-url-params'
 import { FilterSelect } from '../features/leads/FilterSelect'
+import { LeadListRow } from '../features/leads/LeadListRow'
+import { LeadQuickFilters } from '../features/leads/LeadQuickFilters'
+import { LeadStatusTabs } from '../features/leads/LeadStatusTabs'
 import { useLeadSavedViews, type LeadSavedView } from '../features/leads/saved-views'
 import { UndoToast, type UndoToastState } from '../features/leads/UndoToast'
 import { describeApiError } from '../features/seo/redirects/redirect-rules'
 import { useDebouncedValue } from '../shared/hooks/use-debounced-value'
 import { downloadTextFile } from '../shared/lib/download'
 import { cn } from '../shared/lib/cn'
-import { formatNumber } from '../shared/lib/format'
 import { ErrorState } from '../shared/ui'
 import { Pagination } from '../shared/ui/pagination'
 import { NavIcon } from '../layouts/nav-icons'
@@ -40,19 +42,8 @@ import { useCan } from '../stores/auth'
 import type { LeadStatus } from '../types/api'
 import LeadDetailPage, { type LeadStatusChangeTarget } from './LeadDetailPage'
 
-const PER_PAGE = 25
-const STATUSES: LeadStatus[] = ['new', 'in_progress', 'done', 'spam']
-const SORTS: LeadSortField[] = ['createdAt', 'updatedAt', 'name', 'status', 'source']
 const WAITING_HOURS = 2
 const DESKTOP_QUERY = '(min-width: 1024px)'
-
-const TABS: Array<{ id: LeadStatus | 'all'; label: string }> = [
-    { id: 'all', label: 'Все' },
-    { id: 'new', label: 'Новые' },
-    { id: 'in_progress', label: 'В работе' },
-    { id: 'done', label: 'Готово' },
-    { id: 'spam', label: 'Спам' },
-]
 
 const PERIOD_OPTIONS: Array<{ value: LeadPeriod; label: string }> = [
     { value: 'all', label: 'Период' },
@@ -63,71 +54,11 @@ const PERIOD_OPTIONS: Array<{ value: LeadPeriod; label: string }> = [
     { value: 'custom', label: 'Свои даты…' },
 ]
 
-function readParams(search: URLSearchParams): LeadListParams {
-    const status = search.get('status')
-    const sort = search.get('sort')
-    const waiting = Number.parseInt(search.get('waiting') ?? '', 10)
-
-    return {
-        q: '',
-        status: STATUSES.includes(status as LeadStatus) ? (status as LeadStatus) : 'all',
-        source: search.get('source') ?? '',
-        from: search.get('from') ?? '',
-        to: search.get('to') ?? '',
-        assignee: search.get('assignee') ?? 'all',
-        b2b: search.get('b2b') === '1',
-        waitingHours: Number.isFinite(waiting) && waiting > 0 ? waiting : 0,
-        sort: SORTS.includes(sort as LeadSortField) ? (sort as LeadSortField) : 'createdAt',
-        direction: search.get('direction') === 'asc' ? 'asc' : 'desc',
-        page: Math.max(1, Number.parseInt(search.get('page') ?? '1', 10) || 1),
-        perPage: PER_PAGE,
-    }
-}
-
-function writeParams(params: LeadListParams): URLSearchParams {
-    const search = new URLSearchParams()
-    const entries: Array<[string, string, string]> = [
-        ['status', params.status, 'all'],
-        ['source', params.source, ''],
-        ['from', params.from, ''],
-        ['to', params.to, ''],
-        ['assignee', params.assignee, 'all'],
-        ['b2b', params.b2b ? '1' : '', ''],
-        ['waiting', params.waitingHours > 0 ? String(params.waitingHours) : '', ''],
-        ['sort', params.sort, 'createdAt'],
-        ['direction', params.direction, 'desc'],
-        ['page', String(params.page), '1'],
-    ]
-    for (const [key, value, fallback] of entries) {
-        if (value !== fallback) {
-            search.set(key, value)
-        }
-    }
-
-    return search
-}
-
-function withSearch(path: string, search: URLSearchParams): string {
-    const query = search.toString()
-
-    return query === '' ? path : `${path}?${query}`
-}
-
-function statusMatchesTab(tab: LeadStatus | 'all', status: LeadStatus): boolean {
-    return tab === 'all' ? status !== 'spam' : tab === status
-}
-
 function isDesktop(): boolean {
     return typeof window.matchMedia === 'function' && window.matchMedia(DESKTOP_QUERY).matches
 }
 
 const filterButton = 'h-8'
-const chipBase =
-    'h-[30px] rounded-full border px-2.5 text-xs transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500'
-const chipOn =
-    'border-brand-200 bg-brand-50 font-semibold text-brand-800 dark:border-brand-800 dark:bg-brand-900/30 dark:text-brand-200'
-const chipOff =
-    'border-line-strong bg-white font-medium text-graphite hover:bg-surface dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
 
 /**
  * Рабочее место по заявкам: слева список с вкладками статусов, фильтрами и быстрыми видами,
@@ -139,7 +70,7 @@ export default function CrmPage() {
     const navigate = useNavigate()
     const leadId = useMatch('/admin/crm/:leadId')?.params.leadId
     const [searchParams, setSearchParams] = useSearchParams()
-    const urlParams = useMemo(() => readParams(searchParams), [searchParams])
+    const urlParams = useMemo(() => readLeadListParams(searchParams), [searchParams])
     const [searchText, setSearchText] = useState('')
     const debouncedSearch = useDebouncedValue(searchText)
     const params: LeadListParams = { ...urlParams, q: debouncedSearch.trim() }
@@ -150,8 +81,6 @@ export default function CrmPage() {
     const [exporting, setExporting] = useState(false)
     const [createOpen, setCreateOpen] = useState(false)
     const [customPeriod, setCustomPeriod] = useState(false)
-    const [savingView, setSavingView] = useState(false)
-    const [viewName, setViewName] = useState('')
     const [undo, setUndo] = useState<
         (UndoToastState & { leadId: string; from: LeadStatus }) | null
     >(null)
@@ -160,7 +89,7 @@ export default function CrmPage() {
     const savedViews = useLeadSavedViews()
 
     const update = (patch: Partial<LeadListParams>) => {
-        setSearchParams(writeParams({ ...params, page: 1, ...patch }), { replace: true })
+        setSearchParams(writeLeadListParams({ ...params, page: 1, ...patch }), { replace: true })
     }
 
     const exportCsv = async () => {
@@ -334,12 +263,10 @@ export default function CrmPage() {
         setCustomPeriod(view.period === 'custom')
         setSearchText('')
         setSearchParams(
-            writeParams({
+            writeLeadListParams({
                 ...params,
                 q: '',
-                status: STATUSES.includes(view.status as LeadStatus)
-                    ? (view.status as LeadStatus)
-                    : 'all',
+                status: isLeadStatus(view.status) ? view.status : 'all',
                 source: view.source,
                 assignee: view.assignee,
                 b2b: view.b2b,
@@ -352,11 +279,7 @@ export default function CrmPage() {
         )
     }
 
-    const saveView = () => {
-        const name = viewName.trim()
-        if (name === '') {
-            return
-        }
+    const saveView = (name: string) => {
         savedViews.add({
             name,
             status: params.status,
@@ -368,20 +291,7 @@ export default function CrmPage() {
             from: params.from,
             to: params.to,
         })
-        setSavingView(false)
-        setViewName('')
         push({ title: 'Вид сохранён', description: name })
-    }
-
-    const counts = data?.counts
-    const tabCount = (id: LeadStatus | 'all'): string => {
-        if (counts === undefined) {
-            return ''
-        }
-
-        return formatNumber(
-            id === 'all' ? counts.total - (counts.byStatus.spam ?? 0) : (counts.byStatus[id] ?? 0),
-        )
     }
 
     const todayActive = period === 'today'
@@ -420,36 +330,11 @@ export default function CrmPage() {
                     )}
                 >
                     <div className="flex flex-col gap-3 px-[18px] pb-2.5 pt-[18px]">
-                        <div
-                            role="tablist"
-                            aria-label="Статус заявок"
-                            className="flex gap-0.5 rounded-[11px] bg-line p-[3px] dark:bg-slate-800"
-                        >
-                            {TABS.map((tab) => {
-                                const active = params.status === tab.id
-
-                                return (
-                                    <button
-                                        key={tab.id}
-                                        type="button"
-                                        role="tab"
-                                        aria-selected={active}
-                                        onClick={() => update({ status: tab.id })}
-                                        className={cn(
-                                            'flex h-9 flex-[1_1_auto] items-center justify-center gap-1 whitespace-nowrap rounded-[9px] px-1.5 text-xs font-semibold focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500',
-                                            active
-                                                ? 'bg-white text-ink dark:bg-slate-950 dark:text-slate-100'
-                                                : 'bg-transparent text-graphite dark:text-slate-400',
-                                        )}
-                                    >
-                                        {tab.label}
-                                        <span className="text-[11px] font-bold text-graphite dark:text-slate-400">
-                                            {tabCount(tab.id)}
-                                        </span>
-                                    </button>
-                                )
-                            })}
-                        </div>
+                        <LeadStatusTabs
+                            status={params.status}
+                            counts={data?.counts}
+                            onChange={(status) => update({ status })}
+                        />
 
                         <label className="flex h-12 items-center gap-2 rounded-[10px] border border-line-strong px-3 text-graphite focus-within:ring-2 focus-within:ring-brand-500 dark:border-slate-700 dark:text-slate-400">
                             <NavIcon name="search" size={16} />
@@ -533,101 +418,22 @@ export default function CrmPage() {
                             </div>
                         ) : null}
 
-                        <div className="flex flex-wrap gap-1.5">
-                            <button
-                                type="button"
-                                aria-pressed={todayActive}
-                                onClick={() => setPeriod(todayActive ? 'all' : 'today')}
-                                className={cn(chipBase, todayActive ? chipOn : chipOff)}
-                            >
-                                Сегодня
-                            </button>
-                            <button
-                                type="button"
-                                aria-pressed={params.b2b}
-                                onClick={() => update({ b2b: !params.b2b })}
-                                className={cn(chipBase, params.b2b ? chipOn : chipOff)}
-                            >
-                                Юрлица B2B
-                            </button>
-                            <button
-                                type="button"
-                                aria-pressed={params.waitingHours > 0}
-                                onClick={() =>
-                                    update({
-                                        waitingHours: params.waitingHours > 0 ? 0 : WAITING_HOURS,
-                                    })
-                                }
-                                className={cn(chipBase, params.waitingHours > 0 ? chipOn : chipOff)}
-                            >
-                                Без ответа больше {WAITING_HOURS} ч
-                            </button>
-                            {savedViews.views.map((view) => (
-                                <span
-                                    key={view.id}
-                                    className={cn(
-                                        chipBase,
-                                        chipOff,
-                                        'inline-flex items-center gap-1 pr-1',
-                                    )}
-                                >
-                                    <button
-                                        type="button"
-                                        onClick={() => applyView(view)}
-                                        className="max-w-36 truncate focus-visible:outline-hidden"
-                                    >
-                                        {view.name}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        aria-label={`Удалить вид «${view.name}»`}
-                                        onClick={() => savedViews.remove(view.id)}
-                                        className="flex h-5 w-5 items-center justify-center rounded-full text-graphite hover:bg-surface-strong dark:hover:bg-slate-800"
-                                    >
-                                        <NavIcon name="close" size={12} />
-                                    </button>
-                                </span>
-                            ))}
-                            {savedViews.views.length < savedViews.limit ? (
-                                <button
-                                    type="button"
-                                    onClick={() => setSavingView((value) => !value)}
-                                    className={cn(
-                                        chipBase,
-                                        'border-dashed border-line-strong bg-white font-medium text-graphite hover:bg-surface dark:hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400',
-                                    )}
-                                >
-                                    + Сохранить вид
-                                </button>
-                            ) : null}
-                        </div>
-
-                        {savingView ? (
-                            <form
-                                className="flex gap-2"
-                                onSubmit={(event) => {
-                                    event.preventDefault()
-                                    saveView()
-                                }}
-                            >
-                                <input
-                                    aria-label="Название вида"
-                                    placeholder="Название, например «B2B без ответа»"
-                                    maxLength={40}
-                                    autoFocus
-                                    value={viewName}
-                                    onChange={(event) => setViewName(event.target.value)}
-                                    className="h-12 min-w-0 flex-1 rounded-lg border border-line-strong bg-white px-2.5 text-[13px] dark:border-slate-700 dark:bg-slate-900"
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={viewName.trim() === ''}
-                                    className="h-12 rounded-lg bg-brand-700 px-3 text-[13px] font-semibold text-white disabled:opacity-60"
-                                >
-                                    Сохранить
-                                </button>
-                            </form>
-                        ) : null}
+                        <LeadQuickFilters
+                            todayActive={todayActive}
+                            b2b={params.b2b}
+                            waiting={params.waitingHours > 0}
+                            waitingHours={WAITING_HOURS}
+                            savedViews={savedViews}
+                            onToggleToday={() => setPeriod(todayActive ? 'all' : 'today')}
+                            onToggleB2b={() => update({ b2b: !params.b2b })}
+                            onToggleWaiting={() =>
+                                update({
+                                    waitingHours: params.waitingHours > 0 ? 0 : WAITING_HOURS,
+                                })
+                            }
+                            onApplyView={applyView}
+                            onSaveView={saveView}
+                        />
 
                         {hasFilters ? (
                             <div>
@@ -679,71 +485,14 @@ export default function CrmPage() {
                                 className="m-0 flex list-none flex-col gap-0.5 p-0"
                                 aria-label="Заявки"
                             >
-                                {items.map((lead) => {
-                                    const isCurrent = lead.id === leadId
-                                    const unread = lead.readAt === null && lead.status === 'new'
-
-                                    return (
-                                        <li key={lead.id} data-testid="lead-row">
-                                            <Link
-                                                to={leadHref(lead.id)}
-                                                aria-current={isCurrent ? 'true' : undefined}
-                                                className={cn(
-                                                    'flex w-full gap-3 rounded-xl border px-3 py-[13px] text-left text-sm text-ink no-underline hover:text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:text-slate-100',
-                                                    isCurrent
-                                                        ? 'border-brand-200 bg-brand-50 dark:border-brand-800 dark:bg-brand-900/20'
-                                                        : 'border-transparent bg-transparent hover:bg-surface dark:hover:bg-slate-800/60',
-                                                )}
-                                            >
-                                                <span
-                                                    aria-hidden="true"
-                                                    className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-surface-strong text-[13px] font-bold text-graphite dark:bg-slate-800 dark:text-slate-200"
-                                                >
-                                                    {leadInitials(lead.name)}
-                                                </span>
-                                                <span className="flex min-w-0 flex-1 flex-col gap-[3px]">
-                                                    <span className="flex items-center gap-2">
-                                                        <span
-                                                            className={cn(
-                                                                'min-w-0 flex-1 truncate',
-                                                                unread
-                                                                    ? 'font-bold'
-                                                                    : 'font-medium',
-                                                            )}
-                                                        >
-                                                            {lead.name}
-                                                        </span>
-                                                        {unread ? (
-                                                            <span
-                                                                aria-label="Не прочитана"
-                                                                className="h-2 w-2 shrink-0 rounded-full bg-orange-700"
-                                                            />
-                                                        ) : null}
-                                                        <time
-                                                            dateTime={lead.createdAt}
-                                                            className="shrink-0 text-xs text-graphite dark:text-slate-400"
-                                                        >
-                                                            {formatLeadListTime(lead.createdAt)}
-                                                        </time>
-                                                    </span>
-                                                    {lead.messagePreview !== null ? (
-                                                        <span className="line-clamp-2 text-[13px] text-graphite dark:text-slate-300">
-                                                            {lead.messagePreview}
-                                                        </span>
-                                                    ) : null}
-                                                    <span className="flex flex-wrap gap-1.5 text-xs text-graphite dark:text-slate-400">
-                                                        <span>{leadSourceLabel(lead.source)}</span>
-                                                        {lead.b2b ? (
-                                                            <span className="rounded-[5px] bg-indigo-100 px-1.5 font-bold text-blue-800 dark:bg-blue-900/40 dark:text-blue-200">
-                                                                B2B
-                                                            </span>
-                                                        ) : null}
-                                                    </span>
-                                                </span>
-                                            </Link>
-                                        </li>
-                                    )
-                                })}
+                                {items.map((lead) => (
+                                    <LeadListRow
+                                        key={lead.id}
+                                        lead={lead}
+                                        href={leadHref(lead.id)}
+                                        isCurrent={lead.id === leadId}
+                                    />
+                                ))}
                             </ul>
                         ) : null}
 

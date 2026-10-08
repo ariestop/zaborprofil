@@ -86,6 +86,16 @@
 
 При загрузке считается `sha256` исходного файла (до оптимизации, которая переупаковывает изображение) и сохраняется в `media_assets.file_hash`. Если файл с таким хешем уже есть, новый ассет не создаётся: API отвечает `200` с существующим ассетом и `duplicate: true` (новая загрузка — `201`, `duplicate: false`). В UI строка загрузки получает статус «Уже в медиатеке». Ограничение: у файлов, загруженных до миграции `Version20261007100000`, хеша нет (`null`), поэтому дедупликация действует только для новых загрузок.
 
+## Устройство frontend
+
+`admin/features/media/MediaLibrary.tsx` собирает экран из частей:
+
+- `useMediaLibraryFilters.ts` — поиск (с задержкой 300 мс), фильтры, страница и размер страницы; любое изменение фильтра возвращает на первую страницу;
+- `MediaFilterRow.tsx` — формат, использование, папка, даты; `mediaLibraryOptions.ts` — варианты списков;
+- `MediaAssetViews.tsx` — сетка и список; `MediaAssetThumb.tsx` — превью и отметка использования;
+- `MediaAssetDetails.tsx` — свойства файла, где используется, `FocalPointPicker.tsx`;
+- `MediaUploadList.tsx` — очередь загрузок (`useMediaUploads.ts`), `MediaPagination.tsx`, `DeleteMediaDialog.tsx`.
+
 ## MediaPicker
 
 `admin/features/media/MediaPicker.tsx` — поле «значение + кнопка выбора».
