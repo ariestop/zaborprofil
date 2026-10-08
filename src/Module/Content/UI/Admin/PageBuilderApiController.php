@@ -26,6 +26,8 @@ use App\Module\Content\Domain\Repository\PageBlockRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRevisionRepositoryInterface;
 use App\Module\Content\UI\Web\TwigBlockRenderer;
+use App\Shared\UI\Http\AdminApiResponses;
+use App\Shared\UI\Http\JsonRequest;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -54,7 +56,7 @@ final readonly class PageBuilderApiController
         BuilderDocumentVersion $versions,
     ): JsonResponse {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_VIEW)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -72,7 +74,7 @@ final readonly class PageBuilderApiController
     public function save(string $id, Request $request, SavePageBuilderDocumentHandler $handler): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::BLOCKS_EDIT)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -107,7 +109,7 @@ final readonly class PageBuilderApiController
         BlockSchemaRegistry $schemas,
     ): JsonResponse {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_VIEW)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -155,7 +157,7 @@ final readonly class PageBuilderApiController
         PublishPageHandler $handler,
     ): JsonResponse {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_PUBLISH)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -171,7 +173,7 @@ final readonly class PageBuilderApiController
         PageRevisionRepositoryInterface $revisions,
     ): JsonResponse {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_VIEW_REVISIONS)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -193,7 +195,7 @@ final readonly class PageBuilderApiController
         RollbackPageRevisionHandler $handler,
     ): JsonResponse {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_ROLLBACK_REVISION)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -216,7 +218,7 @@ final readonly class PageBuilderApiController
         CurrentAdminActor $actor,
     ): JsonResponse {
         if (!$this->authorizationChecker->isGranted(AdminPermission::BLOCKS_EDIT)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -247,7 +249,7 @@ final readonly class PageBuilderApiController
         PageEditLockService $locks,
     ): JsonResponse|Response {
         if (!$this->authorizationChecker->isGranted(AdminPermission::BLOCKS_EDIT)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -272,11 +274,4 @@ final readonly class PageBuilderApiController
         return $sessionId;
     }
 
-    private function accessDenied(): JsonResponse
-    {
-        return new JsonResponse([
-            'error' => 'Access denied.',
-            'code' => 'ACCESS_DENIED',
-        ], 403);
-    }
 }

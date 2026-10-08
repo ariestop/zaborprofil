@@ -650,7 +650,7 @@ export function MediaLibrary({
                 setPage(page - 1)
             }
         } catch (error) {
-            const inUse = error instanceof ApiError && error.status === 409
+            const inUse = error instanceof ApiError && error.serverCode === 'MEDIA_IN_USE'
             push({
                 title: inUse ? 'Файл используется на сайте' : 'Не удалось удалить файл',
                 description: describeMediaError(error),

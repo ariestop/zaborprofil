@@ -13,6 +13,8 @@ use App\Module\Content\Application\Service\BlockSchemaRegistry;
 use App\Module\Content\Domain\Entity\PageTemplate;
 use App\Module\Content\Domain\Enum\PageType;
 use App\Module\Content\Domain\Repository\PageTemplateRepositoryInterface;
+use App\Shared\UI\Http\AdminApiResponses;
+use App\Shared\UI\Http\JsonRequest;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -33,7 +35,7 @@ final readonly class PageTemplateApiController
     public function templates(Request $request, PageTemplateRepositoryInterface $templates): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_VIEW)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -59,7 +61,7 @@ final readonly class PageTemplateApiController
     public function create(Request $request, SavePageTemplateHandler $handler): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_MANAGE_TEMPLATES)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -82,7 +84,7 @@ final readonly class PageTemplateApiController
     public function delete(string $code, DeactivatePageTemplateHandler $handler): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_MANAGE_TEMPLATES)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -98,7 +100,7 @@ final readonly class PageTemplateApiController
     public function blockSchemas(BlockSchemaRegistry $schemas): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_VIEW)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         return new JsonResponse([
@@ -106,11 +108,4 @@ final readonly class PageTemplateApiController
         ]);
     }
 
-    private function accessDenied(): JsonResponse
-    {
-        return new JsonResponse([
-            'error' => 'Access denied.',
-            'code' => 'ACCESS_DENIED',
-        ], 403);
-    }
 }

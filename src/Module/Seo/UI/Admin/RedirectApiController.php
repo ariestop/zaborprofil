@@ -15,6 +15,8 @@ use App\Module\Seo\Domain\Entity\Redirect;
 use App\Module\Seo\Domain\Repository\RedirectRepositoryInterface;
 use App\Module\Seo\Domain\Repository\RedirectSearchCriteria;
 use App\Shared\UI\Http\AdminApiErrorResponder;
+use App\Shared\UI\Http\AdminApiResponses;
+use App\Shared\UI\Http\JsonRequest;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -35,6 +37,7 @@ final readonly class RedirectApiController
         private RedirectCsvExporter $exporter,
         private AuthorizationCheckerInterface $authorizationChecker,
         private AdminApiErrorResponder $errors,
+        private JsonRequest $jsonRequest,
     ) {
     }
 
@@ -42,7 +45,7 @@ final readonly class RedirectApiController
     public function list(Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SEO_EDIT)) {
-            return AccessDeniedResponse::create();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -84,7 +87,7 @@ final readonly class RedirectApiController
     public function analysis(): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SEO_EDIT)) {
-            return AccessDeniedResponse::create();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -98,7 +101,7 @@ final readonly class RedirectApiController
     public function export(): Response
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SEO_EDIT)) {
-            return AccessDeniedResponse::create();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -116,15 +119,15 @@ final readonly class RedirectApiController
     public function import(Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SEO_EDIT)) {
-            return AccessDeniedResponse::create();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
-            $payload = JsonPayload::fromRequest($request);
+            $payload = $this->jsonRequest->payload($request);
             $report = $this->importer->import(
-                $payload->string('csv'),
-                $payload->bool('dryRun', true),
-                $payload->bool('updateExisting', false),
+                $this->jsonRequest->string($payload, 'csv'),
+                $this->jsonRequest->bool($payload, 'dryRun', true),
+                $this->jsonRequest->bool($payload, 'updateExisting', false),
             );
 
             return new JsonResponse($report->toArray());
@@ -137,16 +140,16 @@ final readonly class RedirectApiController
     public function create(Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SEO_EDIT)) {
-            return AccessDeniedResponse::create();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
-            $payload = JsonPayload::fromRequest($request);
+            $payload = $this->jsonRequest->payload($request);
             $change = $this->manager->create(
-                $payload->string('sourcePath'),
-                $payload->string('targetPath'),
-                $payload->int('statusCode', 301),
-                $payload->bool('isActive', true),
+                $this->jsonRequest->string($payload, 'sourcePath'),
+                $this->jsonRequest->string($payload, 'targetPath'),
+                $this->jsonRequest->int($payload, 'statusCode', 301),
+                $this->jsonRequest->bool($payload, 'isActive', true),
             );
 
             return new JsonResponse(self::changeToArray($change), 201);
@@ -161,7 +164,7 @@ final readonly class RedirectApiController
     public function update(string $id, Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SEO_EDIT)) {
-            return AccessDeniedResponse::create();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -170,13 +173,13 @@ final readonly class RedirectApiController
                 return $this->errors->notFound('Redirect not found.');
             }
 
-            $payload = JsonPayload::fromRequest($request);
+            $payload = $this->jsonRequest->payload($request);
             $change = $this->manager->update(
                 $redirect,
-                $payload->has('sourcePath') ? $payload->string('sourcePath') : $redirect->sourcePath(),
-                $payload->string('targetPath'),
-                $payload->int('statusCode', $redirect->statusCode()),
-                $payload->bool('isActive', $redirect->isActive()),
+                \array_key_exists('sourcePath', $payload) ? $this->jsonRequest->string($payload, 'sourcePath') : $redirect->sourcePath(),
+                $this->jsonRequest->string($payload, 'targetPath'),
+                $this->jsonRequest->int($payload, 'statusCode', $redirect->statusCode()),
+                $this->jsonRequest->bool($payload, 'isActive', $redirect->isActive()),
             );
 
             return new JsonResponse(self::changeToArray($change));
@@ -191,7 +194,7 @@ final readonly class RedirectApiController
     public function delete(string $id): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SEO_EDIT)) {
-            return AccessDeniedResponse::create();
+            return AdminApiResponses::accessDenied();
         }
 
         try {

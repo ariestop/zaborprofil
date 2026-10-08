@@ -38,6 +38,8 @@ use App\Module\Content\Domain\Repository\PageBlockRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageSearchCriteria;
 use App\Module\Content\Domain\ValueObject\PageVisibility;
+use App\Shared\UI\Http\AdminApiResponses;
+use App\Shared\UI\Http\JsonRequest;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -63,7 +65,7 @@ final readonly class PageApiController
     public function index(Request $request, PageRepositoryInterface $pages, PageRevisionComparison $comparison, AdminDisplayNames $adminNames): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_VIEW)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         $names = $adminNames->all();
@@ -152,7 +154,7 @@ final readonly class PageApiController
     public function show(string $id, ContentId $contentId, PageRepositoryInterface $pages, PageBlockRepositoryInterface $blocks): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_VIEW)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -173,7 +175,7 @@ final readonly class PageApiController
     public function create(Request $request, CreatePageHandler $handler): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_CREATE)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -202,7 +204,7 @@ final readonly class PageApiController
     public function update(string $id, Request $request, UpdatePageHandler $handler): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_EDIT)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -241,7 +243,7 @@ final readonly class PageApiController
             };
 
             if (!$this->authorizationChecker->isGranted($permission)) {
-                return $this->accessDenied();
+                return AdminApiResponses::accessDenied();
             }
 
             $indexable = $payload['indexable'] ?? null;
@@ -272,11 +274,11 @@ final readonly class PageApiController
     public function duplicate(string $id, Request $request, DuplicatePageHandler $handler): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_CREATE)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
-            $payload = $request->getContent() === '' ? [] : $this->jsonRequest->payload($request);
+            $payload = $this->jsonRequest->optionalPayload($request);
 
             return new JsonResponse($handler(new DuplicatePageCommand(
                 $id,
@@ -293,7 +295,7 @@ final readonly class PageApiController
     public function updateSeo(string $id, Request $request, UpdatePageSeoMetadataHandler $handler): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SEO_EDIT)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -321,11 +323,11 @@ final readonly class PageApiController
     public function publish(string $id, Request $request, PublishPageHandler $handler): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_PUBLISH)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
-            $payload = $request->getContent() === '' ? [] : $this->jsonRequest->payload($request);
+            $payload = $this->jsonRequest->optionalPayload($request);
 
             return new JsonResponse($handler(new PublishPageCommand($id, $this->jsonRequest->nullableString($payload, 'comment')))->toArray());
         } catch (Throwable $exception) {
@@ -340,7 +342,7 @@ final readonly class PageApiController
             $payload = $this->jsonRequest->payload($request);
             $status = $this->jsonRequest->string($payload, 'status');
             if (!$this->authorizationChecker->isGranted($this->permissionForStatus($status))) {
-                return $this->accessDenied();
+                return AdminApiResponses::accessDenied();
             }
 
             return new JsonResponse($handler(new ChangePageStatusCommand(
@@ -359,7 +361,7 @@ final readonly class PageApiController
     public function schedule(string $id, Request $request, SchedulePageHandler $handler): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_SCHEDULE)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -380,11 +382,11 @@ final readonly class PageApiController
     public function cancelSchedule(string $id, Request $request, CancelPageScheduleHandler $handler): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_SCHEDULE)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
-            $payload = $request->getContent() === '' ? [] : $this->jsonRequest->payload($request);
+            $payload = $this->jsonRequest->optionalPayload($request);
 
             return new JsonResponse($handler(new CancelPageScheduleCommand($id, $this->jsonRequest->nullableString($payload, 'comment')))->toArray());
         } catch (Throwable $exception) {
@@ -396,7 +398,7 @@ final readonly class PageApiController
     public function workflow(string $id, PageWorkflowState $state): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_VIEW)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -415,7 +417,7 @@ final readonly class PageApiController
         UrlGeneratorInterface $urlGenerator,
     ): JsonResponse {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_VIEW)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -438,7 +440,7 @@ final readonly class PageApiController
     public function archive(string $id, ArchivePageHandler $handler): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_DELETE)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -462,11 +464,4 @@ final readonly class PageApiController
         };
     }
 
-    private function accessDenied(): JsonResponse
-    {
-        return new JsonResponse([
-            'error' => 'Access denied.',
-            'code' => 'ACCESS_DENIED',
-        ], 403);
-    }
 }

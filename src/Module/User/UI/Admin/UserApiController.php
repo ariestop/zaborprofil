@@ -11,6 +11,7 @@ use App\Module\User\Domain\Exception\UserManagementException;
 use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
 use App\Module\User\Infrastructure\Repository\AdminUserRepository;
 use App\Shared\UI\Http\AdminApiErrorResponder;
+use App\Shared\UI\Http\AdminApiResponses;
 use InvalidArgumentException;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -36,7 +37,7 @@ final readonly class UserApiController
     public function index(): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::USERS_MANAGE)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         return new JsonResponse([
@@ -52,7 +53,7 @@ final readonly class UserApiController
     public function create(Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::USERS_MANAGE)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         $payload = $request->getPayload()->all();
@@ -76,11 +77,11 @@ final readonly class UserApiController
 
         $actor = $this->actor();
         if (!$actor instanceof AdminUser) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         if (\in_array(AdminRole::SUPER_ADMIN, $roles, true) && !\in_array(AdminRole::SUPER_ADMIN, $actor->storedRoles(), true)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -99,7 +100,7 @@ final readonly class UserApiController
     {
         $actor = $this->actor();
         if (!$actor instanceof AdminUser) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         $payload = $request->getPayload()->all();
@@ -126,7 +127,7 @@ final readonly class UserApiController
     public function updateRoles(string $id, Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::USERS_MANAGE)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         $target = $this->findUser($id);
@@ -136,7 +137,7 @@ final readonly class UserApiController
         }
 
         if (!$actor instanceof AdminUser) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         $payload = $request->getPayload()->all();
@@ -166,7 +167,7 @@ final readonly class UserApiController
     public function updateName(string $id, Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::USERS_MANAGE)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         $target = $this->findUser($id);
@@ -194,7 +195,7 @@ final readonly class UserApiController
     public function resetPassword(string $id, Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::USERS_MANAGE)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         $target = $this->findUser($id);
@@ -224,7 +225,7 @@ final readonly class UserApiController
     public function updateActive(string $id, Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::USERS_MANAGE)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         $target = $this->findUser($id);
@@ -234,7 +235,7 @@ final readonly class UserApiController
         }
 
         if (!$actor instanceof AdminUser) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         $active = $request->getPayload()->all()['active'] ?? null;
@@ -259,7 +260,7 @@ final readonly class UserApiController
     public function delete(string $id): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::USERS_MANAGE)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         $target = $this->findUser($id);
@@ -269,7 +270,7 @@ final readonly class UserApiController
         }
 
         if (!$actor instanceof AdminUser) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -333,13 +334,6 @@ final readonly class UserApiController
         return $this->errors->notFound('User not found.');
     }
 
-    private function accessDenied(): JsonResponse
-    {
-        return new JsonResponse([
-            'error' => 'Access denied.',
-            'code' => 'ACCESS_DENIED',
-        ], 403);
-    }
 
     /**
      * @param list<array{field: string, message: string}> $details

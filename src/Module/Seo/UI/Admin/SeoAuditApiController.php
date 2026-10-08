@@ -9,6 +9,7 @@ use App\Module\Content\Application\Service\ContentId;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use App\Module\Seo\Application\Audit\SeoAuditEngine;
 use App\Shared\UI\Http\AdminApiErrorResponder;
+use App\Shared\UI\Http\AdminApiResponses;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
@@ -28,10 +29,7 @@ final readonly class SeoAuditApiController
     public function page(string $id, ContentId $contentId, PageRepositoryInterface $pages): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SEO_EDIT)) {
-            return new JsonResponse([
-                'error' => 'Access denied.',
-                'code' => 'ACCESS_DENIED',
-            ], 403);
+            return AdminApiResponses::accessDenied();
         }
 
         try {

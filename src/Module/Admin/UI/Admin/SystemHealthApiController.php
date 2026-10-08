@@ -8,6 +8,7 @@ use App\Module\Admin\Application\Service\SystemWarningCollector;
 use App\Module\Auth\Domain\Security\AdminPermission;
 use App\Shared\Infrastructure\Health\HealthCheckResult;
 use App\Shared\Infrastructure\Health\HealthRegistry;
+use App\Shared\UI\Http\AdminApiResponses;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -31,10 +32,7 @@ final readonly class SystemHealthApiController
     public function __invoke(): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SYSTEM_VIEW)) {
-            return new JsonResponse([
-                'error' => 'Access denied.',
-                'code' => 'ACCESS_DENIED',
-            ], 403);
+            return AdminApiResponses::accessDenied();
         }
 
         $checks = $this->healthRegistry->runAll();

@@ -9,6 +9,7 @@ use App\Module\Admin\Application\Service\CacheManagerService;
 use App\Module\Admin\Application\Service\DangerousActionConfirmationService;
 use App\Module\Auth\Domain\Security\AdminPermission;
 use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Shared\UI\Http\AdminApiResponses;
 use InvalidArgumentException;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -34,7 +35,7 @@ final readonly class SystemCacheController
     public function index(): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SYSTEM_VIEW)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         return new JsonResponse($this->cacheManager->status());
@@ -47,14 +48,14 @@ final readonly class SystemCacheController
             !$this->authorizationChecker->isGranted(AdminPermission::SYSTEM_MANAGE)
             || !$this->authorizationChecker->isGranted(AdminPermission::SYSTEM_DANGEROUS)
         ) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         $payload = $this->jsonPayload($request);
         $confirmToken = isset($payload['confirmToken']) && \is_string($payload['confirmToken']) ? $payload['confirmToken'] : '';
         $actorId = $this->actorId();
         if ($actorId === null) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         $this->auditLogger->log(

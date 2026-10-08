@@ -9,6 +9,7 @@ use App\Module\Admin\Application\Service\DangerousActionConfirmationService;
 use App\Module\Admin\Application\Service\SecurityAuditService;
 use App\Module\Auth\Domain\Security\AdminPermission;
 use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Shared\UI\Http\AdminApiResponses;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -33,7 +34,7 @@ final readonly class SystemSecurityController
     public function index(): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SYSTEM_VIEW)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         return new JsonResponse($this->securityAudit->status());
@@ -46,7 +47,7 @@ final readonly class SystemSecurityController
             !$this->authorizationChecker->isGranted(AdminPermission::SYSTEM_MANAGE)
             || !$this->authorizationChecker->isGranted(AdminPermission::SYSTEM_DANGEROUS)
         ) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         $payload = $this->jsonPayload($request);
@@ -57,7 +58,7 @@ final readonly class SystemSecurityController
 
         $actorId = $this->actorId();
         if ($actorId === null) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         $token = $this->confirmation->issue($actorId, $action);

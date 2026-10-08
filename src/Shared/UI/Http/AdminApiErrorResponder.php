@@ -23,12 +23,12 @@ use Throwable;
  */
 final readonly class AdminApiErrorResponder
 {
-    public const string CODE_VALIDATION = 'VALIDATION';
-    public const string CODE_NOT_FOUND = 'NOT_FOUND';
-    public const string CODE_ACCESS_DENIED = 'ACCESS_DENIED';
-    public const string CODE_BAD_REQUEST = 'BAD_REQUEST';
-    public const string CODE_CONFLICT = 'CONFLICT';
-    public const string CODE_INTERNAL = 'INTERNAL';
+    public const string CODE_VALIDATION = AdminApiResponses::CODE_VALIDATION;
+    public const string CODE_NOT_FOUND = AdminApiResponses::CODE_NOT_FOUND;
+    public const string CODE_ACCESS_DENIED = AdminApiResponses::CODE_ACCESS_DENIED;
+    public const string CODE_BAD_REQUEST = AdminApiResponses::CODE_BAD_REQUEST;
+    public const string CODE_CONFLICT = AdminApiResponses::CODE_CONFLICT;
+    public const string CODE_INTERNAL = AdminApiResponses::CODE_INTERNAL;
 
     public function __construct(
         #[Autowire(service: 'monolog.logger.admin')]
@@ -62,17 +62,17 @@ final readonly class AdminApiErrorResponder
      */
     public function validation(string $message, string $code = self::CODE_VALIDATION, array $details = []): JsonResponse
     {
-        return $this->json($message, $code, 422, $details);
+        return AdminApiResponses::validation($message, $code, $details);
     }
 
     public function notFound(string $message = 'Not found.'): JsonResponse
     {
-        return $this->json($message, self::CODE_NOT_FOUND, 404);
+        return AdminApiResponses::notFound($message);
     }
 
     public function accessDenied(): JsonResponse
     {
-        return $this->json('Access denied.', self::CODE_ACCESS_DENIED, 403);
+        return AdminApiResponses::accessDenied();
     }
 
     /**
@@ -80,12 +80,12 @@ final readonly class AdminApiErrorResponder
      */
     public function conflict(string $message, string $code = self::CODE_CONFLICT, array $extra = []): JsonResponse
     {
-        return new JsonResponse(['error' => $message, 'code' => $code, ...$extra], 409);
+        return AdminApiResponses::conflict($message, $code, $extra);
     }
 
     public function badRequest(string $message): JsonResponse
     {
-        return $this->json($message, self::CODE_BAD_REQUEST, 400);
+        return AdminApiResponses::badRequest($message);
     }
 
     public function internal(Throwable $exception, string $operation = 'Admin API'): JsonResponse
@@ -94,19 +94,6 @@ final readonly class AdminApiErrorResponder
             'exception' => $exception,
         ]);
 
-        return $this->json('Internal server error', self::CODE_INTERNAL, 500);
-    }
-
-    /**
-     * @param list<array{field: string, message: string}> $details
-     */
-    private function json(string $message, string $code, int $status, array $details = []): JsonResponse
-    {
-        $payload = ['error' => $message, 'code' => $code];
-        if ($details !== []) {
-            $payload['details'] = $details;
-        }
-
-        return new JsonResponse($payload, $status);
+        return AdminApiResponses::internal();
     }
 }

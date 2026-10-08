@@ -12,9 +12,10 @@ use App\Module\Catalog\Domain\Enum\ProductStatus;
 use App\Module\Catalog\Domain\Repository\CategoryRepositoryInterface;
 use App\Module\Catalog\Domain\Repository\ProductRepositoryInterface;
 use App\Module\Catalog\Domain\Repository\VariantRepositoryInterface;
-use App\Module\Content\UI\Admin\JsonRequest;
 use App\Module\Seo\Application\Service\CanonicalUrlGuard;
 use App\Shared\UI\Http\AdminApiErrorResponder;
+use App\Shared\UI\Http\AdminApiResponses;
+use App\Shared\UI\Http\JsonRequest;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -39,7 +40,7 @@ final readonly class CatalogApiController
     public function categories(): JsonResponse
     {
         if (!$this->canView()) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         return new JsonResponse([
@@ -51,7 +52,7 @@ final readonly class CatalogApiController
     public function createCategory(Request $request): JsonResponse
     {
         if (!$this->canManage()) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -77,7 +78,7 @@ final readonly class CatalogApiController
     public function updateCategory(string $id, Request $request): JsonResponse
     {
         if (!$this->canManage()) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -104,7 +105,7 @@ final readonly class CatalogApiController
     public function deleteCategory(string $id): JsonResponse
     {
         if (!$this->canManage()) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -120,7 +121,7 @@ final readonly class CatalogApiController
     public function products(): JsonResponse
     {
         if (!$this->canView()) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         return new JsonResponse([
@@ -133,7 +134,7 @@ final readonly class CatalogApiController
     public function createProduct(Request $request): JsonResponse
     {
         if (!$this->canManage()) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -168,7 +169,7 @@ final readonly class CatalogApiController
     public function updateProduct(string $id, Request $request): JsonResponse
     {
         if (!$this->canManage()) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -204,7 +205,7 @@ final readonly class CatalogApiController
     public function deleteProduct(string $id): JsonResponse
     {
         if (!$this->canManage()) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -220,7 +221,7 @@ final readonly class CatalogApiController
     public function createVariant(string $productId, Request $request): JsonResponse
     {
         if (!$this->canManage()) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -246,7 +247,7 @@ final readonly class CatalogApiController
     public function updateVariant(string $id, Request $request): JsonResponse
     {
         if (!$this->canManage()) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -272,7 +273,7 @@ final readonly class CatalogApiController
     public function deleteVariant(string $id): JsonResponse
     {
         if (!$this->canManage()) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -294,13 +295,6 @@ final readonly class CatalogApiController
         return $this->authorizationChecker->isGranted(AdminPermission::CATALOG_MANAGE);
     }
 
-    private function accessDenied(): JsonResponse
-    {
-        return new JsonResponse([
-            'error' => 'Access denied.',
-            'code' => 'ACCESS_DENIED',
-        ], 403);
-    }
 
     private function error(Throwable $exception): JsonResponse
     {
