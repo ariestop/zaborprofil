@@ -17,6 +17,7 @@ use App\Module\Content\Domain\Entity\PageBlock;
 use App\Module\Content\Domain\Repository\PageBlockRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use App\Module\Content\Domain\ValueObject\PageVisibility;
+use App\Shared\Application\Transaction\TransactionRunnerInterface;
 use InvalidArgumentException;
 
 /**
@@ -33,13 +34,20 @@ final readonly class SavePageBuilderDocumentHandler
         private PublicPageCacheInvalidator $cacheInvalidator,
         private BuilderDocumentVersion $versions,
         private BlockSchemaRegistry $schemas,
+        private TransactionRunnerInterface $transactions,
     ) {
+    }
+
+    public function __invoke(SavePageBuilderDocumentCommand $command): PageBuilderDocumentOutput
+    {
+        // Все записи use case — одной транзакцией: при ошибке на любом шаге не остаётся половины изменений.
+        return $this->transactions->run(fn (): PageBuilderDocumentOutput => $this->handle($command));
     }
 
     /**
      * @throws PageEditConflictException если блоки изменились после версии, от которой начиналась правка
      */
-    public function __invoke(SavePageBuilderDocumentCommand $command): PageBuilderDocumentOutput
+    private function handle(SavePageBuilderDocumentCommand $command): PageBuilderDocumentOutput
     {
         $pageId = $this->contentId->fromString($command->pageId);
         $page = $this->pages->get($pageId);

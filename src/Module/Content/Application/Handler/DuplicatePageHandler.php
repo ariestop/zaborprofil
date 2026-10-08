@@ -12,6 +12,7 @@ use App\Module\Content\Domain\Entity\Page;
 use App\Module\Content\Domain\Entity\PageBlock;
 use App\Module\Content\Domain\Repository\PageBlockRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
+use App\Shared\Application\Transaction\TransactionRunnerInterface;
 use InvalidArgumentException;
 
 /**
@@ -27,10 +28,17 @@ final readonly class DuplicatePageHandler
         private PageBlockRepositoryInterface $blocks,
         private ContentId $contentId,
         private CurrentAdminActor $actor,
+        private TransactionRunnerInterface $transactions,
     ) {
     }
 
     public function __invoke(DuplicatePageCommand $command): PageOutput
+    {
+        // Все записи use case — одной транзакцией: при ошибке на любом шаге не остаётся половины изменений.
+        return $this->transactions->run(fn (): PageOutput => $this->handle($command));
+    }
+
+    private function handle(DuplicatePageCommand $command): PageOutput
     {
         $sourceId = $this->contentId->fromString($command->id);
         $source = $this->pages->get($sourceId);

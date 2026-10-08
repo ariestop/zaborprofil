@@ -12,6 +12,7 @@ use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRevisionRepositoryInterface;
 use App\Module\Seo\Application\Audit\PrePublishChecklist;
 use App\Shared\Application\Logging\BusinessEventLogger;
+use App\Shared\Application\Transaction\TransactionRunnerInterface;
 
 /**
  * Публикация и снятие с публикации: общий код для ручных действий и планировщика.
@@ -28,20 +29,28 @@ final readonly class PagePublisher
         private BusinessEventLogger $businessEvents,
         private PrePublishChecklist $prePublishChecklist,
         private PageRevisionSnapshotBuilder $snapshotBuilder,
+        private TransactionRunnerInterface $transactions,
     ) {
     }
 
     public function publish(Page $page, ?string $actorId, ?string $comment = null, string $action = 'publish'): PageRevision
     {
         $this->prePublishChecklist->assertPublishable($page);
-        $revision = $this->snapshot($page, $actorId, $comment, $action);
 
-        $page->publish($actorId);
-        $this->pages->save($page);
+        // Ревизия, статус страницы и публикация — одной транзакцией: иначе сбой между ними оставлял страницу
+        // «опубликованной» в админке без опубликованной ревизии (на сайте — 404 или старая версия).
+        $revision = $this->transactions->run(function () use ($page, $actorId, $comment, $action): PageRevision {
+            $revision = $this->snapshot($page, $actorId, $comment, $action);
 
-        $publication = $this->publications->getOrCreate($page);
-        $publication->publish($revision);
-        $this->publications->save($publication);
+            $page->publish($actorId);
+            $this->pages->save($page);
+
+            $publication = $this->publications->getOrCreate($page);
+            $publication->publish($revision);
+            $this->publications->save($publication);
+
+            return $revision;
+        });
 
         $this->publicPageCache->invalidate($page->path());
         $this->businessEvents->log('page.published', [
@@ -55,9 +64,11 @@ final readonly class PagePublisher
 
     public function unpublish(Page $page, ?string $actorId, string $action = 'unpublish'): void
     {
-        $page->unpublish($actorId);
-        $this->pages->save($page);
-        $this->withdraw($page);
+        $this->transactions->run(function () use ($page, $actorId): void {
+            $page->unpublish($actorId);
+            $this->pages->save($page);
+            $this->withdraw($page);
+        });
         $this->businessEvents->log('page.unpublished', [
             'page_id' => (string) $page->id(),
             'path' => $page->path(),

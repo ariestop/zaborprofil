@@ -213,7 +213,10 @@ private Collection $blocks;
 
 - **Транзакционная граница — Application handler** (см. [09-application-layer](09-application-layer.md)).
 - `Repository::save()` обычно делает `persist + flush` для одной агрегатной сущности.
-- Если в одном handler нужно сохранить две сущности атомарно — использовать явную транзакцию через `EntityManager::wrapInTransaction()` или (целевое) `UnitOfWorkInterface`.
+- Если в одном handler нужно сохранить несколько сущностей атомарно — обернуть use case в `TransactionRunnerInterface::run()` (`App\Shared\Application\Transaction`, реализация `DoctrineTransactionRunner`). Так сделаны публикация, снятие, планирование, откат ревизии, смена статуса, создание, дублирование и архивирование страницы, сохранение конструктора и шаги планировщика.
+- Вложенный `run()` становится частью внешней транзакции (DBAL оформляет его точкой сохранения); `flush()` внутри репозиториев допустим.
+- В отличие от `EntityManager::wrapInTransaction()` исключение операции не закрывает EntityManager: пакетные операции и планировщик продолжают работу после ошибки валидации на одном элементе. Ошибка самого `flush()` EntityManager закрывает (так устроен Doctrine).
+- Сброс кэша и внешние вызовы — через `TransactionRunnerInterface::afterCommit()`: выполняются после фиксации внешней транзакции и не выполняются при откате. `PublicPageCacheInvalidator` делает это сам.
 
 ```php
 // Application/Handler/PublishPageHandler.php
@@ -222,7 +225,7 @@ final readonly class PublishPageHandler
     public function __construct(
         private PageRepositoryInterface $pages,
         private RedirectRepositoryInterface $redirects,
-        private TransactionalRunner $tx,            // целевая абстракция над EM
+        private TransactionRunnerInterface $tx,
         private LoggerInterface $logger,
     ) {}
 

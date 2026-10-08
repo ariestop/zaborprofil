@@ -13,6 +13,7 @@ use App\Module\Content\Domain\Entity\PageTemplate;
 use App\Module\Content\Domain\Enum\PageType;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageTemplateRepositoryInterface;
+use App\Shared\Application\Transaction\TransactionRunnerInterface;
 use InvalidArgumentException;
 
 final readonly class CreatePageHandler
@@ -22,10 +23,17 @@ final readonly class CreatePageHandler
         private ContentId $contentId,
         private PageTemplateRepositoryInterface $templates,
         private PageTemplateBlocks $templateBlocks,
+        private TransactionRunnerInterface $transactions,
     ) {
     }
 
     public function __invoke(CreatePageCommand $command): PageOutput
+    {
+        // Все записи use case — одной транзакцией: при ошибке на любом шаге не остаётся половины изменений.
+        return $this->transactions->run(fn (): PageOutput => $this->handle($command));
+    }
+
+    private function handle(CreatePageCommand $command): PageOutput
     {
         if ($this->pages->existsByPath($command->path)) {
             throw new InvalidArgumentException('Page path must be unique.');
