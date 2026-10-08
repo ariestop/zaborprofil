@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { collectCspViolations, expect, test } from './helpers/test'
 import { createBlockViaAdminApi, loginToAdmin } from './helpers/admin'
 import { buildTextBlockPayload, buildUniquePng } from './helpers/fixtures'
 import {
@@ -65,6 +65,7 @@ test.describe('Content to lead flow', () => {
     await expect(page.getByText('Опубликовано', { exact: true }).first()).toBeVisible()
 
     const visitor = await browser.newContext()
+    const visitorCspViolations = collectCspViolations(visitor)
     try {
       const publicPage = await visitor.newPage()
       const response = await publicPage.goto(pagePath)
@@ -87,6 +88,7 @@ test.describe('Content to lead flow', () => {
         form.getByRole('button', { name: PUBLIC_LEAD_FORM_SELECTORS.submitName }).click(),
       ])
       await expect(form.locator('.js-lead-form-status')).toHaveText(PUBLIC_LEAD_FORM_SELECTORS.successText)
+      expect(visitorCspViolations, 'Content-Security-Policy violations on the public page').toEqual([])
     } finally {
       await visitor.close()
     }

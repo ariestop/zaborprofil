@@ -16,6 +16,7 @@ final class StagingConfigParityTest extends TestCase
     private const array PARITY_PARAMETERS = [
         'app.vite.dev_server_url',
         'env(PUBLIC_HTTP_CACHE_ENABLED)',
+        'env(CONTENT_SECURITY_POLICY_ENFORCED)',
         'app.asset_build_enabled',
     ];
 
