@@ -238,10 +238,7 @@ export default function LeadDetailPage({
     const items = timeline(lead)
 
     return (
-        <div
-            className="@container flex w-full max-w-[1240px] flex-col gap-5"
-            data-testid="lead-detail"
-        >
+        <div className="@container flex w-full flex-col gap-5" data-testid="lead-detail">
             <Link
                 className="text-sm text-brand-700 hover:underline lg:hidden dark:text-brand-400"
                 to={backHref}
