@@ -239,7 +239,7 @@ export default function LeadDetailPage({
 
     return (
         <div
-            className="@container mx-auto flex w-full max-w-[1240px] flex-col gap-5"
+            className="@container flex w-full max-w-[1240px] flex-col gap-5"
             data-testid="lead-detail"
         >
             <Link
