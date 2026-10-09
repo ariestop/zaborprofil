@@ -238,7 +238,10 @@ export default function LeadDetailPage({
     const items = timeline(lead)
 
     return (
-        <div className="flex flex-col gap-[18px]" data-testid="lead-detail">
+        <div
+            className="@container mx-auto flex w-full max-w-[1240px] flex-col gap-5"
+            data-testid="lead-detail"
+        >
             <Link
                 className="text-sm text-brand-700 hover:underline lg:hidden dark:text-brand-400"
                 to={backHref}
@@ -319,33 +322,40 @@ export default function LeadDetailPage({
                 </div>
             </div>
 
-            <div className="flex flex-wrap items-start gap-4">
-                <section className={cn(card, 'min-w-0 flex-[2_1_420px] p-5')}>
+            {/*
+             * Широкая карточка: слева запрос и история, справа узкая колонка со служебными
+             * блоками. Узкая — одна колонка в порядке: запрос, служебные блоки, история.
+             */}
+            <div className="grid items-start gap-4 @4xl:grid-cols-[minmax(0,1fr)_300px] @4xl:grid-rows-[auto_1fr] @4xl:gap-5">
+                <section className={cn(card, 'min-w-0 p-5 @4xl:col-start-1 @4xl:row-start-1')}>
                     <h2 className={sectionTitle}>Запрос клиента</h2>
                     <p className="mt-2.5 whitespace-pre-wrap break-words text-[17px] leading-[1.6]">
                         {lead.message ?? 'Клиент не оставил сообщения.'}
                     </p>
-                    <dl className="mt-[18px] flex flex-wrap gap-x-6 gap-y-3.5 text-[13px]">
-                        <div className="flex-[1_1_200px]">
+                    <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3.5 border-t border-line pt-4 text-[13px] @md:grid-cols-2 @3xl:grid-cols-4 dark:border-slate-800">
+                        <div className="min-w-0">
                             <dt className="text-graphite dark:text-slate-400">Источник</dt>
                             <dd className="m-0 mt-0.5">{leadSourceLabel(lead.source)}</dd>
                         </div>
-                        <div className="flex-[1_1_200px]">
+                        <div className="min-w-0">
                             <dt className="text-graphite dark:text-slate-400">Страница</dt>
                             <dd className="m-0 mt-0.5 break-all">{leadPagePath(lead.pageUrl)}</dd>
                         </div>
-                        <div className="flex-[1_1_200px]">
+                        <div className="min-w-0">
                             <dt className="text-graphite dark:text-slate-400">Получена</dt>
                             <dd className="m-0 mt-0.5">{formatLeadReceived(lead.createdAt)}</dd>
                         </div>
-                        <div className="flex-[1_1_200px]">
+                        <div className="min-w-0">
                             <dt className="text-graphite dark:text-slate-400">UTM-метки</dt>
                             <dd className="m-0 mt-0.5 break-all">{leadUtmText(lead.utm)}</dd>
                         </div>
                     </dl>
                 </section>
 
-                <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-4">
+                <aside
+                    aria-label="Работа с заявкой"
+                    className="grid min-w-0 gap-4 @2xl:grid-cols-3 @4xl:col-start-2 @4xl:row-span-2 @4xl:row-start-1 @4xl:grid-cols-1"
+                >
                     <section className={cn(card, 'flex flex-col gap-2 p-[18px]')}>
                         <label htmlFor="lead-owner" className={sectionTitle}>
                             Ответственный
@@ -355,7 +365,7 @@ export default function LeadDetailPage({
                             value={lead.assignee?.id ?? NO_ASSIGNEE}
                             disabled={!canManage || assigneeMutation.isPending}
                             onChange={(event) => void changeAssignee(event.target.value)}
-                            className="h-12 rounded-[10px] border border-line-strong bg-white px-2.5 text-sm text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                            className="h-12 w-full min-w-0 rounded-[10px] border border-line-strong bg-white px-2.5 text-sm text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                         >
                             {assigneeOptions.map((option) => (
                                 <option key={option.value} value={option.value}>
@@ -363,6 +373,30 @@ export default function LeadDetailPage({
                                 </option>
                             ))}
                         </select>
+                    </section>
+
+                    <section className={cn(card, 'p-[18px]')}>
+                        <h2 className={sectionTitle}>Антиспам</h2>
+                        <p className={cn('mt-2 font-semibold', spam.color)}>{spam.title}</p>
+                        <div className="mt-2.5 h-1.5 overflow-hidden rounded-[3px] bg-line dark:bg-slate-800">
+                            <div
+                                className={cn('h-1.5', spam.barColor)}
+                                style={{ width: `${spam.percent}%` }}
+                            />
+                        </div>
+                        <p className="mt-2 text-[13px] text-graphite dark:text-slate-400">
+                            {spam.text}
+                        </p>
+                        {canManage && lead.status !== 'spam' ? (
+                            <button
+                                type="button"
+                                disabled={statusMutation.isPending}
+                                onClick={() => void changeStatus('spam')}
+                                className="mt-3 text-[13px] font-medium text-danger hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-60 dark:text-red-400"
+                            >
+                                Отметить как спам
+                            </button>
+                        ) : null}
                     </section>
 
                     <section className={cn(card, 'p-[18px]')}>
@@ -393,99 +427,80 @@ export default function LeadDetailPage({
                             </details>
                         ) : null}
                     </section>
+                </aside>
 
-                    <section className={cn(card, 'p-[18px]')}>
-                        <h2 className={sectionTitle}>Антиспам</h2>
-                        <p className={cn('mt-2 font-semibold', spam.color)}>{spam.title}</p>
-                        <div className="mt-2.5 h-1.5 overflow-hidden rounded-[3px] bg-line dark:bg-slate-800">
-                            <div
-                                className={cn('h-1.5', spam.barColor)}
-                                style={{ width: `${spam.percent}%` }}
-                            />
-                        </div>
-                        <p className="mt-2 text-[13px] text-graphite dark:text-slate-400">
-                            {spam.text}
-                        </p>
-                        {canManage && lead.status !== 'spam' ? (
-                            <button
-                                type="button"
-                                disabled={statusMutation.isPending}
-                                onClick={() => void changeStatus('spam')}
-                                className="mt-3 text-[13px] font-medium text-danger hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-60 dark:text-red-400"
+                <section className={cn(card, 'min-w-0 p-5 @4xl:col-start-1 @4xl:row-start-2')}>
+                    <h2 className={sectionTitle}>История и заметки</h2>
+                    <ol className="m-0 mt-4 list-none p-0" aria-label="История заявки">
+                        {items.map((item, index) => (
+                            <li
+                                key={item.key}
+                                data-testid="lead-event"
+                                className="relative flex gap-3 pb-4 last:pb-0"
                             >
-                                Отметить как спам
-                            </button>
-                        ) : null}
-                    </section>
-                </div>
+                                {index < items.length - 1 ? (
+                                    <span
+                                        className="absolute bottom-0 left-[3.5px] top-4 w-px bg-line-strong dark:bg-slate-700"
+                                        aria-hidden="true"
+                                    />
+                                ) : null}
+                                <span
+                                    className="mt-[7px] h-2 w-2 shrink-0 rounded-full bg-graphite/60"
+                                    aria-hidden="true"
+                                />
+                                <div className="flex min-w-0 flex-1 flex-col gap-0.5 @md:flex-row @md:items-baseline @md:justify-between @md:gap-4">
+                                    <span className="min-w-0 whitespace-pre-wrap break-words text-ink dark:text-slate-200">
+                                        {item.text}
+                                    </span>
+                                    <span className="shrink-0 whitespace-nowrap text-xs text-graphite dark:text-slate-400">
+                                        {item.time}
+                                    </span>
+                                </div>
+                            </li>
+                        ))}
+                    </ol>
+                    {canManage ? (
+                        <div className="mt-5 flex flex-col gap-2 border-t border-line pt-4 dark:border-slate-800">
+                            <label
+                                htmlFor="lead-note"
+                                className="text-[13px] text-graphite dark:text-slate-400"
+                            >
+                                Заметка для команды
+                            </label>
+                            <textarea
+                                id="lead-note"
+                                rows={3}
+                                maxLength={NOTE_MAX_LENGTH}
+                                placeholder="Например: перезвонить после 18:00, замер в субботу"
+                                value={note}
+                                onChange={(event) => setNote(event.target.value)}
+                                className="box-border w-full resize-y rounded-[11px] border border-line-strong bg-white px-3 py-2.5 text-sm text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                            />
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <span className="flex flex-wrap gap-x-3.5 gap-y-1.5 text-xs text-graphite dark:text-slate-400">
+                                    <span>
+                                        <Kbd>J</Kbd> <Kbd>K</Kbd> навигация
+                                    </span>
+                                    <span>
+                                        <Kbd>E</Kbd> следующий статус
+                                    </span>
+                                    <span>
+                                        <Kbd>S</Kbd> спам
+                                    </span>
+                                </span>
+                                <button
+                                    type="button"
+                                    disabled={note.trim() === '' || noteMutation.isPending}
+                                    onClick={() => void submitNote()}
+                                    className="h-12 rounded-[10px] border border-line-strong bg-white px-3.5 text-[13px] font-semibold text-ink transition hover:bg-surface dark:hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                                >
+                                    Добавить заметку
+                                </button>
+                            </div>
+                        </div>
+                    ) : null}
+                </section>
             </div>
-
-            <section className={cn(card, 'p-5')}>
-                <h2 className={sectionTitle}>История и заметки</h2>
-                <ol
-                    className="m-0 mt-3 flex list-none flex-col gap-3 p-0"
-                    aria-label="История заявки"
-                >
-                    {items.map((item) => (
-                        <li
-                            key={item.key}
-                            data-testid="lead-event"
-                            className="flex items-baseline gap-3"
-                        >
-                            <span className="w-12 shrink-0 text-xs text-graphite dark:text-slate-400">
-                                {item.time}
-                            </span>
-                            <span
-                                className="h-2 w-2 shrink-0 rounded-full bg-graphite/60"
-                                aria-hidden="true"
-                            />
-                            <span className="min-w-0 whitespace-pre-wrap break-words text-graphite dark:text-slate-200">
-                                {item.text}
-                            </span>
-                        </li>
-                    ))}
-                </ol>
-                {canManage ? (
-                    <div className="mt-4 flex flex-col gap-2">
-                        <label
-                            htmlFor="lead-note"
-                            className="text-[13px] text-graphite dark:text-slate-400"
-                        >
-                            Заметка для команды
-                        </label>
-                        <textarea
-                            id="lead-note"
-                            rows={2}
-                            maxLength={NOTE_MAX_LENGTH}
-                            placeholder="Например: перезвонить после 18:00, замер в субботу"
-                            value={note}
-                            onChange={(event) => setNote(event.target.value)}
-                            className="box-border w-full resize-y rounded-[11px] border border-line-strong bg-white px-3 py-2.5 text-sm text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                        />
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                            <span className="flex flex-wrap gap-x-3.5 gap-y-1.5 text-xs text-graphite dark:text-slate-400">
-                                <span>
-                                    <Kbd>J</Kbd> <Kbd>K</Kbd> навигация
-                                </span>
-                                <span>
-                                    <Kbd>E</Kbd> следующий статус
-                                </span>
-                                <span>
-                                    <Kbd>S</Kbd> спам
-                                </span>
-                            </span>
-                            <button
-                                type="button"
-                                disabled={note.trim() === '' || noteMutation.isPending}
-                                onClick={() => void submitNote()}
-                                className="h-12 rounded-[10px] border border-line-strong bg-white px-3.5 text-[13px] font-semibold text-ink transition hover:bg-surface dark:hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-                            >
-                                Добавить заметку
-                            </button>
-                        </div>
-                    </div>
-                ) : null}
-            </section>
         </div>
     )
 }
