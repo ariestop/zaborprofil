@@ -8,6 +8,13 @@ export const LEAD_PILL_STYLES: Record<LeadStatus, string> = {
     spam: 'bg-surface-strong text-graphite dark:bg-slate-800 dark:text-slate-300',
 }
 
+/** Подпись сотрудника: «Фамилия Имя» из профиля, без него — email. */
+export function personLabel(person: { name?: string | null; email: string | null }): string {
+    const name = person.name?.trim() ?? ''
+
+    return name !== '' ? name : (person.email ?? 'Пользователь удалён')
+}
+
 const LEGAL_FORMS = new Set(['ооо', 'ип', 'ао', 'зао', 'пао', 'оао', 'тоо'])
 
 /** Инициалы для аватара: «Андрей Смирнов» → «АС», «ООО «СтройДвор»» → «СД», без букв → «?». */

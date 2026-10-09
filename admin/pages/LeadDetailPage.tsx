@@ -17,6 +17,7 @@ import {
     LEAD_PILL_STYLES,
     leadInitials,
     leadPagePath,
+    personLabel,
     leadUtmText,
 } from '../entities/lead/presentation'
 import { describeApiError } from '../features/seo/redirects/redirect-rules'
@@ -169,7 +170,7 @@ export default function LeadDetailPage({
     const assignees = assigneesQuery.data?.items ?? []
     const assigneeOptions = [
         { value: NO_ASSIGNEE, label: 'Не назначен' },
-        ...assignees.map((assignee) => ({ value: assignee.id, label: assignee.email })),
+        ...assignees.map((assignee) => ({ value: assignee.id, label: personLabel(assignee) })),
     ]
     if (
         lead.assignee !== null &&
@@ -177,7 +178,7 @@ export default function LeadDetailPage({
     ) {
         assigneeOptions.push({
             value: lead.assignee.id,
-            label: lead.assignee.email ?? 'Пользователь удалён',
+            label: personLabel(lead.assignee),
         })
     }
     const nextAction = nextLeadAction(lead.status)

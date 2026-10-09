@@ -202,6 +202,15 @@ final class LeadAdminApiTest extends AdminApiTestCase
         $events = $this->rows($this->json($client)['events']);
         self::assertSame('note', $events[0]['type']);
         self::assertSame('Перезвонить после 18:00', $events[0]['body']);
+        self::assertSame('admin-api@example.test', $events[0]['actorLabel'], 'Без имени в профиле автор заметки показывается по email.');
+
+        $author = $this->entityManager()->getRepository(AdminUser::class)->findOneBy(['email' => 'admin-api@example.test']);
+        self::assertInstanceOf(AdminUser::class, $author);
+        $author->rename('Сидоров Игорь');
+        $this->entityManager()->flush();
+        $this->api($client, 'GET', '/admin/api/leads/'.$lead->id());
+        self::assertResponseIsSuccessful();
+        self::assertSame('Сидоров Игорь', $this->rows($this->json($client)['events'])[0]['actorLabel'], 'Автор заметки показывается по текущему имени из профиля.');
 
         $audit = $this->auditEntries('lead.note_added');
         self::assertCount(1, $audit);
@@ -220,6 +229,7 @@ final class LeadAdminApiTest extends AdminApiTestCase
         $client = $this->adminClient('admin@example.test');
         $lead = $this->seedLeads()['Анна'];
         $manager = new AdminUser('manager@example.test', 'hash', ['ROLE_MANAGER']);
+        $manager->rename('Петров Иван');
         $editor = new AdminUser('editor@example.test', 'hash', ['ROLE_EDITOR']);
         $inactive = new AdminUser('inactive@example.test', 'hash', ['ROLE_MANAGER']);
         $inactive->deactivate();
@@ -235,15 +245,17 @@ final class LeadAdminApiTest extends AdminApiTestCase
         self::assertContains('admin@example.test', $emails);
         self::assertNotContains('editor@example.test', $emails);
         self::assertNotContains('inactive@example.test', $emails);
+        $names = array_column($this->rows($this->json($client)['items']), 'name', 'email');
+        self::assertSame('Петров Иван', $names['manager@example.test'] ?? null);
 
         $this->api($client, 'PATCH', '/admin/api/leads/'.$lead->id().'/assignee', ['assigneeId' => (string) $manager->id()]);
         self::assertResponseIsSuccessful();
         $card = $this->json($client);
-        self::assertSame(['id' => (string) $manager->id(), 'email' => 'manager@example.test'], $card['assignee']);
+        self::assertSame(['id' => (string) $manager->id(), 'email' => 'manager@example.test', 'name' => 'Петров Иван'], $card['assignee']);
         $events = $this->rows($card['events']);
         self::assertSame('assigned', $events[0]['type']);
         self::assertIsArray($events[0]['data']);
-        self::assertSame('manager@example.test', $events[0]['data']['toLabel'] ?? null);
+        self::assertSame('Петров Иван', $events[0]['data']['toLabel'] ?? null);
         self::assertCount(1, $this->auditEntries('lead.assigned'));
 
         $this->api($client, 'GET', '/admin/api/leads?assignee='.(string) $manager->id());

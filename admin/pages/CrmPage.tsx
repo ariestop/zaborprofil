@@ -15,7 +15,12 @@ import {
     type LeadFilters,
     type LeadListParams,
 } from '../entities/lead/model'
-import { detectPeriod, periodRange, type LeadPeriod } from '../entities/lead/presentation'
+import {
+    detectPeriod,
+    periodRange,
+    personLabel,
+    type LeadPeriod,
+} from '../entities/lead/presentation'
 import { CreateLeadDialog } from '../features/leads/CreateLeadDialog'
 import {
     isLeadStatus,
@@ -380,7 +385,7 @@ export default function CrmPage() {
                                     { value: 'none', label: 'Без ответственного' },
                                     ...assignees.map((assignee) => ({
                                         value: assignee.id,
-                                        label: assignee.email,
+                                        label: personLabel(assignee),
                                     })),
                                 ]}
                             />

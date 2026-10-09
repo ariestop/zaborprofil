@@ -171,7 +171,7 @@ final readonly class LeadApiController
         try {
             return new JsonResponse([
                 'items' => array_map(
-                    static fn (LeadAssignee $assignee): array => ['id' => $assignee->id, 'email' => $assignee->email],
+                    static fn (LeadAssignee $assignee): array => ['id' => $assignee->id, 'email' => $assignee->email, 'name' => $assignee->name],
                     $this->assignees->assignable(),
                 ),
             ]);
