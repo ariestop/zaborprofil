@@ -1,0 +1,265 @@
+{#
+    Сцена конфигуратора забора: вид с тротуара, глаза на высоте 1,6 м. Забор — в плоскости 103,4 px/м (низ — y 414).
+    Фон — фото участка (photo, слой <picture> под SVG) или рисунок: дом в глубине (0,42 масштаба) и дерево (0,7),
+    поэтому высокий забор закрывает окна дома. Человек для масштаба — фото с прозрачным фоном (person) или силуэт женщины.
+
+    Ламели — по чертежам производителя, вид спереди:
+      jaluzi (Largo)         — односторонний наклон, осевой шаг 90 мм, в П-планке 80 мм: плоская грань, снизу валик-завиток R11;
+      jaluzi-double (Doppio) — профиль «домиком», осевой шаг 75 мм, в П-планке 100 мм.
+    Цвет забора — --fence: это --ral, а у декора под дерево (finish wood, «Античный дуб») — свой цвет --oak, RAL не действует.
+    Покрытие меняет только отражение: gloss (полиэстер, полуглянец) — блики; matte (велюр) — матовая мелкая
+    «песочная» структура без бликов; wood — матовый рисунок дуба. Тени и блики уравновешены, средний тон RAL не меняется.
+
+    assets/site/configurator.ts меняет у [data-fence-body] y/height, у [data-fence-top] сдвиг (константы GROUND и SCALE),
+    у [data-fill-prefix] — рисунок, у сцены — data-pattern, data-finish и --ral.
+    Цвета неба, дома и земли — иллюстрация, а не интерфейс (исключение из запрета HEX, docs/50-brand-system.md).
+    Параметры: uid, pattern, finish, ral (HEX), height (м), label, photo (bool), person (URL), person_height (м),
+    scale (px на метр на плоскости забора, по умолчанию 103,4; для фото подбирается по росту человека на снимке),
+    person_x (центр человека по x в единицах сцены 0…1200, по умолчанию 672).
+#}
+{% set ground = 414 %}
+{% set scale = max(60, min(200, (scale ?? 103.4) + 0)) %}
+{% set top = ground - height * scale %}
+{% set posts = [124, 383, 641, 900, 1158] %}
+{% set height_label = height|number_format(1, ',', '') ~ ' м' %}
+{% set person_height = (person_height ?? 1.65) + 0 %}
+{% set ph = person_height * scale * 1.06 %}
+{% set p_base = ground + 10.3 %}
+{% set px = (person_x ?? 672) + 0 %}
+<svg class="zp-scene{% if photo %} zp-scene--photo{% endif %}" viewBox="0 0 1200 470" preserveAspectRatio="xMinYMax slice" data-cfg-scene data-scale="{{ scale }}" data-pattern="{{ pattern }}" data-finish="{{ finish }}" style="--ral: {{ ral }}; --oak: #74502f" role="img" aria-label="{{ label }}">
+    <defs>
+        <linearGradient id="{{ uid }}-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#93c1e2"/><stop offset="1" stop-color="#e6f0f6"/></linearGradient>
+        <linearGradient id="{{ uid }}-glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient>
+        <linearGradient id="{{ uid }}-walk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b3afa6"/><stop offset="1" stop-color="#d9d6cf"/></linearGradient>
+        <linearGradient id="{{ uid }}-drop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".32"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>
+        {# Освещение сверху-слева: чуть светлее слева, чуть темнее справа — общий тон не меняется. #}
+        <linearGradient id="{{ uid }}-sun" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".07"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".07"/></linearGradient>
+
+        {# Largo: грань ламели (наклонена к небу) и валик-завиток снизу. #}
+        <linearGradient id="{{ uid }}-lg-face" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".22"/><stop offset=".35" stop-color="#fff" stop-opacity=".04"/><stop offset="1" stop-color="#fff" stop-opacity=".16"/></linearGradient>
+        <linearGradient id="{{ uid }}-lg-bead" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".5"/></linearGradient>
+        {# Doppio: верхний скат светлее, нижний в тени, конёк по середине. #}
+        <linearGradient id="{{ uid }}-dp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".2"/><stop offset=".47" stop-color="#fff" stop-opacity=".06"/><stop offset=".53" stop-color="#000" stop-opacity=".08"/><stop offset="1" stop-color="#000" stop-opacity=".36"/></linearGradient>
+        <linearGradient id="{{ uid }}-u" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset=".2" stop-color="#000" stop-opacity=".05"/><stop offset=".8" stop-color="#000" stop-opacity=".05"/><stop offset="1" stop-color="#000" stop-opacity=".3"/></linearGradient>
+        <linearGradient id="{{ uid }}-shv" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".35"/><stop offset=".3" stop-color="#fff" stop-opacity=".3"/><stop offset=".55" stop-color="#fff" stop-opacity=".1"/><stop offset=".75" stop-color="#000" stop-opacity=".1"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></linearGradient>
+
+        {# Шаг 90 мм = 9,306 px. #}
+        <pattern id="{{ uid }}-jaluzi" patternUnits="userSpaceOnUse" width="40" height="9.306">
+            <rect width="40" height="9.306" style="fill: var(--fence)"/>
+            <rect width="40" height="9.306" fill="#000" fill-opacity=".62"/>
+            <rect width="40" height="6.7" style="fill: var(--fence)"/>
+            <rect width="40" height="6.7" fill="url(#{{ uid }}-lg-face)"/>
+            <rect width="40" height=".45" fill="#fff" fill-opacity=".3"/>
+            <rect y="6.7" width="40" height="2.25" style="fill: var(--fence)"/>
+            <rect y="6.7" width="40" height="2.25" fill="url(#{{ uid }}-lg-bead)"/>
+            <rect class="zp-scene__spec" y="6.95" width="40" height=".5" fill="#fff" fill-opacity=".55"/>
+            <rect class="zp-scene__spec" y="2.6" width="40" height="1.1" fill="#fff" fill-opacity=".1"/>
+        </pattern>
+        {# Шаг 75 мм = 7,755 px. #}
+        <pattern id="{{ uid }}-jaluzi-double" patternUnits="userSpaceOnUse" width="40" height="7.755">
+            <rect width="40" height="7.755" style="fill: var(--fence)"/>
+            <rect width="40" height="7.755" fill="#000" fill-opacity=".62"/>
+            <rect y=".45" width="40" height="6.9" style="fill: var(--fence)"/>
+            <rect y=".45" width="40" height="6.9" fill="url(#{{ uid }}-dp)"/>
+            <rect class="zp-scene__spec" y="3.55" width="40" height=".55" fill="#fff" fill-opacity=".5"/>
+            <rect class="zp-scene__spec" y="1.1" width="40" height=".9" fill="#fff" fill-opacity=".1"/>
+        </pattern>
+        {# Только светотень ламелей (без цвета) — кладётся поверх рисунка дуба. У остальных рисунков пусто. #}
+        <pattern id="{{ uid }}-jaluzi-shade" patternUnits="userSpaceOnUse" width="40" height="9.306">
+            <rect width="40" height="6.7" fill="url(#{{ uid }}-lg-face)"/>
+            <rect width="40" height=".45" fill="#fff" fill-opacity=".3"/>
+            <rect y="6.7" width="40" height="2.25" fill="url(#{{ uid }}-lg-bead)"/>
+            <rect y="8.95" width="40" height=".356" fill="#000" fill-opacity=".62"/>
+        </pattern>
+        <pattern id="{{ uid }}-jaluzi-double-shade" patternUnits="userSpaceOnUse" width="40" height="7.755">
+            <rect width="40" height=".45" fill="#000" fill-opacity=".62"/>
+            <rect y=".45" width="40" height="6.9" fill="url(#{{ uid }}-dp)"/>
+            <rect y="7.35" width="40" height=".405" fill="#000" fill-opacity=".62"/>
+        </pattern>
+        {% for name in ['profnastil', 'profnastil-wide', 'shtaketnik', 'setka'] %}
+            <pattern id="{{ uid }}-{{ name }}-shade" patternUnits="userSpaceOnUse" width="1" height="1"/>
+        {% endfor %}
+        <pattern id="{{ uid }}-profnastil" patternUnits="userSpaceOnUse" width="11.9" height="20"><rect width="11.9" height="20" style="fill: var(--fence)"/><rect width="11.9" height="20" fill="url(#{{ uid }}-shv)"/></pattern>
+        <pattern id="{{ uid }}-profnastil-wide" patternUnits="userSpaceOnUse" width="23.8" height="20"><rect width="23.8" height="20" style="fill: var(--fence)"/><rect width="23.8" height="20" fill="url(#{{ uid }}-shv)"/></pattern>
+        <pattern id="{{ uid }}-shtaketnik" patternUnits="userSpaceOnUse" width="16.5" height="20"><rect width="12.4" height="20" style="fill: var(--fence)"/><rect width="12.4" height="20" fill="url(#{{ uid }}-shv)"/></pattern>
+        <pattern id="{{ uid }}-setka" patternUnits="userSpaceOnUse" width="5.2" height="20.7"><rect width="1.3" height="20.7" style="fill: var(--fence)"/><rect y="9.6" width="5.2" height="1.3" style="fill: var(--fence)"/></pattern>
+
+        {# Велюр: мелкое зерно — светлые и тёмные крапинки поровну, средний тон не меняется. #}
+        <filter id="{{ uid }}-grain-dark" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="1" seed="7"/><feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  2.2 0 0 0 -1.1"/></filter>
+        <filter id="{{ uid }}-grain-light" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="1" seed="7"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  -2.2 0 0 0 1.1"/></filter>
+        {#
+            «Античный дуб» (матовый): длинные волокна вдоль ламели, светлые пятна (в лупе ещё поры) — шум feTurbulence,
+            растянутый по горизонтали; полосы годовых колец — таблица feFuncR. Цвет основы — --oak.
+        #}
+        <filter id="{{ uid }}-oak" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency=".0012 .035" numOctaves="4" seed="11" result="grain"/>
+            <feComponentTransfer in="grain" result="rings"><feFuncR type="table" tableValues="0 .9 .15 1 0 .8 .1 .95 0 .85 .2 1 0 .9 .1"/></feComponentTransfer>
+            <feColorMatrix in="rings" result="dark" values="0 0 0 0 .19  0 0 0 0 .11  0 0 0 0 .06  .45 0 0 0 0"/>
+            <feTurbulence type="fractalNoise" baseFrequency=".0025 .012" numOctaves="2" seed="2" result="spots"/>
+            <feColorMatrix in="spots" result="light" values="0 0 0 0 .78  0 0 0 0 .55  0 0 0 0 .32  1.4 0 0 0 -.55"/>
+            <feMerge><feMergeNode in="light"/><feMergeNode in="dark"/></feMerge>
+        </filter>
+        {# Лупа: те же рисунки в 4,5 раза крупнее, мелкая «песочная» структура велюра и волокна дуба. #}
+        {% for name in ['jaluzi', 'jaluzi-double', 'profnastil', 'profnastil-wide', 'shtaketnik', 'setka'] %}
+            <pattern id="{{ uid }}-{{ name }}-zoom" href="#{{ uid }}-{{ name }}" patternTransform="scale(4.5)"/>
+            <pattern id="{{ uid }}-{{ name }}-shade-zoom" href="#{{ uid }}-{{ name }}-shade" patternTransform="scale(4.5)"/>
+        {% endfor %}
+        <filter id="{{ uid }}-grain-dark-zoom" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".5" numOctaves="2" seed="3"/><feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.6 0 0 0 -.8"/></filter>
+        <filter id="{{ uid }}-grain-light-zoom" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".5" numOctaves="2" seed="3"/><feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  -1.6 0 0 0 .8"/></filter>
+        <filter id="{{ uid }}-oak-zoom" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency=".003 .045" numOctaves="4" seed="11" result="grain"/>
+            <feComponentTransfer in="grain" result="rings"><feFuncR type="table" tableValues="0 0 .9 .1 0 0 .7 0 .2 1 0 0 .1 .8 0 0 .6 .1 0 1 0 0"/></feComponentTransfer>
+            <feColorMatrix in="rings" result="dark" values="0 0 0 0 .17  0 0 0 0 .1  0 0 0 0 .05  .8 0 0 0 0"/>
+            <feTurbulence type="fractalNoise" baseFrequency=".0012 .006" numOctaves="2" seed="2" result="spots"/>
+            <feColorMatrix in="spots" result="light" values="0 0 0 0 .8  0 0 0 0 .56  0 0 0 0 .33  1.5 0 0 0 -.6"/>
+            <feTurbulence type="fractalNoise" baseFrequency=".03 .6" numOctaves="2" seed="4" result="pores"/>
+            <feColorMatrix in="pores" result="pore" values="0 0 0 0 .12  0 0 0 0 .07  0 0 0 0 .04  2 0 0 0 -1"/>
+            <feMerge><feMergeNode in="light"/><feMergeNode in="dark"/><feMergeNode in="pore"/></feMerge>
+        </filter>
+        <clipPath id="{{ uid }}-loupe"><circle r="78"/></clipPath>
+    </defs>
+
+    {% if not photo %}
+        <rect width="1200" height="470" fill="url(#{{ uid }}-sky)"/>
+        <ellipse cx="300" cy="66" rx="110" ry="20" fill="#fff" opacity=".7"/>
+        <ellipse cx="372" cy="52" rx="70" ry="18" fill="#fff" opacity=".7"/>
+        <ellipse cx="960" cy="94" rx="90" ry="15" fill="#fff" opacity=".55"/>
+        <path d="M0 197 q120 -62 240 -10 t264 0 t264 -21 t240 10 t192 0 V414 H0z" fill="#a9c196"/>
+        <rect y="248.6" width="1200" height="165.4" fill="#8fb27a"/>
+
+        {# Дом в глубине участка. #}
+        <rect x="818" y="74" width="24" height="83" fill="#8b6d5c"/>
+        <polygon points="458,179 708,35.7 958,179" fill="#4a5058"/>
+        <polygon points="708,35.7 958,179 743,179" fill="#3c4249"/>
+        <rect x="480" y="179" width="456" height="139" fill="#ece5d8"/>
+        <rect x="480" y="179" width="456" height="11" fill="#d6cebf"/>
+        <polygon points="647,179 708,83.5 769,179" fill="#e3dccd"/>
+        {% for w in [[686, 111.7, 43.4, 52.1], [519, 218.1, 56.5, 60.8], [615, 218.1, 56.5, 60.8], [840.5, 218.1, 56.5, 60.8]] %}
+            <rect x="{{ w[0] }}" y="{{ w[1] }}" width="{{ w[2] }}" height="{{ w[3] }}" fill="#8fabbf"/>
+            <rect x="{{ w[0] }}" y="{{ w[1] }}" width="{{ w[2] }}" height="{{ w[3] }}" fill="url(#{{ uid }}-glass)"/>
+            <rect x="{{ w[0] }}" y="{{ w[1] }}" width="{{ w[2] }}" height="{{ w[3] }}" fill="none" stroke="#f6f3ec" stroke-width="3.9"/>
+            <line x1="{{ w[0] + w[2] / 2 }}" y1="{{ w[1] }}" x2="{{ w[0] + w[2] / 2 }}" y2="{{ w[1] + w[3] }}" stroke="#f6f3ec" stroke-width="3"/>
+        {% endfor %}
+        <rect x="753.6" y="222.5" width="43.4" height="95.5" fill="#6b4f3f"/>
+        <rect x="480" y="302.8" width="456" height="15.2" fill="#b7aea0"/>
+
+        {# Дерево и куст на участке. #}
+        <rect x="192.8" y="176.2" width="14.5" height="188.2" fill="#76573f"/>
+        <circle cx="200" cy="132.7" r="86.9" fill="#5c8c4b"/>
+        <circle cx="134.8" cy="176.2" r="65.2" fill="#6a9a56"/>
+        <circle cx="265.2" cy="168.9" r="68.8" fill="#527d43"/>
+        <circle cx="1080" cy="300" r="70" fill="#5f8e4d"/>
+        <circle cx="1140" cy="318" r="56" fill="#527d43"/>
+        <rect y="408.8" width="1200" height="17.6" fill="#6e9a5b"/>
+    {% endif %}
+
+    {# Забор: ламели, фактура покрытия, свет, затем П-планки, столбы и верхняя планка. #}
+    <rect data-fence-body x="0" y="{{ top }}" width="1200" height="{{ ground - top }}" fill="url(#{{ uid }}-{{ pattern }})" data-fill-prefix="{{ uid }}"/>
+    <g class="zp-scene__grain">
+        <rect data-fence-body x="0" y="{{ top }}" width="1200" height="{{ ground - top }}" filter="url(#{{ uid }}-grain-dark)" opacity=".09"/>
+        <rect data-fence-body x="0" y="{{ top }}" width="1200" height="{{ ground - top }}" filter="url(#{{ uid }}-grain-light)" opacity=".09"/>
+    </g>
+    {# Матовые покрытия рассеивают ту же долю света, что полиэстер отдаёт бликами: средний тон одинаковый. #}
+    <rect class="zp-scene__sheen" data-fence-body x="0" y="{{ top }}" width="1200" height="{{ ground - top }}" fill="#fff"/>
+    {# Дуб: сплошной цвет декора, волокна, сверху светотень ламелей. #}
+    <g class="zp-scene__wood">
+        <rect data-fence-body x="0" y="{{ top }}" width="1200" height="{{ ground - top }}" style="fill: var(--fence)"/>
+        <rect data-fence-body x="0" y="{{ top }}" width="1200" height="{{ ground - top }}" filter="url(#{{ uid }}-oak)"/>
+        <rect data-fence-body x="0" y="{{ top }}" width="1200" height="{{ ground - top }}" fill="url(#{{ uid }}-{{ pattern }}-shade)" data-fill-prefix="{{ uid }}" data-fill-suffix="-shade"/>
+    </g>
+    <rect data-fence-body x="0" y="{{ top }}" width="1200" height="{{ ground - top }}" fill="url(#{{ uid }}-sun)"/>
+    <rect y="407.8" width="1200" height="6.2" style="fill: var(--fence)"/>
+    <rect y="407.8" width="1200" height="6.2" fill="#000" fill-opacity=".18"/>
+    {% for x in posts %}
+        {# П-планка секции: у Doppio — 100 мм, у Largo и остальных — 80 мм. #}
+        <g class="zp-scene__u zp-scene__u--wide">
+            <rect data-fence-body x="{{ x - 5.17 }}" y="{{ top }}" width="10.34" height="{{ ground - top }}" style="fill: var(--fence)"/>
+            <rect data-fence-body x="{{ x - 5.17 }}" y="{{ top }}" width="10.34" height="{{ ground - top }}" fill="url(#{{ uid }}-u)"/>
+        </g>
+        <g class="zp-scene__u zp-scene__u--narrow">
+            <rect data-fence-body x="{{ x - 4.136 }}" y="{{ top }}" width="8.272" height="{{ ground - top }}" style="fill: var(--fence)"/>
+            <rect data-fence-body x="{{ x - 4.136 }}" y="{{ top }}" width="8.272" height="{{ ground - top }}" fill="url(#{{ uid }}-u)"/>
+        </g>
+    {% endfor %}
+    <g data-fence-top transform="translate(0 {{ top }})">
+        <rect y="-2" width="1200" height="6.2" style="fill: var(--fence)"/>
+        <rect y="-2" width="1200" height="2.2" fill="#fff" fill-opacity=".18"/>
+        <rect y="2.4" width="1200" height="1.8" fill="#000" fill-opacity=".3"/>
+        {% for x in posts %}
+            <rect x="{{ x - 5.17 }}" y="-6.5" width="10.34" height="5" rx="1.2" style="fill: var(--fence)"/>
+            <rect x="{{ x - 5.17 }}" y="-6.5" width="10.34" height="5" rx="1.2" fill="#000" fill-opacity=".15"/>
+        {% endfor %}
+    </g>
+
+    {% if not photo %}
+        {# Тротуар и тень забора. #}
+        <rect y="426.4" width="1200" height="43.6" fill="url(#{{ uid }}-walk)"/>
+    {% endif %}
+    <rect y="414" width="1200" height="20" fill="url(#{{ uid }}-drop)"/>
+
+    {# Лупа: ламель крупно — профиль серии, цвет и покрытие. #}
+    <g class="zp-scene__loupe" transform="translate(318 316)">
+        <circle r="82" cx="3" cy="5" fill="#000" fill-opacity=".22"/>
+        <g clip-path="url(#{{ uid }}-loupe)">
+            <rect x="-80" y="-80" width="160" height="160" fill="url(#{{ uid }}-{{ pattern }}-zoom)" data-fill-prefix="{{ uid }}" data-fill-suffix="-zoom"/>
+            <g class="zp-scene__grain">
+                <rect x="-80" y="-80" width="160" height="160" filter="url(#{{ uid }}-grain-dark-zoom)" opacity=".24"/>
+                <rect x="-80" y="-80" width="160" height="160" filter="url(#{{ uid }}-grain-light-zoom)" opacity=".2"/>
+            </g>
+            <rect class="zp-scene__sheen" x="-80" y="-80" width="160" height="160" fill="#fff"/>
+            <g class="zp-scene__wood">
+                <rect x="-80" y="-80" width="160" height="160" style="fill: var(--fence)"/>
+                <rect x="-80" y="-80" width="160" height="160" filter="url(#{{ uid }}-oak-zoom)"/>
+                <rect x="-80" y="-80" width="160" height="160" fill="url(#{{ uid }}-{{ pattern }}-shade-zoom)" data-fill-prefix="{{ uid }}" data-fill-suffix="-shade-zoom"/>
+            </g>
+            <rect x="-80" y="-80" width="160" height="160" fill="url(#{{ uid }}-sun)"/>
+        </g>
+        <circle r="78" fill="none" stroke="#fff" stroke-width="5"/>
+        <rect x="-38" y="64" width="76" height="26" rx="13" fill="#fff"/>
+        <text y="83" text-anchor="middle" font-size="17" font-weight="600" fill="#23272d" font-family="Onest, sans-serif">крупно</text>
+    </g>
+
+    {# Человек для масштаба. #}
+    {% if not (photo and person is defined and person is not empty) %}
+        <ellipse cx="{{ px }}" cy="{{ p_base }}" rx="{{ 0.28 * scale }}" ry="4.5" fill="#000" fill-opacity=".28"/>
+    {% endif %}
+    {% if person is defined and person is not empty %}
+        <image href="{{ person }}" x="{{ px - 0.5 * scale }}" y="{{ p_base - ph }}" width="{{ scale }}" height="{{ ph }}" preserveAspectRatio="xMidYMax meet"/>
+    {% else %}
+        {% set u = ph / 10 %}
+        <g fill="#2f353c">
+            {# Силуэт женщины: волосы до плеч, жакет, платье до колена. #}
+            <path d="M{{ px - 0.78 * u }} {{ p_base - ph + 0.75 * u }} a{{ 0.78 * u }} {{ 0.82 * u }} 0 1 1 {{ 1.56 * u }} 0 v{{ 0.75 * u }} q0 {{ 0.25 * u }} {{ -0.25 * u }} {{ 0.2 * u }} h{{ -1.06 * u }} q{{ -0.25 * u }} {{ 0.05 * u }} {{ -0.25 * u }} {{ -0.2 * u }} z"/>
+            <rect x="{{ px - 0.2 * u }}" y="{{ p_base - ph + 1.35 * u }}" width="{{ 0.4 * u }}" height="{{ 0.45 * u }}"/>
+            <path d="M{{ px - 0.9 * u }} {{ p_base - ph + 1.85 * u }} q{{ 0.9 * u }} {{ -0.35 * u }} {{ 1.8 * u }} 0 l{{ 0.3 * u }} {{ 2.9 * u }} q{{ -0.1 * u }} {{ 0.25 * u }} {{ -0.35 * u }} {{ 0.05 * u }} l{{ -0.2 * u }} {{ -1.9 * u }} l{{ 0.55 * u }} {{ 2.9 * u }} h{{ -3.1 * u }} l{{ 0.55 * u }} {{ -2.9 * u }} l{{ -0.2 * u }} {{ 1.9 * u }} q{{ -0.25 * u }} {{ 0.2 * u }} {{ -0.35 * u }} {{ -0.05 * u }} z"/>
+            <rect x="{{ px - 0.62 * u }}" y="{{ p_base - 3.4 * u }}" width="{{ 0.42 * u }}" height="{{ 3.25 * u }}" rx="{{ 0.18 * u }}"/>
+            <rect x="{{ px + 0.2 * u }}" y="{{ p_base - 3.4 * u }}" width="{{ 0.42 * u }}" height="{{ 3.25 * u }}" rx="{{ 0.18 * u }}"/>
+            <path d="M{{ px - 0.7 * u }} {{ p_base - 0.25 * u }} h{{ 0.62 * u }} v{{ 0.25 * u }} h{{ -0.75 * u }} z M{{ px + 0.12 * u }} {{ p_base - 0.25 * u }} h{{ 0.62 * u }} l{{ 0.13 * u }} {{ 0.25 * u }} h{{ -0.75 * u }} z"/>
+        </g>
+    {% endif %}
+    <g class="zp-scene__label" font-family="Onest, sans-serif" font-size="20.7" font-weight="600" fill="#23272d" text-anchor="middle">
+        <rect x="{{ px - 34 }}" y="{{ p_base - ph - 34 }}" width="68" height="26" rx="13" fill="#fff" fill-opacity=".88"/>
+        <text x="{{ px }}" y="{{ p_base - ph - 14.5 }}">{{ person_height|number_format(2, ',', '')|trim('0', 'right')|trim(',', 'right') }} м</text>
+    </g>
+
+    {# Линейка и подпись высоты. #}
+    <g class="zp-scene__ruler">
+        <rect x="18" y="{{ ground - 2.2 * scale }}" width="48" height="{{ 2.2 * scale + 4 }}" rx="8" fill="#fff" fill-opacity="{{ photo ? '.72' : '0' }}"/>
+        <g stroke="#23272d" stroke-opacity=".7" stroke-width="2">
+            <line x1="51.7" y1="414" x2="51.7" y2="{{ ground - 2.15 * scale }}"/>
+            {% for m in [0.5, 1, 1.5, 2] %}
+                <line x1="44.7" y1="{{ ground - m * scale }}" x2="58.7" y2="{{ ground - m * scale }}"/>
+            {% endfor %}
+        </g>
+        <g font-size="20.7" fill="#23272d" fill-opacity=".8" text-anchor="end" font-family="'Sofia Sans Condensed', sans-serif">
+            {% for m in [0.5, 1, 1.5, 2] %}
+                <text x="40.7" y="{{ ground - m * scale + 6 }}">{{ m|number_format(m == m|round ? 0 : 1, ',', '') }}</text>
+            {% endfor %}
+        </g>
+    </g>
+    <g data-fence-top transform="translate(0 {{ top }})">
+        <line x1="51.7" x2="65.7" stroke="#2d7f27" stroke-width="3"/>
+        <rect x="65.7" y="-20.7" width="98" height="41.4" rx="8" fill="#fff" stroke="#2d7f27" stroke-width="2"/>
+        <text x="114.7" y="10" text-anchor="middle" font-size="27.9" font-weight="700" fill="#23272d" font-family="'Sofia Sans Condensed', sans-serif" data-cfg-height-tag>{{ height_label }}</text>
+    </g>
+</svg>

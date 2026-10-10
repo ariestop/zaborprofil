@@ -102,7 +102,7 @@ export function PageRowMenu({
                     type="button"
                     aria-label={`Действия со страницей «${page.title}»`}
                     className={cn(
-                        'flex h-9 w-9 items-center justify-center rounded-lg text-graphite hover:bg-surface-strong focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 data-[state=open]:bg-surface-strong dark:text-slate-300 dark:hover:bg-slate-800 dark:data-[state=open]:bg-slate-800',
+                        'flex h-12 w-12 items-center justify-center rounded-lg text-graphite hover:bg-surface-strong focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-500 data-[state=open]:bg-surface-strong dark:text-slate-300 dark:hover:bg-slate-800 dark:data-[state=open]:bg-slate-800',
                         triggerClassName,
                     )}
                 >

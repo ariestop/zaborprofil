@@ -88,7 +88,7 @@ make npm-dev        # vite dev на :5173, HMR
 - `@theme`: кастомные цвета (`brand-*`) и шрифт `--font-sans` (оставлен стек из Tailwind 3). Кастомные значения добавляются сюда, не inline.
 - `@layer base`: совместимость с v3 (цвет границы по умолчанию `gray-200`, курсор `pointer` у кнопок).
 
-Цвета, шрифты, радиусы и размеры текста задаёт бренд-система «Периметр»: значения токенов `@theme` берутся только из [50-brand-system](50-brand-system.md) (раздел 11). Шрифты Onest и Sofia Sans Condensed подключаются локально через npm-пакеты `@fontsource*`, не через CDN.
+Цвета, шрифты, радиусы и размеры текста задаёт бренд-система «Периметр»: значения токенов `@theme` берутся только из [50-brand-system](50-brand-system.md) (раздел 11). Шрифты Golos Text (заголовки), Onest и Sofia Sans Condensed подключаются локально через npm-пакеты `@fontsource*`, не через CDN.
 
 `vite.config.ts` задаёт `base: '/build/'` для сборки: ссылки внутри CSS/JS (шрифты, картинки, чанки) должны вести в `public_html/build`, откуда их раздаёт `ViteAssetExtension` (`app.vite.public_build_path`). Без этого `url()` в CSS указывают на `/assets/...` и дают 404.
 

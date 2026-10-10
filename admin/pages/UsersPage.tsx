@@ -246,7 +246,7 @@ export default function UsersPage() {
       <Card title="Новый пользователь">
         <form className="grid gap-3 lg:grid-cols-2" onSubmit={submitCreate}>
           <div>
-            <Input placeholder="Имя (например, Игорь)" autoComplete="off" {...createForm.register('name')} />
+            <Input placeholder="Фамилия и имя (например, Иванов Игорь)" autoComplete="off" {...createForm.register('name')} />
             {createForm.formState.errors.name?.message !== undefined ? (
               <p className="mt-1 text-xs text-red-600">{createForm.formState.errors.name.message}</p>
             ) : null}

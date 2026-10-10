@@ -6,7 +6,7 @@
 :root{
   --green:#45A63D; --act:#2D7F27; --act-h:#246C1F; --green-50:#EEF6EC;
   --ink:#23272D; --graph:#575C63; --surface:#F3F5F2; --line:#DCE0DB; --night:#2A2F35; --badge:#F2B13B;
-  --f:'Onest',system-ui,sans-serif; --c:'Sofia Sans Condensed','Arial Narrow',sans-serif;
+  --h:'Golos Text','Onest',system-ui,sans-serif; --f:'Onest',system-ui,sans-serif; --c:'Sofia Sans Condensed','Arial Narrow',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{background:#fff;color:var(--ink);font-family:var(--f);font-size:13px;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -16,8 +16,8 @@ html,body{background:#fff;color:var(--ink);font-family:var(--f);font-size:13px;l
 .foot .pn{font-size:13px;font-weight:800;color:var(--ink)}
 .foot .ln{flex:1;height:1px;background:var(--line);margin:0 12px}
 .eb{font:800 12px/1 var(--c);letter-spacing:.1em;text-transform:uppercase;color:var(--act)}
-h1{font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1.08;text-wrap:balance}
-h2{font-size:19px;font-weight:700;line-height:1.2}
+h1{font-family:var(--h);font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1.08;text-wrap:balance}
+h2{font-family:var(--h);font-size:19px;font-weight:700;line-height:1.2}
 h3{font:800 12px/1.2 var(--c);letter-spacing:.08em;text-transform:uppercase;color:var(--graph)}
 p{max-width:72ch}
 .lead{font-size:14.5px;color:var(--graph);max-width:80ch}
@@ -97,9 +97,9 @@ th{font:800 10.5px/1.2 var(--c);letter-spacing:.07em;text-transform:uppercase;co
 .ral i{display:block;height:30mm;border-radius:8px;border:1px solid rgba(0,0,0,.12)}
 
 /* type */
-.spec{display:grid;grid-template-columns:1fr 1fr;gap:6mm;flex:1}
+.spec{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6mm;flex:1}
 .spec .box{display:flex;flex-direction:column;gap:3mm}
-.big{font-size:64px;line-height:1;font-weight:800;letter-spacing:-.02em}
+.big{font-size:56px;line-height:1;font-weight:800;letter-spacing:-.02em}
 .alpha{font-size:17px;line-height:1.45;word-break:break-all}
 .weights{display:flex;gap:5mm;flex-wrap:wrap;font-size:18px}
 .scale td:first-child{width:30mm}
@@ -401,14 +401,21 @@ code{font-family:var(--c);font-weight:600;letter-spacing:.02em}
 
 <!-- 9. FONTS -->
 <section class="page">
-  <div class="hd"><span class="eb">Типографика</span><h1>Два шрифта вместо Open Sans и Cuprum</h1></div>
+  <div class="hd"><span class="eb">Типографика</span><h1>Три шрифта вместо Open Sans и Cuprum</h1></div>
   <div class="spec">
+    <div class="box" style="font-family:var(--h)">
+      <h3>Golos Text · заголовки</h3>
+      <div class="big" style="font-weight:700">Аа Бб 18</div>
+      <div class="weights"><span style="font-weight:400">Regular</span><span style="font-weight:600">SemiBold</span><span style="font-weight:700">Bold</span><span style="font-weight:800">ExtraBold</span></div>
+      <div class="alpha">АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ абвгдеёжзийклмнопрстуфхцчшщъыьэюя 0123456789 ₽ № « »</div>
+      <p class="small" style="font-family:var(--f)">Заголовки сайта h1–h3. Российский шрифт для городской навигации и интерфейсов: открытые формы, отличная кириллица, вариативный (400–900). Лицензия OFL. Запасные — Geologica и Inter Tight.</p>
+    </div>
     <div class="box">
-      <h3>Onest · основной</h3>
+      <h3>Onest · текст</h3>
       <div class="big">Аа Бб 18</div>
       <div class="weights"><span style="font-weight:400">Regular</span><span style="font-weight:500">Medium</span><span style="font-weight:700">Bold</span><span style="font-weight:800">ExtraBold</span></div>
       <div class="alpha">АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ абвгдеёжзийклмнопрстуфхцчшщъыьэюя 0123456789 ₽ № « »</div>
-      <p class="small">Заголовки, текст, кнопки, поля. Российский шрифт 2023 года, отличная кириллица, вариативный (100–900). Лицензия OFL, бесплатно для сайта и печати. Заменяет Open Sans.</p>
+      <p class="small">Текст, кнопки, поля, админка. Российский шрифт 2023 года, отличная кириллица, вариативный (100–900). Лицензия OFL, бесплатно для сайта и печати. Заменяет Open Sans.</p>
     </div>
     <div class="box" style="font-family:var(--c)">
       <h3>Sofia Sans Condensed · цифры и подписи</h3>
@@ -429,9 +436,9 @@ code{font-family:var(--c);font-weight:600;letter-spacing:.02em}
     <table class="scale num">
       <thead><tr><th>Роль</th><th>Образец</th><th>Сайт, px</th></tr></thead>
       <tbody>
-        <tr><td>H1</td><td class="s" style="font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1.05">Забор под ключ</td><td>40–56 / 1,08</td></tr>
-        <tr><td>H2</td><td class="s" style="font-size:25px;font-weight:800">Наши работы</td><td>30–36 / 1,15</td></tr>
-        <tr><td>H3</td><td class="s" style="font-size:19px;font-weight:700">Профнастил С8</td><td>21–24 / 1,2</td></tr>
+        <tr><td>H1</td><td class="s" style="font-family:var(--h);font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1.05">Забор под ключ</td><td>40–56 / 1,08</td></tr>
+        <tr><td>H2</td><td class="s" style="font-family:var(--h);font-size:25px;font-weight:700">Наши работы</td><td>30–36 / 1,15</td></tr>
+        <tr><td>H3</td><td class="s" style="font-family:var(--h);font-size:19px;font-weight:700">Профнастил С8</td><td>21–24 / 1,2</td></tr>
         <tr><td>Текст</td><td class="s" style="font-size:15px">Монтаж от 1 дня в Саратове</td><td>18 / 1,55</td></tr>
         <tr><td>Мелкий</td><td class="s" style="font-size:12.5px;color:var(--graph)">Оттенок может отличаться</td><td>15 / 1,45</td></tr>
         <tr><td>Цена</td><td class="s" style="font:800 28px/1 var(--c)">от 1 290 ₽</td><td>28–40, Sofia 800</td></tr>
@@ -644,9 +651,10 @@ code{font-family:var(--c);font-weight:600;letter-spacing:.02em}
         <li><code>assets/shared/styles/fonts.css</code> — шрифты</li>
         <li><code>docs/brand/print/color-proof-2026.pdf</code> — цветопроба</li></ul></div>
       <div class="sur"><h3>Шрифты на сайте</h3><ul class="l" style="margin-top:2mm">
+        <li><code>@fontsource-variable/golos-text</code> — заголовки</li>
         <li><code>@fontsource-variable/onest</code></li>
         <li><code>@fontsource/sofia-sans-condensed</code> (600, 800)</li>
-        <li>cyrillic + latin (+ latin-ext у Onest ради ₽), woff2, с собственного домена. Без CDN.</li>
+        <li>cyrillic + latin (+ latin-ext у Golos Text и Onest ради ₽), woff2, с собственного домена. Без CDN.</li>
         <li>В Sofia Sans Condensed нет ₽ — он берётся из Onest.</li></ul></div>
       <div class="sur"><h3>Проверки</h3><ul class="l" style="margin-top:2mm">
         <li>Контраст пар цветов — по таблице на стр. 07</li>
@@ -654,6 +662,7 @@ code{font-family:var(--c);font-weight:600;letter-spacing:.02em}
         <li>Текст от 17 px, prefers-reduced-motion</li></ul></div>
     </div>
 <pre>@theme {
+  --font-heading: 'Golos Text Variable', 'Geologica', 'Inter Tight', 'Onest Variable', sans-serif;
   --font-sans: 'Onest Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-cond: 'Sofia Sans Condensed', 'Onest Variable', 'Arial Narrow', sans-serif;  /* ₽ из Onest */
 

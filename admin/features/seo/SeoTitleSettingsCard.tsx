@@ -59,7 +59,7 @@ export function SeoTitleSettingsCard() {
             placeholder="{h1} — заборы в Москве | {site_name}"
             onChange={(event) => setTemplateOverride(event.target.value)}
           />
-          <span className="mt-1 block text-xs font-normal text-slate-500 dark:text-slate-400">
+          <span className="mt-1 block text-xs font-normal text-graphite dark:text-slate-400">
             Доступные подстановки: <code>{'{title}'}</code>, <code>{'{h1}'}</code>, <code>{'{site_name}'}</code>. Пустой шаблон — в title попадает название страницы.
           </span>
         </label>
@@ -67,8 +67,8 @@ export function SeoTitleSettingsCard() {
           Название сайта
           <Input className="mt-1" value={siteName} onChange={(event) => setSiteNameOverride(event.target.value)} />
         </label>
-        <div className="rounded-lg border border-slate-200 p-3 text-sm dark:border-slate-700">
-          <div className="text-xs text-slate-500 dark:text-slate-400">
+        <div className="rounded-lg border border-line p-3 text-sm dark:border-slate-700">
+          <div className="text-xs text-graphite dark:text-slate-400">
             Пример для страницы «{exampleTitle}» с H1 «{exampleH1}»:
           </div>
           <div className="mt-1 font-medium" data-testid="seo-template-example">{example}</div>

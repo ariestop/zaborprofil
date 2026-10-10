@@ -10,6 +10,7 @@ use App\Module\Content\Application\DTO\PageRevisionOutput;
 use App\Module\Content\Application\Handler\RollbackPageRevisionHandler;
 use App\Module\Content\Application\Service\PageRevisionComparison;
 use App\Module\Content\Domain\Repository\PageRevisionRepositoryInterface;
+use App\Shared\UI\Http\AdminApiResponses;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -30,7 +31,7 @@ final readonly class PageRevisionApiController
     public function index(string $pageId, PageRevisionRepositoryInterface $revisions): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_VIEW_REVISIONS)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -46,7 +47,7 @@ final readonly class PageRevisionApiController
     public function diff(string $pageId, Request $request, PageRevisionComparison $comparison): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_VIEW_REVISIONS)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -65,7 +66,7 @@ final readonly class PageRevisionApiController
     public function rollback(string $pageId, string $revisionId, RollbackPageRevisionHandler $handler): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_ROLLBACK_REVISION)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -75,11 +76,4 @@ final readonly class PageRevisionApiController
         }
     }
 
-    private function accessDenied(): JsonResponse
-    {
-        return new JsonResponse([
-            'error' => 'Access denied.',
-            'code' => 'ACCESS_DENIED',
-        ], 403);
-    }
 }

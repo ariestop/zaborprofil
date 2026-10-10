@@ -50,18 +50,18 @@ function ScheduleForm({ status, initialPublishAt, initialUnpublishAt, pending, e
       }}
     >
       {!unpublishOnly && (
-        <label className="block text-sm font-medium text-slate-700">
+        <label className="block text-sm font-medium text-ink">
           Опубликовать
-          <input type="datetime-local" required value={publishAt} onChange={(event) => setPublishAt(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+          <input type="datetime-local" required value={publishAt} onChange={(event) => setPublishAt(event.target.value)} className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2" />
         </label>
       )}
-      <label className="block text-sm font-medium text-slate-700">
+      <label className="block text-sm font-medium text-ink">
         {unpublishOnly ? 'Снять с публикации' : 'Снять с публикации (необязательно)'}
-        <input type="datetime-local" required={unpublishOnly} value={unpublishAt} onChange={(event) => setUnpublishAt(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+        <input type="datetime-local" required={unpublishOnly} value={unpublishAt} onChange={(event) => setUnpublishAt(event.target.value)} className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2" />
       </label>
-      <label className="block text-sm font-medium text-slate-700">
+      <label className="block text-sm font-medium text-ink">
         Комментарий
-        <input type="text" value={comment} onChange={(event) => setComment(event.target.value)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" />
+        <input type="text" value={comment} onChange={(event) => setComment(event.target.value)} className="mt-1 w-full rounded-lg border border-line-strong px-3 py-2" />
       </label>
       {invalidOrder && <p role="alert" className="text-sm text-red-700">Снятие должно быть позже публикации.</p>}
       {error && <p role="alert" className="text-sm text-red-700">{error}</p>}

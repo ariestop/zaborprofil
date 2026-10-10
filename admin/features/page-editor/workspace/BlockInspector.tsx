@@ -70,7 +70,7 @@ function JsonEditor({
                 id={`${block.id}-content-json`}
                 value={content}
                 onChange={(event) => setContent(event.target.value)}
-                className="min-h-36 w-full rounded-md border border-slate-300 bg-white p-2 font-mono text-xs dark:border-slate-700 dark:bg-slate-900"
+                className="min-h-36 w-full rounded-md border border-line-strong bg-white p-2 font-mono text-xs dark:border-slate-700 dark:bg-slate-900"
             />
             <label
                 className="text-xs font-medium text-graphite dark:text-slate-300"
@@ -82,7 +82,7 @@ function JsonEditor({
                 id={`${block.id}-settings-json`}
                 value={settings}
                 onChange={(event) => setSettings(event.target.value)}
-                className="min-h-24 w-full rounded-md border border-slate-300 bg-white p-2 font-mono text-xs dark:border-slate-700 dark:bg-slate-900"
+                className="min-h-24 w-full rounded-md border border-line-strong bg-white p-2 font-mono text-xs dark:border-slate-700 dark:bg-slate-900"
             />
             {error !== null ? (
                 <p className="text-xs text-red-600" role="alert">
@@ -167,7 +167,7 @@ export function BlockInspector({
                         id={`${block.id}-name`}
                         value={block.name === '' ? '' : title}
                         onChange={(event) => touch({ name: event.target.value })}
-                        className="h-9 rounded-lg border border-slate-300 bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-900"
+                        className="h-9 rounded-lg border border-line-strong bg-white px-3 text-sm dark:border-slate-700 dark:bg-slate-900"
                     />
                     <p className="text-xs text-graphite dark:text-slate-400">
                         Видно только в редакторе, на сайт не выводится
@@ -290,7 +290,7 @@ export function BlockInspector({
                     <button
                         type="button"
                         onClick={onDuplicate}
-                        className="inline-flex h-[38px] items-center gap-1.5 rounded-[9px] border border-line-strong bg-white px-3 text-[13px] font-semibold text-graphite hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                        className="inline-flex h-[38px] items-center gap-1.5 rounded-[9px] border border-line-strong bg-white px-3 text-[13px] font-semibold text-graphite hover:bg-surface dark:hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                     >
                         <svg
                             width="16"
@@ -312,7 +312,7 @@ export function BlockInspector({
                         <button
                             type="button"
                             onClick={onSaveAsSection}
-                            className="inline-flex h-[38px] items-center rounded-[9px] border border-line-strong bg-white px-3 text-[13px] font-semibold text-graphite hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                            className="inline-flex h-[38px] items-center rounded-[9px] border border-line-strong bg-white px-3 text-[13px] font-semibold text-graphite hover:bg-surface dark:hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                         >
                             Сохранить как шаблон секции
                         </button>

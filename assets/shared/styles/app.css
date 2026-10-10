@@ -30,7 +30,7 @@
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
+    border-color: var(--color-line, currentcolor);
   }
 }
 
@@ -41,6 +41,24 @@
 
   html.dark {
     color-scheme: dark;
+
+    /*
+      Тёмная тема админки (docs/50-brand-system.md, раздел 11): классы dark:*-slate-* остаются в разметке,
+      а сама шкала slate в тёмной теме подменена нейтралями бренда: 800 = night, 100 = surface-strong, 50 = surface.
+      Вместо холодного сине-фиолетового slate Tailwind — приглушённый графит с тем же оттенком, что у ink и night.
+      Контраст текста: slate-100 на 900 — 13,6:1, slate-400 на 900 — 6,6:1, slate-500 на 900 — 4,9:1.
+    */
+    --color-slate-50: #f3f5f2;
+    --color-slate-100: #e9ece8;
+    --color-slate-200: #d6dade;
+    --color-slate-300: #bcc1c7;
+    --color-slate-400: #a0a6ad;
+    --color-slate-500: #868d96;
+    --color-slate-600: #5a616a;
+    --color-slate-700: #4a515a;
+    --color-slate-800: #2a2f35;
+    --color-slate-900: #1d2126;
+    --color-slate-950: #15181c;
   }
 
   /* Tailwind 4 preflight uses the default cursor on buttons; keep Tailwind 3 behavior. */

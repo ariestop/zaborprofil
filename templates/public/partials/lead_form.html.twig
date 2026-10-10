@@ -20,18 +20,18 @@
         <div class="grid gap-4 sm:grid-cols-2">
             <label class="zp-field">
                 Ваше имя
-                <input class="zp-input" name="name" autocomplete="name" placeholder="Как к вам обращаться" required>
+                <input class="zp-input" name="name" autocomplete="name" maxlength="{{ constant('App\\Module\\Lead\\Domain\\Entity\\Lead::NAME_MAX_LENGTH') }}" placeholder="Как к вам обращаться" required>
             </label>
 
             <label class="zp-field">
                 Телефон
-                <input class="zp-input" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" required>
+                <input class="zp-input" name="phone" type="tel" maxlength="{{ constant('App\\Module\\Lead\\Domain\\Entity\\Lead::PHONE_MAX_LENGTH') }}" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" required>
             </label>
         </div>
 
         <label class="zp-field">
             Что нужно сделать <span class="font-normal text-graphite">(необязательно)</span>
-            <textarea class="zp-input" name="message" rows="3" placeholder="Например: забор из жалюзи, 40 метров, нужны ворота и калитка"></textarea>
+            <textarea class="zp-input" name="message" rows="3" maxlength="{{ constant('App\\Module\\Lead\\Domain\\Entity\\Lead::MESSAGE_MAX_LENGTH') }}" placeholder="Например: забор из жалюзи, 40 метров, нужны ворота и калитка"></textarea>
         </label>
 
         <label class="flex items-start gap-3 text-sm leading-5 text-graphite">

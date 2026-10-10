@@ -7,25 +7,27 @@ namespace App\Module\Content\UI\Admin;
 use App\Module\Auth\Domain\Security\AdminPermission;
 use App\Module\Content\Application\Command\PublishPageCommand;
 use App\Module\Content\Application\Command\RollbackPageRevisionCommand;
+use App\Module\Content\Application\Command\SavePageBuilderDocumentCommand;
 use App\Module\Content\Application\DTO\BuilderBlockOutput;
 use App\Module\Content\Application\DTO\PageBuilderDocumentOutput;
 use App\Module\Content\Application\DTO\PageRevisionOutput;
+use App\Module\Content\Application\Exception\PageEditConflictException;
 use App\Module\Content\Application\Handler\PublishPageHandler;
 use App\Module\Content\Application\Handler\RollbackPageRevisionHandler;
+use App\Module\Content\Application\Handler\SavePageBuilderDocumentHandler;
 use App\Module\Content\Application\Service\BlockSchemaRegistry;
 use App\Module\Content\Application\Service\BuilderDocumentVersion;
 use App\Module\Content\Application\Service\ContentId;
 use App\Module\Content\Application\Service\CurrentAdminActor;
 use App\Module\Content\Application\Service\PageBlockView;
 use App\Module\Content\Application\Service\PageEditLockService;
-use App\Module\Content\Application\Service\PublicPageCacheInvalidator;
 use App\Module\Content\Application\Service\StructuredBlockDocumentService;
-use App\Module\Content\Domain\Entity\PageBlock;
 use App\Module\Content\Domain\Repository\PageBlockRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRevisionRepositoryInterface;
-use App\Module\Content\Domain\ValueObject\PageVisibility;
 use App\Module\Content\UI\Web\TwigBlockRenderer;
+use App\Shared\UI\Http\AdminApiResponses;
+use App\Shared\UI\Http\JsonRequest;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -54,7 +56,7 @@ final readonly class PageBuilderApiController
         BuilderDocumentVersion $versions,
     ): JsonResponse {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_VIEW)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -69,19 +71,10 @@ final readonly class PageBuilderApiController
     }
 
     #[Route('/{id}/builder', name: 'admin_api_content_page_builder_save', methods: ['PUT'])]
-    public function save(
-        string $id,
-        Request $request,
-        ContentId $contentId,
-        PageRepositoryInterface $pages,
-        PageBlockRepositoryInterface $blocks,
-        StructuredBlockDocumentService $documentService,
-        PublicPageCacheInvalidator $cacheInvalidator,
-        BuilderDocumentVersion $versions,
-        BlockSchemaRegistry $schemas,
-    ): JsonResponse {
+    public function save(string $id, Request $request, SavePageBuilderDocumentHandler $handler): JsonResponse
+    {
         if (!$this->authorizationChecker->isGranted(AdminPermission::BLOCKS_EDIT)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -91,96 +84,17 @@ final readonly class PageBuilderApiController
                 throw new \InvalidArgumentException('Field "blocks" must be an array.');
             }
 
-            $pageId = $contentId->fromString($id);
-            $page = $pages->get($pageId);
-            $existing = $blocks->findByPage($pageId);
-
             $baseVersion = $payload['baseVersion'] ?? null;
             if ($baseVersion !== null && !\is_string($baseVersion)) {
                 throw new \InvalidArgumentException('Field "baseVersion" must be a string.');
             }
-            if ($baseVersion !== null) {
-                $currentItems = array_map(BuilderBlockOutput::fromBlock(...), $existing);
-                $currentVersion = $versions->fromBlocks($currentItems);
-                if (!hash_equals($currentVersion, $baseVersion)) {
-                    return $this->responder->conflict(
-                        'Page blocks were changed by another editor.',
-                        self::CODE_EDIT_CONFLICT,
-                        [
-                            'version' => $currentVersion,
-                            'updatedAt' => $page->updatedAt()->format(DATE_ATOM),
-                        ],
-                    );
-                }
-            }
 
-            $existingById = [];
-            foreach ($existing as $block) {
-                $existingById[(string) $block->id()] = $block;
-            }
-
-            $preparedBlocks = [];
-            $persist = [];
-            $keptIds = [];
-            foreach (array_values($rawBlocks) as $position => $rawBlock) {
-                if (!\is_array($rawBlock)) {
-                    throw new \InvalidArgumentException('Each block must be an object.');
-                }
-
-                /** @var array<string, mixed> $stringKeyed */
-                $stringKeyed = [];
-                foreach ($rawBlock as $key => $value) {
-                    if (!\is_string($key)) {
-                        throw new \InvalidArgumentException('Each block must be an object.');
-                    }
-                    $stringKeyed[$key] = $value;
-                }
-
-                $parsed = $documentService->parseBlockPayload($stringKeyed, $position);
-                $keptIds[] = $parsed['id'];
-
-                $existingBlock = $existingById[$parsed['id']] ?? null;
-                if ($existingBlock instanceof PageBlock) {
-                    $existingBlock->update(
-                        $parsed['type'],
-                        $parsed['name'] ?? ($existingBlock->type() === $parsed['type'] ? $existingBlock->name() : $schemas->get($parsed['type'])->label),
-                        $parsed['content'],
-                        $parsed['settings'],
-                        $parsed['enabled'],
-                        $existingBlock->visibility(),
-                    );
-                    $existingBlock->moveTo($position);
-                    $persist[] = $existingBlock;
-                    $preparedBlocks[] = BuilderBlockOutput::fromBlock($existingBlock);
-                    continue;
-                }
-
-                $newBlock = new PageBlock(
-                    $page,
-                    $parsed['type'],
-                    $parsed['name'] ?? $schemas->get($parsed['type'])->label,
-                    $position,
-                    $parsed['content'],
-                    $parsed['settings'],
-                    $parsed['enabled'],
-                    PageVisibility::Public,
-                );
-                $persist[] = $newBlock;
-                $preparedBlocks[] = BuilderBlockOutput::fromBlock($newBlock);
-            }
-
-            foreach ($existing as $block) {
-                if (!\in_array((string) $block->id(), $keptIds, true)) {
-                    $blocks->remove($block);
-                }
-            }
-
-            if ($persist !== []) {
-                $blocks->saveAll($persist);
-            }
-            $cacheInvalidator->invalidate($page->path());
-
-            return new JsonResponse(PageBuilderDocumentOutput::fromPage($page, $preparedBlocks, $versions->fromBlocks($preparedBlocks))->toArray());
+            return new JsonResponse($handler(new SavePageBuilderDocumentCommand($id, $rawBlocks, $baseVersion))->toArray());
+        } catch (PageEditConflictException $conflict) {
+            return $this->responder->conflict($conflict->getMessage(), self::CODE_EDIT_CONFLICT, [
+                'version' => $conflict->currentVersion,
+                'updatedAt' => $conflict->updatedAt->format(DATE_ATOM),
+            ]);
         } catch (Throwable $exception) {
             return $this->responder->error($exception);
         }
@@ -195,7 +109,7 @@ final readonly class PageBuilderApiController
         BlockSchemaRegistry $schemas,
     ): JsonResponse {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_VIEW)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -243,7 +157,7 @@ final readonly class PageBuilderApiController
         PublishPageHandler $handler,
     ): JsonResponse {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_PUBLISH)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -259,7 +173,7 @@ final readonly class PageBuilderApiController
         PageRevisionRepositoryInterface $revisions,
     ): JsonResponse {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_VIEW_REVISIONS)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -281,7 +195,7 @@ final readonly class PageBuilderApiController
         RollbackPageRevisionHandler $handler,
     ): JsonResponse {
         if (!$this->authorizationChecker->isGranted(AdminPermission::PAGES_ROLLBACK_REVISION)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -304,7 +218,7 @@ final readonly class PageBuilderApiController
         CurrentAdminActor $actor,
     ): JsonResponse {
         if (!$this->authorizationChecker->isGranted(AdminPermission::BLOCKS_EDIT)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -335,7 +249,7 @@ final readonly class PageBuilderApiController
         PageEditLockService $locks,
     ): JsonResponse|Response {
         if (!$this->authorizationChecker->isGranted(AdminPermission::BLOCKS_EDIT)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -360,11 +274,4 @@ final readonly class PageBuilderApiController
         return $sessionId;
     }
 
-    private function accessDenied(): JsonResponse
-    {
-        return new JsonResponse([
-            'error' => 'Access denied.',
-            'code' => 'ACCESS_DENIED',
-        ], 403);
-    }
 }

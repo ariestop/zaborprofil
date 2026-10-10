@@ -42,7 +42,7 @@ const lead = {
   phone: '+7 900 111-22-33',
   email: 'anna@example.test',
   status: 'new',
-  assignee: { id: 'U1', email: 'manager@example.test' },
+  assignee: { id: 'U1', email: 'manager@example.test', name: 'Петров Иван' },
   spamScore: 0,
   b2b: false,
   readAt: null as string | null,
@@ -78,7 +78,7 @@ beforeEach(() => {
       return Promise.resolve(listResponse())
     }
     if (url === '/admin/api/leads/assignees') {
-      return Promise.resolve({ items: [{ id: 'U1', email: 'manager@example.test' }] })
+      return Promise.resolve({ items: [{ id: 'U1', email: 'manager@example.test', name: 'Петров Иван' }] })
     }
     if (url.startsWith('/admin/api/leads/export')) {
       return Promise.resolve('id,name\n1,Anna\n')

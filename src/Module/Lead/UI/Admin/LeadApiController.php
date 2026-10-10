@@ -6,7 +6,6 @@ namespace App\Module\Lead\UI\Admin;
 
 use App\Module\Admin\Application\Service\AdminAuditLogger;
 use App\Module\Auth\Domain\Security\AdminPermission;
-use App\Module\Content\UI\Admin\JsonRequest;
 use App\Module\Lead\Application\Export\LeadCsvExporter;
 use App\Module\Lead\Application\Workflow\LeadWorkflow;
 use App\Module\Lead\Domain\Repository\LeadAssigneeDirectoryInterface;
@@ -18,6 +17,8 @@ use App\Module\Lead\Domain\ValueObject\LeadStatus;
 use App\Module\Lead\Infrastructure\Security\LeadActorProvider;
 use App\Shared\Application\Logging\BusinessEventLogger;
 use App\Shared\UI\Http\AdminApiErrorResponder;
+use App\Shared\UI\Http\AdminApiResponses;
+use App\Shared\UI\Http\JsonRequest;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -55,7 +56,7 @@ final readonly class LeadApiController
     public function index(Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::LEADS_VIEW)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -82,7 +83,7 @@ final readonly class LeadApiController
     public function create(Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::LEADS_MANAGE)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -105,7 +106,7 @@ final readonly class LeadApiController
     public function summary(): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::LEADS_VIEW)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -126,7 +127,7 @@ final readonly class LeadApiController
     public function dashboard(): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::LEADS_VIEW)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -164,13 +165,13 @@ final readonly class LeadApiController
     public function assignees(): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::LEADS_VIEW)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
             return new JsonResponse([
                 'items' => array_map(
-                    static fn (LeadAssignee $assignee): array => ['id' => $assignee->id, 'email' => $assignee->email],
+                    static fn (LeadAssignee $assignee): array => ['id' => $assignee->id, 'email' => $assignee->email, 'name' => $assignee->name],
                     $this->assignees->assignable(),
                 ),
             ]);
@@ -183,7 +184,7 @@ final readonly class LeadApiController
     public function export(Request $request): Response
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::LEADS_EXPORT)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -218,7 +219,7 @@ final readonly class LeadApiController
     public function show(string $id): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::LEADS_VIEW)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -235,7 +236,7 @@ final readonly class LeadApiController
     public function read(string $id): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::LEADS_VIEW)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -251,7 +252,7 @@ final readonly class LeadApiController
     public function status(string $id, Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::LEADS_MANAGE)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -272,7 +273,7 @@ final readonly class LeadApiController
     public function assignee(string $id, Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::LEADS_MANAGE)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -293,7 +294,7 @@ final readonly class LeadApiController
     public function note(string $id, Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::LEADS_MANAGE)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         try {
@@ -307,11 +308,4 @@ final readonly class LeadApiController
         }
     }
 
-    private function accessDenied(): JsonResponse
-    {
-        return new JsonResponse([
-            'error' => 'Access denied.',
-            'code' => 'ACCESS_DENIED',
-        ], 403);
-    }
 }

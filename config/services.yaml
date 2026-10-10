@@ -2,6 +2,10 @@ parameters:
     empty_string: ''
     app.asset_build_default_command: npm run build
     app.asset_build_command: '%env(default:app.asset_build_default_command:APP_ASSET_BUILD_COMMAND)%'
+    # Кнопка «Перекомпилировать» в админке: по умолчанию только при APP_DEBUG=1 (локальная разработка).
+    # На staging и production фронтенд собирает CI; принудительно включить — APP_ASSET_BUILD_ENABLED=1.
+    app.asset_build_enabled_default: '%kernel.debug%'
+    app.asset_build_enabled: '%env(bool:default:app.asset_build_enabled_default:APP_ASSET_BUILD_ENABLED)%'
     app.site_url: '%env(SITE_URL)%'
     app.vite.manifest_path: '%kernel.project_dir%/public_html/build/.vite/manifest.json'
     app.vite.public_build_path: /build
@@ -24,6 +28,9 @@ parameters:
     # Каталог nginx fastcgi_cache_path для сброса кэша при публикации; пусто — сброс отключён.
     env(NGINX_FASTCGI_CACHE_DIR): ''
     env(NGINX_FASTCGI_CACHE_LEVELS): '1:2'
+    # Content-Security-Policy в режиме enforce (иначе Report-Only). Включён в prod/staging и test;
+    # в dev выключен (Vite dev-сервер, профайлер). Аварийно выключить на сервере — CONTENT_SECURITY_POLICY_ENFORCED=0.
+    env(CONTENT_SECURITY_POLICY_ENFORCED): '0'
 
 services:
     _defaults:
@@ -97,6 +104,7 @@ services:
     App\Module\Admin\Application\Service\AssetBuildRunner:
         arguments:
             $command: '%app.asset_build_command%'
+            $enabled: '%app.asset_build_enabled%'
 
     App\Module\Admin\Application\Service\WhitelistCommandRunner:
         arguments:
@@ -187,6 +195,8 @@ services:
     App\Shared\Infrastructure\Http\SecurityHeadersSubscriber:
         arguments:
             $environment: '%kernel.environment%'
+            $enforceContentSecurityPolicy: '%env(bool:CONTENT_SECURITY_POLICY_ENFORCED)%'
+            $viteDevServerUrl: '%app.vite.dev_server_url%'
 
     App\Shared\Infrastructure\Http\StagingAccessSubscriber:
         arguments:
@@ -233,6 +243,7 @@ when@test:
         app.sitemap_chunk_size: 2
         app.observability_dir: '%kernel.cache_dir%/observability'
         env(PUBLIC_HTTP_CACHE_ENABLED): '1'
+        env(CONTENT_SECURITY_POLICY_ENFORCED): '1'
 
     services:
         test.rate_limiter.storage:
@@ -245,7 +256,11 @@ when@test:
             alias: App\Tests\Support\Settings\FakeMigrationAdminService
 
 # Dev-сервер Vite не должен включиться на staging/production, даже если переменная попала в окружение.
-when@prod:
+when@prod: &prod_services
     parameters:
         app.vite.dev_server_url: ''
         env(PUBLIC_HTTP_CACHE_ENABLED): '1'
+        env(CONTENT_SECURITY_POLICY_ENFORCED): '1'
+
+# staging (APP_ENV=staging, dev.zaborprofil.ru) получает ту же конфигурацию, что и prod: стенд проверяет prod-настройки перед выкладкой.
+when@staging: *prod_services

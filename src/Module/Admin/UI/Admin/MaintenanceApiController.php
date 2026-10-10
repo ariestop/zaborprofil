@@ -6,6 +6,8 @@ namespace App\Module\Admin\UI\Admin;
 
 use App\Module\Auth\Domain\Security\AdminPermission;
 use App\Shared\Infrastructure\Maintenance\MaintenanceState;
+use App\Shared\UI\Http\AdminApiResponses;
+use App\Shared\UI\Http\JsonRequest;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -18,6 +20,7 @@ final readonly class MaintenanceApiController
     public function __construct(
         private MaintenanceState $maintenance,
         private AuthorizationCheckerInterface $authorizationChecker,
+        private JsonRequest $jsonRequest,
     ) {
     }
 
@@ -25,7 +28,7 @@ final readonly class MaintenanceApiController
     public function status(): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SYSTEM_VIEW)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         return new JsonResponse($this->maintenance->payload());
@@ -35,10 +38,10 @@ final readonly class MaintenanceApiController
     public function on(Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SYSTEM_MANAGE)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
-        $payload = $this->payload($request);
+        $payload = $this->jsonRequest->lenientPayload($request);
         $message = $payload['message'] ?? 'Сайт временно находится на техническом обслуживании.';
         $allowedIps = $payload['allowedIps'] ?? [];
 
@@ -55,7 +58,7 @@ final readonly class MaintenanceApiController
     public function off(): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SYSTEM_MANAGE)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         $this->maintenance->disable();
@@ -63,31 +66,4 @@ final readonly class MaintenanceApiController
         return new JsonResponse($this->maintenance->payload());
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    private function payload(Request $request): array
-    {
-        $decoded = json_decode($request->getContent(), true);
-        if (!\is_array($decoded)) {
-            return [];
-        }
-
-        $payload = [];
-        foreach ($decoded as $key => $value) {
-            if (\is_string($key)) {
-                $payload[$key] = $value;
-            }
-        }
-
-        return $payload;
-    }
-
-    private function accessDenied(): JsonResponse
-    {
-        return new JsonResponse([
-            'error' => 'Access denied.',
-            'code' => 'ACCESS_DENIED',
-        ], 403);
-    }
 }

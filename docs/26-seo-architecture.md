@@ -277,7 +277,7 @@ Sitemap: https://zaborprofil.ru/sitemap.xml
 
 ### 7.2 Автоматическое создание при смене path
 
-- При смене `Page.path` — `PagePathChangeListener` ([код](../src/Module/Seo/Infrastructure/Doctrine/PagePathChangeListener.php)) создаёт 301 со старого пути на новый.
+- При смене `Page.path` — `PagePathChangeListener` ([код](../src/Module/Seo/Infrastructure/Doctrine/PagePathChangeListener.php)) создаёт 301 со старого пути на новый (или перенаправляет на новый путь уже существующее правило со старого пути) и выключает активный редирект с нового пути: редиректы проверяются раньше маршрутизации и иначе перекрыли бы страницу. Так же выключается редирект с пути новой страницы. Переименование `/a/` → `/b/` → `/a/` не создаёт петлю.
 - Если для нового пути уже есть `Redirect → старый путь` — это loop, и операция должна быть отклонена в Application.
 
 ### 7.2.1 Управление через админку (SEO-панель)

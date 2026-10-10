@@ -41,7 +41,7 @@
             {% endif %}
             <div class="mt-7 flex flex-col gap-3 sm:flex-row">
                 {% if (cta.label ?? '') is not empty %}
-                    <a class="zp-btn zp-btn--primary bg-brand-500 hover:bg-brand-600" href="{{ cta_href }}" data-lead-cta>{{ cta.label }}</a>
+                    <a class="zp-btn zp-btn--primary" href="{{ cta_href }}" data-lead-cta>{{ cta.label }}</a>
                 {% endif %}
                 <a class="zp-btn zp-btn--outline-light" href="{{ site.phone_href }}">
                     <svg class="size-5" aria-hidden="true"><use href="#i-phone"/></svg>{{ site.phone }}

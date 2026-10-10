@@ -12,6 +12,7 @@ use App\Module\Content\Domain\Repository\PagePublicationRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRevisionRepositoryInterface;
 use InvalidArgumentException;
+use Throwable;
 
 /**
  * Сравнение ревизий страницы между собой и с текущим (рабочим) состоянием.
@@ -56,6 +57,48 @@ final readonly class PageRevisionComparison
         }
 
         return $this->differ->diff($published, $this->current($page))['hasChanges'];
+    }
+
+    /**
+     * {@see hasUnpublishedChanges()} для списка страниц: публикации с ревизиями и блоки загружаются
+     * двумя запросами на весь список, а не тремя на каждую опубликованную страницу.
+     * Ошибка сравнения одной страницы не ломает остальные: страница получает false, ошибка уходит в $onError.
+     *
+     * @param list<Page>                      $pages
+     * @param callable(Page, Throwable): void $onError
+     *
+     * @return array<string, bool> id страницы => есть ли неопубликованные правки
+     */
+    public function unpublishedChangesFor(array $pages, callable $onError): array
+    {
+        $ids = array_map(static fn (Page $page): string => (string) $page->id(), $pages);
+        $publications = $this->publications->findByPages($ids);
+        $published = array_values(array_filter(
+            $ids,
+            static fn (string $id): bool => ($publications[$id] ?? null)?->publishedRevision() !== null,
+        ));
+        $blocks = $this->blocks->findByPages($published);
+
+        $result = [];
+        foreach ($pages as $page) {
+            $id = (string) $page->id();
+            $revision = ($publications[$id] ?? null)?->publishedRevision();
+            if ($revision === null) {
+                $result[$id] = false;
+
+                continue;
+            }
+
+            try {
+                $current = $this->snapshotBuilder->build($page, 0, $blocks[$id] ?? []);
+                $result[$id] = $this->differ->diff($revision, $current)['hasChanges'];
+            } catch (Throwable $exception) {
+                $onError($page, $exception);
+                $result[$id] = false;
+            }
+        }
+
+        return $result;
     }
 
     private function resolve(Page $page, string $revisionId): PageRevision

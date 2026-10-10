@@ -10,6 +10,8 @@ use App\Module\Auth\Domain\Security\AdminPermission;
 use App\Module\Settings\Application\Service\MigrationAdminServiceInterface;
 use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
 use App\Shared\UI\Http\AdminApiErrorResponder;
+use App\Shared\UI\Http\AdminApiResponses;
+use App\Shared\UI\Http\JsonRequest;
 use Doctrine\Migrations\Exception\MigrationClassNotFound;
 use InvalidArgumentException;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -32,6 +34,7 @@ final readonly class MigrationsApiController
         private Security $security,
         private AdminApiErrorResponder $errors,
         private bool $webActionsEnabled,
+        private JsonRequest $jsonRequest,
     ) {
     }
 
@@ -39,7 +42,7 @@ final readonly class MigrationsApiController
     public function list(): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SETTINGS_EDIT)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         $actionsAllowed = $this->canRunActions();
@@ -80,12 +83,12 @@ final readonly class MigrationsApiController
         }
 
         if (!$this->hasDangerousPermissions()) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         $actorId = $this->actorId();
         if ($actorId === null) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         $entityId = $operation.':'.$version;
@@ -145,8 +148,7 @@ final readonly class MigrationsApiController
 
     private function confirmToken(Request $request): string
     {
-        $decoded = json_decode($request->getContent(), true);
-        $token = \is_array($decoded) ? ($decoded['confirmToken'] ?? null) : null;
+        $token = $this->jsonRequest->lenientPayload($request)['confirmToken'] ?? null;
 
         return \is_string($token) ? $token : '';
     }
@@ -158,11 +160,4 @@ final readonly class MigrationsApiController
         return $user instanceof AdminUser ? (string) $user->id() : null;
     }
 
-    private function accessDenied(): JsonResponse
-    {
-        return new JsonResponse([
-            'error' => 'Access denied.',
-            'code' => 'ACCESS_DENIED',
-        ], 403);
-    }
 }

@@ -55,6 +55,8 @@ export interface LeadDashboard {
 export interface LeadAssigneeOption {
   id: string
   email: string
+  /** «Фамилия Имя» из профиля; `null`, если не заполнено. */
+  name: string | null
 }
 
 export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {

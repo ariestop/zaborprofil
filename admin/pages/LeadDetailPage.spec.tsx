@@ -71,7 +71,12 @@ beforeEach(() => {
   apiRequest.mockReset()
   apiRequest.mockImplementation((url: string, options?: { method?: string, body?: unknown }) => {
     if (url === '/admin/api/leads/assignees') {
-      return Promise.resolve({ items: [{ id: 'U1', email: 'manager@example.test' }] })
+      return Promise.resolve({
+        items: [
+          { id: 'U1', email: 'manager@example.test', name: 'Петров Иван' },
+          { id: 'U2', email: 'seo@example.test', name: null },
+        ],
+      })
     }
     if (options?.method === 'POST' && url.endsWith('/notes')) {
       const text = (options.body as { text: string }).text
@@ -121,6 +126,16 @@ describe('LeadDetailPage', () => {
     expect((screen.getByLabelText('Заметка для команды') as HTMLTextAreaElement).value).toBe('')
     const noteCall = apiRequest.mock.calls.find((call) => String(call[0]).endsWith('/notes'))
     expect(noteCall?.[1]).toMatchObject({ method: 'POST', body: { text: 'Перезвонить завтра' } })
+  })
+
+  it('lists assignees by name and falls back to email', async () => {
+    renderPage()
+    await screen.findByRole('heading', { name: 'Анна Петрова' })
+
+    const owner = screen.getByLabelText('Ответственный')
+    await waitFor(() => expect(within(owner).getByRole('option', { name: 'Петров Иван' })).toBeTruthy())
+    expect(within(owner).getByRole('option', { name: 'seo@example.test' })).toBeTruthy()
+    expect(within(owner).queryByRole('option', { name: 'manager@example.test' })).toBeNull()
   })
 
   it('shows an error state when the lead cannot be loaded', async () => {

@@ -9,6 +9,7 @@ use App\Module\Content\Application\DTO\PageBlockOutput;
 use App\Module\Content\Application\Service\BlockSchemaRegistry;
 use App\Module\Content\Application\Service\ContentId;
 use App\Module\Content\Application\Service\PublicPageCacheInvalidator;
+use App\Module\Content\Application\Service\StructuredBlockDocumentService;
 use App\Module\Content\Domain\Enum\BlockType;
 use App\Module\Content\Domain\Repository\PageBlockRepositoryInterface;
 
@@ -19,6 +20,7 @@ final readonly class UpdatePageBlockHandler
         private ContentId $contentId,
         private PublicPageCacheInvalidator $publicPageCache,
         private BlockSchemaRegistry $blockSchemas,
+        private StructuredBlockDocumentService $documentService,
     ) {
     }
 
@@ -26,8 +28,10 @@ final readonly class UpdatePageBlockHandler
     {
         $block = $this->blocks->get($this->contentId->fromString($command->id));
         $type = BlockType::from($command->type);
-        $this->blockSchemas->validate($type, $command->content);
-        $block->update($type, $command->name, $command->content, $command->settings, $command->isEnabled, $command->visibility);
+        // Та же очистка, что и в конструкторе: HTML блока rich-text выводится на сайте как разметка.
+        $content = $this->documentService->sanitizeContent($type, $command->content);
+        $this->blockSchemas->validate($type, $content);
+        $block->update($type, $command->name, $content, $command->settings, $command->isEnabled, $command->visibility);
         $this->blocks->save($block);
 
         $this->publicPageCache->invalidate($block->page()->path());

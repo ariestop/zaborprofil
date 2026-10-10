@@ -92,10 +92,6 @@ export default defineConfig({
             return 'vendor-forms'
           }
 
-          if (id.includes('recharts') || id.includes('/d3-')) {
-            return 'vendor-charts'
-          }
-
           if (id.includes('@tiptap')) {
             return 'vendor-tiptap'
           }

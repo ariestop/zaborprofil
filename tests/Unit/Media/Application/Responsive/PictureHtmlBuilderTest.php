@@ -20,12 +20,38 @@ final class PictureHtmlBuilderTest extends TestCase
         ]);
 
         self::assertStringStartsWith('<picture>', $html);
-        self::assertStringContainsString('<source type="image/avif" srcset="/uploads/media/variants/fence-320.avif 320w, /uploads/media/variants/fence-768.avif 768w" sizes="100vw">', $html);
-        self::assertStringContainsString('<source type="image/webp" srcset="/uploads/media/variants/fence-320.webp 320w" sizes="100vw">', $html);
+        self::assertStringContainsString('<source type="image/avif" srcset="/uploads/media/variants/fence-320.avif 320w, /uploads/media/variants/fence-768.avif 768w" sizes="(min-resolution: 2.5dppx) calc(100vw * 2 / 3), 100vw">', $html);
+        self::assertStringContainsString('<source type="image/webp" srcset="/uploads/media/variants/fence-320.webp 320w" sizes="(min-resolution: 2.5dppx) calc(100vw * 2 / 3), 100vw">', $html);
         self::assertLessThan(strpos($html, 'image/webp'), strpos($html, 'image/avif'));
         self::assertStringContainsString('<img src="/uploads/media/fence.jpg" alt="Забор" width="1600" height="900" class="w-full" loading="lazy" decoding="async">', $html);
         self::assertStringNotContainsString('fetchpriority', $html);
         self::assertStringEndsWith('</picture>', $html);
+    }
+
+    public function testHighDensityScreensGetTwoThirdsSlotBeforeOriginalSizes(): void
+    {
+        $html = (new PictureHtmlBuilder())->build('/uploads/media/fence.jpg', $this->image(), [
+            'sizes' => '(min-width: 768px) and (max-width: 1000px) calc(50vw - 16px), (min-width: 1152px) 360px, 100vw',
+        ]);
+
+        self::assertStringContainsString(
+            'sizes="(min-resolution: 2.5dppx) and ((min-width: 768px) and (max-width: 1000px)) calc(calc(50vw - 16px) * 2 / 3), '
+            .'(min-resolution: 2.5dppx) and (min-width: 1152px) calc(360px * 2 / 3), '
+            .'(min-resolution: 2.5dppx) calc(100vw * 2 / 3), '
+            .'(min-width: 768px) and (max-width: 1000px) calc(50vw - 16px), (min-width: 1152px) 360px, 100vw"',
+            $html,
+        );
+    }
+
+    public function testDefaultSizesAreCappedAndAutoSizesAreKept(): void
+    {
+        $builder = new PictureHtmlBuilder();
+
+        self::assertStringContainsString(
+            'sizes="(min-resolution: 2.5dppx) and (min-width: 1152px) calc(1152px * 2 / 3), (min-resolution: 2.5dppx) calc(100vw * 2 / 3), '.PictureHtmlBuilder::DEFAULT_SIZES.'"',
+            $builder->build('/uploads/media/fence.jpg', $this->image()),
+        );
+        self::assertStringContainsString('sizes="auto, 100vw"', $builder->build('/uploads/media/fence.jpg', $this->image(), ['sizes' => 'auto, 100vw']));
     }
 
     public function testPriorityImageIsEagerWithHighFetchPriority(): void

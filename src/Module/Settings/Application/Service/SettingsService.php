@@ -12,7 +12,8 @@ use Symfony\Contracts\Cache\ItemInterface;
 
 final readonly class SettingsService
 {
-    private const string CACHE_PREFIX = 'settings.';
+    // Версия в префиксе: до v2 в кэше могли остаться значения по умолчанию вызывающего кода.
+    private const string CACHE_PREFIX = 'settings.v2.';
 
     public function __construct(
         private SettingRepositoryInterface $settings,
@@ -23,12 +24,15 @@ final readonly class SettingsService
 
     public function get(string $scope, string $key, mixed $default = null): mixed
     {
-        return $this->cache->get($this->cacheKey($scope, $key), function (ItemInterface $item) use ($scope, $key, $default): mixed {
+        // В кэше лежит только сохранённое значение (null — настройки нет). Значение по умолчанию зависит
+        // от вызывающего кода, поэтому подставляется после чтения и не «залипает» в кэше для остальных.
+        $stored = $this->cache->get($this->cacheKey($scope, $key), function (ItemInterface $item) use ($scope, $key): mixed {
             $item->expiresAfter(86400);
-            $setting = $this->settings->findOne($scope, $key);
 
-            return $setting?->value() ?? $default;
+            return $this->settings->findOne($scope, $key)?->value();
         });
+
+        return $stored ?? $default;
     }
 
     public function set(string $scope, string $key, mixed $value, ?string $description = null): Setting

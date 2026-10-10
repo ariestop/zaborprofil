@@ -6,6 +6,7 @@ namespace App\Module\Admin\UI\Admin;
 
 use App\Module\Admin\Application\Service\AssetBuildRunner;
 use App\Module\Auth\Domain\Security\AdminPermission;
+use App\Shared\UI\Http\AdminApiResponses;
 use JsonException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,7 +26,11 @@ final readonly class AssetBuildApiController
     public function status(): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SYSTEM_VIEW)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
+        }
+
+        if (!$this->buildRunner->isEnabled()) {
+            return $this->disabled();
         }
 
         return new JsonResponse($this->buildRunner->status());
@@ -35,13 +40,17 @@ final readonly class AssetBuildApiController
     public function run(Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SYSTEM_MANAGE)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
+        }
+
+        if (!$this->buildRunner->isEnabled()) {
+            return $this->disabled();
         }
 
         try {
             $payload = json_decode((string) $request->getContent(), true, 512, \JSON_THROW_ON_ERROR);
         } catch (JsonException) {
-            return $this->badRequest('Invalid JSON payload.');
+            return AdminApiResponses::badRequest('Invalid JSON payload.');
         }
 
         if ($payload === null) {
@@ -49,12 +58,12 @@ final readonly class AssetBuildApiController
         }
 
         if (!\is_array($payload)) {
-            return $this->badRequest('Invalid request payload.');
+            return AdminApiResponses::badRequest('Invalid request payload.');
         }
 
         $targets = $payload['targets'] ?? [];
         if (!\is_array($targets)) {
-            return $this->badRequest('Field "targets" must be an array.');
+            return AdminApiResponses::badRequest('Field "targets" must be an array.');
         }
 
         $status = $this->buildRunner->start($targets);
@@ -62,19 +71,13 @@ final readonly class AssetBuildApiController
         return new JsonResponse($status, $status['status'] === 'running' ? 202 : 200);
     }
 
-    private function badRequest(string $message): JsonResponse
+
+    private function disabled(): JsonResponse
     {
         return new JsonResponse([
-            'error' => $message,
-            'code' => 'INVALID_REQUEST',
-        ], 400);
+            'error' => 'Asset build from the admin panel is disabled in this environment.',
+            'code' => 'ASSET_BUILD_DISABLED',
+        ], 404);
     }
 
-    private function accessDenied(): JsonResponse
-    {
-        return new JsonResponse([
-            'error' => 'Access denied.',
-            'code' => 'ACCESS_DENIED',
-        ], 403);
-    }
 }

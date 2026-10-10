@@ -9,6 +9,8 @@ use InvalidArgumentException;
 
 final readonly class WhitelistCommandRunner
 {
+    private const int TIMEOUT_EXIT_CODE = 124;
+
     /**
      * @var array<string, array{command: list<string>, timeoutSeconds: int}>
      */
@@ -77,8 +79,12 @@ final readonly class WhitelistCommandRunner
         $cwd = getcwd();
         chdir($this->projectDir);
 
-        // Intentionally executes only commands from fixed whitelist.
-        exec($this->buildCommandString($command).' 2>&1', $output, $exitCode);
+        // Только команды из фиксированного списка. `timeout` (coreutils) обрывает зависшую команду:
+        // иначе запрос админки держит воркер PHP-FPM до max_execution_time. Код 124 — команда прервана по таймауту.
+        exec($this->buildCommandString(['timeout', (string) $definition['timeoutSeconds'], ...$command]).' 2>&1', $output, $exitCode);
+        if ($exitCode === self::TIMEOUT_EXIT_CODE) {
+            $output[] = \sprintf('Command timed out after %d seconds.', $definition['timeoutSeconds']);
+        }
 
         if ($cwd !== false) {
             chdir($cwd);

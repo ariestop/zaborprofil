@@ -129,6 +129,13 @@ chmod 600 .env.local
 (`* * * * *`): `cd ~/dev.zaborprofil.ru && /usr/local/bin/php8.5 bin/console app:content:publish-scheduled --env=staging --no-interaction >> var/log/publish-scheduled.log 2>&1`.
 Подробности, `--dry-run` и мониторинг: [50-publishing-workflow](50-publishing-workflow.md).
 
+### 5b. Cron очереди Messenger
+
+Critical-алерты в Telegram уходят через асинхронную очередь (Doctrine transport). Постоянного worker на Beget нет,
+поэтому очередь разбирает cron «каждую минуту» (`* * * * *`):
+`cd ~/dev.zaborprofil.ru && /usr/local/bin/php8.5 bin/console messenger:consume async --time-limit=50 --memory-limit=128M --env=staging --no-interaction >> var/log/messenger.log 2>&1`.
+Без этой задачи алерты копятся в таблице `messenger_messages`. Токен и чат — `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` в `.env.local`.
+
 ### 6. SSH-ключ деплоя
 
 Отдельный ключ без пароля только для деплоя (на компьютере владельца, не на сервере):
@@ -271,6 +278,7 @@ STAGING_ALLOW_PUBLIC=1
 | Workflow зелёный, но шаги пропущены | не заданы `DEPLOY_HOST`/`DEPLOY_USER`/`DEPLOY_SSH_KEY` | добавить секреты |
 | GitHub не подключается по SSH | в панели включено ограничение по IP | снять ограничение |
 | `/health/ready` отвечает 503 | недоступна БД или каталог кэша | проверить `DATABASE_URL`, права на `shared/cache` и `shared/sessions` |
+| В админке «Сборка упала», `npm не найден в PATH` (код 127) | кнопка «Перекомпилировать» запускает `npm run build` в PHP-FPM, а Node.js на Beget нет: фронтенд собирает CI и деплой кладёт готовый `public_html/build` | ничего чинить не нужно: пересборка из админки по умолчанию выключена (`APP_ASSET_BUILD_ENABLED`, по умолчанию равна `APP_DEBUG`), виджет скрыт, сводка не показывает ошибку. Фронтенд обновляется только деплоем |
 | Пользователей «разлогинило» после деплоя | `var/sessions` не был симлинком на `shared/sessions` | деплой сам создаёт симлинк; проверить `ls -l var/` |
 
 ## Проверки перед изменением деплоя

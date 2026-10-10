@@ -154,6 +154,9 @@ jobs:
       - name: Frontend lint (admin scope)
         run: npm run lint:admin
 
+      - name: Frontend lint (public site)
+        run: npm run lint:site
+
       - name: Build frontend
         run: npm run build
 

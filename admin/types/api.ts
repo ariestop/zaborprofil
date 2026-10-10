@@ -272,6 +272,8 @@ export type LeadStatus = 'new' | 'in_progress' | 'done' | 'spam'
 export interface LeadAssigneeRef {
   id: string
   email: string | null
+  /** «Фамилия Имя» из профиля; `null`, если не заполнено. */
+  name: string | null
 }
 
 export interface LeadItem {

@@ -74,7 +74,7 @@ final readonly class AdminUserLeadAssigneeDirectory implements LeadAssigneeDirec
             }
         }
 
-        usort($assignees, static fn (LeadAssignee $a, LeadAssignee $b): int => $a->email <=> $b->email);
+        usort($assignees, static fn (LeadAssignee $a, LeadAssignee $b): int => mb_strtolower($a->label()) <=> mb_strtolower($b->label()));
 
         return $assignees;
     }
@@ -89,6 +89,6 @@ final readonly class AdminUserLeadAssigneeDirectory implements LeadAssigneeDirec
 
     private static function toAssignee(AdminUser $user): LeadAssignee
     {
-        return new LeadAssignee((string) $user->id(), $user->email());
+        return new LeadAssignee((string) $user->id(), $user->email(), $user->name());
     }
 }

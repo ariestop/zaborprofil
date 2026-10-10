@@ -6,6 +6,7 @@ namespace App\Module\Admin\UI\Admin;
 
 use App\Module\Admin\Application\Service\LogReaderService;
 use App\Module\Auth\Domain\Security\AdminPermission;
+use App\Shared\UI\Http\AdminApiResponses;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -26,7 +27,7 @@ final readonly class SystemLogsController
     public function index(Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SYSTEM_VIEW)) {
-            return $this->accessDenied();
+            return AdminApiResponses::accessDenied();
         }
 
         $channel = $request->query->getString('channel');

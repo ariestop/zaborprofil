@@ -28,4 +28,13 @@ interface PageBlockRepositoryInterface
      * @return list<PageBlock>
      */
     public function findByPage(string $pageId): array;
+
+    /**
+     * Блоки нескольких страниц одним запросом, в порядке позиции.
+     *
+     * @param list<string> $pageIds
+     *
+     * @return array<string, list<PageBlock>> id страницы => блоки (страницы без блоков отсутствуют)
+     */
+    public function findByPages(array $pageIds): array;
 }

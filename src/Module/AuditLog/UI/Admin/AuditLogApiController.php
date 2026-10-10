@@ -7,6 +7,7 @@ namespace App\Module\AuditLog\UI\Admin;
 use App\Module\AuditLog\Domain\Entity\AuditLogEntry;
 use App\Module\AuditLog\Domain\Repository\AuditLogRepositoryInterface;
 use App\Module\Auth\Domain\Security\AdminPermission;
+use App\Shared\UI\Http\AdminApiResponses;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -25,10 +26,7 @@ final readonly class AuditLogApiController
     public function list(Request $request): JsonResponse
     {
         if (!$this->authorizationChecker->isGranted(AdminPermission::SYSTEM_VIEW)) {
-            return new JsonResponse([
-                'error' => 'Access denied.',
-                'code' => 'ACCESS_DENIED',
-            ], 403);
+            return AdminApiResponses::accessDenied();
         }
 
         $limit = $request->query->getInt('limit', 50);

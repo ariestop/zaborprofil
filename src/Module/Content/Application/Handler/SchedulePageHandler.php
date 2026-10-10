@@ -16,6 +16,7 @@ use App\Module\Content\Domain\Enum\PageStatus;
 use App\Module\Content\Domain\Repository\PagePublicationRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use App\Module\Seo\Application\Audit\PrePublishChecklist;
+use App\Shared\Application\Transaction\TransactionRunnerInterface;
 use DateTimeImmutable;
 use DateTimeZone;
 use Exception;
@@ -37,10 +38,17 @@ final readonly class SchedulePageHandler
         private PrePublishChecklist $prePublishChecklist,
         private PageWorkflowJournalInterface $journal,
         private ClockInterface $clock,
+        private TransactionRunnerInterface $transactions,
     ) {
     }
 
     public function __invoke(SchedulePageCommand $command): PageOutput
+    {
+        // Все записи use case — одной транзакцией: при ошибке на любом шаге не остаётся половины изменений.
+        return $this->transactions->run(fn (): PageOutput => $this->handle($command));
+    }
+
+    private function handle(SchedulePageCommand $command): PageOutput
     {
         $page = $this->pages->get($this->contentId->fromString($command->id));
         $from = $page->status();

@@ -9,9 +9,10 @@ use Symfony\Component\Uid\Ulid;
 
 final readonly class UploadValidator
 {
-    private const int MAX_SIZE_BYTES = 10_485_760;
-    private const int MAX_IMAGE_WIDTH = 8_000;
-    private const int MAX_IMAGE_HEIGHT = 8_000;
+    // Публичные: те же ограничения применяет синхронизация медиатеки к файлам, перенесённым вручную.
+    public const int MAX_SIZE_BYTES = 10_485_760;
+    public const int MAX_IMAGE_WIDTH = 8_000;
+    public const int MAX_IMAGE_HEIGHT = 8_000;
 
     /**
      * @var array<string, list<string>>

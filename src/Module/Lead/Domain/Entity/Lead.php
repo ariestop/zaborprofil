@@ -22,6 +22,17 @@ use Symfony\Component\Uid\Ulid;
 #[ORM\Index(name: 'idx_leads_phone_digits', columns: ['phone_digits'])]
 final class Lead
 {
+    /**
+     * Ограничения повторяют размеры колонок (`message` — запас внутри TEXT): без них длинное значение из формы
+     * приводило к ошибке MySQL и ответу 500 вместо понятной ошибки валидации.
+     */
+    public const int SOURCE_MAX_LENGTH = 120;
+    public const int NAME_MAX_LENGTH = 180;
+    public const int PHONE_MAX_LENGTH = 40;
+    public const int PHONE_MIN_DIGITS = 6;
+    public const int EMAIL_MAX_LENGTH = 180;
+    public const int MESSAGE_MAX_LENGTH = 5000;
+
     #[ORM\Id]
     #[ORM\Column(type: 'ulid', unique: true)]
     private Ulid $id;
@@ -93,12 +104,17 @@ final class Lead
     public function __construct(string $source, string $name, string $phone, ?string $email, ?string $message, array $consentSnapshot, ?string $pageUrl = null, array $utm = [])
     {
         $this->id = new Ulid();
-        $this->source = self::required($source, 'Lead source cannot be empty.');
-        $this->name = self::required($name, 'Lead name cannot be empty.');
-        $this->phone = self::required($phone, 'Lead phone cannot be empty.');
+        $this->source = self::limited(self::required($source, 'Lead source cannot be empty.'), self::SOURCE_MAX_LENGTH, 'source');
+        $this->name = self::limited(self::required($name, 'Lead name cannot be empty.'), self::NAME_MAX_LENGTH, 'name');
+        $this->phone = self::limited(self::required($phone, 'Lead phone cannot be empty.'), self::PHONE_MAX_LENGTH, 'phone');
         $this->phoneDigits = PhoneNumber::digits($this->phone);
-        $this->email = self::optional($email);
-        $this->message = self::optional($message);
+        if (\strlen($this->phoneDigits) < self::PHONE_MIN_DIGITS) {
+            throw new InvalidArgumentException(\sprintf('Lead phone must contain at least %d digits.', self::PHONE_MIN_DIGITS));
+        }
+        $email = self::optional($email);
+        $this->email = $email === null ? null : self::limited($email, self::EMAIL_MAX_LENGTH, 'email');
+        $message = self::optional($message);
+        $this->message = $message === null ? null : self::limited($message, self::MESSAGE_MAX_LENGTH, 'message');
         $this->consentSnapshot = $consentSnapshot;
         $pageUrl = self::optional($pageUrl);
         $this->pageUrl = $pageUrl === null ? null : mb_substr($pageUrl, 0, 500);
@@ -200,6 +216,15 @@ final class Lead
         }
 
         return $normalized;
+    }
+
+    private static function limited(string $value, int $maxLength, string $field): string
+    {
+        if (mb_strlen($value) > $maxLength) {
+            throw new InvalidArgumentException(\sprintf('Lead %s must not exceed %d characters.', $field, $maxLength));
+        }
+
+        return $value;
     }
 
     private static function optional(?string $value): ?string

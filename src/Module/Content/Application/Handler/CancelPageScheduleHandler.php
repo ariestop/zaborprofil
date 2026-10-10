@@ -14,6 +14,7 @@ use App\Module\Content\Application\Service\PagePublisher;
 use App\Module\Content\Application\Service\PageWorkflowGuard;
 use App\Module\Content\Domain\Enum\PageStatus;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
+use App\Shared\Application\Transaction\TransactionRunnerInterface;
 
 /**
  * Отменяет запланированную публикацию (scheduled -> approved) или запланированное снятие опубликованной страницы.
@@ -27,10 +28,17 @@ final readonly class CancelPageScheduleHandler
         private PageWorkflowGuard $guard,
         private CurrentAdminActor $actor,
         private PageWorkflowJournalInterface $journal,
+        private TransactionRunnerInterface $transactions,
     ) {
     }
 
     public function __invoke(CancelPageScheduleCommand $command): PageOutput
+    {
+        // Все записи use case — одной транзакцией: при ошибке на любом шаге не остаётся половины изменений.
+        return $this->transactions->run(fn (): PageOutput => $this->handle($command));
+    }
+
+    private function handle(CancelPageScheduleCommand $command): PageOutput
     {
         $page = $this->pages->get($this->contentId->fromString($command->id));
         $from = $page->status();

@@ -13,7 +13,7 @@ use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 
 /**
  * Enforces a double-submit CSRF token on every state-changing request to
- * `/admin/api/*`. The Vue admin reads the token from a meta tag rendered by
+ * `/admin/api/*`. The React admin reads the token from a meta tag rendered by
  * the server-side admin layout and sends it back in the `X-CSRF-Token`
  * header. GET/HEAD/OPTIONS requests are allowed without a token because they
  * are expected to be safe.
