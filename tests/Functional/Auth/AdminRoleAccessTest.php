@@ -153,7 +153,9 @@ final class AdminRoleAccessTest extends WebTestCase
 
         $client->request('GET', '/admin/api/me');
 
-        self::assertResponseRedirects('/admin/login');
+        // Admin API без сессии отвечает 401 JSON, а не редиректом на форму входа (его fetch принял бы за успех).
+        self::assertResponseStatusCodeSame(401);
+        self::assertStringContainsString('"code":"UNAUTHORIZED"', (string) $client->getResponse()->getContent());
     }
 
     /**

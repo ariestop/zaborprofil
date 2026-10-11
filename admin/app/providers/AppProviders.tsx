@@ -5,6 +5,7 @@ import { ThemeProvider } from './theme-provider'
 import { ToastProvider } from './toast-provider'
 import { CommandPaletteProvider, useCommandPalette } from './command-palette-provider'
 import { queryClient } from './query-client'
+import { SessionExpiredNotice } from '../../widgets/SessionExpiredNotice'
 
 function KeyboardShortcuts() {
   const { open: openCommandPalette } = useCommandPalette()
@@ -33,6 +34,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
             <CommandPaletteProvider>
               <KeyboardShortcuts />
               {children}
+              <SessionExpiredNotice />
             </CommandPaletteProvider>
           </DialogProvider>
         </ToastProvider>

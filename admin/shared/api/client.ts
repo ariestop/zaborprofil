@@ -1,4 +1,5 @@
 import { resolveApiErrorCode, type ApiErrorCode } from './errors'
+import { notifySessionExpired, SESSION_EXPIRED_MESSAGE } from './session'
 
 export type ApiMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
@@ -49,6 +50,10 @@ function requestId(): string {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`
 }
 
+function sessionExpiredError(): ApiError {
+  return new ApiError(SESSION_EXPIRED_MESSAGE, 401, { error: SESSION_EXPIRED_MESSAGE, code: 'UNAUTHORIZED' })
+}
+
 function parseResponsePayload(response: Response): Promise<unknown> {
   const contentType = response.headers.get('content-type') ?? ''
   if (contentType.includes('application/json')) {
@@ -86,9 +91,20 @@ export async function apiRequest<T>(
     signal: options.signal,
   })
 
+  // Admin API не перенаправляет: ответ после редиректа — HTML формы входа, а не результат запроса.
+  // Принять его за успех нельзя, иначе действие выглядит выполненным.
+  if (response.redirected) {
+    notifySessionExpired()
+    throw sessionExpiredError()
+  }
+
   const payload = await parseResponsePayload(response)
 
   if (!response.ok) {
+    if (response.status === 401) {
+      notifySessionExpired()
+    }
+
     const message = typeof payload === 'object' && payload !== null && 'error' in payload
       ? String((payload as { error: unknown }).error)
       : `Admin API request failed with status ${response.status}`
@@ -133,6 +149,15 @@ function parseUploadPayload(xhr: XMLHttpRequest): unknown {
   }
 }
 
+/** XHR тоже молча следует редиректу; признак — итоговый адрес ответа отличается от запрошенного. */
+function isRedirectedUpload(xhr: XMLHttpRequest, path: string): boolean {
+  if (xhr.responseURL === '') {
+    return false
+  }
+
+  return new URL(xhr.responseURL, window.location.href).pathname !== new URL(path, window.location.href).pathname
+}
+
 export function apiUpload<T>(path: string, body: FormData, options: ApiUploadOptions = {}): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const xhr = new XMLHttpRequest()
@@ -150,6 +175,16 @@ export function apiUpload<T>(path: string, body: FormData, options: ApiUploadOpt
     }
 
     xhr.onload = () => {
+      if (isRedirectedUpload(xhr, path)) {
+        notifySessionExpired()
+        reject(sessionExpiredError())
+        return
+      }
+
+      if (xhr.status === 401) {
+        notifySessionExpired()
+      }
+
       const payload = parseUploadPayload(xhr)
       if (xhr.status >= 200 && xhr.status < 300) {
         options.onProgress?.(1)
