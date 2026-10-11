@@ -116,7 +116,7 @@
 Где используется:
 
 - Редактор блоков: поля изображений в форме блока (`admin/features/page-editor/workspace/BlockFields.tsx`) используют `MediaPicker`; при выборе пустой `alt`/`imageAlt` заполняется из `alt` ассета. В списках фото (`gallery`, `portfolio`, `slider` и т. п.) кнопка добавления открывает `MediaPickerDialog`. Для блоков без ручной формы поля изображений определяются по ключам (`image`, `src`, `imageUrl`, `poster`, `backgroundImage`, …), логика — `blocks/shared/mediaFields.ts`.
-- TipTap (`SimpleEditor`): кнопка «Загрузить» отправляет файл в медиатеку (`handleImageUpload` → `POST /admin/api/media/assets`, прогресс и ошибки показываются), кнопка «Медиатека» вставляет изображение из библиотеки с `alt`/`title`.
+- TipTap (`SimpleEditor`) изображений не вставляет: санитайзер блоков rich-text их вырезает, поэтому картинки добавляются отдельными блоками ([rich-text-editor](rich-text-editor.md)).
 - Редактор страницы (`admin/features/page-editor`): «Изображение для соцсетей» (`ogImage`, абсолютный URL по `window.location.origin`) и изображение блока `text_image`.
 
 ## Лимиты загрузки
