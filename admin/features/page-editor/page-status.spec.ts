@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canPublishFrom, quickStatusActions, statusTone } from './page-status'
+import { canPublishFrom, quickStatusActions, statusTone, visibilityHints, visibilityLabels } from './page-status'
 
 describe('page status helpers', () => {
   it('allows quick publish from draft, but not from published', () => {
@@ -18,5 +18,11 @@ describe('page status helpers', () => {
     expect(statusTone('published')).toBe('success')
     expect(statusTone('draft')).toBe('warning')
     expect(statusTone('archived')).toBe('neutral')
+  })
+})
+
+describe('visibility hints', () => {
+  it('explains every visibility option shown in the settings tab', () => {
+    expect(Object.keys(visibilityHints).sort()).toEqual(Object.keys(visibilityLabels).sort())
   })
 })
