@@ -199,8 +199,13 @@ final readonly class UserApiController
         }
 
         $target = $this->findUser($id);
+        $actor = $this->actor();
         if (!$target instanceof AdminUser) {
             return $this->notFound();
+        }
+
+        if (!$actor instanceof AdminUser) {
+            return AdminApiResponses::accessDenied();
         }
 
         $password = $request->getPayload()->all()['password'] ?? null;
@@ -211,7 +216,7 @@ final readonly class UserApiController
         }
 
         try {
-            $this->service->changePassword($target, $password);
+            $this->service->resetPassword($actor, $target, $password);
         } catch (UserManagementException $exception) {
             return $this->domainError($exception);
         } catch (Throwable $exception) {

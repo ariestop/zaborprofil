@@ -403,6 +403,76 @@ final class AdminUserApiTest extends WebTestCase
         self::assertStringNotContainsString($reloaded->getPassword(), json_encode($audit[0]->newValues(), JSON_THROW_ON_ERROR));
     }
 
+    public function testAdministratorCannotResetPasswordDeactivateOrDeleteSuperAdmin(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+        $admin = $this->createAdminUser('plain-admin-guard@example.test', ['ROLE_ADMIN']);
+        $super = $this->createAdminUser('guarded-super@example.test', ['ROLE_SUPER_ADMIN']);
+        // Второй суперадминистратор: отказ должен быть из-за прав исполнителя, а не из-за правила «последний суперадмин».
+        $this->createAdminUser('spare-super@example.test', ['ROLE_SUPER_ADMIN']);
+        $client->loginUser($admin);
+        $superId = (string) $super->id();
+        $oldHash = $super->getPassword();
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/users/'.$superId.'/password', ['password' => 'takeover-password-1']);
+        self::assertResponseStatusCodeSame(403);
+        self::assertSame('ROLE_NOT_ALLOWED', $this->decode($client)['code'] ?? null);
+
+        $this->jsonRequestWithCsrf($client, 'PATCH', '/admin/api/users/'.$superId.'/active', ['active' => false]);
+        self::assertResponseStatusCodeSame(403);
+        self::assertSame('ROLE_NOT_ALLOWED', $this->decode($client)['code'] ?? null);
+
+        $this->jsonRequestWithCsrf($client, 'DELETE', '/admin/api/users/'.$superId);
+        self::assertResponseStatusCodeSame(403);
+        self::assertSame('ROLE_NOT_ALLOWED', $this->decode($client)['code'] ?? null);
+
+        $this->entityManager()->clear();
+        $reloaded = $this->entityManager()->getRepository(AdminUser::class)->find($super->id());
+        self::assertInstanceOf(AdminUser::class, $reloaded);
+        self::assertSame($oldHash, $reloaded->getPassword());
+        self::assertTrue($reloaded->isActive());
+    }
+
+    public function testSuperAdminCanResetPasswordDeactivateAndDeleteAnotherSuperAdmin(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+        $actor = $this->createAdminUser('acting-super@example.test', ['ROLE_SUPER_ADMIN']);
+        $target = $this->createAdminUser('target-super@example.test', ['ROLE_SUPER_ADMIN']);
+        $client->loginUser($actor);
+        $targetId = (string) $target->id();
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/users/'.$targetId.'/password', ['password' => 'rotated-password-1']);
+        self::assertResponseIsSuccessful();
+
+        $this->jsonRequestWithCsrf($client, 'PATCH', '/admin/api/users/'.$targetId.'/active', ['active' => false]);
+        self::assertResponseIsSuccessful();
+        self::assertFalse($this->decode($client)['active'] ?? null);
+
+        $this->jsonRequestWithCsrf($client, 'DELETE', '/admin/api/users/'.$targetId);
+        self::assertResponseStatusCodeSame(204);
+    }
+
+    public function testPasswordResetEndpointRejectsOwnAccount(): void
+    {
+        $client = self::createClient();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+        $admin = $this->createAdminUser('reset-self@example.test', ['ROLE_ADMIN']);
+        $client->loginUser($admin);
+        $oldHash = $admin->getPassword();
+
+        // Сброс без текущего пароля доступен только для чужих учётных записей; свой пароль меняется через /me/password.
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/users/'.(string) $admin->id().'/password', ['password' => 'no-current-password-1']);
+        self::assertResponseStatusCodeSame(409);
+        self::assertSame('OWN_PASSWORD_CHANGE_REQUIRED', $this->decode($client)['code'] ?? null);
+
+        $this->entityManager()->clear();
+        $reloaded = $this->entityManager()->getRepository(AdminUser::class)->find($admin->id());
+        self::assertInstanceOf(AdminUser::class, $reloaded);
+        self::assertSame($oldHash, $reloaded->getPassword());
+    }
+
     public function testUserCanChangeOwnPasswordOnlyWithCurrentPassword(): void
     {
         $client = self::createClient();

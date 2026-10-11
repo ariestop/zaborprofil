@@ -14,6 +14,7 @@ final class UserManagementException extends RuntimeException
     public const string ROLE_NOT_ALLOWED = 'ROLE_NOT_ALLOWED';
     public const string LAST_ADMIN = 'LAST_ADMIN';
     public const string INVALID_CURRENT_PASSWORD = 'INVALID_CURRENT_PASSWORD';
+    public const string OWN_PASSWORD_CHANGE_REQUIRED = 'OWN_PASSWORD_CHANGE_REQUIRED';
 
     /**
      * @param list<array{field: string, message: string}> $details
@@ -52,6 +53,11 @@ final class UserManagementException extends RuntimeException
     public static function lastAdmin(string $message): self
     {
         return new self(self::LAST_ADMIN, $message);
+    }
+
+    public static function ownPasswordChangeRequired(): self
+    {
+        return new self(self::OWN_PASSWORD_CHANGE_REQUIRED, 'Собственный пароль меняется в форме «Сменить пароль» с вводом текущего пароля.');
     }
 
     public static function invalidCurrentPassword(): self
