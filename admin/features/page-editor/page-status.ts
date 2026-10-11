@@ -62,6 +62,13 @@ export const visibilityLabels: Record<string, string> = {
   unlisted: 'Доступна по ссылке',
 }
 
+/** Что видит посетитель. Как и индексация, действует сразу после сохранения, без переопубликации. */
+export const visibilityHints: Record<string, string> = {
+  public: 'Открывается на сайте, попадает в sitemap и индексируется (если индексация разрешена).',
+  hidden: 'На сайте не открывается (404), в sitemap и хлебных крошках не появляется. Предпросмотр работает.',
+  unlisted: 'Открывается по прямой ссылке, но не индексируется (noindex) и не попадает в sitemap.',
+}
+
 export const templateLabels: Record<string, string> = {
   home_default: 'Главная страница',
   service_landing: 'Страница услуги',

@@ -24,6 +24,8 @@ security:
             lazy: true
             provider: admin_user_provider
             user_checker: App\Module\Auth\Infrastructure\Security\AdminUserChecker
+            # Без сессии: Admin API — 401 JSON, HTML-страницы — редирект на форму входа.
+            entry_point: App\Module\Auth\Infrastructure\Security\AdminAuthenticationEntryPoint
             form_login:
                 login_path: admin_login
                 check_path: admin_login

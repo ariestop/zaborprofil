@@ -8,6 +8,13 @@ use App\Module\Content\Domain\Entity\Page;
 use App\Module\Content\Domain\Entity\PageBlock;
 use App\Module\Content\Domain\Entity\PageRevision;
 
+/**
+ * Опубликованная страница для публичного рендера.
+ *
+ * Контент и SEO берутся из снимка опубликованной ревизии, а адрес — из самой страницы: по нему страница
+ * уже находится и открывается (со старого адреса работает 301), поэтому canonical, крошки и JSON-LD
+ * должны указывать туда же. Страница с видимостью «по ссылке» не индексируется.
+ */
 final readonly class PublicPageView
 {
     /**
@@ -41,7 +48,7 @@ final readonly class PublicPageView
             $page->h1(),
             $page->path(),
             $page->template(),
-            $page->isIndexable(),
+            $page->isIndexable() && $page->visibility()->allowsIndexing(),
             $page->metaDescription(),
             $page->canonicalUrl(),
             $page->ogTitle(),
@@ -60,14 +67,15 @@ final readonly class PublicPageView
         $normalizer = new SnapshotValueNormalizer();
         $metaDescription = \is_string($seo['metaDescription'] ?? null) ? $seo['metaDescription'] : null;
         $jsonLd = $normalizer->objectListOrNull($seo['jsonLd'] ?? null);
+        $page = $revision->page();
 
         return new self(
-            (string) $revision->page()->id(),
+            (string) $page->id(),
             $revision->title(),
             $revision->h1(),
-            $revision->path(),
+            $page->path(),
             $revision->template(),
-            (bool) ($seo['isIndexable'] ?? true),
+            (bool) ($seo['isIndexable'] ?? true) && $page->visibility()->allowsIndexing(),
             $metaDescription,
             \is_string($seo['canonicalUrl'] ?? null) ? $seo['canonicalUrl'] : null,
             \is_string($seo['ogTitle'] ?? null) ? $seo['ogTitle'] : null,
@@ -96,6 +104,7 @@ final readonly class PublicPageView
         $normalizer = new SnapshotValueNormalizer();
         $metaDescription = \is_string($seo['metaDescription'] ?? null) ? $seo['metaDescription'] : null;
         $jsonLd = $normalizer->objectListOrNull($seo['jsonLd'] ?? null);
+        $page = $revision->page();
 
         $blocks = [];
         foreach ($liveBlocks as $block) {
@@ -105,12 +114,12 @@ final readonly class PublicPageView
         }
 
         return new self(
-            (string) $revision->page()->id(),
+            (string) $page->id(),
             $revision->title(),
             $revision->h1(),
-            $revision->path(),
+            $page->path(),
             $revision->template(),
-            (bool) ($seo['isIndexable'] ?? true),
+            (bool) ($seo['isIndexable'] ?? true) && $page->visibility()->allowsIndexing(),
             $metaDescription,
             \is_string($seo['canonicalUrl'] ?? null) ? $seo['canonicalUrl'] : null,
             \is_string($seo['ogTitle'] ?? null) ? $seo['ogTitle'] : null,

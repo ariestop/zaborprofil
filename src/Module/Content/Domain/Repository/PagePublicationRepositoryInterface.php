@@ -24,5 +24,8 @@ interface PagePublicationRepositoryInterface
      */
     public function findByPages(array $pageIds): array;
 
+    /**
+     * Публикация страницы, доступной посетителям по адресу: опубликована, не удалена и не скрыта.
+     */
     public function findPublishedByPath(string $path): ?PagePublication;
 }

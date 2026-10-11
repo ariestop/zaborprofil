@@ -31,6 +31,7 @@ import {
   type EditorTab,
   type PageEditorFormValues,
 } from './form'
+import { rememberServerIds, withServerIds, type ServerBlockIds } from './block-ids'
 import { clearDraft, draftDiffersFromServer, readDraft, writeDraft, type PageDraft } from './draft-storage'
 import { EDIT_CONFLICT_MESSAGE, parseEditConflict, type EditConflict } from './edit-conflict'
 import { resolveSaveState, type SaveState } from './save-state'
@@ -116,6 +117,7 @@ export function usePageEditorController({ page, builderVersion = null, onInvalid
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
   const guardDisabledRef = useRef(false)
   const versionRef = useRef<string | null>(builderVersion)
+  const serverIdsRef = useRef<ServerBlockIds>(new Map())
   const [conflict, setConflict] = useState<EditConflict | null>(null)
   const [draft, setDraft] = useState<PageDraft | null>(() => {
     const stored = readDraft(page.id)
@@ -219,7 +221,9 @@ export function usePageEditorController({ page, builderVersion = null, onInvalid
       }
 
       if (blocksChanged) {
-        const saved = await saveBuilder.mutateAsync({ blocks: normalizedBlocks, baseVersion: versionRef.current })
+        const sent = withServerIds(normalizedBlocks, serverIdsRef.current)
+        const saved = await saveBuilder.mutateAsync({ blocks: sent, baseVersion: versionRef.current })
+        rememberServerIds(normalizedBlocks, saved.blocks, serverIdsRef.current)
         if (typeof saved.version === 'string') {
           versionRef.current = saved.version
         }

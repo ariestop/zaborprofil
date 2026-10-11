@@ -173,6 +173,41 @@ describe('usePageEditorController autosave', () => {
   })
 })
 
+describe('usePageEditorController block ids', () => {
+  it('sends the server id of a block created in the browser on the next save without changing it in the editor', async () => {
+    apiRequest.mockImplementation((url: string, options?: { method?: string, body?: { blocks?: Array<{ id: string }> } }) => {
+      if (url.endsWith('/builder') && options?.method === 'PUT') {
+        const blocks = (options.body?.blocks ?? []).map((block, index) => (
+          block.id.startsWith('SERVER-') ? block : { ...block, id: `SERVER-${index}` }
+        ))
+
+        return Promise.resolve({ pageId: 'page-1', updatedAt: null, version: 'v-saved', blocks })
+      }
+
+      return Promise.resolve(makePage())
+    })
+    const { result } = renderController()
+    const block = createBlock('text', 0)
+
+    act(() => useBuilderStore.getState().setBlocks([block], true))
+    await act(async () => {
+      await result.current.saveAll()
+    })
+
+    act(() => useBuilderStore.getState().updateBlock(block.id, (current) => ({ ...current, content: { ...current.content, html: '<p>Правка</p>' } })))
+    await act(async () => {
+      await result.current.saveAll()
+    })
+
+    const puts = calls('PUT', '/builder')
+    expect(puts).toHaveLength(2)
+    expect((puts[0]?.[1] as { body: { blocks: Array<{ id: string }> } }).body.blocks[0]?.id).toBe(block.id)
+    expect((puts[1]?.[1] as { body: { blocks: Array<{ id: string }> } }).body.blocks[0]?.id).toBe('SERVER-0')
+    expect(useBuilderStore.getState().blocks[0]?.id).toBe(block.id)
+    expect(useBuilderStore.getState().dirty).toBe(false)
+  })
+})
+
 describe('usePageEditorController manual save', () => {
   it('saves settings only on manual save and sends parentId as is', async () => {
     const { result } = renderController(makePage({ parentId: 'parent-1' }))

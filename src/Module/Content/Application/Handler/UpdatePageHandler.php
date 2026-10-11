@@ -8,9 +8,11 @@ use App\Module\Content\Application\Command\UpdatePageCommand;
 use App\Module\Content\Application\DTO\PageOutput;
 use App\Module\Content\Application\Service\ContentId;
 use App\Module\Content\Application\Service\PublicPageCacheInvalidator;
+use App\Module\Content\Application\Service\PublishedRevisionAccessSync;
 use App\Module\Content\Domain\Enum\PageType;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use App\Shared\Application\Logging\BusinessEventLogger;
+use App\Shared\Application\Transaction\TransactionRunnerInterface;
 use InvalidArgumentException;
 
 final readonly class UpdatePageHandler
@@ -20,10 +22,18 @@ final readonly class UpdatePageHandler
         private ContentId $contentId,
         private PublicPageCacheInvalidator $publicPageCache,
         private BusinessEventLogger $businessEvents,
+        private PublishedRevisionAccessSync $publishedAccess,
+        private TransactionRunnerInterface $transactions,
     ) {
     }
 
     public function __invoke(UpdatePageCommand $command): PageOutput
+    {
+        // Страница и снимок её опубликованной ревизии — одной транзакцией.
+        return $this->transactions->run(fn (): PageOutput => $this->handle($command));
+    }
+
+    private function handle(UpdatePageCommand $command): PageOutput
     {
         $pageId = $this->contentId->fromString($command->id);
 
@@ -49,6 +59,8 @@ final readonly class UpdatePageHandler
         );
 
         $this->pages->save($page);
+        // Индексация и видимость действуют сразу, как и адрес: см. PublishedRevisionAccessSync.
+        $this->publishedAccess->sync($page);
 
         $this->publicPageCache->invalidateMany([$previousPath, $page->path()]);
         if ($previousPath !== $page->path()) {

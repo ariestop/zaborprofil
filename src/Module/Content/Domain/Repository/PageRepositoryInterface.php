@@ -24,6 +24,9 @@ interface PageRepositoryInterface
 
     public function findOneByPath(string $path): ?Page;
 
+    /**
+     * Страница, доступная посетителям по адресу: опубликована, не удалена и не скрыта.
+     */
     public function findPublishedByPath(string $path): ?Page;
 
     public function existsByPath(string $path, ?string $excludeId = null): bool;

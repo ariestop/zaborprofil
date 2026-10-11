@@ -40,6 +40,8 @@ ROLE_MANAGER: []
 
 Конкретные разделы и эндпоинты закрывает `AdminPermissionVoter`: каждый контроллер `/admin/api/*` проверяет своё право.
 
+Запрос без действующей сессии (истекла, сброшена сменой пароля, выход в другой вкладке) обрабатывает `AdminAuthenticationEntryPoint` (Auth-модуль, `entry_point` firewall `main`): HTML-страницы `/admin/*` перенаправляются на `/admin/login`, а `/admin/api/*` получает `401` JSON `{"error": "Сессия истекла. Войдите в админку снова.", "code": "UNAUTHORIZED"}`. Редирект для API не годится: fetch и XHR молча следуют ему, получают HTML формы входа со статусом `200`, и SPA принимала его за успешный ответ (например, публикация выглядела выполненной).
+
 ### Права для SPA
 
 `GET /admin/api/me` возвращает `{email, roles, permissions}`; те же `roles` и `permissions` шаблон `admin/dashboard.html.twig` отдаёт в `data-roles` / `data-permissions` корня `#admin-app`. Список прав вычисляет `AdminAccessProfile` теми же voter'ами, что защищают эндпоинты. Фронтенд (`admin/stores/auth.ts`) использует его, чтобы:

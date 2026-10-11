@@ -8,7 +8,7 @@ use App\Module\Content\Application\Command\BulkUpdatePagesCommand;
 use App\Module\Content\Application\Command\ChangePageStatusCommand;
 use App\Module\Content\Application\Service\ContentId;
 use App\Module\Content\Application\Service\PublicPageCacheInvalidator;
-use App\Module\Content\Domain\Repository\PagePublicationRepositoryInterface;
+use App\Module\Content\Application\Service\PublishedRevisionAccessSync;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use App\Shared\Application\Exception\ClientErrorClassifier;
 use App\Shared\Domain\Exception\NotFoundExceptionInterface;
@@ -27,7 +27,7 @@ final readonly class BulkUpdatePagesHandler
 
     public function __construct(
         private PageRepositoryInterface $pages,
-        private PagePublicationRepositoryInterface $publications,
+        private PublishedRevisionAccessSync $publishedAccess,
         private ContentId $contentId,
         private ChangePageStatusHandler $changeStatus,
         private PublicPageCacheInvalidator $publicPageCache,
@@ -112,13 +112,7 @@ final readonly class BulkUpdatePagesHandler
         $page = $this->pages->get($this->contentId->fromString($id));
         $page->changeIndexable($indexable);
         $this->pages->save($page);
-
-        $publication = $this->publications->findByPage((string) $page->id());
-        $published = $publication?->publishedRevision();
-        if ($publication !== null && $published !== null) {
-            $published->changeIndexable($indexable);
-            $this->publications->save($publication);
-        }
+        $this->publishedAccess->sync($page);
 
         $this->publicPageCache->invalidate($page->path());
     }
