@@ -57,7 +57,7 @@ final class UserManagementException extends RuntimeException
 
     public static function ownPasswordChangeRequired(): self
     {
-        return new self(self::OWN_PASSWORD_CHANGE_REQUIRED, 'Собственный пароль меняется в форме «Сменить пароль» с вводом текущего пароля.');
+        return new self(self::OWN_PASSWORD_CHANGE_REQUIRED, 'Собственный пароль меняется в форме «Сменить свой пароль» с вводом текущего пароля.');
     }
 
     public static function invalidCurrentPassword(): self

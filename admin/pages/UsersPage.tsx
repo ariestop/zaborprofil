@@ -221,7 +221,7 @@ export default function UsersPage() {
               size="sm"
               variant="outline"
               disabled={isSelf}
-              title={isSelf ? 'Свой пароль меняется в форме «Сменить пароль»' : undefined}
+              title={isSelf ? 'Свой пароль меняется в форме «Сменить свой пароль»' : undefined}
               onClick={() => setResetTarget(user)}
             >
               Сбросить пароль
