@@ -135,6 +135,10 @@ services:
     App\Module\Media\Domain\Repository\MediaAssetRepositoryInterface:
         alias: App\Module\Media\Infrastructure\Doctrine\Repository\DoctrineMediaAssetRepository
 
+    App\Module\Media\Application\Upload\MediaUploadHandler:
+        arguments:
+            $mediaUploadDir: '%app.media_upload_dir%'
+
     App\Module\Media\UI\Admin\MediaApiController:
         arguments:
             $mediaUploadDir: '%app.media_upload_dir%'
