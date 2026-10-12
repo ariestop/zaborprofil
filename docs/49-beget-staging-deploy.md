@@ -175,7 +175,7 @@ GitHub Environment `staging`: Required reviewers не включать, инач
 1. Изменения попадают в ветку `dev` (через PR или прямым push), workflow запускается автоматически.
 2. Результат виден через несколько минут на `https://dev.zaborprofil.ru/`.
 3. Следить за деплоем: `gh run list --workflow=deploy-staging-beget.yml -L 3`, `gh run watch <id>`.
-4. Ручной запуск любой ветки/SHA: Actions -> «Deploy staging (Beget)» -> Run workflow -> `ref`.
+4. Ручной запуск любой ветки/SHA: Actions -> «Deploy staging (Beget)» -> Run workflow -> `ref`. Так ветку PR проверяют на стенде до мержа; после мержа push в `dev` выкладывает тот же код.
 5. Логи на сервере: `~/dev.zaborprofil.ru/var/log/deploy.log`, история — `var/log/deploy-history.log`.
 
 Важно: push в `dev` запускает workflow, только если файл `.github/workflows/deploy-staging-beget.yml` уже есть в коммите, на который указывает `dev`. Поэтому workflow сначала должен попасть в `dev` (например, merge `main` в `dev` после принятия PR с этим деплоем). Ветки `main` и `dev` исторически разошлись, конфликты разрешает владелец ветки.
@@ -280,6 +280,7 @@ STAGING_ALLOW_PUBLIC=1
 | `/health/ready` отвечает 503 | недоступна БД или каталог кэша | проверить `DATABASE_URL`, права на `shared/cache` и `shared/sessions` |
 | В админке «Сборка упала», `npm не найден в PATH` (код 127) | кнопка «Перекомпилировать» запускает `npm run build` в PHP-FPM, а Node.js на Beget нет: фронтенд собирает CI и деплой кладёт готовый `public_html/build` | ничего чинить не нужно: пересборка из админки по умолчанию выключена (`APP_ASSET_BUILD_ENABLED`, по умолчанию равна `APP_DEBUG`), виджет скрыт, сводка не показывает ошибку. Фронтенд обновляется только деплоем |
 | Пользователей «разлогинило» после деплоя | `var/sessions` не был симлинком на `shared/sessions` | деплой сам создаёт симлинк; проверить `ls -l var/` |
+| В заявках и журнале IP хостинга или IP, который подставил посетитель | в `.env.local` задан `SYMFONY_TRUSTED_PROXIES` (`REMOTE_ADDR`, `PRIVATE_SUBNETS`): Beget и так кладёт IP посетителя в `REMOTE_ADDR`, а `X-Forwarded-For` от клиента не перезаписывает | удалить `SYMFONY_TRUSTED_PROXIES`, см. [27-config-and-env](27-config-and-env.md#trusted-proxies--hosts) |
 
 ## Проверки перед изменением деплоя
 
