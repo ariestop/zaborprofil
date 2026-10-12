@@ -19,7 +19,6 @@ use Symfony\Contracts\Cache\TagAwareCacheInterface;
 #[AsDecorator(decorates: PublicPageResolverInterface::class)]
 final readonly class CachedPublicPageResolver implements PublicPageResolverInterface
 {
-    public const string CACHE_KEY_PREFIX = 'content.public_page.';
     public const int DEFAULT_TTL_SECONDS = 300;
 
     public function __construct(

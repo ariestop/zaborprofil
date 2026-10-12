@@ -63,7 +63,7 @@
 
 ## Конфликты правок и восстановление черновика (D2)
 
-**Оптимистичная блокировка блоков.** `GET /builder` и ответ `PUT /builder` содержат поле `version` — хэш содержимого блоков (`BuilderDocumentVersion`: id, тип, порядок, включённость, `content`, `settings`; не зависит от порядка ключей JSON и служебных меток времени). Редактор запоминает версию и отправляет её в `PUT /builder` как `baseVersion`. Если блоки успели изменить в другой вкладке или другим пользователем, backend отвечает `409` с кодом `EDIT_CONFLICT` и актуальными `version` и `updatedAt`, ничего не записывая. Без `baseVersion` проверка не выполняется (обратная совместимость для скриптов и старых клиентов).
+**Оптимистичная блокировка блоков.** `GET /builder` и ответ `PUT /builder` содержат поле `version` — хэш содержимого блоков (`BuilderDocumentVersion`: id, тип, имя, порядок, включённость, `content`, `settings`; не зависит от порядка ключей JSON и служебных меток времени). Редактор запоминает версию и отправляет её в `PUT /builder` как `baseVersion`. Если блоки успели изменить в другой вкладке или другим пользователем, backend отвечает `409` с кодом `EDIT_CONFLICT` и актуальными `version` и `updatedAt`, ничего не записывая. Без `baseVersion` проверка не выполняется (обратная совместимость для скриптов и старых клиентов). Проверка и запись идут в одной транзакции под блокировкой строки страницы (`PageRepositoryInterface::getForUpdate()`, `SELECT … FOR UPDATE`): второе почти одновременное сохранение с той же `baseVersion` ждёт фиксации первого и получает `409`, а не затирает его правки.
 
 В редакторе конфликт открывает диалог «Страница изменена другим пользователем»:
 
@@ -96,6 +96,6 @@
 
 - Vitest: `admin/features/page-editor/*.spec.ts(x)` (форма и схема, индикатор, автосохранение с fake timers, LeaveGuard, переключение вкладок, рабочее место блоков `ContentTab.spec.tsx`), `admin/features/page-editor/workspace/*.spec.ts`, `admin/routes/route-config.spec.ts`.
 - Playwright (`tests/e2e/admin-smoke.spec.ts`): создание страницы → правка SEO → сохранение → предпросмотр → предупреждение при уходе; старый URL `/builder` → «Добавить блок» → заполнение полей → сохранение; DnD блоков в структуре.
-- PHPUnit (MySQL 8.4): `tests/Functional/Content/AdminContentApiTest.php`, `tests/Functional/Content/PageEditConflictApiTest.php` (версия, `409 EDIT_CONFLICT`, edit-lock), `tests/Unit/Content/BuilderDocumentVersionTest.php`, `tests/Unit/Content/PageEditLockServiceTest.php`.
+- PHPUnit (MySQL 8.4): `tests/Functional/Content/AdminContentApiTest.php`, `tests/Functional/Content/PageEditConflictApiTest.php` (версия, `409 EDIT_CONFLICT`, edit-lock), `tests/Unit/Content/BuilderDocumentVersionTest.php`, `tests/Unit/Content/PageEditLockServiceTest.php`, `tests/Integration/Content/BuilderSaveRowLockTest.php` (блокировка строки страницы при сохранении).
 
 Ключевые модули: `admin/features/page-editor/*`, `admin/features/pages-list/*`, `admin/pages/PageEditorPage.tsx`, `admin/pages/PageCreatePage.tsx`, `admin/pages/PagesPage.tsx`, `admin/entities/page/api.ts`.

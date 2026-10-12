@@ -120,26 +120,12 @@ final readonly class PageBuilderApiController
             }
 
             $html = '';
-            foreach (array_values($rawBlocks) as $position => $rawBlock) {
-                if (!\is_array($rawBlock)) {
-                    throw new \InvalidArgumentException('Each block must be an object.');
-                }
-
-                /** @var array<string, mixed> $stringKeyed */
-                $stringKeyed = [];
-                foreach ($rawBlock as $key => $value) {
-                    if (!\is_string($key)) {
-                        throw new \InvalidArgumentException('Each block must be an object.');
-                    }
-                    $stringKeyed[$key] = $value;
-                }
-
-                $parsed = $documentService->parseBlockPayload($stringKeyed, $position);
+            foreach ($documentService->parseRawBlocks($rawBlocks) as $parsed) {
                 $html .= $blockRenderer->render(PageBlockView::fromSnapshot([
                     'id' => $parsed['id'],
                     'type' => $parsed['type']->value,
                     'name' => $parsed['name'] ?? $schemas->get($parsed['type'])->label,
-                    'position' => $position,
+                    'position' => $parsed['position'],
                     'content' => $parsed['content'],
                     'settings' => $parsed['settings'],
                 ]));
