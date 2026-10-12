@@ -13,6 +13,7 @@ use App\Module\Content\Domain\Repository\PageSearchResult;
 use App\Module\Content\Domain\ValueObject\PageVisibility;
 use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bridge\Doctrine\Types\UlidType;
@@ -37,6 +38,12 @@ final class DoctrinePageRepository extends ServiceEntityRepository implements Pa
     public function get(string $id): Page
     {
         return $this->findById($id) ?? throw new ContentNotFoundException('Page not found.');
+    }
+
+    public function getForUpdate(string $id): Page
+    {
+        return $this->getEntityManager()->find(Page::class, $this->toUlid($id), LockMode::PESSIMISTIC_WRITE)
+            ?? throw new ContentNotFoundException('Page not found.');
     }
 
     public function findById(string $id): ?Page

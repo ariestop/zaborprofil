@@ -22,6 +22,7 @@ final class BuilderDocumentVersion
         $normalized = array_map(static fn (BuilderBlockOutput $block): array => [
             'id' => $block->id,
             'type' => $block->type,
+            'name' => $block->name,
             'enabled' => $block->enabled,
             'position' => $block->position,
             'content' => $block->content,

@@ -50,7 +50,9 @@ final readonly class SavePageBuilderDocumentHandler
     private function handle(SavePageBuilderDocumentCommand $command): PageBuilderDocumentOutput
     {
         $pageId = $this->contentId->fromString($command->pageId);
-        $page = $this->pages->get($pageId);
+        // Блокировка строки страницы — до чтения блоков: второе одновременное сохранение с той же baseVersion
+        // дождётся фиксации первого, увидит его блоки и получит конфликт, а не затрёт чужие правки молча.
+        $page = $this->pages->getForUpdate($pageId);
         $existing = $this->blocks->findByPage($pageId);
 
         if ($command->baseVersion !== null) {

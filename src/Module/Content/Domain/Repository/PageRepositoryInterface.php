@@ -18,6 +18,12 @@ interface PageRepositoryInterface
 
     public function get(string $id): Page;
 
+    /**
+     * Страница с блокировкой строки до конца транзакции (`SELECT … FOR UPDATE`): одновременные правки
+     * той же страницы ждут друг друга и видят уже сохранённое. Вызывать только внутри транзакции.
+     */
+    public function getForUpdate(string $id): Page;
+
     public function findById(string $id): ?Page;
 
     public function findPreviewById(string $id): ?Page;
