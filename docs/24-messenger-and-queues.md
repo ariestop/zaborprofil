@@ -7,7 +7,15 @@
 - Failure transport — `failed` (Doctrine).
 - Транспорт `async` — Doctrine (через `MESSENGER_TRANSPORT_DSN=doctrine://default?auto_setup=0`).
 - Транспорт `failed` — `doctrine://default?queue_name=failed`.
-- Routing: `App\Shared\Infrastructure\Logging\Message\SendTelegramLogMessage` → `async`.
+- Routing: `App\Shared\Infrastructure\Logging\Message\SendTelegramLogMessage` → `async`, `App\Module\Lead\Application\Notification\NotifyLeadMessage` → `async`.
+- Повторы `async`: 5 попыток через 1, 3, 9, 27 и 60 минут (~1 ч 40 мин), затем сообщение уходит в `failed` (`messenger:failed:show`, `messenger:failed:retry`).
+
+### Уведомления о заявках
+
+- `PublicLeadSubmitter` после сохранения заявки вызывает `LeadNotifier::queue()`: по сообщению `NotifyLeadMessage(leadId, channel)` на каждый настроенный канал (`email`, `telegram`). Каналы — отдельные сообщения, поэтому сбой Telegram не приводит к повторному письму.
+- `NotifyLeadMessageHandler` отправляет уведомление; сбой канала — исключение, Messenger повторяет. Заявку удалили до отправки — `UnrecoverableMessageHandlingException`, без повторов.
+- После последней попытки `LeadNotificationFailureSubscriber` пишет `error` `lead.notification.failed` в канал `observability` (Telegram-алерт и Sentry).
+- Без воркера уведомления не уходят: на VPS — systemd-сервис `zaborprofil-messenger`, на Beget — cron `messenger:consume` раз в минуту ([49-beget-staging-deploy](49-beget-staging-deploy.md#5b-cron-очереди-messenger)); задержка уведомления — до минуты. Локально: `docker compose exec app php bin/console messenger:consume async -vv`.
 
 В `test` оба транспорта — `in-memory://`.
 
@@ -16,7 +24,8 @@
 ## Зачем нужен Messenger
 
 - Отправка email’ов и Telegram-логов вне HTTP-цикла.
-- Будущее: media processing, sitemap generation, search indexing, bulk imports/exports, lead notifications.
+- Уведомления менеджеров о новых заявках (email, Telegram) с повторами.
+- Будущее: media processing, sitemap generation, search indexing, bulk imports/exports.
 
 ## Структура
 

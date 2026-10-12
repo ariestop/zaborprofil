@@ -15,7 +15,8 @@ use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * Приём заявки с публичной формы: антиспам, проверка согласия, снимок согласия, сохранение и уведомление менеджера.
+ * Приём заявки с публичной формы: антиспам, проверка согласия, снимок согласия, сохранение и постановка
+ * уведомлений менеджерам в очередь (отправляет воркер, см. {@see LeadNotifier}).
  * Ограничения полей (длины, минимум цифр телефона) проверяет {@see Lead}: нарушение — 422, а не ошибка БД.
  */
 final readonly class PublicLeadSubmitter
@@ -69,7 +70,7 @@ final readonly class PublicLeadSubmitter
             'maskedContact' => PhoneNumber::mask($lead->phone()),
         ]);
         if (!$spamCheck->isSpam()) {
-            $this->notifier->notify($lead);
+            $this->notifier->queue($lead);
         }
 
         return $lead;

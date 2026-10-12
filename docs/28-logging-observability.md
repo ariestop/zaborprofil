@@ -36,8 +36,8 @@
 
 | Событие (message) | Уровень | Когда |
 |---|---|---|
-| `lead.notification.failed: заявка <id> не доставлена ни по одному каналу` | `error` | email и Telegram уведомление о новой заявке не доставлены (или единственный настроенный канал упал). Уходит в Telegram и Sentry |
-| `lead.notification.partial` | `warning` | один канал доставил, другой упал |
+| `lead.notification.failed: заявка <id> не доставлена в канал <channel>` | `error` | уведомление о новой заявке не доставлено по каналу после всех повторов (~1 ч 40 мин); сообщение лежит в `failed` (`messenger:failed:retry`). Уходит в Telegram и Sentry |
+| `lead.notification.channel_disabled` | `warning` | канал отключили, пока уведомление ждало в очереди |
 | `lead.notification.not_configured` | `warning` | не задан ни `LEAD_NOTIFICATION_EMAIL`, ни пара `LEAD_TELEGRAM_*` |
 | `admin.client.error: <текст ошибки>` | `error` | необработанная ошибка в SPA админки (`ErrorBoundary`, `window.onerror`, `unhandledrejection`) |
 
