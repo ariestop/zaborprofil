@@ -90,12 +90,20 @@ final class ViteAssetExtension extends AbstractExtension
             return new Markup('', 'UTF-8');
         }
 
-        $url = $this->publicBuildPath.'/'.$file;
+        // Чанки, которые entry импортирует статически (vendor-react и др.), браузер иначе узнал бы
+        // только после загрузки и разбора entry — лишний круг запросов перед запуском приложения.
+        $tags = '';
+        foreach ($this->collectImportedChunkFiles($entryData) as $chunkFile) {
+            $tags .= \sprintf(
+                '<link rel="modulepreload" href="%s">',
+                htmlspecialchars($this->publicBuildPath.'/'.$chunkFile, \ENT_QUOTES | \ENT_HTML5, 'UTF-8'),
+            );
+        }
 
         return new Markup(
-            \sprintf(
+            $tags.\sprintf(
                 '<script type="module" src="%s"></script>',
-                htmlspecialchars($url, \ENT_QUOTES | \ENT_HTML5, 'UTF-8'),
+                htmlspecialchars($this->publicBuildPath.'/'.$file, \ENT_QUOTES | \ENT_HTML5, 'UTF-8'),
             ),
             'UTF-8',
         );
@@ -197,6 +205,32 @@ final class ViteAssetExtension extends AbstractExtension
         $this->walkImports($entryData, $manifest, $visited, $cssFiles);
 
         return array_values(array_unique($cssFiles));
+    }
+
+    /**
+     * JS-файлы чанков, которые entry импортирует статически (вместе с их собственными статическими импортами).
+     * Динамические импорты (`dynamicImports`, ленивые маршруты) сюда не входят.
+     *
+     * @param array<string, mixed> $entryData
+     *
+     * @return list<string>
+     */
+    private function collectImportedChunkFiles(array $entryData): array
+    {
+        $manifest = $this->loadManifest();
+        $visited = [];
+        $cssFiles = [];
+        $this->walkImports($entryData, $manifest, $visited, $cssFiles);
+
+        $files = [];
+        foreach (array_keys($visited) as $importKey) {
+            $file = $manifest[$importKey]['file'] ?? null;
+            if (\is_string($file) && str_ends_with($file, '.js')) {
+                $files[] = $file;
+            }
+        }
+
+        return array_values(array_unique($files));
     }
 
     /**

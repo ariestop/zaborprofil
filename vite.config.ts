@@ -76,6 +76,13 @@ export default defineConfig({
             return
           }
 
+          // Рантайм React нужен всем чанкам. Без явного чанка Rollup кладёт его в первый vendor-чанк,
+          // которому он понадобился (react — в vendor-query, react-dom — в vendor-tiptap), и входная точка
+          // админки начинает статически грузить редактор (vendor-tiptap + vendor-prosemirror) на каждой странице.
+          if (/node_modules\/(react|react-dom|scheduler|use-sync-external-store)\//.test(id)) {
+            return 'vendor-react'
+          }
+
           if (id.includes('@tanstack/react-query') || id.includes('@tanstack/query-core')) {
             return 'vendor-query'
           }

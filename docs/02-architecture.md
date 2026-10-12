@@ -17,8 +17,10 @@
 
 ## Снимок модулей (фактическое состояние)
 
-- Реализованные: `Admin`, `Auth`, `User`, `Content`, `Seo`, `Settings`.
-- В стадии развития/расширения: `Media`, `Menu`, `Lead`, `AuditLog`, `Catalog`, `Order`, `Partner`.
+- Реализованные: `Admin`, `Auth`, `User`, `Content`, `Seo`, `Settings`, `Media`, `Menu`, `Lead`, `AuditLog`, `Catalog`.
+- Зарезервированные (в модуле только `README.md`): `Portfolio`, `Redirect`, `Order`, `Partner`.
+
+Подробная карта модулей и их назначение — [06-module-architecture](06-module-architecture.md#карта-модулей).
 
 ## High-level diagram
 
