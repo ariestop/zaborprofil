@@ -43,6 +43,13 @@ final class PublicSiteLayoutTest extends WebTestCase
         self::assertNotNull($crawler->filter('#mobile-nav')->attr('hidden'));
         self::assertGreaterThan(0, $crawler->filter('[data-callbar] a[href="tel:+78452988808"]')->count());
         self::assertGreaterThan(0, $crawler->filter('footer#contacts a[href="mailto:info@zaborprofil.ru"]')->count());
+
+        // Контакты в разметке Organization берутся из того же глобала site, что и шапка.
+        $organization = json_decode($crawler->filter('script[type="application/ld+json"]')->first()->text(), true, flags: JSON_THROW_ON_ERROR);
+        self::assertIsArray($organization);
+        self::assertSame('Organization', $organization['@type'] ?? null);
+        self::assertSame('+78452988808', $organization['telephone'] ?? null);
+        self::assertSame('info@zaborprofil.ru', $organization['email'] ?? null);
     }
 
     public function testHeaderMenuFallsBackToMainSectionsUntilMenuIsFilled(): void

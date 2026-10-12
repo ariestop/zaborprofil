@@ -45,7 +45,7 @@
             'name': site.name,
             'url': app.request.schemeAndHttpHost ~ '/',
             'logo': app.request.schemeAndHttpHost ~ '/img/logo.png',
-            'telephone': '+7-8452-98-88-08',
+            'telephone': site.phone_href|replace({'tel:': ''}),
             'email': site.email,
             'areaServed': ['Саратов', 'Россия', 'Казахстан'],
             'sameAs': [site.telegram, site.instagram]

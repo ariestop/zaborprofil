@@ -71,7 +71,7 @@ make health
 - `http://localhost:8025` — Mailpit
 - `http://localhost:8080` — Adminer
 
-Подробнее: `docs/LOCAL_DOCKER.md`.
+Подробнее: `docs/33-local-development.md`, `docs/32-docker-architecture.md`.
 
 ## Запуск на Windows
 
@@ -166,10 +166,9 @@ Staging-стенд `https://dev.zaborprofil.ru` на хостинге Beget де
 
 Документация:
 
-- `docs/STAGING.md`
-- `docs/PRODUCTION.md`
-- `docs/DEPLOY.md`
-- `docs/CI_CD.md`
+- `docs/34-deployment.md` — staging и production на VPS
+- `docs/49-beget-staging-deploy.md` — staging на Beget
+- `docs/35-cicd.md`
 
 ## Content Engine
 
@@ -184,4 +183,4 @@ Admin API доступен под `/admin/api/content/...` и защищен т�
 
 ## Дальше
 
-W0-W11 из `docs/FEATURES_PLAN.md` реализованы. Release readiness и базовый `Catalog / Product / Variant` подготовлены на уровне репозитория. Commerce, Customer, Public API, reverse proxy cache и domain events вынесены в более позднюю реализацию. Канонический порядок работ зафиксирован в `docs/45-roadmap-and-extension-points.md` и `docs/FEATURES_PLAN.md`.
+W0-W11 из плана работ реализованы. Release readiness и базовый `Catalog / Product / Variant` подготовлены на уровне репозитория. Commerce, Customer, Public API, reverse proxy cache и domain events вынесены в более позднюю реализацию. Канонический порядок работ зафиксирован в `docs/45-roadmap-and-extension-points.md`.
