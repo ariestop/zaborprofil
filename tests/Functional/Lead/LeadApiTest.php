@@ -47,6 +47,48 @@ final class LeadApiTest extends WebTestCase
         self::assertSame('https://zaborprofil.test/catalog/', $consentSnapshot['pageUrl'] ?? null);
     }
 
+    /**
+     * Прокси-заголовкам по умолчанию не доверяем: на Beget настоящий IP приходит в REMOTE_ADDR, а X-Forwarded-For
+     * от клиента хостинг пропускает как есть. Доверие к ним подменило бы IP в согласии и обошло антиспам.
+     */
+    public function testConsentSnapshotStoresConnectionIpAndIgnoresClientForwardedHeaders(): void
+    {
+        // Как в PHP-FPM: REMOTE_ADDR известен уже при загрузке ядра, иначе Symfony молча отбросила бы
+        // ключевое слово REMOTE_ADDR из trusted_proxies и тест не заметил бы такую настройку.
+        $previousRemoteAddr = $_SERVER['REMOTE_ADDR'] ?? null;
+        $_SERVER['REMOTE_ADDR'] = '198.51.100.20';
+        try {
+            $client = self::createClient();
+        } finally {
+            if ($previousRemoteAddr === null) {
+                unset($_SERVER['REMOTE_ADDR']);
+            } else {
+                $_SERVER['REMOTE_ADDR'] = $previousRemoteAddr;
+            }
+        }
+        SchemaTestHelper::recreateSchema($this->entityManager());
+
+        $client->jsonRequest('POST', '/api/leads', [
+            'source' => 'public_page_form',
+            'name' => 'Иван',
+            'phone' => '+79990000000',
+            'consent' => true,
+            'formLoadedAt' => (new \DateTimeImmutable('-10 seconds'))->format(DATE_ATOM),
+        ], server: [
+            'REMOTE_ADDR' => '198.51.100.20',
+            'HTTP_X_FORWARDED_FOR' => '203.0.113.7',
+            'HTTP_X_REAL_IP' => '203.0.113.8',
+            'HTTP_FORWARDED' => 'for=203.0.113.9',
+        ]);
+
+        self::assertResponseStatusCodeSame(201);
+        $lead = $this->leads()->findLatest(1)[0] ?? null;
+        self::assertNotNull($lead);
+        $consentSnapshot = $lead->toArray()['consentSnapshot'] ?? null;
+        self::assertIsArray($consentSnapshot);
+        self::assertSame('198.51.100.20', $consentSnapshot['ip'] ?? null);
+    }
+
     public function testSpamLeadIsAcceptedAndStoredAsSpam(): void
     {
         $client = self::createClient();
