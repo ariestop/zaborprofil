@@ -5,8 +5,13 @@ const projectRoot = process.cwd()
 const manifestPath = path.resolve(projectRoot, 'public_html/build/.vite/manifest.json')
 const baselinePath = path.resolve(projectRoot, 'tools/perf/admin-chunk-baseline.json')
 
+// admin-initial — весь JS, который браузер грузит при открытии любой страницы админки: entry и его статические
+// импорты (без ленивых маршрутов). Ловит случай, когда в начальную загрузку попадает тяжёлый чанк
+// (например, редактор: vendor-tiptap + vendor-prosemirror), хотя каждый чанк по отдельности в бюджете.
 const budgets = [
-  { name: 'admin-entry', maxBytes: 420 * 1024, patterns: [/\/admin-[^/]+\.js$/] },
+  { name: 'admin-initial', maxBytes: 520 * 1024, initialOf: 'admin/app.ts' },
+  { name: 'admin-entry', maxBytes: 300 * 1024, patterns: [/\/admin-[^/]+\.js$/] },
+  { name: 'vendor-react', maxBytes: 210 * 1024, patterns: [/\/vendor-react-[^/]+\.js$/] },
   { name: 'page-editor-route', maxBytes: 120 * 1024, patterns: [/\/PageEditorPage-[^/]+\.js$/] },
   { name: 'rich-text-runtime', maxBytes: 200 * 1024, patterns: [/\/RichTextEditor-[^/]+\.js$/] },
   { name: 'vendor-tiptap', maxBytes: 280 * 1024, patterns: [/\/vendor-tiptap-[^/]+\.js$/] },
@@ -31,10 +36,42 @@ let hasFailures = false
 const rows = []
 console.log('Admin chunk budget report:')
 
+/**
+ * Файлы entry и всех его статических импортов (рекурсивно); dynamicImports не входят.
+ *
+ * @param {string} entryKey
+ * @returns {string[]}
+ */
+function initialFiles(entryKey) {
+  const entry = manifest[entryKey]
+  if (!entry || typeof entry.file !== 'string') {
+    return []
+  }
+
+  const files = new Set([entry.file])
+  const visited = new Set()
+  const queue = Array.isArray(entry.imports) ? [...entry.imports] : []
+  while (queue.length > 0) {
+    const key = queue.shift()
+    if (visited.has(key) || !manifest[key]) {
+      continue
+    }
+    visited.add(key)
+    if (typeof manifest[key].file === 'string' && manifest[key].file.endsWith('.js')) {
+      files.add(manifest[key].file)
+    }
+    if (Array.isArray(manifest[key].imports)) {
+      queue.push(...manifest[key].imports)
+    }
+  }
+
+  return Array.from(files)
+}
+
 for (const budget of budgets) {
-  const matched = Array.from(emittedFiles).filter((file) =>
-    budget.patterns.some((pattern) => pattern.test(file)),
-  )
+  const matched = budget.initialOf
+    ? initialFiles(budget.initialOf)
+    : Array.from(emittedFiles).filter((file) => budget.patterns.some((pattern) => pattern.test(file)))
 
   const totalSize = matched.reduce((sum, relativeFile) => {
     const absolutePath = path.resolve(projectRoot, 'public_html/build', relativeFile)
@@ -60,7 +97,7 @@ for (const budget of budgets) {
   })
   if (matched.length === 0) {
     hasFailures = true
-    console.log(`   Missing expected chunk(s): ${budget.patterns.map((p) => p.toString()).join(', ')}`)
+    console.log(`   Missing expected chunk(s): ${budget.initialOf ?? budget.patterns.map((p) => p.toString()).join(', ')}`)
     console.error(`::error title=Missing chunk::${budget.name} is not found in Vite manifest.`)
     continue
   }

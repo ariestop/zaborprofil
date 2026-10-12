@@ -57,4 +57,11 @@ admin/
 - Обязательный `npm run typecheck`.
 - Обязательный `npm run test:frontend`.
 - Scoped lint для admin runtime: `npm run lint:admin`.
-- Build guardrail по размерам критичных чанков: `npm run check:chunks`.
+- Build guardrail по размерам критичных чанков: `npm run check:chunks` (`tools/perf/check-admin-chunks.mjs`, базовая линия — `tools/perf/admin-chunk-baseline.json`).
+
+### Чанки и начальная загрузка
+
+- `admin-initial` — весь JS, который грузится при открытии любой страницы админки: entry `admin/app.ts` и его статические импорты, без ленивых маршрутов. Бюджет 520 КБ (сейчас ~457 КБ: entry ~231 КБ, `vendor-react` ~190 КБ, `vendor-query` ~34 КБ).
+- Рантайм React (`react`, `react-dom`, `scheduler`, `use-sync-external-store`) вынесен в `vendor-react` явно (`manualChunks` в `vite.config.ts`). Без этого Rollup клал его в первый vendor-чанк, которому он понадобился, и entry статически тянул `vendor-tiptap` + `vendor-prosemirror` (~411 КБ редактора) на каждой странице.
+- Редактор (`vendor-tiptap`, `vendor-prosemirror`, `RichTextEditor`) грузится только с ленивыми маршрутами. Если `admin-initial` вырос скачком — проверить статические импорты entry в `public_html/build/.vite/manifest.json`.
+- `vite_entry_script_tags()` выводит `<link rel="modulepreload">` для статических импортов entry, чтобы они грузились параллельно с ним, а не после его разбора.

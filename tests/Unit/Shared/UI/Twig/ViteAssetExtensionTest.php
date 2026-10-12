@@ -69,6 +69,34 @@ final class ViteAssetExtensionTest extends TestCase
         );
     }
 
+    public function testPreloadsStaticallyImportedChunksButNotLazyOnes(): void
+    {
+        file_put_contents($this->manifestFile, json_encode([
+            'admin/app.ts' => [
+                'file' => 'assets/admin-A.js',
+                'isEntry' => true,
+                'imports' => ['_vendor-query-Q.js', '_vendor-react-R.js'],
+                'dynamicImports' => ['admin/pages/PageEditorPage.tsx'],
+            ],
+            '_vendor-query-Q.js' => ['file' => 'assets/vendor-query-Q.js', 'imports' => ['_vendor-react-R.js']],
+            '_vendor-react-R.js' => ['file' => 'assets/vendor-react-R.js'],
+            'admin/pages/PageEditorPage.tsx' => [
+                'file' => 'assets/PageEditorPage-E.js',
+                'isDynamicEntry' => true,
+                'imports' => ['_vendor-tiptap-T.js'],
+            ],
+            '_vendor-tiptap-T.js' => ['file' => 'assets/vendor-tiptap-T.js'],
+        ], \JSON_THROW_ON_ERROR));
+        $ext = new ViteAssetExtension($this->manifestFile, '/build');
+
+        self::assertSame(
+            '<link rel="modulepreload" href="/build/assets/vendor-query-Q.js">'
+            .'<link rel="modulepreload" href="/build/assets/vendor-react-R.js">'
+            .'<script type="module" src="/build/assets/admin-A.js"></script>',
+            (string) $ext->renderScriptTags('admin/app.ts'),
+        );
+    }
+
     public function testThrowsOnUnknownEntry(): void
     {
         $ext = new ViteAssetExtension($this->manifestFile, '/build');
