@@ -26,7 +26,8 @@
 - принимает lead payload (`source`, `name`, `phone`, `email`, `message`, `consent`, `consentText`, `pageUrl`, `policyUrl`, `formLoadedAt`, honeypot `website`);
 - normal lead: `201` и статус `new`;
 - spam lead: нейтральный `202`, статус `spam`, `spamScore`/`spamReasons`;
-- антиспам: honeypot, минимальное время заполнения, IP rate limit, link scoring;
+- антиспам: honeypot, минимальное время заполнения, счётчик по IP, link scoring;
+- жёсткий лимит: 10 запросов в час с одного IP (`limiter.public_leads`, sliding window), считается каждый запрос; сверх — `429` с `code: TOO_MANY_REQUESTS` и `Retry-After`, заявка не сохраняется;
 - уведомления: email и Telegram (если заданы env переменные).
 
 ### Версионирование
@@ -62,7 +63,7 @@
 - Anonymous: 60 req/min на IP.
 - Authenticated: 600 req/min на токен.
 - Login endpoint: 10 req/min.
-- Lead submission: 5 req/min на IP.
+- Lead submission: 10 запросов в час на IP — **действует** (`limiter.public_leads`).
 
 ### Идемпотентность
 

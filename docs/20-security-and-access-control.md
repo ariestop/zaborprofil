@@ -155,12 +155,20 @@ password_hashers:
 
 `symfony/rate-limiter` уже подключён.
 
-Целевое (фактически только login throttling сейчас):
+Действует:
 
 | Endpoint | Limit |
 |---|---|
 | `admin_login` | 5 / 15 min (login_throttling) |
-| `lead.submit` | 5 req/min/IP |
+| `POST /api/leads` | 10 / час / IP (`limiter.public_leads`, sliding window): считается каждый запрос, сверх — `429 TOO_MANY_REQUESTS` с `Retry-After`, заявка не сохраняется |
+| `POST /admin/api/client-errors` | 20 / 10 min на пользователя (`limiter.admin_client_errors`) |
+
+IP для лимитов — `Request::getClientIp()`; доверенные прокси не заданы, см. [27-config-and-env](27-config-and-env.md#trusted-proxies--hosts).
+
+Целевое:
+
+| Endpoint | Limit |
+|---|---|
 | `api.public` (анонимный) | 60 req/min/IP |
 | `api.public` (auth) | 600 req/min/token |
 
