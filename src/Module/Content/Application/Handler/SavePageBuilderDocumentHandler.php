@@ -18,7 +18,6 @@ use App\Module\Content\Domain\Repository\PageBlockRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use App\Module\Content\Domain\ValueObject\PageVisibility;
 use App\Shared\Application\Transaction\TransactionRunnerInterface;
-use InvalidArgumentException;
 
 /**
  * Сохранение документа конструктора: проверка конфликта правок по версии документа, затем блоки
@@ -71,21 +70,8 @@ final readonly class SavePageBuilderDocumentHandler
         $preparedBlocks = [];
         $persist = [];
         $keptIds = [];
-        foreach (array_values($command->blocks) as $position => $rawBlock) {
-            if (!\is_array($rawBlock)) {
-                throw new InvalidArgumentException('Each block must be an object.');
-            }
-
-            /** @var array<string, mixed> $stringKeyed */
-            $stringKeyed = [];
-            foreach ($rawBlock as $key => $value) {
-                if (!\is_string($key)) {
-                    throw new InvalidArgumentException('Each block must be an object.');
-                }
-                $stringKeyed[$key] = $value;
-            }
-
-            $parsed = $this->documentService->parseBlockPayload($stringKeyed, $position);
+        foreach ($this->documentService->parseRawBlocks($command->blocks) as $parsed) {
+            $position = $parsed['position'];
             $keptIds[] = $parsed['id'];
 
             $existingBlock = $existingById[$parsed['id']] ?? null;

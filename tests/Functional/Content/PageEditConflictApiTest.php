@@ -71,6 +71,40 @@ final class PageEditConflictApiTest extends AdminApiTestCase
         self::assertResponseStatusCodeSame(422);
     }
 
+    public function testMalformedBlockIsRejectedOnSaveAndPreviewWithoutChanges(): void
+    {
+        $client = $this->adminClient();
+        $pageId = $this->createPage($client, 'edit-malformed');
+        $this->api($client, 'PUT', $this->url($pageId, 'builder'), ['blocks' => [$this->heroBlock('Сохранённый')]]);
+        $savedVersion = $this->text($this->json($client)['version']);
+
+        foreach (['builder' => 'PUT', 'builder/preview' => 'POST'] as $suffix => $method) {
+            foreach ([['не объект'], [['список', 'без ключей']]] as $blocks) {
+                $this->api($client, $method, $this->url($pageId, $suffix), ['blocks' => [$this->heroBlock('Новый'), ...$blocks]]);
+                self::assertResponseStatusCodeSame(422, $method.' '.$suffix);
+                self::assertSame('Each block must be an object.', $this->json($client)['error'] ?? null);
+            }
+        }
+
+        $this->api($client, 'GET', $this->url($pageId, 'builder'));
+        self::assertSame($savedVersion, $this->json($client)['version']);
+    }
+
+    public function testPreviewRendersBlocksWithoutSaving(): void
+    {
+        $client = $this->adminClient();
+        $pageId = $this->createPage($client, 'edit-preview');
+        $this->api($client, 'GET', $this->url($pageId, 'builder'));
+        $version = $this->json($client)['version'];
+
+        $this->api($client, 'POST', $this->url($pageId, 'builder/preview'), ['blocks' => [$this->heroBlock('Заголовок предпросмотра')]]);
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('Заголовок предпросмотра', $this->text($this->json($client)['html']));
+
+        $this->api($client, 'GET', $this->url($pageId, 'builder'));
+        self::assertSame($version, $this->json($client)['version']);
+    }
+
     public function testEditLockWarnsSecondSessionAndAllowsTakeOver(): void
     {
         $client = $this->adminClient();
