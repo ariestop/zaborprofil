@@ -12,4 +12,4 @@
 - Карточка заявки: история в таблице `lead_events` (`status_changed`, `note`, `assigned`) + запись в audit log; `LeadWorkflow` — единая точка смены статуса, назначения и добавления заметок.
 - Права: `leads.view`, `leads.manage`, `leads.export` (только админы); открытие карточки и экспорт пишутся в audit log без ПДн.
 - Экспорт CSV: `LeadCsvExporter` экранирует ячейки, начинающиеся с `= + - @`, табуляции и `\r` (защита от CSV-инъекций), добавляет UTF-8 BOM.
-- Notifications: email через `LEAD_NOTIFICATION_EMAIL`; Telegram через `LEAD_TELEGRAM_BOT_TOKEN` + `LEAD_TELEGRAM_CHAT_ID`.
+- Notifications: email через `LEAD_NOTIFICATION_EMAIL`; Telegram через `LEAD_TELEGRAM_BOT_TOKEN` + `LEAD_TELEGRAM_CHAT_ID`. Отправляются через очередь Messenger (`NotifyLeadMessage`, по сообщению на канал) с повторами; нужен воркер или cron `messenger:consume`, см. [24-messenger-and-queues](../../../docs/24-messenger-and-queues.md#уведомления-о-заявках).

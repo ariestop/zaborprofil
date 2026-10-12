@@ -28,7 +28,7 @@
 - spam lead: нейтральный `202`, статус `spam`, `spamScore`/`spamReasons`;
 - антиспам: honeypot, минимальное время заполнения, счётчик по IP, link scoring;
 - жёсткий лимит: 10 запросов в час с одного IP (`limiter.public_leads`, sliding window), считается каждый запрос; сверх — `429` с `code: TOO_MANY_REQUESTS` и `Retry-After`, заявка не сохраняется;
-- уведомления: email и Telegram (если заданы env переменные).
+- уведомления: email и Telegram (если заданы env переменные) — через очередь Messenger с повторами, ответ посетителю их не ждёт ([24-messenger-and-queues](24-messenger-and-queues.md#уведомления-о-заявках)).
 
 ### Версионирование
 

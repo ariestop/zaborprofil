@@ -131,10 +131,10 @@ chmod 600 .env.local
 
 ### 5b. Cron очереди Messenger
 
-Critical-алерты в Telegram уходят через асинхронную очередь (Doctrine transport). Постоянного worker на Beget нет,
+Critical-алерты в Telegram и уведомления менеджерам о новых заявках (email, Telegram) уходят через асинхронную очередь (Doctrine transport). Постоянного worker на Beget нет,
 поэтому очередь разбирает cron «каждую минуту» (`* * * * *`):
 `cd ~/dev.zaborprofil.ru && /usr/local/bin/php8.5 bin/console messenger:consume async --time-limit=50 --memory-limit=128M --env=staging --no-interaction >> var/log/messenger.log 2>&1`.
-Без этой задачи алерты копятся в таблице `messenger_messages`. Токен и чат — `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` в `.env.local`.
+Без этой задачи алерты и уведомления о заявках копятся в таблице `messenger_messages` и не доходят до менеджеров. Токен и чат — `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` в `.env.local`.
 
 ### 6. SSH-ключ деплоя
 
