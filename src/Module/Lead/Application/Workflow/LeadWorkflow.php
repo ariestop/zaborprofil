@@ -15,12 +15,16 @@ use App\Module\Lead\Domain\ValueObject\LeadEventType;
 use App\Module\Lead\Domain\ValueObject\LeadStatus;
 use App\Module\Lead\Domain\ValueObject\PhoneNumber;
 use App\Shared\Application\Logging\BusinessEventLogger;
+use App\Shared\Application\Transaction\TransactionRunnerInterface;
 use InvalidArgumentException;
 use Symfony\Component\Uid\Ulid;
 
 /**
  * Действия менеджера над заявкой. Каждое изменение пишется в хронологию заявки и в журнал аудита;
  * в аудит и в логи не попадают телефон, email и текст заметок.
+ *
+ * Заявка, событие хронологии и запись аудита сохраняются одной транзакцией: при сбое любой записи
+ * не остаётся, например, сменённого статуса без события в хронологии. Бизнес-лог пишется после фиксации.
  */
 final readonly class LeadWorkflow
 {
@@ -32,6 +36,7 @@ final readonly class LeadWorkflow
         private LeadAssigneeDirectoryInterface $assignees,
         private AdminAuditLogger $audit,
         private BusinessEventLogger $businessEvents,
+        private TransactionRunnerInterface $transactions,
     ) {
     }
 
@@ -54,10 +59,12 @@ final readonly class LeadWorkflow
 
         $lead = new Lead(self::MANUAL_SOURCE, $name, $phone, $email, $message, ['consent' => false, 'origin' => 'manual']);
         $lead->markRead();
-        $this->leads->save($lead);
-
         $leadId = (string) $lead->id();
-        $this->audit->log('lead.created_manually', 'lead', $leadId, [], ['source' => self::MANUAL_SOURCE]);
+        $this->transactions->run(function () use ($lead, $leadId): void {
+            $this->leads->save($lead);
+            $this->audit->log('lead.created_manually', 'lead', $leadId, [], ['source' => self::MANUAL_SOURCE]);
+        });
+
         $this->businessEvents->log('lead.created', [
             'leadId' => $leadId,
             'source' => self::MANUAL_SOURCE,
@@ -84,19 +91,21 @@ final readonly class LeadWorkflow
             return $lead;
         }
 
-        $lead->updateStatus($newStatus);
-        $this->leads->save($lead);
-        $this->events->save(new LeadEvent(
-            $lead,
-            LeadEventType::STATUS_CHANGED,
-            self::actorId($actor),
-            $actor->label,
-            null,
-            ['from' => $oldStatus, 'to' => $newStatus],
-        ));
-
         $leadId = (string) $lead->id();
-        $this->audit->log('lead.status_changed', 'lead', $leadId, ['status' => $oldStatus], ['status' => $newStatus]);
+        $this->transactions->run(function () use ($lead, $leadId, $oldStatus, $newStatus, $actor): void {
+            $lead->updateStatus($newStatus);
+            $this->leads->save($lead);
+            $this->events->save(new LeadEvent(
+                $lead,
+                LeadEventType::STATUS_CHANGED,
+                self::actorId($actor),
+                $actor->label,
+                null,
+                ['from' => $oldStatus, 'to' => $newStatus],
+            ));
+            $this->audit->log('lead.status_changed', 'lead', $leadId, ['status' => $oldStatus], ['status' => $newStatus]);
+        });
+
         $this->businessEvents->log('lead.status_changed', ['leadId' => $leadId, 'from' => $oldStatus, 'to' => $newStatus]);
 
         return $lead;
@@ -113,10 +122,12 @@ final readonly class LeadWorkflow
         }
 
         $event = new LeadEvent($lead, LeadEventType::NOTE, self::actorId($actor), $actor->label, $text);
-        $this->events->save($event);
-
         $leadId = (string) $lead->id();
-        $this->audit->log('lead.note_added', 'lead', $leadId, [], ['length' => mb_strlen($text)]);
+        $this->transactions->run(function () use ($event, $leadId, $text): void {
+            $this->events->save($event);
+            $this->audit->log('lead.note_added', 'lead', $leadId, [], ['length' => mb_strlen($text)]);
+        });
+
         $this->businessEvents->log('lead.note_added', ['leadId' => $leadId]);
 
         return $event;
@@ -136,19 +147,21 @@ final readonly class LeadWorkflow
             return $lead;
         }
 
-        $lead->assignTo($assignee === null ? null : Ulid::fromString($assignee->id));
-        $this->leads->save($lead);
-        $this->events->save(new LeadEvent(
-            $lead,
-            LeadEventType::ASSIGNED,
-            self::actorId($actor),
-            $actor->label,
-            null,
-            ['from' => $oldId, 'to' => $newId, 'toLabel' => $assignee?->email],
-        ));
-
         $leadId = (string) $lead->id();
-        $this->audit->log('lead.assigned', 'lead', $leadId, ['assigneeId' => $oldId], ['assigneeId' => $newId]);
+        $this->transactions->run(function () use ($lead, $leadId, $assignee, $oldId, $newId, $actor): void {
+            $lead->assignTo($assignee === null ? null : Ulid::fromString($assignee->id));
+            $this->leads->save($lead);
+            $this->events->save(new LeadEvent(
+                $lead,
+                LeadEventType::ASSIGNED,
+                self::actorId($actor),
+                $actor->label,
+                null,
+                ['from' => $oldId, 'to' => $newId, 'toLabel' => $assignee?->email],
+            ));
+            $this->audit->log('lead.assigned', 'lead', $leadId, ['assigneeId' => $oldId], ['assigneeId' => $newId]);
+        });
+
         $this->businessEvents->log('lead.assigned', ['leadId' => $leadId, 'assigneeId' => $newId]);
 
         return $lead;
