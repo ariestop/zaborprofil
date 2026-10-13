@@ -51,7 +51,7 @@ H1 страницы выводится внутри первого блока `h
 
 ## Перенос контента
 
-Контент главной, контактов, `/fasad/profnastil/` и страниц заборов (`/zabor-jaluzi/`, `/gorizont/`, `/zabor-3d-setka/`, `/zabor-iz-profnastila/`, `/zabor-iz-euroshtaketnika/`) описан в `tools/content/site-content.mjs` (тексты, цены и список фото взяты со старого сайта; новых фактов нет). Большие прайсы вынесены в отдельные файлы: `profnastil-prices.mjs`, `setka-3d-prices.mjs`. Загрузка выполняется через административный API — так же, как работает админка:
+Контент главной, контактов, страниц заборов (`/zabor-jaluzi/`, `/gorizont/`, `/zabor-3d-setka/`, `/zabor-iz-profnastila/`, `/zabor-iz-euroshtaketnika/`) и материалов (`/fasad/profnastil/`, `/fasad/metallocherepica/`, `/metall-saiding/`, `/krepezh-3d-zabor/`, `/zaglushki-plastik/`) описан в `tools/content/site-content.mjs` (тексты, цены и список фото взяты со старого сайта; новых фактов нет). Большие прайсы вынесены в отдельные файлы: `profnastil-prices.mjs`, `setka-3d-prices.mjs`, `materials-prices.mjs`. Загрузка выполняется через административный API — так же, как работает админка:
 
 ```bash
 ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD='…' \
@@ -70,6 +70,6 @@ ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD='…' \
 
 ## Что осталось на следующие этапы
 
-- Остальные страницы старого сайта (`/zaglushki-plastik/`, `/krepezh-3d-zabor/`, `/zabor-iz-setki-rabici/`, фасадные материалы): карточки каталога на главной уже ведут на часть этих адресов.
+- Остальные страницы старого сайта (например, `/zabor-iz-setki-rabici/`) — по списку владельца.
 - Страница `/privacy/` (ссылка в согласии формы заявки).
 - Калькулятор стоимости (на старом сайте нет, упомянут в UX-рекомендациях).
