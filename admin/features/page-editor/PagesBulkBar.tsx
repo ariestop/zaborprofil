@@ -8,7 +8,7 @@ import {
 } from '../../entities/page/api'
 import type { ContentPageItem } from '../../types/api'
 import { describeApiError } from '../seo/redirects/redirect-rules'
-import { pageStatusLabels } from './page-status'
+import { describePageStatusError, pageStatusLabels } from './page-status'
 
 /** Публикация и планирование доступны только поштучно: перед публикацией нужна проверка SEO. */
 export const BULK_STATUSES: PageStatus[] = [
@@ -31,7 +31,7 @@ function failureDetails(pages: ContentPageItem[], response: BulkPagesResponse): 
         .slice(0, 3)
         .map(
             (result) =>
-                `${pages.find((page) => page.id === result.id)?.title ?? result.id}: ${result.error ?? 'ошибка'}`,
+                `${pages.find((page) => page.id === result.id)?.title ?? result.id}: ${result.error === null ? 'ошибка' : describePageStatusError(result.error)}`,
         )
         .join('; ')
 }
