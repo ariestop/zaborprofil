@@ -22,18 +22,48 @@ export function initMobileNav(root: ParentNode = document): void {
         iconOpen?.classList.toggle('hidden', open)
         iconClose?.classList.toggle('hidden', !open)
         document.documentElement.classList.toggle('overflow-hidden', open)
+        if (open) {
+            panel.querySelector<HTMLElement>('button[data-nav-close]')?.focus()
+        }
     }
 
     toggle.addEventListener('click', () => setOpen(panel.hidden))
     panel.addEventListener('click', (event) => {
-        if ((event.target as HTMLElement).closest('a') !== null) {
+        const target = event.target as HTMLElement
+        if (target.closest('[data-nav-close]') !== null) {
+            setOpen(false)
+            toggle.focus()
+        } else if (target.closest('a') !== null) {
             setOpen(false)
         }
     })
     document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && !panel.hidden) {
+        if (panel.hidden) {
+            return
+        }
+        if (event.key === 'Escape') {
             setOpen(false)
             toggle.focus()
+
+            return
+        }
+        // Фокус не уходит за панель: Tab с последнего элемента — на первый, Shift+Tab с первого — на последний.
+        if (event.key === 'Tab') {
+            const items = Array.from(
+                panel.querySelectorAll<HTMLElement>('a[href], button:not([disabled])'),
+            )
+            const first = items[0]
+            const last = items[items.length - 1]
+            if (first === undefined || last === undefined) {
+                return
+            }
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault()
+                last.focus()
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault()
+                first.focus()
+            }
         }
     })
     window.matchMedia?.(DESKTOP_NAV_QUERY).addEventListener('change', (event) => {

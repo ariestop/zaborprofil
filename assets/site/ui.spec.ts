@@ -65,6 +65,68 @@ describe('initMobileNav', () => {
         expect(panel.hidden).toBe(true)
     })
 
+    const drawer = `
+    <button data-nav-toggle aria-expanded="false"><svg data-icon-open></svg><svg data-icon-close class="hidden"></svg></button>
+    <div data-nav-panel hidden>
+        <div data-nav-backdrop data-nav-close></div>
+        <button type="button" data-nav-close>Закрыть</button>
+        <a href="/zabor-jaluzi/">Жалюзи</a>
+        <a href="/#catalog">Каталог</a>
+    </div>`
+
+    it('при открытии отдаёт фокус крестику, а закрытие крестиком и затемнением возвращает его на кнопку меню', () => {
+        const root = mount(drawer)
+        initMobileNav(root)
+        const toggle = root.querySelector<HTMLButtonElement>('[data-nav-toggle]')!
+        const panel = root.querySelector<HTMLElement>('[data-nav-panel]')!
+        const close = root.querySelector<HTMLButtonElement>('button[data-nav-close]')!
+
+        toggle.click()
+        expect(document.activeElement).toBe(close)
+
+        close.click()
+        expect(panel.hidden).toBe(true)
+        expect(document.activeElement).toBe(toggle)
+
+        toggle.click()
+        root.querySelector<HTMLElement>('[data-nav-backdrop]')!.click()
+        expect(panel.hidden).toBe(true)
+        expect(document.activeElement).toBe(toggle)
+    })
+
+    it('не выпускает Tab за пределы панели', () => {
+        const root = mount(drawer)
+        initMobileNav(root)
+        root.querySelector<HTMLButtonElement>('[data-nav-toggle]')!.click()
+        const [first, , last] = [
+            root.querySelector<HTMLElement>('button[data-nav-close]')!,
+            root.querySelector<HTMLElement>('a[href="/zabor-jaluzi/"]')!,
+            root.querySelector<HTMLElement>('a[href="/#catalog"]')!,
+        ]
+
+        last.focus()
+        const forward = new KeyboardEvent('keydown', { key: 'Tab', cancelable: true })
+        document.dispatchEvent(forward)
+        expect(forward.defaultPrevented).toBe(true)
+        expect(document.activeElement).toBe(first)
+
+        const back = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, cancelable: true })
+        document.dispatchEvent(back)
+        expect(back.defaultPrevented).toBe(true)
+        expect(document.activeElement).toBe(last)
+    })
+
+    it('Tab внутри панели не трогает фокус, пока он не на краю', () => {
+        const root = mount(drawer)
+        initMobileNav(root)
+        root.querySelector<HTMLButtonElement>('[data-nav-toggle]')!.click()
+        root.querySelector<HTMLElement>('a[href="/zabor-jaluzi/"]')!.focus()
+
+        const middle = new KeyboardEvent('keydown', { key: 'Tab', cancelable: true })
+        document.dispatchEvent(middle)
+        expect(middle.defaultPrevented).toBe(false)
+    })
+
     it('не падает на странице без меню', () => {
         expect(() => initMobileNav(mount('<p>без меню</p>'))).not.toThrow()
     })

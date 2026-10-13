@@ -120,22 +120,34 @@
                         </button>
                     </div>
                 </div>
+            </header>
 
-                <div class="zp-drawer" id="mobile-nav" data-nav-panel hidden>
-                    <nav class="zp-container zp-drawer__nav" aria-label="Мобильная навигация">
+            {# Боковое меню телефона: панель справа под большим пальцем, страница за ней затемнена.
+               Вне <header>: у шапки backdrop-filter, из-за него fixed-потомок считался бы от шапки, а не от экрана. #}
+            <div class="zp-drawer" id="mobile-nav" data-nav-panel role="dialog" aria-modal="true" aria-label="Меню сайта" hidden>
+                <div class="zp-drawer__backdrop" data-nav-close aria-hidden="true"></div>
+                <div class="zp-drawer__sheet">
+                    <div class="zp-drawer__top">
+                        <span class="zp-drawer__title">Меню</span>
+                        <button class="zp-burger" type="button" data-nav-close>
+                            <svg class="size-6" aria-hidden="true"><use href="#i-close"/></svg>
+                            <span class="sr-only">Закрыть меню</span>
+                        </button>
+                    </div>
+                    <nav class="zp-drawer__nav" aria-label="Мобильная навигация">
                         {% for item in header_menu %}
-                            <a href="{{ item.url }}">{{ item.label }}<svg class="size-4 text-graphite/70" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+                            <a href="{{ item.url }}">{{ item.label }}<svg class="size-4 shrink-0 text-graphite/70" aria-hidden="true"><use href="#i-arrow"/></svg></a>
                         {% endfor %}
                     </nav>
-                    <div class="zp-container zp-drawer__foot">
-                        <a class="zp-btn zp-btn--primary w-full" href="#lead-form" data-nav-close>Рассчитать стоимость</a>
+                    <div class="zp-drawer__foot">
+                        <a class="zp-btn zp-btn--primary w-full" href="#lead-form">Рассчитать стоимость</a>
                         <a class="zp-btn zp-btn--ghost w-full" href="{{ site.phone_href }}">
                             <svg class="size-5" aria-hidden="true"><use href="#i-phone"/></svg>{{ site.phone }}
                         </a>
                         <p class="text-center text-sm text-graphite">{{ site.city }} · {{ site.delivery }}</p>
                     </div>
                 </div>
-            </header>
+            </div>
         {% endblock %}
 
         <div id="content" tabindex="-1">

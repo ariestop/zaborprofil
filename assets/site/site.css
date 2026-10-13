@@ -123,20 +123,40 @@
     .zp-burger {
         @apply inline-flex size-12 items-center justify-center rounded-full text-ink transition hover:bg-surface-strong lg:hidden;
     }
+    /*
+     * Боковое меню телефона (templates/base.html.twig): панель выезжает справа, где кнопка меню и большой палец,
+     * страница за ней затемнена. Закрытие — крестик на месте бургера, тап по затемнению, Esc.
+     */
     .zp-drawer {
-        @apply absolute inset-x-0 top-full max-h-[calc(100dvh-3.5rem)] overflow-y-auto border-b border-line bg-white shadow-xl lg:hidden;
+        @apply fixed inset-0 z-[60] lg:hidden;
     }
     .zp-drawer[hidden] {
         display: none;
     }
+    .zp-drawer__backdrop {
+        @apply absolute inset-0 bg-night/55;
+        animation: zp-fade-in 0.2s ease-out;
+    }
+    .zp-drawer__sheet {
+        @apply absolute inset-y-0 right-0 flex w-[min(88vw,22.5rem)] flex-col rounded-l-[var(--radius-card)] bg-white shadow-xl;
+        animation: zp-slide-in 0.25s ease-out;
+    }
+    .zp-drawer__top {
+        @apply flex shrink-0 items-center justify-between border-b border-line py-1 pr-4 pl-5;
+        padding-top: max(0.25rem, env(safe-area-inset-top));
+    }
+    .zp-drawer__title {
+        @apply font-cond text-sm font-extrabold tracking-[0.08em] text-graphite uppercase;
+    }
     .zp-drawer__nav {
-        @apply flex flex-col py-2;
+        @apply flex flex-1 flex-col overflow-y-auto overscroll-contain px-5 py-2;
     }
     .zp-drawer__nav a {
-        @apply flex min-h-12 items-center justify-between border-b border-line text-base font-medium text-ink last:border-b-0;
+        @apply flex min-h-14 items-center justify-between gap-3 border-b border-line text-lg font-medium text-ink transition-colors last:border-b-0 hover:text-brand-800 focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-brand-600;
     }
     .zp-drawer__foot {
-        @apply grid gap-3 pt-3 pb-5;
+        @apply grid shrink-0 gap-3 border-t border-line px-5 pt-4;
+        padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
     }
 
     /* ---------- Кнопки (flat): сплошные заливки, без теней и градиентов ---------- */
@@ -744,5 +764,22 @@
     }
     .zp-audience button:focus-visible {
         @apply outline-3 outline-offset-2 outline-brand-600;
+    }
+}
+
+@keyframes zp-fade-in {
+    from {
+        opacity: 0;
+    }
+}
+@keyframes zp-slide-in {
+    from {
+        transform: translateX(100%);
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .zp-drawer__backdrop,
+    .zp-drawer__sheet {
+        animation: none;
     }
 }

@@ -41,6 +41,11 @@ final class PublicSiteLayoutTest extends WebTestCase
         self::assertSame('tel:+78452988808', $crawler->filter('header a.zp-header__phone')->attr('href'));
         self::assertSame('mobile-nav', $crawler->filter('button[data-nav-toggle]')->attr('aria-controls'));
         self::assertNotNull($crawler->filter('#mobile-nav')->attr('hidden'));
+        // Боковое меню телефона вне <header>: у шапки backdrop-filter, и fixed-панель считалась бы от шапки, а не от экрана.
+        self::assertSame('dialog', $crawler->filter('#mobile-nav')->attr('role'));
+        self::assertSame(0, $crawler->filter('header #mobile-nav')->count());
+        self::assertGreaterThan(0, $crawler->filter('#mobile-nav button[data-nav-close]')->count(), 'У меню есть крестик.');
+        self::assertGreaterThan(0, $crawler->filter('#mobile-nav nav a')->count());
         self::assertGreaterThan(0, $crawler->filter('[data-callbar] a[href="tel:+78452988808"]')->count());
         self::assertGreaterThan(0, $crawler->filter('footer#contacts a[href="mailto:info@zaborprofil.ru"]')->count());
 
