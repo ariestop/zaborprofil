@@ -136,7 +136,10 @@
                     </div>
                     <nav class="zp-drawer__nav" aria-label="Мобильная навигация">
                         {% for item in header_menu %}
-                            <a href="{{ item.url }}">{{ item.label }}<svg class="size-4 shrink-0 text-graphite/70" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+                            <a href="{{ item.url }}">
+                                <span class="flex min-w-0 items-center gap-3"><svg class="size-6 shrink-0 text-ink" aria-hidden="true"><use href="#{{ menu_icon(item.label, item.url) }}"/></svg>{{ item.label }}</span>
+                                <svg class="size-4 shrink-0 text-graphite/70" aria-hidden="true"><use href="#i-arrow"/></svg>
+                            </a>
                         {% endfor %}
                     </nav>
                     <div class="zp-drawer__foot">
