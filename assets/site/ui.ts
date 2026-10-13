@@ -514,6 +514,8 @@ export function initPriceMatrices(root: ParentNode = document): void {
             const more = panel.querySelector<HTMLButtonElement>('[data-pm-more]')
             const moreWrap = panel.querySelector<HTMLElement>('[data-pm-more-wrap]')
             const limit = Number(list?.dataset.pmLimit ?? 0)
+            // Подпись строк группы: «Профиль» у профнастила, «Высота панели» у 3D забора.
+            const rowsLabel = panel.dataset.pmRowsLabel?.trim() || 'Профиль'
             let expanded = false
 
             const render = (): void => {
@@ -550,13 +552,13 @@ export function initPriceMatrices(root: ParentNode = document): void {
                     const order = option.querySelector<HTMLElement>('[data-pm-order]')
                     if (order !== null) {
                         const details = order.dataset.details ?? ''
-                        order.dataset.leadPlan = `${order.dataset.title ?? ''}${details !== '' ? ` (${details})` : ''}, профиль ${row}`
+                        order.dataset.leadPlan = `${order.dataset.title ?? ''}${details !== '' ? ` (${details})` : ''}, ${rowsLabel.toLocaleLowerCase('ru')} ${row}`
                     }
                 })
 
                 if (count !== null) {
                     count.textContent =
-                        shown > 0 ? `Профиль ${row}: ${pluralizeOptions(shown)}` : ''
+                        shown > 0 ? `${rowsLabel} ${row}: ${pluralizeOptions(shown)}` : ''
                 }
                 if (moreWrap !== null && more !== null) {
                     const hiddenCount = limit > 0 && !expanded ? Math.max(0, shown - limit) : 0

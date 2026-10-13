@@ -378,6 +378,23 @@ describe('прайс-лист с выбором', () => {
         )
     })
 
+    it('подписывает строки по настройке группы, а не всегда «Профиль»', () => {
+        const root = mount(
+            markup.replace(
+                'data-pm-panel="0"',
+                'data-pm-panel="0" data-pm-rows-label="Высота панели"',
+            ),
+        )
+        initPriceMatrices(root)
+
+        expect(root.querySelector('[data-pm-count]')!.textContent).toBe(
+            'Высота панели С8: 3 варианта',
+        )
+        expect(root.querySelector<HTMLElement>('[data-pm-order]')!.dataset.leadPlan).toBe(
+            'Полиэстер (гладкий), высота панели С8',
+        )
+    })
+
     it('переключает вкладки', () => {
         const root = mount(markup)
         initPriceMatrices(root)

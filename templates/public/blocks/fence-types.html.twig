@@ -27,7 +27,8 @@
                             {% set bullets = [] %}
                             {% for line in lines %}
                                 {% if line starts with '–' or line starts with '•' or line starts with '-' %}
-                                    {% set bullets = bullets|merge([line|trim('–•- ')]) %}
+                                    {# slice, а не trim('–•- '): побайтовый trim обрезал кириллицу на конце строки. #}
+                                    {% set bullets = bullets|merge([line|slice(1)|trim]) %}
                                 {% elseif loop.first %}
                                     <p class="mt-1 text-sm font-semibold text-brand-700">{{ line }}</p>
                                 {% else %}

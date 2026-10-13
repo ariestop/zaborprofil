@@ -270,7 +270,7 @@ final class PublicBlockTemplatesTest extends KernelTestCase
                         ['title' => 'VALORY', 'group' => 'ПРЕМЬЕР', 'tone' => 'orange', 'prices' => ['С8' => null, 'МП18' => 960]],
                     ],
                 ],
-                ['label' => 'Оцинкованный', 'compact' => true, 'rows' => ['С8'], 'options' => [['title' => '0.30 мм', 'prices' => ['С8' => 363]]]],
+                ['label' => 'Оцинкованный', 'rowsLabel' => 'Высота', 'compact' => true, 'rows' => ['С8'], 'options' => [['title' => '0.30 мм', 'prices' => ['С8' => 363]]]],
             ],
         ]);
 
@@ -283,6 +283,8 @@ final class PublicBlockTemplatesTest extends KernelTestCase
         self::assertStringContainsString('name="pm-b1-filter-0"', $html);
         self::assertStringContainsString('Показать полную таблицу цен', $html);
         self::assertStringContainsString('<th scope="col" class="text-right">МП18</th>', $html);
+        self::assertStringContainsString('data-pm-panel="0" data-pm-rows-label="Профиль"', $html, 'Без rowsLabel строки подписаны «Профиль».');
+        self::assertStringContainsString('data-pm-panel="1" data-pm-rows-label="Высота"', $html);
     }
 
     public function testFenceTypesSplitsBulletsAndSubtitle(): void
@@ -292,6 +294,21 @@ final class PublicBlockTemplatesTest extends KernelTestCase
         self::assertStringContainsString('Дизайнерское решение', $html);
         self::assertStringContainsString('<span>толщина 30 мкм</span>', $html);
         self::assertSame(2, substr_count($html, '<li><svg'));
+    }
+
+    public function testListMarkersAreRemovedWithoutBreakingCyrillicLineEndings(): void
+    {
+        // «р» в UTF-8 — D1 80; побайтовый trim с маской «–•» (E2 80 93, E2 80 A2) отрезал у неё второй байт.
+        $hero = $this->render('hero.classic', ['title' => 'Заголовок', 'text' => "Цены за погонный метр\n– Изготовим в любой цвет и размер\n• Доставка"]);
+
+        self::assertStringContainsString('<span>Цены за погонный метр</span>', $hero);
+        self::assertStringContainsString('<span>Изготовим в любой цвет и размер</span>', $hero);
+        self::assertStringContainsString('<span>Доставка</span>', $hero);
+
+        $types = $this->render('fence-types', ['items' => [['title' => 'Полиэстер', 'text' => "Экономно\n– любой размер\n- RAL 9003 «белый»"]]]);
+
+        self::assertStringContainsString('<span>любой размер</span>', $types);
+        self::assertStringContainsString('<span>RAL 9003 «белый»</span>', $types);
     }
 
     public function testInternalLinksRenderQuickNavigation(): void

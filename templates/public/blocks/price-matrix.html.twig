@@ -46,7 +46,7 @@
                 {% for option in options %}
                     {% if (option.group ?? '') is not empty and option.group not in group_names %}{% set group_names = group_names|merge([option.group]) %}{% endif %}
                 {% endfor %}
-                <div class="mt-6" role="tabpanel" id="pm-{{ block.id }}-panel-{{ gi }}" {% if groups|length > 1 %}aria-labelledby="pm-{{ block.id }}-tab-{{ gi }}"{% endif %} data-pm-panel="{{ gi }}">
+                <div class="mt-6" role="tabpanel" id="pm-{{ block.id }}-panel-{{ gi }}" {% if groups|length > 1 %}aria-labelledby="pm-{{ block.id }}-tab-{{ gi }}"{% endif %} data-pm-panel="{{ gi }}" data-pm-rows-label="{{ group.rowsLabel ?? 'Профиль' }}">
                     {% if (group.note ?? '') is not empty %}
                         <p class="mb-4 max-w-3xl text-base leading-7 text-graphite">{{ group.note }}</p>
                     {% endif %}
