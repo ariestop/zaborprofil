@@ -6,7 +6,7 @@ namespace App\Tests\Functional\Lead;
 
 use App\Module\AuditLog\Domain\Entity\AuditLogEntry;
 use App\Module\Lead\Domain\Entity\Lead;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Module\User\Domain\Entity\AdminUser;
 use App\Tests\Support\Admin\AdminApiTestCase;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;

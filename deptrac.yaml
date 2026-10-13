@@ -87,10 +87,11 @@ deptrac:
             - SymfonyBundle
             - Cache
             - Mailer
+        # UI вызывает Application; Domain — для типов в запросах и ответах. Infrastructure — только через интерфейсы
+        # (известные исключения: Health, Maintenance, LeadActorProvider — в baseline).
         UI:
             - Domain
             - Application
-            - Infrastructure
             - Http
             - Twig
             - SymfonyBundle

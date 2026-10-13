@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Module\User\Infrastructure\Doctrine\Entity;
+namespace App\Module\User\Domain\Entity;
 
-use App\Module\User\Infrastructure\Repository\AdminUserRepository;
+use App\Module\User\Infrastructure\Doctrine\Repository\DoctrineAdminUserRepository;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use InvalidArgumentException;
@@ -12,7 +12,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Uid\Ulid;
 
-#[ORM\Entity(repositoryClass: AdminUserRepository::class)]
+#[ORM\Entity(repositoryClass: DoctrineAdminUserRepository::class)]
 #[ORM\Table(name: 'admin_users')]
 #[ORM\UniqueConstraint(name: 'uniq_admin_users_email', columns: ['email'])]
 final class AdminUser implements UserInterface, PasswordAuthenticatedUserInterface

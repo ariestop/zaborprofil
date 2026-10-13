@@ -9,7 +9,7 @@ use App\Module\Content\Domain\Entity\Page;
 use App\Module\Content\Domain\Entity\PageBlock;
 use App\Module\Seo\Domain\Entity\Redirect;
 use App\Module\Settings\Domain\Entity\Setting;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Module\User\Domain\Entity\AdminUser;
 use App\Shared\Infrastructure\Http\RequestIdSubscriber;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\ORM\Event\OnFlushEventArgs;

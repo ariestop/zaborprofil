@@ -7,18 +7,16 @@ namespace App\Module\User\UI\Admin;
 use App\Module\Auth\Domain\Security\AdminPermission;
 use App\Module\User\Application\Service\AdminUserService;
 use App\Module\User\Domain\AdminRole;
+use App\Module\User\Domain\Entity\AdminUser;
 use App\Module\User\Domain\Exception\UserManagementException;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
-use App\Module\User\Infrastructure\Repository\AdminUserRepository;
+use App\Module\User\Domain\Repository\AdminUserRepositoryInterface;
 use App\Shared\UI\Http\AdminApiErrorResponder;
 use App\Shared\UI\Http\AdminApiResponses;
-use InvalidArgumentException;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
-use Symfony\Component\Uid\Ulid;
 use Throwable;
 
 #[Route('/admin/api/users')]
@@ -27,7 +25,7 @@ final readonly class UserApiController
     public function __construct(
         private AuthorizationCheckerInterface $authorizationChecker,
         private Security $security,
-        private AdminUserRepository $users,
+        private AdminUserRepositoryInterface $users,
         private AdminUserService $service,
         private AdminApiErrorResponder $errors,
     ) {
@@ -43,7 +41,7 @@ final readonly class UserApiController
         return new JsonResponse([
             'users' => array_map(
                 self::serializeUser(...),
-                $this->users->findBy([], ['createdAt' => 'DESC']),
+                $this->users->findAllNewestFirst(),
             ),
             'availableRoles' => AdminRole::all(),
         ]);
@@ -316,15 +314,7 @@ final readonly class UserApiController
 
     private function findUser(string $id): ?AdminUser
     {
-        try {
-            $ulid = Ulid::fromString($id);
-        } catch (InvalidArgumentException) {
-            return null;
-        }
-
-        $user = $this->users->find($ulid);
-
-        return $user instanceof AdminUser ? $user : null;
+        return $this->users->findById($id);
     }
 
     private function actor(): ?AdminUser

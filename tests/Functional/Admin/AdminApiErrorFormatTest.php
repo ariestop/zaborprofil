@@ -6,7 +6,7 @@ namespace App\Tests\Functional\Admin;
 
 use App\Module\Admin\Infrastructure\Http\AdminApiCsrfSubscriber;
 use App\Module\Menu\Domain\Entity\MenuItem;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Module\User\Domain\Entity\AdminUser;
 use App\Tests\Support\Database\SchemaTestHelper;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;

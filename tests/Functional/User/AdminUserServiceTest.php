@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Tests\Functional\User;
 
 use App\Module\User\Application\Service\AdminUserService;
+use App\Module\User\Domain\Entity\AdminUser;
 use App\Module\User\Domain\Exception\UserManagementException;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
 use App\Tests\Support\Database\SchemaTestHelper;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;

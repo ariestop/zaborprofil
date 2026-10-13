@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Kernel;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Module\User\Domain\Entity\AdminUser;
 use Doctrine\Persistence\ManagerRegistry;
 
 require dirname(__DIR__, 2).'/vendor/autoload.php';

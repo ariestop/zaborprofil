@@ -9,7 +9,7 @@ use App\Module\Menu\Application\Service\MenuProvider;
 use App\Module\Menu\Domain\Entity\MenuItem;
 use App\Module\Menu\Domain\Repository\MenuItemRepositoryInterface;
 use App\Module\Menu\Domain\ValueObject\MenuPosition;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Module\User\Domain\Entity\AdminUser;
 use App\Tests\Support\Database\SchemaTestHelper;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;

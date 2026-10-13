@@ -4,7 +4,6 @@
 deptrac:
   skip_violations:
     App\Module\Admin\Application\Service\AdminAuditLogger:
-      - App\Module\User\Infrastructure\Doctrine\Entity\AdminUser
       - App\Shared\Infrastructure\Http\RequestIdSubscriber
       - Symfony\Bundle\SecurityBundle\Security
       - Symfony\Component\HttpFoundation\RequestStack
@@ -26,14 +25,18 @@ deptrac:
       - App\Shared\Infrastructure\Health\HealthRegistry
     App\Module\Admin\Infrastructure\Http\AdminApiExceptionSubscriber:
       - App\Shared\UI\Http\AdminApiErrorResponder
+    App\Module\Admin\UI\Admin\MaintenanceApiController:
+      - App\Shared\Infrastructure\Maintenance\MaintenanceState
+    App\Module\Admin\UI\Admin\SystemHealthApiController:
+      - App\Shared\Infrastructure\Health\HealthCheckResult
+      - App\Shared\Infrastructure\Health\HealthRegistry
+    App\Module\Admin\UI\Console\SystemDiagnosticsCommand:
+      - App\Shared\Infrastructure\Health\HealthRegistry
     App\Module\Auth\Application\Service\AdminAccessProfile:
       - Symfony\Bundle\SecurityBundle\Security
     App\Module\Auth\Infrastructure\Security\AdminAuthenticationEntryPoint:
       - App\Shared\UI\Http\AdminApiResponses
-    App\Module\Content\Application\Service\AdminDisplayNames:
-      - App\Module\User\Infrastructure\Repository\AdminUserRepository
     App\Module\Content\Application\Service\CurrentAdminActor:
-      - App\Module\User\Infrastructure\Doctrine\Entity\AdminUser
       - Symfony\Bundle\SecurityBundle\Security
     App\Module\Content\Application\Service\PageWorkflowGuard:
       - App\Module\Content\Infrastructure\Security\PageWorkflowVoter
@@ -44,11 +47,19 @@ deptrac:
       - Symfony\Component\Mailer\MailerInterface
     App\Module\Lead\Application\Submission\PublicLeadSubmitter:
       - Symfony\Component\HttpFoundation\Request
+    App\Module\Lead\UI\Admin\LeadApiController:
+      - App\Module\Lead\Infrastructure\Security\LeadActorProvider
     App\Module\Media\Application\Service\MediaLibrarySynchronizer:
       - App\Shared\Infrastructure\Upload\UploadValidator
     App\Module\Media\Application\Upload\MediaUploadHandler:
       - App\Shared\Infrastructure\Upload\UploadValidator
       - Symfony\Component\HttpFoundation\File\UploadedFile
-    App\Module\User\Application\Service\AdminUserService:
-      - App\Module\User\Infrastructure\Doctrine\Entity\AdminUser
-      - App\Module\User\Infrastructure\Repository\AdminUserRepository
+    App\Shared\UI\Console\MaintenanceOffCommand:
+      - App\Shared\Infrastructure\Maintenance\MaintenanceState
+    App\Shared\UI\Console\MaintenanceOnCommand:
+      - App\Shared\Infrastructure\Maintenance\MaintenanceState
+    App\Shared\UI\Console\MaintenanceStatusCommand:
+      - App\Shared\Infrastructure\Maintenance\MaintenanceState
+    App\Shared\UI\Http\HealthCheckController:
+      - App\Shared\Infrastructure\Health\HealthCheckResult
+      - App\Shared\Infrastructure\Health\HealthRegistry

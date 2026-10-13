@@ -6,7 +6,7 @@ namespace App\Module\Admin\Application\Service;
 
 use App\Module\AuditLog\Domain\Entity\AuditLogEntry;
 use App\Module\AuditLog\Domain\Repository\AuditLogRepositoryInterface;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Module\User\Domain\Entity\AdminUser;
 use App\Shared\Infrastructure\Http\RequestIdSubscriber;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\RequestStack;

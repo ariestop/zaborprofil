@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Module\Content\Application\Service;
 
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Module\User\Domain\Entity\AdminUser;
 use Symfony\Bundle\SecurityBundle\Security;
 
 final readonly class CurrentAdminActor

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Module\Content\Application\Service;
 
-use App\Module\User\Infrastructure\Repository\AdminUserRepository;
+use App\Module\User\Domain\Repository\AdminUserRepositoryInterface;
 
 /**
  * Имена администраторов для подписей «кто изменил»: имя из профиля, иначе email.
@@ -12,7 +12,7 @@ use App\Module\User\Infrastructure\Repository\AdminUserRepository;
  */
 final readonly class AdminDisplayNames
 {
-    public function __construct(private AdminUserRepository $users)
+    public function __construct(private AdminUserRepositoryInterface $users)
     {
     }
 
@@ -22,7 +22,7 @@ final readonly class AdminDisplayNames
     public function all(): array
     {
         $names = [];
-        foreach ($this->users->findAll() as $user) {
+        foreach ($this->users->findAllNewestFirst() as $user) {
             $name = trim((string) $user->name());
             $names[(string) $user->id()] = $name !== '' ? $name : $user->email();
         }

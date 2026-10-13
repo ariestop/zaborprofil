@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Module\Auth\Infrastructure\Security;
 
 use App\Module\User\Domain\AdminRole;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Module\User\Domain\Entity\AdminUser;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAccountStatusException;
 use Symfony\Component\Security\Core\User\UserCheckerInterface;

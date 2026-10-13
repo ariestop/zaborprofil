@@ -12,7 +12,7 @@ use App\Module\Content\Domain\Enum\PageType;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use App\Module\Seo\Domain\Entity\Redirect;
 use App\Module\Seo\Domain\Repository\RedirectRepositoryInterface;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Module\User\Domain\Entity\AdminUser;
 use App\Tests\Support\Database\SchemaTestHelper;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;

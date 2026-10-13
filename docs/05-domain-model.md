@@ -79,9 +79,9 @@ stateDiagram-v2
 
 301/302 правила, обрабатываемые `RedirectKernelSubscriber` на `kernel.request`.
 
-### AdminUser — `src/Module/User/Infrastructure/Doctrine/Entity/AdminUser.php`
+### AdminUser — `src/Module/User/Domain/Entity/AdminUser.php`
 
-Symfony Security user. Лежит в `Infrastructure/Doctrine/Entity/`, потому что это persistence model (а не богатая Domain Entity), и автоматически участвует в DI исключается из автозагрузки.
+Пользователь админки и Symfony Security user (`UserInterface`, `PasswordAuthenticatedUserInterface`). Доступ — через `App\Module\User\Domain\Repository\AdminUserRepositoryInterface`; реализация `DoctrineAdminUserRepository` (`User/Infrastructure/Doctrine/Repository/`) — она же провайдер пользователей Symfony Security.
 
 ### Domain enums
 
