@@ -2,21 +2,23 @@
 
 declare(strict_types=1);
 
-namespace App\Module\User\Infrastructure\Repository;
+namespace App\Module\User\Infrastructure\Doctrine\Repository;
 
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Module\User\Domain\Entity\AdminUser;
+use App\Module\User\Domain\Repository\AdminUserRepositoryInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Security\Core\User\UserProviderInterface;
+use Symfony\Component\Uid\Ulid;
 
 /**
  * @extends ServiceEntityRepository<AdminUser>
  * @implements UserProviderInterface<AdminUser>
  */
-final class AdminUserRepository extends ServiceEntityRepository implements UserProviderInterface
+final class DoctrineAdminUserRepository extends ServiceEntityRepository implements AdminUserRepositoryInterface, UserProviderInterface
 {
     public function __construct(ManagerRegistry $registry)
     {
@@ -33,6 +35,19 @@ final class AdminUserRepository extends ServiceEntityRepository implements UserP
     {
         $this->getEntityManager()->remove($user);
         $this->getEntityManager()->flush();
+    }
+
+    public function findById(string $id): ?AdminUser
+    {
+        return Ulid::isValid($id) ? $this->find(Ulid::fromString($id)) : null;
+    }
+
+    /**
+     * @return list<AdminUser>
+     */
+    public function findAllNewestFirst(): array
+    {
+        return $this->findBy([], ['createdAt' => 'DESC']);
     }
 
     public function findOneByEmail(string $email): ?AdminUser

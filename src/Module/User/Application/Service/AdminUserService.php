@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Module\User\Application\Service;
 
 use App\Module\User\Domain\AdminRole;
+use App\Module\User\Domain\Entity\AdminUser;
 use App\Module\User\Domain\Exception\UserManagementException;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
-use App\Module\User\Infrastructure\Repository\AdminUserRepository;
+use App\Module\User\Domain\Repository\AdminUserRepositoryInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -20,7 +20,7 @@ final readonly class AdminUserService
     public const int NAME_MAX_LENGTH = 120;
 
     public function __construct(
-        private AdminUserRepository $users,
+        private AdminUserRepositoryInterface $users,
         private UserPasswordHasherInterface $passwordHasher,
         private ValidatorInterface $validator,
     ) {

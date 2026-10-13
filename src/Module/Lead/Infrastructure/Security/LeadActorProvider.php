@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Module\Lead\Infrastructure\Security;
 
 use App\Module\Lead\Domain\ValueObject\LeadActor;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Module\User\Domain\Entity\AdminUser;
 use Symfony\Bundle\SecurityBundle\Security;
 
 final readonly class LeadActorProvider

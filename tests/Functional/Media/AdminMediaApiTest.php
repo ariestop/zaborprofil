@@ -12,7 +12,7 @@ use App\Module\Content\Domain\Enum\PageType;
 use App\Module\Media\Domain\Entity\MediaAsset;
 use App\Module\Media\Domain\Repository\MediaAssetRepositoryInterface;
 use App\Module\Menu\Domain\Entity\MenuItem;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Module\User\Domain\Entity\AdminUser;
 use App\Tests\Support\Database\SchemaTestHelper;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;

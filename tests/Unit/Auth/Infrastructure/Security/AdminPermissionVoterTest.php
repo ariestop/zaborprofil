@@ -6,7 +6,7 @@ namespace App\Tests\Unit\Auth\Infrastructure\Security;
 
 use App\Module\Auth\Domain\Security\AdminPermission;
 use App\Module\Auth\Infrastructure\Security\AdminPermissionVoter;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Module\User\Domain\Entity\AdminUser;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 

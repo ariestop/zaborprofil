@@ -9,7 +9,7 @@ use App\Module\Auth\Infrastructure\Security\AdminPermissionVoter;
 use App\Module\Content\Domain\Enum\PageStatus;
 use App\Module\Content\Domain\ValueObject\PageTransition;
 use App\Module\Content\Infrastructure\Security\PageWorkflowVoter;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Module\User\Domain\Entity\AdminUser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;

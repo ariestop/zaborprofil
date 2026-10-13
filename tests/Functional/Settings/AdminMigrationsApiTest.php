@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Functional\Settings;
 
 use App\Module\Admin\Infrastructure\Http\AdminApiCsrfSubscriber;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Module\User\Domain\Entity\AdminUser;
 use App\Tests\Support\Database\SchemaTestHelper;
 use App\Tests\Support\Settings\FakeMigrationAdminService;
 use Doctrine\Migrations\Exception\MigrationClassNotFound;

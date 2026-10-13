@@ -64,6 +64,9 @@ services:
     App\Module\Content\Application\Service\PublicHttpCachePurgerInterface:
         alias: App\Module\Content\Infrastructure\Http\NginxFastcgiCachePurger
 
+    App\Module\User\Domain\Repository\AdminUserRepositoryInterface:
+        alias: App\Module\User\Infrastructure\Doctrine\Repository\DoctrineAdminUserRepository
+
     App\Module\Content\Domain\Repository\PageRepositoryInterface:
         alias: App\Module\Content\Infrastructure\Repository\DoctrinePageRepository
 

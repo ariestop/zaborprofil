@@ -7,8 +7,8 @@ namespace App\Module\Lead\Infrastructure\Directory;
 use App\Module\Lead\Domain\Repository\LeadAssigneeDirectoryInterface;
 use App\Module\Lead\Domain\ValueObject\LeadAssignee;
 use App\Module\User\Domain\AdminRole;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
-use App\Module\User\Infrastructure\Repository\AdminUserRepository;
+use App\Module\User\Domain\Entity\AdminUser;
+use App\Module\User\Infrastructure\Doctrine\Repository\DoctrineAdminUserRepository;
 use Doctrine\DBAL\ArrayParameterType;
 use Symfony\Component\Uid\Ulid;
 
@@ -21,7 +21,7 @@ final readonly class AdminUserLeadAssigneeDirectory implements LeadAssigneeDirec
      */
     private const array LEAD_ROLES = [AdminRole::MANAGER, AdminRole::ADMIN, AdminRole::SUPER_ADMIN];
 
-    public function __construct(private AdminUserRepository $users)
+    public function __construct(private DoctrineAdminUserRepository $users)
     {
     }
 

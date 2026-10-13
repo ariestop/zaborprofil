@@ -5,7 +5,7 @@ security:
     providers:
         admin_user_provider:
             entity:
-                class: App\Module\User\Infrastructure\Doctrine\Entity\AdminUser
+                class: App\Module\User\Domain\Entity\AdminUser
                 property: email
 
     role_hierarchy:

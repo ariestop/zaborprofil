@@ -8,7 +8,7 @@ use App\Module\Admin\Application\Service\AdminAuditLogger;
 use App\Module\Admin\Application\Service\CacheManagerService;
 use App\Module\Admin\Application\Service\DangerousActionConfirmationService;
 use App\Module\Auth\Domain\Security\AdminPermission;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Module\User\Domain\Entity\AdminUser;
 use App\Shared\UI\Http\AdminApiResponses;
 use InvalidArgumentException;
 use Symfony\Bundle\SecurityBundle\Security;
