@@ -7,20 +7,20 @@ namespace App\Tests\Integration\Lead;
 use App\Module\Admin\Application\Service\AdminAuditLogger;
 use App\Module\AuditLog\Domain\Entity\AuditLogEntry;
 use App\Module\AuditLog\Domain\Repository\AuditLogRepositoryInterface;
+use App\Module\Auth\Application\Security\CurrentAdminInterface;
 use App\Module\Lead\Application\Workflow\LeadWorkflow;
 use App\Module\Lead\Domain\Entity\Lead;
 use App\Module\Lead\Domain\Repository\LeadAssigneeDirectoryInterface;
 use App\Module\Lead\Domain\Repository\LeadEventRepositoryInterface;
 use App\Module\Lead\Domain\Repository\LeadRepositoryInterface;
 use App\Module\Lead\Domain\ValueObject\LeadActor;
+use App\Shared\Application\Http\RequestContextInterface;
 use App\Shared\Application\Logging\BusinessEventLogger;
 use App\Shared\Application\Transaction\TransactionRunnerInterface;
 use App\Tests\Support\Database\SchemaTestHelper;
 use Doctrine\ORM\EntityManagerInterface;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
-use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Действие менеджера над заявкой сохраняется целиком или никак: заявка, событие хронологии и запись аудита
@@ -80,7 +80,7 @@ final class LeadWorkflowTransactionTest extends KernelTestCase
             $this->service(LeadRepositoryInterface::class),
             $this->service(LeadEventRepositoryInterface::class),
             $this->service(LeadAssigneeDirectoryInterface::class),
-            new AdminAuditLogger($failingAudit, $this->service(Security::class), $this->service(RequestStack::class)),
+            new AdminAuditLogger($failingAudit, $this->service(CurrentAdminInterface::class), $this->service(RequestContextInterface::class)),
             $this->service(BusinessEventLogger::class),
             $this->service(TransactionRunnerInterface::class),
         );

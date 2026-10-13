@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Module\Lead\Application\AntiSpam;
 
 use Psr\Cache\CacheItemPoolInterface;
-use Symfony\Component\HttpFoundation\Request;
 
 final readonly class LeadAntiSpamChecker
 {
@@ -19,8 +18,9 @@ final readonly class LeadAntiSpamChecker
 
     /**
      * @param array<string, mixed> $payload
+     * @param string|null           $clientIp IP посетителя (`ClientInfo::$ip`); `null` — считается общим счётчиком
      */
-    public function check(array $payload, Request $request): LeadSpamCheckResult
+    public function check(array $payload, ?string $clientIp): LeadSpamCheckResult
     {
         $score = 0;
         $reasons = [];
@@ -39,7 +39,7 @@ final readonly class LeadAntiSpamChecker
             }
         }
 
-        $requestCount = $this->incrementRequestCount($request);
+        $requestCount = $this->incrementRequestCount($clientIp);
         if ($requestCount > self::MAX_REQUESTS_PER_HOUR) {
             $score += 80;
             $reasons[] = 'rate_limit_exceeded';
@@ -55,9 +55,9 @@ final readonly class LeadAntiSpamChecker
         return new LeadSpamCheckResult($score, $reasons);
     }
 
-    private function incrementRequestCount(Request $request): int
+    private function incrementRequestCount(?string $clientIp): int
     {
-        $ip = $request->getClientIp() ?? 'unknown';
+        $ip = $clientIp ?? 'unknown';
         $key = 'lead.spam.ip.'.hash('xxh128', $ip);
         $item = $this->cache->getItem($key);
         $count = $item->isHit() && \is_int($item->get()) ? $item->get() : 0;

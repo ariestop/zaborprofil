@@ -3,21 +3,11 @@
 # Перегенерировать целиком: vendor/bin/deptrac analyse --formatter=baseline --output=deptrac.baseline.yaml
 deptrac:
   skip_violations:
-    App\Module\Admin\Application\Service\AdminAuditLogger:
-      - App\Shared\Infrastructure\Http\RequestIdSubscriber
-      - Symfony\Bundle\SecurityBundle\Security
-      - Symfony\Component\HttpFoundation\RequestStack
     App\Module\Admin\Application\Service\CacheManagerService:
       - Symfony\Component\Cache\Adapter\AdapterInterface
-    App\Module\Admin\Application\Service\DangerousActionConfirmationService:
-      - Symfony\Component\HttpFoundation\Exception\SessionNotFoundException
-      - Symfony\Component\HttpFoundation\RequestStack
-      - Symfony\Component\HttpFoundation\Session\SessionInterface
     App\Module\Admin\Application\Service\ObservabilitySnapshotService:
       - App\Shared\Infrastructure\Health\Check\DiskSpaceCheck
       - App\Shared\Infrastructure\Observability\ServerErrorCounter
-    App\Module\Admin\Application\Service\SecurityAuditService:
-      - Symfony\Bundle\SecurityBundle\Security
     App\Module\Admin\Application\Service\SystemHealthService:
       - App\Shared\Infrastructure\Health\HealthCheckResult
       - App\Shared\Infrastructure\Health\HealthRegistry
@@ -32,21 +22,13 @@ deptrac:
       - App\Shared\Infrastructure\Health\HealthRegistry
     App\Module\Admin\UI\Console\SystemDiagnosticsCommand:
       - App\Shared\Infrastructure\Health\HealthRegistry
-    App\Module\Auth\Application\Service\AdminAccessProfile:
-      - Symfony\Bundle\SecurityBundle\Security
     App\Module\Auth\Infrastructure\Security\AdminAuthenticationEntryPoint:
       - App\Shared\UI\Http\AdminApiResponses
-    App\Module\Content\Application\Service\CurrentAdminActor:
-      - Symfony\Bundle\SecurityBundle\Security
     App\Module\Content\Application\Service\PageWorkflowGuard:
       - App\Module\Content\Infrastructure\Security\PageWorkflowVoter
-    App\Module\Lead\Application\AntiSpam\LeadAntiSpamChecker:
-      - Symfony\Component\HttpFoundation\Request
     App\Module\Lead\Application\Notification\LeadNotifier:
       - App\Shared\Infrastructure\Notification\TelegramMessageSenderInterface
       - Symfony\Component\Mailer\MailerInterface
-    App\Module\Lead\Application\Submission\PublicLeadSubmitter:
-      - Symfony\Component\HttpFoundation\Request
     App\Module\Lead\UI\Admin\LeadApiController:
       - App\Module\Lead\Infrastructure\Security\LeadActorProvider
     App\Module\Media\Application\Service\MediaLibrarySynchronizer:

@@ -7,9 +7,6 @@ namespace App\Module\Admin\Application\Service;
 use DateInterval;
 use DateTimeImmutable;
 use InvalidArgumentException;
-use Symfony\Component\HttpFoundation\Exception\SessionNotFoundException;
-use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Uid\Ulid;
 
 final readonly class DangerousActionConfirmationService
@@ -17,7 +14,7 @@ final readonly class DangerousActionConfirmationService
     private const int TTL_SECONDS = 300;
 
     public function __construct(
-        private RequestStack $requestStack,
+        private DangerousActionTokenStoreInterface $tokens,
     ) {
     }
 
@@ -33,14 +30,9 @@ final readonly class DangerousActionConfirmationService
             'action' => $action,
             'expiresAt' => $expiresAt->format(DATE_ATOM),
         ];
-        $session = $this->session();
-
-        $tokens = $session->get('system_dangerous_tokens', []);
-        if (!\is_array($tokens)) {
-            $tokens = [];
-        }
+        $tokens = $this->tokens->load();
         $tokens[$token] = $payload;
-        $session->set('system_dangerous_tokens', $tokens);
+        $this->tokens->save($tokens);
 
         return [
             'confirmToken' => $token,
@@ -54,15 +46,13 @@ final readonly class DangerousActionConfirmationService
             throw new InvalidArgumentException('Missing confirmation token.');
         }
 
-        $session = $this->session();
-
-        $tokens = $session->get('system_dangerous_tokens', []);
-        if (!\is_array($tokens) || !isset($tokens[$confirmToken]) || !\is_array($tokens[$confirmToken])) {
+        $tokens = $this->tokens->load();
+        if (!isset($tokens[$confirmToken]) || !\is_array($tokens[$confirmToken])) {
             throw new InvalidArgumentException('Confirmation token is invalid or expired.');
         }
         $payload = $tokens[$confirmToken];
         unset($tokens[$confirmToken]);
-        $session->set('system_dangerous_tokens', $tokens);
+        $this->tokens->save($tokens);
 
         $expiresAt = isset($payload['expiresAt']) && \is_string($payload['expiresAt']) ? strtotime($payload['expiresAt']) : false;
         if ($expiresAt === false || $expiresAt < time()) {
@@ -71,15 +61,6 @@ final readonly class DangerousActionConfirmationService
 
         if (($payload['actorId'] ?? null) !== $actorId || ($payload['action'] ?? null) !== $action) {
             throw new InvalidArgumentException('Confirmation token does not match actor or action.');
-        }
-    }
-
-    private function session(): SessionInterface
-    {
-        try {
-            return $this->requestStack->getSession();
-        } catch (SessionNotFoundException $exception) {
-            throw new InvalidArgumentException('Session is not available for confirmation token.', previous: $exception);
         }
     }
 }

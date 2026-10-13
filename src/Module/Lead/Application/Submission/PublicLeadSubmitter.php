@@ -10,9 +10,9 @@ use App\Module\Lead\Domain\Entity\Lead;
 use App\Module\Lead\Domain\Repository\LeadRepositoryInterface;
 use App\Module\Lead\Domain\ValueObject\LeadUtm;
 use App\Module\Lead\Domain\ValueObject\PhoneNumber;
+use App\Shared\Application\Http\ClientInfo;
 use App\Shared\Application\Logging\BusinessEventLogger;
 use InvalidArgumentException;
-use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Приём заявки с публичной формы: антиспам, проверка согласия, снимок согласия, сохранение и постановка
@@ -32,9 +32,9 @@ final readonly class PublicLeadSubmitter
     /**
      * @param array<string, mixed> $payload
      */
-    public function submit(array $payload, Request $request): Lead
+    public function submit(array $payload, ClientInfo $client): Lead
     {
-        $spamCheck = $this->antiSpam->check($payload, $request);
+        $spamCheck = $this->antiSpam->check($payload, $client->ip);
 
         if (($payload['consent'] ?? false) !== true) {
             throw new InvalidArgumentException('Consent is required.');
@@ -51,8 +51,8 @@ final readonly class PublicLeadSubmitter
                 'text' => $this->nullableString($payload, 'consentText') ?? 'Пользователь согласился на обработку персональных данных.',
                 'policyUrl' => $this->nullableString($payload, 'policyUrl') ?? '/privacy/',
                 'pageUrl' => $this->nullableString($payload, 'pageUrl'),
-                'ip' => $request->getClientIp(),
-                'userAgent' => $request->headers->get('User-Agent'),
+                'ip' => $client->ip,
+                'userAgent' => $client->userAgent,
                 'capturedAt' => (new \DateTimeImmutable())->format(DATE_ATOM),
             ],
             $this->nullableString($payload, 'pageUrl'),
