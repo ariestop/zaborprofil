@@ -24,7 +24,7 @@ TEST_DATABASE_NAME ?= $(MYSQL_DATABASE)_test
 TEST_DATABASE_URL ?= mysql://$(MYSQL_USER):$(MYSQL_PASSWORD)@mysql:3306/$(TEST_DATABASE_NAME)?serverVersion=8.4&charset=utf8mb4
 TEST_ENV = env APP_ENV=test APP_SECRET=test-secret DATABASE_URL='$(TEST_DATABASE_URL)' MESSENGER_TRANSPORT_DSN=in-memory:// MAILER_DSN=null://null SITE_URL=https://zaborprofil.test DEFAULT_URI=https://zaborprofil.test
 
-.PHONY: init up down restart build shell composer-install npm-install npm-dev npm-build migrate migration fixtures test-db test phpstan cs cs-fix rector quality smoke cache-clear logs db reset-db health
+.PHONY: init up down restart build shell composer-install npm-install npm-dev npm-build migrate migration fixtures test-db test phpstan cs cs-fix rector deptrac quality smoke cache-clear logs db reset-db health
 
 init: build up composer-install npm-install migrate npm-build smoke
 
@@ -82,12 +82,16 @@ cs-fix:
 rector:
 	$(PHP) php vendor/bin/rector process --dry-run --ansi
 
+deptrac:
+	$(PHP) composer check:deptrac
+
 quality: test-db
 	$(PHP) composer validate --strict
 	$(PHP) composer check:syntax
 	$(PHP) php vendor/bin/php-cs-fixer fix --dry-run --diff --ansi
 	$(PHP) php vendor/bin/phpstan analyse
 	$(PHP) php vendor/bin/rector process --dry-run --ansi
+	$(PHP) composer check:deptrac
 	$(PHP) $(TEST_ENV) php bin/console doctrine:migrations:status --env=test --no-interaction
 	$(PHP) $(TEST_ENV) php bin/console doctrine:schema:validate --env=test --no-interaction
 	$(PHP) $(TEST_ENV) php bin/console lint:container --env=test --no-interaction
