@@ -76,6 +76,9 @@ jobs:
       - name: Rector dry run
         run: composer check:rector
 
+      - name: Deptrac (границы слоёв)
+        run: composer check:deptrac
+
       - name: Use MySQL for test environment
         run: cp .env.test.ci .env.test.local
 

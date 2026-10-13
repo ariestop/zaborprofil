@@ -35,6 +35,7 @@
 ###> friendsofphp/php-cs-fixer ###
 /.php-cs-fixer.php
 /.php-cs-fixer.cache
+/.deptrac.cache
 ###< friendsofphp/php-cs-fixer ###
 
 ###> phpunit/phpunit ###

@@ -28,17 +28,18 @@
 7. `composer check:cs` (php-cs-fixer dry-run).
 8. `composer check:phpstan`.
 9. `composer check:rector` (dry-run).
-10. `cp .env.test.ci .env.test.local` — переключает тесты на MySQL.
-11. `doctrine:migrations:status --env=test`.
-12. `doctrine:migrations:migrate --env=test --allow-no-migration`.
-13. `doctrine:migrations:migrate first` + `doctrine:migrations:migrate` — откат до пустой схемы и повторное применение (проверка `down()`).
-14. `doctrine:schema:validate --env=test` — полная проверка mapping и БД (исключения: [17-doctrine-and-database](17-doctrine-and-database.md) §13.1).
-15. `lint:container --env=test`.
-16. `lint:twig templates --env=test`.
-17. Bash syntax check для `tools/deploy/*.sh`; ShellCheck и `tests/shell/deploy-beget.sh` для Beget-деплоя (проверка `mysql://`, симлинков `shared/`, прогрева кэша, отката).
-18. `php bin/console app:smoke:test --env=test`.
-19. `composer test:coverage` (PHPUnit с `pcov`, Clover-отчёт в `var/coverage/clover.xml`).
-20. `composer check:coverage` — порог покрытия строк PHP (75%).
+10. `composer check:deptrac` — границы слоёв Domain / Application / Infrastructure / UI (`deptrac.yaml`, известные нарушения — `deptrac.baseline.yaml`).
+11. `cp .env.test.ci .env.test.local` — переключает тесты на MySQL.
+12. `doctrine:migrations:status --env=test`.
+13. `doctrine:migrations:migrate --env=test --allow-no-migration`.
+14. `doctrine:migrations:migrate first` + `doctrine:migrations:migrate` — откат до пустой схемы и повторное применение (проверка `down()`).
+15. `doctrine:schema:validate --env=test` — полная проверка mapping и БД (исключения: [17-doctrine-and-database](17-doctrine-and-database.md) §13.1).
+16. `lint:container --env=test`.
+17. `lint:twig templates --env=test`.
+18. Bash syntax check для `tools/deploy/*.sh`; ShellCheck и `tests/shell/deploy-beget.sh` для Beget-деплоя (проверка `mysql://`, симлинков `shared/`, прогрева кэша, отката).
+19. `php bin/console app:smoke:test --env=test`.
+20. `composer test:coverage` (PHPUnit с `pcov`, Clover-отчёт в `var/coverage/clover.xml`).
+21. `composer check:coverage` — порог покрытия строк PHP (75%).
 
 #### Frontend job
 

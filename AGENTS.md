@@ -138,6 +138,7 @@ composer check:syntax
 vendor/bin/php-cs-fixer fix --dry-run --diff
 vendor/bin/phpstan analyse
 vendor/bin/rector process --dry-run
+composer check:deptrac
 vendor/bin/phpunit
 npm run build
 ```
