@@ -40,7 +40,7 @@
 
 Шапка: название и статус страницы, адрес (`path`), ссылка «К списку страниц», индикатор сохранения, кнопки «Предпросмотр», «Сохранить» (также `Ctrl/Cmd+S`), «Опубликовать» и меню «Другие действия со страницей» (стрелка рядом с «Опубликовать»): «Публикация и расписание…», «Сохранить страницу как шаблон» (право `pages.manage_templates`) и «Режим JSON (для разработчика)».
 
-Слоты для публикационного workflow (D1) расположены в `admin/features/page-editor/slots.tsx`: `PagePublishingSlot` (шапка) и `PageRevisionsSlot` (вкладка «История»). Реализация D1 подключена в этих компонентах из `admin/features/publishing/`: пункт меню «Публикация и расписание…» открывает панель workflow (`PagePublishingSlot` с `hideTrigger` и `openSignal`; перед открытием сохраняются правки), вкладка «История» дополнена сравнением ревизий с текущей версией. Подробности: [50-publishing-workflow](../50-publishing-workflow.md).
+Слот публикационного workflow (D1) — `PagePublishingSlot` в `admin/features/page-editor/slots.tsx`: пункт меню «Публикация и расписание…» открывает панель workflow (`hideTrigger` и `openSignal`; перед открытием сохраняются правки). Вкладка «История версий» (`RevisionsTab`) — один список `RevisionHistory` из `admin/features/publishing/` со сравнением ревизии с текущей версией и откатом. Подробности: [50-publishing-workflow](../50-publishing-workflow.md).
 
 ## Сохранение и автосохранение
 

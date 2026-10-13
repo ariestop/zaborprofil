@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { PageRevisionItem } from '../../types/api'
 import type { PageWorkflow } from '../publishing/types'
 import { renderWithProviders } from '../seo/test-utils'
-import { PagePublishingSlot, PageRevisionsSlot } from './slots'
+import { PagePublishingSlot } from './slots'
 
 const apiRequest = vi.fn()
 
@@ -119,25 +119,5 @@ describe('PagePublishingSlot', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Вернуть в черновик' }))
 
     await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('/admin/api/content/pages/page-1/status', { method: 'PATCH', body: { status: 'draft', comment: null } }))
-  })
-})
-
-describe('PageRevisionsSlot', () => {
-  it('lets the editor compare a revision with the current version without a second rollback button', async () => {
-    renderWithProviders(<PageRevisionsSlot pageId="page-1" status="draft" />)
-
-    fireEvent.click(await screen.findByRole('button', { name: 'Сравнить с текущей' }))
-
-    expect(await screen.findByText('Различий нет.')).toBeTruthy()
-    expect(apiRequest).toHaveBeenCalledWith('/admin/api/content/pages/page-1/revisions/diff?from=rev-1&to=current')
-    expect(screen.queryByRole('button', { name: 'Откатить' })).toBeNull()
-  })
-
-  it('renders nothing while there are no revisions', async () => {
-    apiRequest.mockResolvedValue({ revisions: [] })
-    renderWithProviders(<PageRevisionsSlot pageId="page-1" status="draft" />)
-
-    await waitFor(() => expect(apiRequest).toHaveBeenCalled())
-    expect(screen.queryByLabelText('История ревизий')).toBeNull()
   })
 })
