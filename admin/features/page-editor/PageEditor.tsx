@@ -361,7 +361,7 @@ export function PageEditor({
                                 <SettingsTab controller={controller} page={page} />
                             ) : null}
                             {tab === 'revisions' ? (
-                                <RevisionsTab controller={controller} status={page.status} />
+                                <RevisionsTab controller={controller} />
                             ) : null}
                         </section>
                     ) : null}

@@ -286,8 +286,9 @@ API защищен admin firewall и используется React + TypeScript
 
 - `GET /admin/api/content/pages/{id}/builder`
 - `PUT /admin/api/content/pages/{id}/builder`
-- `POST /admin/api/content/pages/{id}/builder/preview`
-- `POST /admin/api/content/pages/{id}/builder/publish`
+
+Публикация, версии и откат — общие для страницы: `POST /{id}/publish`, `GET /{id}/revisions`, `POST /{id}/revisions/{revisionId}/rollback`
+(дубли под `/builder/*` удалены).
 
 `PUT /builder` принимает массив блоков structured-контракта и синхронизирует
 состав/порядок/включенность блоков страницы атомарно.

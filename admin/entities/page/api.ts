@@ -345,17 +345,3 @@ export function releasePageEditLock(pageId: string, sessionId: string): Promise<
     body: { sessionId },
   })
 }
-
-export function useRollbackPageBuilderMutation(pageId: string) {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (revisionId: string) => apiRequest<ContentPageItem>(`/admin/api/content/pages/${pageId}/builder/rollback`, {
-      method: 'POST',
-      body: { revisionId },
-    }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: pageQueryKey(pageId) })
-    },
-  })
-}

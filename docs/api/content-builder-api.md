@@ -56,34 +56,13 @@ firewall) и дополнительно проверяют `AdminPermission`.
 - блоки, отсутствующие в новом списке, удаляются;
 - порядок блоков нормализуется по индексу в списке.
 
-### POST `/admin/api/content/pages/{id}/builder/preview`
+### Публикация, версии и откат
 
-Принимает `blocks` в том же формате, возвращает HTML-предпросмотр:
+Отдельных эндпоинтов под `/builder` для них нет (дубли `/builder/{preview,publish,versions,rollback}` удалены):
 
-```json
-{
-  "html": "<section>...</section>"
-}
-```
-
-### POST `/admin/api/content/pages/{id}/builder/publish`
-
-Публикует страницу через существующий publish-flow (`PageRevision`,
-`PagePublication`, SEO pre-publish checklist).
-
-### GET `/admin/api/content/pages/{id}/builder/versions`
-
-Возвращает список ревизий, доступных для builder-level rollback.
-
-### POST `/admin/api/content/pages/{id}/builder/rollback`
-
-Откатывает страницу к указанной ревизии:
-
-```json
-{
-  "revisionId": "01J..."
-}
-```
+- публикация — `POST /admin/api/content/pages/{id}/publish` (необязательный `comment`);
+- версии — `GET /admin/api/content/pages/{id}/revisions`, сравнение — `GET …/revisions/diff?from=…&to=current`;
+- откат — `POST /admin/api/content/pages/{id}/revisions/{revisionId}/rollback`.
 
 ## Ошибки
 
