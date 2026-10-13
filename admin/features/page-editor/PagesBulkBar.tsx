@@ -6,6 +6,8 @@ import {
     type BulkPagesResponse,
     type PageStatus,
 } from '../../entities/page/api'
+import { ConfirmDialog } from '../../shared/ui/confirm-dialog'
+import { useCan } from '../../stores/auth'
 import type { ContentPageItem } from '../../types/api'
 import { describeApiError } from '../seo/redirects/redirect-rules'
 import { describePageStatusError, pageStatusLabels } from './page-status'
@@ -40,6 +42,8 @@ export function PagesBulkBar({ pages, selectedIds, onClear }: PagesBulkBarProps)
     const { push } = useToast()
     const bulk = useBulkPagesMutation()
     const [status, setStatus] = useState<PageStatus>('draft')
+    const canDelete = useCan('pages.delete')
+    const [confirmDelete, setConfirmDelete] = useState(false)
 
     const run = (payload: BulkPagesPayload, label: string): void => {
         bulk.mutate(payload, {
@@ -128,6 +132,16 @@ export function PagesBulkBar({ pages, selectedIds, onClear }: PagesBulkBarProps)
             >
                 Открыть для индексации
             </button>
+            {canDelete ? (
+                <button
+                    type="button"
+                    className="h-9 rounded-lg bg-danger px-3 text-[13px] font-semibold text-white hover:brightness-110 disabled:opacity-60"
+                    disabled={bulk.isPending}
+                    onClick={() => setConfirmDelete(true)}
+                >
+                    Удалить
+                </button>
+            ) : null}
             <button
                 type="button"
                 onClick={onClear}
@@ -135,6 +149,17 @@ export function PagesBulkBar({ pages, selectedIds, onClear }: PagesBulkBarProps)
             >
                 Снять выделение
             </button>
+            <ConfirmDialog
+                open={confirmDelete}
+                title={`Удалить выбранные страницы (${selectedIds.length})?`}
+                description="Страницы пропадут с сайта и перейдут во вкладку «Удалённые». Вернуть страницу можно в редакторе."
+                confirmLabel="Удалить"
+                onCancel={() => setConfirmDelete(false)}
+                onConfirm={() => {
+                    setConfirmDelete(false)
+                    run({ ids: selectedIds, action: 'status', status: 'deleted' }, 'Удалено')
+                }}
+            />
         </div>
     )
 }

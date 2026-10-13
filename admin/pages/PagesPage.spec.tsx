@@ -183,6 +183,61 @@ describe('PagesPage: список', () => {
     expect(await screen.findByText('Страница снята с публикации')).toBeTruthy()
   })
 
+  it('deletes a page from the row menu only after confirmation', async () => {
+    renderWithProviders(<PagesPage />, '/admin/pages')
+    await screen.findAllByTestId('page-row')
+
+    openRowMenu('Ворота')
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'Удалить' }))
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByText('Удалить страницу «Ворота»?')).toBeTruthy()
+    expect(apiRequest).not.toHaveBeenCalledWith('/admin/api/content/pages/bulk', expect.anything())
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Удалить' }))
+
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalledWith('/admin/api/content/pages/bulk', {
+        method: 'POST',
+        body: { ids: ['page-2'], action: 'status', status: 'deleted' },
+      })
+    })
+    expect(await screen.findByText('Страница удалена')).toBeTruthy()
+  })
+
+  it('archives a draft from the row menu', async () => {
+    renderWithProviders(<PagesPage />, '/admin/pages')
+    await screen.findAllByTestId('page-row')
+
+    openRowMenu('Ворота')
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'В архив' }))
+
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalledWith('/admin/api/content/pages/bulk', {
+        method: 'POST',
+        body: { ids: ['page-2'], action: 'status', status: 'archived' },
+      })
+    })
+  })
+
+  it('deletes the selected pages after confirmation', async () => {
+    renderWithProviders(<PagesPage />, '/admin/pages')
+
+    await screen.findAllByTestId('page-row')
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Выбрать все страницы' }))
+    const bulkBar = await screen.findByRole('region', { name: 'Массовые действия' })
+    fireEvent.click(within(bulkBar).getByRole('button', { name: 'Удалить' }))
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByText('Удалить выбранные страницы (2)?')).toBeTruthy()
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Удалить' }))
+
+    await waitFor(() => {
+      expect(apiRequest).toHaveBeenCalledWith('/admin/api/content/pages/bulk', {
+        method: 'POST',
+        body: { ids: ['page-2', 'page-1'], action: 'status', status: 'deleted' },
+      })
+    })
+  })
+
   it('offers preview instead of the live page for drafts', async () => {
     renderWithProviders(<PagesPage />, '/admin/pages')
     await screen.findAllByTestId('page-row')
@@ -214,6 +269,10 @@ describe('PagesPage: список', () => {
     openRowMenu('Ворота')
     await screen.findByRole('menuitem', { name: 'Редактировать' })
     expect(screen.queryByRole('menuitem', { name: 'Дублировать' })).toBeNull()
+    expect(screen.queryByRole('menuitem', { name: 'Удалить' }), 'Без права pages.delete удаления нет.').toBeNull()
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Выбрать все страницы' }))
+    const bulkBar = await screen.findByRole('region', { name: 'Массовые действия' })
+    expect(within(bulkBar).queryByRole('button', { name: 'Удалить' })).toBeNull()
   })
 })
 
