@@ -262,6 +262,28 @@ final class PageTemplatesAndDuplicationTest extends WebTestCase
         self::assertSame('review', $statuses[$second]);
     }
 
+    public function testBulkArchivesDraftsAndReturnsThemToDrafts(): void
+    {
+        $client = $this->adminClient();
+        $first = $this->createPage($client, 'one', 'Один');
+        $second = $this->createPage($client, 'two', 'Два');
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/content/pages/bulk', ['ids' => [$first, $second], 'action' => 'status', 'status' => 'archived']);
+        self::assertResponseIsSuccessful();
+        $result = $this->json($client);
+        self::assertSame(2, $result['succeeded'], 'Черновик можно отправить в архив.');
+        self::assertSame(0, $result['failed']);
+
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/content/pages/bulk', ['ids' => [$first], 'action' => 'status', 'status' => 'draft']);
+        $this->jsonRequestWithCsrf($client, 'POST', '/admin/api/content/pages/bulk', ['ids' => [$first], 'action' => 'status', 'status' => 'archived']);
+        self::assertSame(1, $this->json($client)['succeeded'], 'Страницу, возвращённую из архива в черновики, можно снова отправить в архив.');
+
+        $client->request('GET', '/admin/api/content/pages');
+        $statuses = array_column($this->jsonList($client, 'pages'), 'status', 'id');
+        self::assertSame('archived', $statuses[$first]);
+        self::assertSame('archived', $statuses[$second]);
+    }
+
     public function testBulkRejectsPublishingUnknownActionAndEmptySelection(): void
     {
         $client = $this->adminClient();

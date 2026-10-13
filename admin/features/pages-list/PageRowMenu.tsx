@@ -2,6 +2,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import type { ReactNode } from 'react'
 import { cn } from '../../shared/lib/cn'
 import type { ContentPageItem } from '../../types/api'
+import { pageStatusTransitions } from '../page-editor/page-status'
 
 export interface PageRowActions {
     edit: (page: ContentPageItem) => void
@@ -10,6 +11,8 @@ export interface PageRowActions {
     duplicate?: (page: ContentPageItem) => void
     unpublish?: (page: ContentPageItem) => void
     archive?: (page: ContentPageItem) => void
+    /** Удаление с подтверждением: страница уходит во вкладку «Удалённые», вернуть её можно в редакторе. */
+    remove?: (page: ContentPageItem) => void
 }
 
 const icon = (path: ReactNode) => (
@@ -68,6 +71,14 @@ const ICONS = {
             <path d="M10 13h4" />
         </>,
     ),
+    remove: icon(
+        <>
+            <path d="M4.5 7h15" />
+            <path d="M9.5 7V5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2" />
+            <path d="M6.5 7l1 12a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1l1-12" />
+            <path d="M10 11v5M14 11v5" />
+        </>,
+    ),
 }
 
 const itemClass =
@@ -85,9 +96,9 @@ export function PageRowMenu({
 }) {
     const isPublished = page.status === 'published'
     const canArchive =
-        actions.archive !== undefined &&
-        (page.status === 'published' || page.status === 'unpublished')
+        actions.archive !== undefined && pageStatusTransitions[page.status].includes('archived')
     const canUnpublish = actions.unpublish !== undefined && isPublished
+    const canRemove = actions.remove !== undefined && page.status !== 'deleted'
     const item = (key: keyof typeof ICONS, label: string, onSelect: () => void) => (
         <DropdownMenu.Item className={itemClass} onSelect={onSelect}>
             {ICONS[key]}
@@ -135,13 +146,14 @@ export function PageRowMenu({
                     {actions.duplicate !== undefined
                         ? item('copy', 'Дублировать', () => actions.duplicate?.(page))
                         : null}
-                    {canUnpublish || canArchive ? (
+                    {canUnpublish || canArchive || canRemove ? (
                         <DropdownMenu.Separator className="mx-1 my-1.5 h-px bg-surface-strong dark:bg-slate-800" />
                     ) : null}
                     {canUnpublish
                         ? item('unpublish', 'Снять с публикации', () => actions.unpublish?.(page))
                         : null}
                     {canArchive ? item('archive', 'В архив', () => actions.archive?.(page)) : null}
+                    {canRemove ? item('remove', 'Удалить', () => actions.remove?.(page)) : null}
                 </DropdownMenu.Content>
             </DropdownMenu.Portal>
         </DropdownMenu.Root>

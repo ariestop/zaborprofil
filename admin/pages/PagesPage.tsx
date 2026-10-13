@@ -26,7 +26,7 @@ import {
 import { describeApiError } from '../features/seo/redirects/redirect-rules'
 import { preloadPageEditorOnIntent } from '../routes/prefetch'
 import { cn } from '../shared/lib/cn'
-import { Checkbox, ErrorState, PageLoadingState } from '../shared/ui'
+import { Checkbox, ConfirmDialog, ErrorState, PageLoadingState } from '../shared/ui'
 import { useCan } from '../stores/auth'
 import type { ContentPageItem } from '../types/api'
 
@@ -78,12 +78,14 @@ export default function PagesPage({ creating = false }: { creating?: boolean }) 
     const canEditSeo = useCan('seo.edit')
     const canUnpublish = useCan('pages.unpublish')
     const canArchive = useCan('pages.archive')
+    const canDelete = useCan('pages.delete')
     const canBulk = canEditPages || canEditSeo
     const [status, setStatus] = useState<StatusFilter>('all')
     const [query, setQuery] = useState('')
     const [type, setType] = useState('')
     const [sort, setSort] = useState<PageSort>('updated')
     const [selected, setSelected] = useState<ReadonlySet<string>>(new Set())
+    const [pageToDelete, setPageToDelete] = useState<ContentPageItem | null>(null)
 
     const allPages = useMemo(() => pagesQuery.data ?? [], [pagesQuery.data])
     const pages = useMemo(
@@ -204,6 +206,7 @@ export default function PagesPage({ creating = false }: { creating?: boolean }) 
         archive: canArchive
             ? (page) => changeStatus(page, 'archived', 'Страница перенесена в архив')
             : undefined,
+        remove: canDelete ? (page) => setPageToDelete(page) : undefined,
     }
 
     return (
@@ -487,6 +490,20 @@ export default function PagesPage({ creating = false }: { creating?: boolean }) 
             </div>
 
             {creating ? <PageCreateDialog onClose={() => void navigate('/admin/pages')} /> : null}
+
+            <ConfirmDialog
+                open={pageToDelete !== null}
+                title={`Удалить страницу «${pageToDelete?.title ?? ''}»?`}
+                description="Страница пропадёт с сайта и перейдёт во вкладку «Удалённые». Вернуть её можно в редакторе."
+                confirmLabel="Удалить"
+                onCancel={() => setPageToDelete(null)}
+                onConfirm={() => {
+                    if (pageToDelete !== null) {
+                        changeStatus(pageToDelete, 'deleted', 'Страница удалена')
+                    }
+                    setPageToDelete(null)
+                }}
+            />
         </div>
     )
 }

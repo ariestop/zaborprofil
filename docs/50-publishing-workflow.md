@@ -7,14 +7,17 @@
 
 | Из статуса | Допустимые следующие статусы |
 | --- | --- |
-| `draft` | `review`, `approved`, `published`, `deleted` |
-| `review` | `approved`, `draft`, `published`, `deleted` |
-| `approved` | `published`, `scheduled`, `draft`, `deleted` |
+| `draft` | `review`, `approved`, `published`, `archived`, `deleted` |
+| `review` | `approved`, `draft`, `published`, `archived`, `deleted` |
+| `approved` | `published`, `scheduled`, `draft`, `archived`, `deleted` |
 | `scheduled` | `published`, `approved` (отмена расписания), `draft`, `deleted` |
 | `published` | `unpublished`, `scheduled` (плановое снятие), `archived`, `deleted` |
 | `unpublished` | `draft`, `published`, `archived`, `deleted` |
 | `archived` | `draft`, `deleted` |
 | `deleted` | `draft` |
+
+В архив можно отправить и неопубликованную работу (`draft`, `review`, `approved`): из архива страница возвращается в черновики,
+поэтому обратный путь открыт. Запланированную страницу (`scheduled`) сначала снимают с расписания.
 
 Матрица переходов — `PageStatusTransitionPolicy` (домен). Права проверяет `PageWorkflowVoter`
 (атрибут `page.workflow.transition`, subject — `PageTransition`) через `PageWorkflowGuard`. Проверка выполняется в
