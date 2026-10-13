@@ -6,17 +6,16 @@ namespace App\Module\Admin\Application\Service;
 
 use App\Module\AuditLog\Domain\Entity\AuditLogEntry;
 use App\Module\AuditLog\Domain\Repository\AuditLogRepositoryInterface;
-use App\Module\User\Domain\Entity\AdminUser;
-use App\Shared\Infrastructure\Http\RequestIdSubscriber;
-use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\HttpFoundation\RequestStack;
+use App\Module\Auth\Application\Security\CurrentAdminInterface;
+use App\Shared\Application\Http\RequestContextInterface;
+use Symfony\Component\Uid\Ulid;
 
 final readonly class AdminAuditLogger
 {
     public function __construct(
         private AuditLogRepositoryInterface $auditLogRepository,
-        private Security $security,
-        private RequestStack $requestStack,
+        private CurrentAdminInterface $currentAdmin,
+        private RequestContextInterface $request,
     ) {
     }
 
@@ -26,10 +25,7 @@ final readonly class AdminAuditLogger
      */
     public function log(string $action, string $entityType, ?string $entityId, array $oldValues = [], array $newValues = []): void
     {
-        $request = $this->requestStack->getCurrentRequest();
-        $user = $this->security->getUser();
-        $actorId = $user instanceof AdminUser ? $user->id() : null;
-        $actorEmail = $user instanceof AdminUser ? $user->email() : null;
+        $actorId = $this->currentAdmin->id();
 
         $this->auditLogRepository->save(new AuditLogEntry(
             action: $action,
@@ -37,11 +33,11 @@ final readonly class AdminAuditLogger
             entityId: $entityId,
             oldValues: $oldValues,
             newValues: $newValues,
-            actorId: $actorId,
-            actorEmail: $actorEmail,
-            ip: $request?->getClientIp(),
-            userAgent: $request?->headers->get('User-Agent'),
-            requestId: $request?->attributes->getString(RequestIdSubscriber::ATTRIBUTE) ?: null,
+            actorId: $actorId === null ? null : Ulid::fromString($actorId),
+            actorEmail: $actorId === null ? null : $this->currentAdmin->identifier(),
+            ip: $this->request->clientIp(),
+            userAgent: $this->request->userAgent(),
+            requestId: $this->request->requestId(),
         ));
     }
 }

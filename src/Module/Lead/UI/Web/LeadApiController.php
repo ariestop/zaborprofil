@@ -6,6 +6,7 @@ namespace App\Module\Lead\UI\Web;
 
 use App\Module\Lead\Application\Submission\PublicLeadSubmitter;
 use App\Module\Lead\Domain\ValueObject\LeadStatus;
+use App\Shared\Application\Http\ClientInfo;
 use App\Shared\UI\Http\AdminApiErrorResponder;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -40,7 +41,7 @@ final readonly class LeadApiController
 
             /** @var array<string, mixed> $payload */
             $payload = $request->toArray();
-            $lead = $this->submitter->submit($payload, $request);
+            $lead = $this->submitter->submit($payload, new ClientInfo($request->getClientIp(), $request->headers->get('User-Agent')));
             $isSpam = $lead->status() === LeadStatus::SPAM;
 
             return new JsonResponse(['status' => $isSpam ? 'accepted' : 'created', 'id' => (string) $lead->id()], $isSpam ? 202 : 201);
