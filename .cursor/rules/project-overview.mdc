@@ -11,6 +11,7 @@ alwaysApply: true
 - Public pages must be server-rendered with Symfony + Twig for SEO; do not turn the public site into a pure SPA.
 - The target stack is PHP `>=8.5`, Node.js `>=25.9.0` (npm `>=11.12.1`), nginx `>=1.30.0`, Symfony `8.x`, MySQL `>=8.4`, filesystem cache (no Redis), Doctrine, Twig, Tailwind CSS, Vite, React admin SPA (`admin/`).
 - Documentation must be written in Russian.
+- Do not create test pages, leads, media or other records on the staging stand (`dev.zaborprofil.ru`, e.g. `e2e-*-check-*`) to verify your changes: check staging read-only (pages, API, screenshots) on existing content, and ask the owner first if a check is impossible without a new record. Scenarios that create data belong in PHPUnit/E2E on the local database.
 - Development database state must be reproducible from Doctrine migrations plus fixtures/seed data. Do not commit Docker images, Docker volumes, real MySQL backups, production/staging dumps, uploads, secrets, or personal data. Only a small manually reviewed anonymized dev snapshot is allowed in Git when fixtures are not enough.
 
 ## Main Directories
