@@ -87,6 +87,7 @@ make health
 - Стенд один: перед push в `dev` убедиться, что он не занят чужой работой. Не использовать `git push --force` в `dev` без явной просьбы пользователя.
 - Workflow `.github/workflows/deploy.yml` (VPS) выключен по умолчанию и включается только repository variable `VPS_DEPLOY_ENABLED=true`; агенты эту переменную не меняют.
 - Агенты не деплоят production, не запускают `deploy-beget.sh` против production, не применяют миграции и не трогают БД production.
+- Не создавать на стенде тестовые страницы, заявки, медиа и другие записи (например, `e2e-*-check-*`) для проверки своих изменений: на стенде проверять только чтением (страницы, API, скриншоты) и на уже существующем контенте. Если проверка без новой записи невозможна — сначала спросить владельца. Сценарии с созданием данных — в PHPUnit/E2E на локальной БД.
 - Стенд закрыт Basic Auth (`StagingAccessSubscriber`, `STAGING_AUTH_*`). Для просмотра в браузере облачному агенту нужен секрет `STAGING_BASIC_AUTH` (`логин:пароль`) в Cursor Dashboard -> Cloud Agents -> Secrets; значение не печатать в общий вывод.
 - Секреты деплоя (`DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `STAGING_BASIC_AUTH`) хранятся только в GitHub Secrets; не коммитить `.env.local` и значения секретов.
 
