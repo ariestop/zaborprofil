@@ -23,4 +23,11 @@ interface MenuItemRepositoryInterface
      * @return list<MenuItem>
      */
     public function findActiveByPosition(string $position): array;
+
+    /**
+     * Все пункты позиции, включая выключенные, по порядку.
+     *
+     * @return list<MenuItem>
+     */
+    public function findByPosition(string $position): array;
 }
