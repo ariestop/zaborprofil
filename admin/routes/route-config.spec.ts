@@ -83,8 +83,8 @@ describe('route permissions', () => {
     expect(navKeys(ROLE_PERMISSIONS.ROLE_EDITOR)).toEqual(['dashboard', 'pages', 'media'])
   })
 
-  it('shows an SEO specialist pages and SEO only', () => {
-    expect(navKeys(ROLE_PERMISSIONS.ROLE_SEO)).toEqual(['dashboard', 'pages', 'seo'])
+  it('shows an SEO specialist pages, site menu and SEO only', () => {
+    expect(navKeys(ROLE_PERMISSIONS.ROLE_SEO)).toEqual(['dashboard', 'pages', 'menu', 'seo'])
   })
 
   it('shows a manager leads only', () => {
