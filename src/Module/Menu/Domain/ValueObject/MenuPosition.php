@@ -28,7 +28,7 @@ final readonly class MenuPosition
     {
         $normalized = strtolower(trim($position));
         if (!\in_array($normalized, self::values(), true)) {
-            throw new InvalidArgumentException('Menu position must be one of: '.implode(', ', self::values()).'.');
+            throw new InvalidArgumentException('Позиция меню — одна из: '.implode(', ', self::values()).'.');
         }
 
         return $normalized;
@@ -40,9 +40,9 @@ final readonly class MenuPosition
     public static function options(): array
     {
         return [
-            ['value' => self::HEADER, 'label' => 'Header'],
-            ['value' => self::FOOTER, 'label' => 'Footer'],
-            ['value' => self::SERVICE, 'label' => 'Service navigation'],
+            ['value' => self::HEADER, 'label' => 'Шапка сайта'],
+            ['value' => self::FOOTER, 'label' => 'Подвал'],
+            ['value' => self::SERVICE, 'label' => 'Верхняя строка'],
         ];
     }
 }

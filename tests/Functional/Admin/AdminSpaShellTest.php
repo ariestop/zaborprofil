@@ -47,6 +47,7 @@ final class AdminSpaShellTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('#admin-app');
         self::assertSelectorExists('meta[name="admin-csrf-token"]');
+        self::assertSelectorNotExists('[data-callbar]');
     }
 
     public function testAnonymousUserIsRedirectedToLoginForAdminShellRoute(): void

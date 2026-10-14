@@ -15,6 +15,7 @@ final class AdminLoginTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'Вход в админ-панель');
+        self::assertSelectorNotExists('[data-callbar]');
     }
 
     public function testLoginPageIncludesViteSiteAssets(): void

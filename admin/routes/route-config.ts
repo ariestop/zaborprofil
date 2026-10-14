@@ -52,6 +52,7 @@ export const adminRoutes: AdminRouteDefinition[] = [
   { key: 'pageDetail', path: '/admin/pages/:id', title: 'Редактор страницы', section: 'content', permission: 'pages.view', fullBleed: true },
   { key: 'pageTab', path: '/admin/pages/:id/:tab', title: 'Редактор страницы', section: 'content', permission: 'pages.view', fullBleed: true },
   { key: 'media', path: '/admin/media', title: 'Медиатека', section: 'content', navGroup: 'content', icon: 'media', keywords: ['медиа', 'фото', 'изображения', 'файлы', 'загрузить'], permission: 'media.upload' },
+  { key: 'menu', path: '/admin/menu', title: 'Меню сайта', section: 'content', navGroup: 'content', icon: 'menu', keywords: ['навигация', 'шапка', 'подвал', 'пункты меню'], permission: 'seo.edit' },
   { key: 'seo', path: '/admin/seo', title: 'SEO', section: 'content', navGroup: 'seo', icon: 'seo', keywords: ['редиректы', 'robots', '404', 'аудит'], permission: 'seo.edit' },
   { key: 'users', path: '/admin/users', title: 'Пользователи', navTitle: 'Пользователи и роли', section: 'system', navGroup: 'manage', icon: 'users', keywords: ['роли', 'пароль', 'доступ'], permission: 'users.manage' },
   { key: 'settings', path: '/admin/settings', title: 'Настройки', section: 'system', navGroup: 'manage', icon: 'settings', permission: 'settings.edit' },

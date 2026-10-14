@@ -199,12 +199,14 @@
         {% endblock %}
 
         {# Мобильная панель связи: всегда под большим пальцем, исчезает, когда на экране уже форма заявки. #}
-        <div class="zp-callbar" data-callbar>
-            <a class="zp-btn zp-btn--ghost" href="{{ site.phone_href }}">
-                <svg class="size-5" aria-hidden="true"><use href="#i-phone"/></svg>Позвонить
-            </a>
-            <a class="zp-btn zp-btn--primary" href="#lead-form">Рассчитать</a>
-        </div>
+        {% block site_callbar %}
+            <div class="zp-callbar" data-callbar>
+                <a class="zp-btn zp-btn--ghost" href="{{ site.phone_href }}">
+                    <svg class="size-5" aria-hidden="true"><use href="#i-phone"/></svg>Позвонить
+                </a>
+                <a class="zp-btn zp-btn--primary" href="#lead-form">Рассчитать</a>
+            </div>
+        {% endblock %}
 
         {% block javascripts %}
             {{ vite_entry_script_tags('assets/site/app.ts') }}
