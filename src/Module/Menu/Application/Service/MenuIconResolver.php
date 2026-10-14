@@ -19,7 +19,7 @@ final readonly class MenuIconResolver
      * @var array<string, list<string>>
      */
     private const array KEYWORDS = [
-        'i-zp-catalog' => ['каталог', 'catalog', 'katalog'],
+        'i-zp-catalog' => ['каталог', 'catalog', 'katalog', 'материал', 'комплектующ'],
         'i-zp-steps' => ['работаем', 'этап', 'process', 'kak-my'],
         'i-zp-pin' => ['контакт', 'contact', 'адрес', 'как проехать'],
         'i-zp-truck' => ['доставк', 'dostavk', 'delivery'],
@@ -28,9 +28,17 @@ final readonly class MenuIconResolver
         'i-zp-fence' => ['забор', 'zabor', 'жалюзи', 'jaluzi', 'ограждени', 'профнастил', 'штакетник', 'ворота', 'калитк'],
     ];
 
+    /**
+     * Сначала название, потом адрес: раздел «Заборы» со ссылкой на /#catalog — это заборы, а не каталог.
+     */
     public function symbolFor(string $label, string $url): string
     {
-        $haystack = mb_strtolower($label.' '.$url);
+        return $this->match($label) ?? $this->match($url) ?? self::DEFAULT;
+    }
+
+    private function match(string $text): ?string
+    {
+        $haystack = mb_strtolower($text);
         foreach (self::KEYWORDS as $symbol => $keywords) {
             foreach ($keywords as $keyword) {
                 if (str_contains($haystack, $keyword)) {
@@ -39,6 +47,6 @@ final readonly class MenuIconResolver
             }
         }
 
-        return self::DEFAULT;
+        return null;
     }
 }

@@ -74,6 +74,88 @@ export function initMobileNav(root: ParentNode = document): void {
 }
 
 /**
+ * Выпадающие списки разделов в шапке (вариант меню B). Открываются кликом, наведением мыши и с клавиатуры
+ * (Enter, пробел, стрелка вниз); закрываются по Esc, клику мимо и уходу фокуса. Одновременно открыт один список.
+ */
+export function initNavDropdowns(root: ParentNode = document): void {
+    const groups = Array.from(root.querySelectorAll<HTMLElement>('[data-nav-group]'))
+    const entries = groups.flatMap((group) => {
+        const trigger = group.querySelector<HTMLButtonElement>('[data-nav-trigger]')
+        const dropdown = group.querySelector<HTMLElement>('[data-nav-dropdown]')
+
+        return trigger !== null && dropdown !== null ? [{ group, trigger, dropdown }] : []
+    })
+    if (entries.length === 0) {
+        return
+    }
+
+    const hoverable = window.matchMedia?.('(hover: hover) and (pointer: fine)').matches ?? false
+    let closeTimer: number | undefined
+
+    const links = (dropdown: HTMLElement): HTMLAnchorElement[] => Array.from(dropdown.querySelectorAll<HTMLAnchorElement>('a[href]'))
+
+    const setOpen = (entry: (typeof entries)[number], open: boolean): void => {
+        if (open) {
+            entries.filter((other) => other !== entry).forEach((other) => setOpen(other, false))
+        }
+        entry.dropdown.hidden = !open
+        entry.trigger.setAttribute('aria-expanded', String(open))
+    }
+
+    const closeAll = (): void => entries.forEach((entry) => setOpen(entry, false))
+
+    for (const entry of entries) {
+        const { group, trigger, dropdown } = entry
+
+        // Мышью список уже открыт наведением — клик его не закрывает; с клавиатуры (detail 0) и пальцем клик переключает.
+        trigger.addEventListener('click', (event) => setOpen(entry, hoverable && event.detail > 0 ? true : dropdown.hidden))
+        trigger.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowDown') {
+                event.preventDefault()
+                setOpen(entry, true)
+                links(dropdown)[0]?.focus()
+            }
+        })
+        dropdown.addEventListener('keydown', (event) => {
+            const items = links(dropdown)
+            const index = items.indexOf(document.activeElement as HTMLAnchorElement)
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                event.preventDefault()
+                const step = event.key === 'ArrowDown' ? 1 : -1
+                items[(index + step + items.length) % items.length]?.focus()
+            }
+        })
+        group.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && !dropdown.hidden) {
+                setOpen(entry, false)
+                trigger.focus()
+            }
+        })
+        group.addEventListener('focusout', (event) => {
+            if (!group.contains(event.relatedTarget as Node | null)) {
+                setOpen(entry, false)
+            }
+        })
+
+        if (hoverable) {
+            group.addEventListener('mouseenter', () => {
+                window.clearTimeout(closeTimer)
+                setOpen(entry, true)
+            })
+            group.addEventListener('mouseleave', () => {
+                closeTimer = window.setTimeout(() => setOpen(entry, false), 150)
+            })
+        }
+    }
+
+    document.addEventListener('click', (event) => {
+        if (!entries.some(({ group }) => group.contains(event.target as Node))) {
+            closeAll()
+        }
+    })
+}
+
+/**
  * Нижняя панель «Позвонить / Рассчитать» на телефоне. Пока на экране первый экран страницы (там свои кнопки),
  * сама форма заявки или блок со своей нижней панелью (data-callbar-hide, например конфигуратор с итогом),
  * панель убирается, чтобы не дублировать призыв и не закрывать контент.

@@ -5,6 +5,7 @@ import {
     initGalleries,
     initLeadPlans,
     initMobileNav,
+    initNavDropdowns,
     initOfficeStatus,
     initPriceMatrices,
     formatMoney,
@@ -27,6 +28,69 @@ function mount(html: string): HTMLElement {
 afterEach(() => {
     document.body.innerHTML = ''
     document.documentElement.className = ''
+})
+
+describe('initNavDropdowns', () => {
+    const markup = `
+    <nav>
+      <div data-nav-group>
+        <button data-nav-trigger aria-expanded="false">Заборы</button>
+        <div data-nav-dropdown hidden><a href="/zabor-jaluzi/">Жалюзи</a><a href="/gorizont/">Ранчо</a></div>
+      </div>
+      <div data-nav-group>
+        <button data-nav-trigger aria-expanded="false">Материалы</button>
+        <div data-nav-dropdown hidden><a href="/fasad/profnastil/">Профнастил</a></div>
+      </div>
+      <a href="/contacts/">Контакты</a>
+    </nav>`
+
+    const parts = (root: HTMLElement) => {
+        const [fences, materials] = Array.from(root.querySelectorAll<HTMLElement>('[data-nav-group]'))
+        const pick = (group: HTMLElement) => ({
+            trigger: group.querySelector<HTMLButtonElement>('[data-nav-trigger]')!,
+            dropdown: group.querySelector<HTMLElement>('[data-nav-dropdown]')!,
+        })
+
+        return { fences: pick(fences), materials: pick(materials) }
+    }
+
+    it('opens one list at a time and closes it by a click outside', () => {
+        const root = mount(markup)
+        initNavDropdowns(root)
+        const { fences, materials } = parts(root)
+
+        fences.trigger.click()
+        expect(fences.dropdown.hidden).toBe(false)
+        expect(fences.trigger.getAttribute('aria-expanded')).toBe('true')
+
+        materials.trigger.click()
+        expect(fences.dropdown.hidden).toBe(true)
+        expect(materials.dropdown.hidden).toBe(false)
+
+        root.querySelector<HTMLAnchorElement>('a[href="/contacts/"]')!.click()
+        expect(materials.dropdown.hidden).toBe(true)
+        expect(materials.trigger.getAttribute('aria-expanded')).toBe('false')
+    })
+
+    it('works from the keyboard: arrow down opens and moves focus, Escape returns to the button', () => {
+        const root = mount(markup)
+        initNavDropdowns(root)
+        const { fences } = parts(root)
+
+        fences.trigger.focus()
+        fences.trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }))
+        expect(fences.dropdown.hidden).toBe(false)
+        expect(document.activeElement?.textContent).toBe('Жалюзи')
+
+        document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }))
+        expect(document.activeElement?.textContent).toBe('Ранчо')
+        document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }))
+        expect(document.activeElement?.textContent).toBe('Жалюзи')
+
+        document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+        expect(fences.dropdown.hidden).toBe(true)
+        expect(document.activeElement).toBe(fences.trigger)
+    })
 })
 
 describe('initMobileNav', () => {

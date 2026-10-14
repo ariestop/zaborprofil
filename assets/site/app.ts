@@ -9,6 +9,7 @@ import {
     initLeadPlans,
     initMapEmbeds,
     initMobileNav,
+    initNavDropdowns,
     initOfficeStatus,
     initPriceMatrices,
     initVideoEmbeds,
@@ -125,6 +126,7 @@ function initLeadForm(form: HTMLFormElement): void {
 document.querySelectorAll<HTMLFormElement>('.js-lead-form').forEach(initLeadForm)
 
 initMobileNav()
+initNavDropdowns()
 initCallbar()
 initGalleries()
 initVideoEmbeds()

@@ -11,6 +11,8 @@ use App\Module\Content\Domain\Enum\PageType;
 use App\Module\Content\Domain\Repository\PageBlockRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use App\Module\Content\Domain\ValueObject\PageVisibility;
+use App\Module\Menu\Application\Command\MenuItemInput;
+use App\Module\Menu\Application\Service\MenuTreeService;
 use App\Tests\Support\Database\SchemaTestHelper;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
@@ -66,6 +68,44 @@ final class PublicSiteLayoutTest extends WebTestCase
         $crawler = $client->request('GET', '/zabory/');
 
         self::assertGreaterThan(0, $crawler->filter('nav[aria-label="Основная навигация"] a[href="/zabor-jaluzi/"]')->count());
+    }
+
+    public function testHeaderSectionsOpenCompactListsWithPricesAndDrawerAccordion(): void
+    {
+        $client = self::createClient();
+        $this->createPage('/zabory/', 'Заборы', [[BlockType::RichText, ['html' => '<p>Текст</p>']]]);
+        $menu = $this->menuTree();
+        $fences = $menu->create(new MenuItemInput('header', 'Заборы', '/zabory/'));
+        $menu->create(new MenuItemInput('header', 'Забор Жалюзи', '/zabor-jaluzi/', 'от 3 400 ₽/м²', parentId: $fences->id()->toBase32()));
+        $menu->create(new MenuItemInput('header', 'Забор Ранчо', '/gorizont/', 'Горизонтальные панели', parentId: $fences->id()->toBase32()));
+        $menu->create(new MenuItemInput('header', 'Скрытый', '/hidden/', active: false, parentId: $fences->id()->toBase32()));
+        $materials = $menu->create(new MenuItemInput('header', 'Материалы', '/fasad/profnastil/'));
+        $menu->create(new MenuItemInput('header', 'Профнастил', '/fasad/profnastil/', parentId: $materials->id()->toBase32()));
+        $menu->create(new MenuItemInput('header', 'Контакты', '/contacts/'));
+
+        $crawler = $client->request('GET', '/zabory/');
+
+        self::assertResponseIsSuccessful();
+        $nav = $crawler->filter('nav[aria-label="Основная навигация"]');
+        $triggers = $nav->filter('button[data-nav-trigger]');
+        self::assertSame(['Заборы', 'Материалы'], $triggers->each(static fn ($node): string => trim($node->text())));
+        self::assertSame('false', $triggers->first()->attr('aria-expanded'));
+
+        $list = $crawler->filter('#'.$triggers->first()->attr('aria-controls'));
+        self::assertNotNull($list->attr('hidden'), 'Список закрыт, пока его не раскрыли.');
+        self::assertSame(['/zabor-jaluzi/', '/gorizont/'], $list->filter('.zp-nav__list a')->each(static fn ($node): ?string => $node->attr('href')), 'Скрытый подпункт на сайт не попадает.');
+        self::assertSame('от 3 400 ₽/м²', $list->filter('a[href="/zabor-jaluzi/"] .zp-nav__price')->text(), 'Подпись с цифрами — цена справа.');
+        self::assertSame('Горизонтальные панели', $list->filter('a[href="/gorizont/"] .zp-nav__hint')->text(), 'Текстовая подпись — под названием.');
+        self::assertSame('/zabory/', $list->filter('a.zp-nav__all')->attr('href'));
+        self::assertStringContainsString('Все заборы', $list->filter('a.zp-nav__all')->text());
+        self::assertSame(0, $crawler->filter('#'.$triggers->eq(1)->attr('aria-controls').' a.zp-nav__all')->count(), 'Ссылка «Все …» не дублирует подпункт с тем же адресом.');
+        self::assertSame(1, $nav->filter('a.zp-nav__item[href="/contacts/"]')->count());
+
+        $drawer = $crawler->filter('#mobile-nav nav');
+        self::assertSame(2, $drawer->filter('details.zp-drawer__group')->count());
+        self::assertNotNull($drawer->filter('details.zp-drawer__group')->first()->attr('open'), 'Первый раздел в боковом меню раскрыт.');
+        self::assertSame(1, $drawer->filter('details a[href="/gorizont/"]')->count());
+        self::assertSame(1, $drawer->filter(':scope > a[href="/contacts/"]')->count());
     }
 
     public function testFirstScreenBlockOutputsPageHeadingExactlyOnce(): void
@@ -129,6 +169,13 @@ final class PublicSiteLayoutTest extends WebTestCase
             $entities[] = new PageBlock($page, $blockType, $blockType->value, $position, $content, [], true, PageVisibility::Public);
         }
         $this->blockRepository()->saveAll($entities);
+    }
+
+    private function menuTree(): MenuTreeService
+    {
+        $service = self::getContainer()->get(MenuTreeService::class);
+
+        return $service instanceof MenuTreeService ? $service : throw new LogicException('MenuTreeService service is not available.');
     }
 
     private function pageRepository(): PageRepositoryInterface
