@@ -138,6 +138,11 @@ initAudienceSwitch()
 initCopyButtons()
 initMapEmbeds()
 
+// Плеер media-chrome грузится только на страницах с загруженным видео.
+if (document.querySelector('[data-zp-player]') !== null) {
+    void import('./player').then((module) => module.initVideoPlayers())
+}
+
 // Swiper (~40 КБ JS + CSS) нужен только страницам со слайдером — остальным он не загружается.
 if (document.querySelector('.js-site-slider') !== null) {
     void import('./slider').then((module) => module.initSiteSliders())

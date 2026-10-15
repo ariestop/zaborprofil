@@ -11,6 +11,8 @@ final readonly class UploadValidator
 {
     // Публичные: те же ограничения применяет синхронизация медиатеки к файлам, перенесённым вручную.
     public const int MAX_SIZE_BYTES = 10_485_760;
+    // Видео (портфолио) крупнее картинок; лимит ниже 64 МБ из client_max_body_size/upload_max_filesize.
+    public const int MAX_VIDEO_SIZE_BYTES = 62_914_560;
     public const int MAX_IMAGE_WIDTH = 8_000;
     public const int MAX_IMAGE_HEIGHT = 8_000;
 
@@ -24,7 +26,14 @@ final readonly class UploadValidator
         'webp' => ['image/webp'],
         'avif' => ['image/avif'],
         'pdf' => ['application/pdf', 'application/x-pdf'],
+        'mp4' => ['video/mp4'],
+        'webm' => ['video/webm'],
     ];
+
+    /**
+     * @var list<string>
+     */
+    private const array VIDEO_EXTENSIONS = ['mp4', 'webm'];
 
     /**
      * @var list<string>
@@ -59,7 +68,9 @@ final readonly class UploadValidator
         $this->rejectDoubleExtension($file->getClientOriginalName(), $extension);
 
         $size = $file->getSize();
-        if (!\is_int($size) || $size <= 0 || $size > self::MAX_SIZE_BYTES) {
+        $isVideo = \in_array($extension, self::VIDEO_EXTENSIONS, true);
+        $maxSize = $isVideo ? self::MAX_VIDEO_SIZE_BYTES : self::MAX_SIZE_BYTES;
+        if (!\is_int($size) || $size <= 0 || $size > $maxSize) {
             throw new UploadSecurityException('Uploaded file size is not allowed.');
         }
 
@@ -68,7 +79,12 @@ final readonly class UploadValidator
             throw new UploadSecurityException('Uploaded file MIME type is not allowed.');
         }
 
-        [$width, $height] = $this->validateImageDimensions($file, $extension);
+        if ($isVideo) {
+            $this->validateVideoSignature($file, $extension);
+            [$width, $height] = [null, null];
+        } else {
+            [$width, $height] = $this->validateImageDimensions($file, $extension);
+        }
 
         return new ValidatedUpload(
             $extension,
@@ -96,6 +112,29 @@ final readonly class UploadValidator
 
         if (\in_array($normalizedExtension, self::DANGEROUS_EXTENSIONS, true)) {
             throw new UploadSecurityException('Uploaded file extension is dangerous.');
+        }
+    }
+
+    /**
+     * MIME из fileinfo смотрит на те же байты, но явная сверка сигнатуры контейнера отсекает файлы,
+     * у которых совпал лишь общий заголовок: MP4 — блок `ftyp` с 5-го байта, WebM — EBML с doctype `webm`.
+     */
+    private function validateVideoSignature(UploadedFile $file, string $extension): void
+    {
+        $handle = fopen($file->getPathname(), 'rb');
+        $header = $handle === false ? false : fread($handle, 64);
+        if ($handle !== false) {
+            fclose($handle);
+        }
+
+        $valid = \is_string($header) && match ($extension) {
+            'mp4' => \strlen($header) >= 12 && substr($header, 4, 4) === 'ftyp',
+            'webm' => str_starts_with($header, "\x1A\x45\xDF\xA3") && str_contains($header, 'webm'),
+            default => false,
+        };
+
+        if (!$valid) {
+            throw new UploadSecurityException('Uploaded video container cannot be read.');
         }
     }
 

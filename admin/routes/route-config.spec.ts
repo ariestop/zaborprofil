@@ -79,12 +79,12 @@ describe('route permissions', () => {
     }
   })
 
-  it('shows an editor pages and media only', () => {
-    expect(navKeys(ROLE_PERMISSIONS.ROLE_EDITOR)).toEqual(['dashboard', 'pages', 'media'])
+  it('shows an editor pages, media and portfolio only', () => {
+    expect(navKeys(ROLE_PERMISSIONS.ROLE_EDITOR)).toEqual(['dashboard', 'pages', 'media', 'portfolio'])
   })
 
-  it('shows an SEO specialist pages, site menu and SEO only', () => {
-    expect(navKeys(ROLE_PERMISSIONS.ROLE_SEO)).toEqual(['dashboard', 'pages', 'menu', 'seo'])
+  it('shows an SEO specialist pages, portfolio, site menu and SEO only', () => {
+    expect(navKeys(ROLE_PERMISSIONS.ROLE_SEO)).toEqual(['dashboard', 'pages', 'portfolio', 'menu', 'seo'])
   })
 
   it('shows a manager leads only', () => {

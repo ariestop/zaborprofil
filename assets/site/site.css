@@ -521,6 +521,69 @@
     .zp-video video {
         @apply absolute inset-0 h-full w-full border-0;
     }
+    .zp-video .zp-player {
+        @apply absolute inset-0;
+    }
+
+    /* ---------- Плеер загруженного видео (media-chrome, assets/site/player.ts) ---------- */
+    .zp-player {
+        @apply block aspect-video w-full overflow-hidden rounded-2xl bg-night;
+        --media-font-family: var(--font-sans);
+        --media-font-size: 15px;
+        --media-primary-color: var(--color-white);
+        --media-secondary-color: transparent;
+        --media-icon-color: var(--color-white);
+        --media-control-background: transparent;
+        --media-control-hover-background: color-mix(in srgb, var(--color-white) 14%, transparent);
+        --media-control-height: 26px;
+        --media-control-padding: 11px;
+        --media-button-icon-height: 26px;
+        --media-range-bar-color: var(--color-brand-500);
+        --media-range-track-height: 5px;
+        --media-range-track-border-radius: 3px;
+        --media-range-track-background: color-mix(in srgb, var(--color-white) 28%, transparent);
+        --media-time-range-buffered-color: color-mix(in srgb, var(--color-white) 45%, transparent);
+        --media-range-thumb-background: var(--color-white);
+        --media-range-thumb-height: 15px;
+        --media-range-thumb-width: 15px;
+        --media-focus-box-shadow: inset 0 0 0 3px var(--color-badge);
+        --media-loading-indicator-icon-height: 72px;
+    }
+    .zp-player video {
+        @apply h-full w-full object-contain;
+    }
+    /* До загрузки модуля элементы media-chrome не определены: видна только нативная панель <video>. */
+    .zp-player:not(:defined) > :not(video) {
+        @apply hidden;
+    }
+    .zp-player__bar {
+        @apply w-full gap-1 rounded-b-2xl px-1 pb-1;
+        background: linear-gradient(to top, color-mix(in srgb, var(--color-night) 92%, transparent), transparent);
+    }
+    .zp-player__bar > * {
+        @apply min-h-12 rounded-[10px];
+    }
+    .zp-player__center {
+        @apply size-[72px] rounded-full bg-brand-700 shadow-lg md:size-20;
+        --media-button-icon-height: 34px;
+        --media-control-hover-background: var(--color-brand-800);
+        --media-control-padding: 19px;
+    }
+    /* Пока ролик идёт, большая кнопка не перекрывает кадр. */
+    .zp-player:not([mediapaused]) .zp-player__center,
+    .zp-player[medialoading]:not([mediapaused]) .zp-player__center {
+        @apply hidden;
+    }
+    .zp-player[mediapaused] .zp-player__bar {
+        @apply opacity-100;
+    }
+    @media (max-width: 639px) {
+        .zp-player__volume,
+        .zp-player__rate,
+        .zp-player__pip {
+            @apply hidden;
+        }
+    }
 }
 
 @layer components {

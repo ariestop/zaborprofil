@@ -66,6 +66,7 @@ final class AdminMediaApiTest extends WebTestCase
         $this->seedAsset('fence_50%.png', 'image/png', 100);
         $this->seedAsset('price-list.pdf', 'application/pdf', 200);
         $this->seedAsset('other.png', 'image/png', 400, 'Забор из профнастила');
+        $this->seedAsset('montage.mp4', 'video/mp4', 5000);
 
         $client->request('GET', '/admin/api/media/assets?q=fence_50%25');
         self::assertSame(['fence_50%.png'], $this->originalNames($this->payload($client)));
@@ -75,6 +76,12 @@ final class AdminMediaApiTest extends WebTestCase
 
         $client->request('GET', '/admin/api/media/assets?type=document');
         self::assertSame(['price-list.pdf'], $this->originalNames($this->payload($client)));
+
+        $client->request('GET', '/admin/api/media/assets?type=video');
+        self::assertSame(['montage.mp4'], $this->originalNames($this->payload($client)));
+
+        $client->request('GET', '/admin/api/media/assets?format=webm');
+        self::assertSame([], $this->originalNames($this->payload($client)));
 
         $client->request('GET', '/admin/api/media/assets?type=image&sort=size');
         self::assertSame(['other.png', 'gate.jpg', 'fence_50%.png'], $this->originalNames($this->payload($client)));
@@ -87,7 +94,7 @@ final class AdminMediaApiTest extends WebTestCase
     {
         $client = $this->adminClient();
 
-        foreach (['page=0', 'page=abc', 'perPage=101', 'type=video', 'sort=random'] as $query) {
+        foreach (['page=0', 'page=abc', 'perPage=101', 'type=audio', 'sort=random'] as $query) {
             $client->request('GET', '/admin/api/media/assets?'.$query);
 
             self::assertResponseStatusCodeSame(422, $query);

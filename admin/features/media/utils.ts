@@ -1,16 +1,31 @@
 import { ApiError } from '../../shared/api/client'
 import type { MediaAssetItem, MediaUsageItem } from '../../types/api'
 
-export const MEDIA_ACCEPT = '.jpg,.jpeg,.png,.webp,.avif,.pdf,image/jpeg,image/png,image/webp,image/avif,application/pdf'
+export const MEDIA_ACCEPT =
+  '.jpg,.jpeg,.png,.webp,.avif,.pdf,.mp4,.webm,image/jpeg,image/png,image/webp,image/avif,application/pdf,video/mp4,video/webm'
+export const VIDEO_ACCEPT = '.mp4,.webm,video/mp4,video/webm'
 export const MEDIA_MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+/** Лимит `UploadValidator::MAX_VIDEO_SIZE_BYTES`. */
+export const MEDIA_MAX_VIDEO_UPLOAD_BYTES = 60 * 1024 * 1024
 
-const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'application/pdf'])
-const ALLOWED_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp', 'avif', 'pdf'])
+const ALLOWED_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/avif',
+  'application/pdf',
+  'video/mp4',
+  'video/webm',
+])
+const ALLOWED_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp', 'avif', 'pdf', 'mp4', 'webm'])
+const VIDEO_EXTENSIONS = new Set(['mp4', 'webm'])
+const ALLOWED_TYPES_MESSAGE = 'Недопустимый тип файла. Разрешены JPG, PNG, WebP, AVIF, PDF и видео MP4, WebM.'
 
 const SERVER_MESSAGES: Array<[string, string]> = [
-  ['Uploaded file extension is not allowed', 'Недопустимый тип файла. Разрешены JPG, PNG, WebP, AVIF и PDF.'],
+  ['Uploaded file extension is not allowed', ALLOWED_TYPES_MESSAGE],
   ['Uploaded file MIME type is not allowed', 'Содержимое файла не соответствует разрешённым форматам.'],
-  ['Uploaded file size is not allowed', 'Файл пустой или больше 10 МБ.'],
+  ['Uploaded file size is not allowed', 'Файл пустой или больше лимита: 10 МБ для картинок и PDF, 60 МБ для видео.'],
+  ['video container cannot be read', 'Не удалось прочитать видео: файл повреждён или это не MP4/WebM.'],
   ['Uploaded file exceeds the allowed size', 'Файл больше допустимого размера.'],
   ['Uploaded file is not valid', 'Файл не удалось загрузить на сервер.'],
   ['dangerous', 'Имя файла содержит опасное расширение.'],
@@ -42,6 +57,10 @@ export function isImageAsset(asset: Pick<MediaAssetItem, 'mimeType'>): boolean {
   return asset.mimeType.startsWith('image/')
 }
 
+export function isVideoAsset(asset: Pick<MediaAssetItem, 'mimeType'>): boolean {
+  return asset.mimeType.startsWith('video/')
+}
+
 export function thumbnailPath(asset: MediaAssetItem): string | null {
   if (!isImageAsset(asset)) {
     return null
@@ -59,15 +78,16 @@ export function validateUploadFile(file: Pick<File, 'name' | 'size' | 'type'>): 
   const extension = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() ?? '' : ''
 
   if (!ALLOWED_EXTENSIONS.has(extension) || (file.type !== '' && !ALLOWED_MIME_TYPES.has(file.type))) {
-    return 'Недопустимый тип файла. Разрешены JPG, PNG, WebP, AVIF и PDF.'
+    return extension === 'mov' ? 'Видео MOV не поддерживается: сохраните его в MP4.' : ALLOWED_TYPES_MESSAGE
   }
 
   if (file.size <= 0) {
     return 'Файл пустой.'
   }
 
-  if (file.size > MEDIA_MAX_UPLOAD_BYTES) {
-    return `Файл больше ${formatFileSize(MEDIA_MAX_UPLOAD_BYTES)}.`
+  const limit = VIDEO_EXTENSIONS.has(extension) ? MEDIA_MAX_VIDEO_UPLOAD_BYTES : MEDIA_MAX_UPLOAD_BYTES
+  if (file.size > limit) {
+    return `Файл больше ${formatFileSize(limit)}.`
   }
 
   return null

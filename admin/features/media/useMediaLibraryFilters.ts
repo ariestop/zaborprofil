@@ -21,7 +21,7 @@ export interface MediaLibraryFilters {
     dateTo: string
     /** Дата «с» позже даты «по»: диапазон не отправляется на сервер. */
     invalidRange: boolean
-    /** Задан поиск или фильтр, кроме сортировки (и типа, если медиатека показывает только изображения). */
+    /** Задан поиск или фильтр, кроме сортировки (и типа, если медиатека показывает файлы одного типа). */
     filtersActive: boolean
     params: MediaListParams
     setSearch: (value: string) => void
@@ -41,11 +41,11 @@ export interface MediaLibraryFilters {
  * Поиск, фильтры и пагинация медиатеки. Любое изменение поиска или фильтра возвращает на первую страницу,
  * поиск уходит на сервер с задержкой 300 мс.
  */
-export function useMediaLibraryFilters(imagesOnly: boolean, perPage: number): MediaLibraryFilters {
+export function useMediaLibraryFilters(fixedType: MediaTypeFilter, perPage: number): MediaLibraryFilters {
     const [searchInput, setSearchInput] = useState('')
     const search = useDebouncedValue(searchInput, 300)
     const [page, setPage] = useState(1)
-    const [typeFilter, setTypeFilter] = useState<MediaTypeFilter>(imagesOnly ? 'image' : '')
+    const [typeFilter, setTypeFilter] = useState<MediaTypeFilter>(fixedType)
     const [sort, setSort] = useState<MediaSort>('newest')
     const [formatFilter, setFormatFilter] = useState<MediaFormatFilter>('')
     const [usageFilter, setUsageFilter] = useState<MediaUsageFilter>('')
@@ -69,7 +69,7 @@ export function useMediaLibraryFilters(imagesOnly: boolean, perPage: number): Me
     }
     const filtersActive =
         search.trim() !== '' ||
-        (!imagesOnly && typeFilter !== '') ||
+        (fixedType === '' && typeFilter !== '') ||
         formatFilter !== '' ||
         usageFilter !== '' ||
         folderFilter !== '' ||
@@ -85,7 +85,7 @@ export function useMediaLibraryFilters(imagesOnly: boolean, perPage: number): Me
 
     const resetFilters = (): void => {
         setSearchInput('')
-        setTypeFilter(imagesOnly ? 'image' : '')
+        setTypeFilter(fixedType)
         setFormatFilter('')
         setUsageFilter('')
         setFolderFilter('')
