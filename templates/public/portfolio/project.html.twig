@@ -16,20 +16,17 @@
                     <span>{% include 'public/portfolio/_media-count.html.twig' with {project: project} only %}</span>
                 </p>
                 {% if specs is not empty %}
-                    <dl class="zp-pf-nums">
-                        {% for spec in specs|slice(0, 4) %}
-                            <div>
-                                <dt>{{ spec.label }}</dt>
-                                <dd>{{ spec.value }}</dd>
-                            </div>
-                        {% endfor %}
-                    </dl>
+                    {% include 'public/portfolio/_nums.html.twig' with {specs: specs, class: 'max-md:hidden'} only %}
                 {% endif %}
             </div>
         </section>
 
         <div class="zp-container">
             {% include 'public/portfolio/_gallery.html.twig' %}
+            {# На телефоне фото идёт сразу под заголовком (как пост), цифры — под ним. #}
+            {% if specs is not empty %}
+                {% include 'public/portfolio/_nums.html.twig' with {specs: specs, light: true, class: 'md:hidden'} only %}
+            {% endif %}
 
             <div class="zp-pf-body">
                 <div class="min-w-0">

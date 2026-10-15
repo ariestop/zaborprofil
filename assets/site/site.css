@@ -1309,6 +1309,139 @@
         @apply w-[82%] shrink-0 snap-start sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)];
     }
 
+    /*
+     * V5: три приёма из Instagram на телефоне (до 767 px). На компьютере вид прежний.
+     * 1) работа: фото во всю ширину сразу под заголовком, счётчик и точки, крупные цифры — под фото;
+     * 2) хаб: разделы — кружки в одну прокручиваемую строку вместо плиток;
+     * 3) раздел: переключатель «Карточки / Сетка», сетка — фото 3 в ряд со значками ▶ и ⧉.
+     */
+    .zp-pf-gallery__badge {
+        @apply pointer-events-none absolute top-3 right-3 z-10 rounded-full bg-night/75 px-2.5 py-1 font-cond text-[15px] font-semibold text-white tabular-nums md:hidden;
+    }
+    .zp-pf-gallery__badge[hidden],
+    .zp-pf-dots[hidden] {
+        @apply hidden;
+    }
+    .zp-pf-dots {
+        @apply flex justify-center gap-1.5 pt-3 pb-1 md:hidden;
+    }
+    .zp-pf-dots i {
+        @apply size-[7px] rounded-full bg-line-strong transition-colors;
+    }
+    .zp-pf-dots i.is-active {
+        @apply bg-brand-700;
+    }
+    .zp-pf-nums--light {
+        @apply mt-4;
+    }
+    .zp-pf-nums--light div {
+        @apply border-line bg-surface;
+    }
+    .zp-pf-nums--light dd {
+        @apply text-ink;
+    }
+    .zp-pf-nums--light dt {
+        @apply text-graphite;
+    }
+    .zp-pf-card__kind {
+        @apply pointer-events-none absolute top-2 right-2 hidden size-5 text-white drop-shadow-[0_1px_3px_rgb(0_0_0/0.55)];
+    }
+    .zp-pf-card__kind svg {
+        @apply size-full;
+    }
+    .zp-pf-view {
+        @apply mb-4 inline-flex gap-1 rounded-[var(--radius-btn)] bg-surface-strong p-1 md:hidden;
+    }
+    .zp-pf-view[hidden] {
+        @apply hidden;
+    }
+    .zp-pf-view button {
+        @apply inline-flex min-h-12 items-center gap-2 rounded-lg px-4 text-[17px] font-semibold text-graphite transition-colors focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
+    }
+    .zp-pf-view button svg {
+        @apply size-5;
+    }
+    .zp-pf-view button[aria-pressed='true'] {
+        @apply bg-white text-ink shadow-sm;
+    }
+
+    @media (max-width: 767px) {
+        /* 1) Галерея работы как пост: во всю ширину, без скруглений, точки под кадром, ленту и стрелки заменяют свайп и точки. */
+        .zp-pf-gallery {
+            @apply -mx-4 mt-0;
+        }
+        .zp-pf-slide__photo,
+        .zp-pf-slide .zp-video,
+        .zp-pf-slide .zp-player {
+            @apply rounded-none;
+        }
+        .zp-pf-slide__caption {
+            @apply px-4;
+        }
+        .zp-pf-gallery__nav {
+            @apply hidden;
+        }
+        .zp-pf-strip {
+            @apply px-4;
+        }
+        .zp-pf-band--project {
+            @apply pb-5;
+        }
+
+        /* 2) Разделы в хабе: кружки с фото, подпись и число работ под ними. */
+        .zp-pf-cats {
+            @apply -mx-4 mt-5 flex gap-4 overflow-x-auto px-4 pb-1 [scrollbar-width:none];
+        }
+        .zp-pf-cats li {
+            @apply shrink-0;
+        }
+        .zp-pf-cat {
+            @apply flex aspect-auto w-24 flex-col items-center gap-1.5 overflow-visible rounded-none bg-transparent text-center;
+        }
+        .zp-pf-cat picture {
+            @apply contents;
+        }
+        .zp-pf-cat::after {
+            @apply hidden;
+        }
+        /* Важность нужна, чтобы перебить size-full у <img> из responsive_image(). */
+        .zp-pf-cat img {
+            @apply size-[4.5rem]! shrink-0 rounded-full border-[3px] border-night opacity-100 outline-2 outline-brand-500;
+        }
+        .zp-pf-cat:hover img {
+            @apply scale-100;
+        }
+        .zp-pf-cat__text {
+            @apply static gap-0;
+        }
+        .zp-pf-cat__title {
+            @apply text-[15px] leading-tight hyphens-auto;
+        }
+        .zp-pf-cat__count {
+            @apply text-sm;
+        }
+
+        /* 3) Плотная сетка в разделе. Вся плитка остаётся ссылкой: подпись невидима, но растянутая ссылка на месте. */
+        .zp-pf-grid.is-compact {
+            @apply -mx-4 grid-cols-3 gap-0.5;
+        }
+        .zp-pf-grid.is-compact .zp-pf-card {
+            @apply rounded-none border-0 hover:shadow-none;
+        }
+        .zp-pf-grid.is-compact .zp-pf-card__media {
+            @apply aspect-square;
+        }
+        .zp-pf-grid.is-compact .zp-pf-badge {
+            @apply hidden;
+        }
+        .zp-pf-grid.is-compact .zp-pf-card__kind {
+            @apply block;
+        }
+        .zp-pf-grid.is-compact .zp-pf-card__body {
+            @apply absolute inset-0 overflow-hidden p-0 opacity-0;
+        }
+    }
+
     @media (prefers-reduced-motion: reduce) {
         .zp-pf-card:hover .zp-pf-card__media img,
         .zp-pf-cat:hover img {

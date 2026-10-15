@@ -15,6 +15,10 @@
                 eager: eager|default(false)
             }) }}
         {% endif %}
+        {# Значок вида для компактной сетки на телефоне (как в Instagram): ▶ — есть видео, ⧉ — несколько фото. #}
+        {% if project.videos|length > 0 or project.photos|length > 1 %}
+            <span class="zp-pf-card__kind" aria-hidden="true"><svg><use href="#{{ project.videos|length > 0 ? 'i-play' : 'i-photos' }}"/></svg></span>
+        {% endif %}
         <span class="zp-pf-badge">
             {% if project.videos|length > 0 %}<svg aria-hidden="true"><use href="#i-play"/></svg>{% endif %}
             {% include 'public/portfolio/_media-count.html.twig' with {project: project} only %}

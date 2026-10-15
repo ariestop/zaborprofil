@@ -38,6 +38,8 @@
             </figure>
         {% endfor %}
         {% if items|length > 1 %}
+            <span class="zp-pf-gallery__badge" data-pf-badge hidden aria-hidden="true">1 / {{ items|length }}</span>
+            <span class="zp-pf-dots" data-pf-dots hidden aria-hidden="true"></span>
             <div class="zp-pf-gallery__nav" data-pf-nav hidden>
                 <button type="button" class="zp-pf-arrow" data-pf-prev aria-label="Предыдущий кадр"><svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
                 <span class="zp-pf-gallery__counter" data-pf-counter aria-live="polite">1 / {{ items|length }}</span>

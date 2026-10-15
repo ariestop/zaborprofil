@@ -14,7 +14,7 @@ import {
     initPriceMatrices,
     initVideoEmbeds,
 } from './ui'
-import { initPortfolioGalleries, initPortfolioRows } from './portfolio'
+import { initPortfolioGalleries, initPortfolioRows, initPortfolioViewToggle } from './portfolio'
 
 function formPayload(form: HTMLFormElement): Record<string, unknown> {
     const data = new FormData(form)
@@ -140,6 +140,7 @@ initCopyButtons()
 initMapEmbeds()
 initPortfolioGalleries()
 initPortfolioRows()
+initPortfolioViewToggle()
 
 // Плеер media-chrome грузится только на страницах с загруженным видео.
 if (document.querySelector('[data-zp-player]') !== null) {

@@ -26,7 +26,16 @@
         <section class="zp-section">
             <div class="zp-container">
                 <h2 class="sr-only">Работы раздела «{{ category.title }}»</h2>
-                <div class="zp-pf-grid">
+                {# На телефоне — переключатель вида: карточки с подписями или плотная сетка фото 3 в ряд (assets/site/portfolio.ts). #}
+                <div class="zp-pf-view" role="group" aria-label="Вид списка работ" data-pf-view hidden>
+                    <button type="button" data-pf-view-mode="cards" aria-pressed="true">
+                        <svg aria-hidden="true" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" d="M4 4h16v7H4zM4 15h16v5H4z"/></svg>Карточки
+                    </button>
+                    <button type="button" data-pf-view-mode="grid" aria-pressed="false">
+                        <svg aria-hidden="true" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" d="M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18"/></svg>Сетка
+                    </button>
+                </div>
+                <div class="zp-pf-grid" data-pf-grid>
                     {% for project in projects %}
                         {% include 'public/portfolio/_card.html.twig' with {project: project, eager: loop.index <= 3} only %}
                     {% endfor %}
