@@ -98,6 +98,12 @@
     .zp-header__bar {
         @apply flex h-14 items-center gap-2 md:h-[4.5rem] md:gap-4 lg:max-w-[90rem];
     }
+    /* Номер телефона текстом (от 1800 px) требует шапку шире 90rem; отдельным правилом, чтобы перебить lg:max-w. */
+    @media (min-width: 1800px) {
+        .zp-header__bar {
+            max-width: 112rem;
+        }
+    }
     .zp-logo {
         @apply flex shrink-0 items-center;
     }
@@ -106,11 +112,11 @@
     }
     /*
      * Меню шапки, вариант B брендбука: пункты и разделы в одну строку, раздел раскрывает компактный список
-     * подпунктов с ценой справа. Пункты от 48 px, текст 17 px. Чтобы строка помещалась: на 1024–1279 px
-     * телефон — иконкой и без кнопки «Рассчитать стоимость», номер телефона текстом — от 1440 px.
+     * подпунктов с ценой справа. Пункты от 48 px, текст 17 px. Чтобы строка из 6 пунктов помещалась: меню строкой —
+     * от 1280 px (уже — боковое меню), на 1280–1439 px без кнопки «Рассчитать стоимость», номер телефона текстом — от 1800 px.
      */
     .zp-nav {
-        @apply hidden min-w-0 flex-1 items-center justify-center gap-0.5 lg:flex;
+        @apply hidden min-w-0 flex-1 items-center justify-center gap-0.5 xl:flex;
     }
     .zp-nav__group {
         @apply relative;
@@ -155,17 +161,17 @@
         @apply font-cond leading-none font-extrabold tracking-normal tabular-nums;
     }
     .zp-header__phone {
-        @apply inline-flex size-12 shrink-0 items-center justify-center gap-2 rounded-full bg-brand-50 font-cond font-extrabold text-ink tabular-nums transition hover:bg-brand-100 min-[1440px]:size-auto min-[1440px]:rounded-lg min-[1440px]:bg-transparent min-[1440px]:px-3 min-[1440px]:py-2 min-[1440px]:text-xl min-[1440px]:whitespace-nowrap;
+        @apply inline-flex size-12 shrink-0 items-center justify-center gap-2 rounded-full bg-brand-50 font-cond font-extrabold text-ink tabular-nums transition hover:bg-brand-100 min-[1800px]:size-auto min-[1800px]:rounded-lg min-[1800px]:bg-transparent min-[1800px]:px-3 min-[1800px]:py-2 min-[1800px]:text-xl min-[1800px]:whitespace-nowrap;
     }
     .zp-burger {
-        @apply inline-flex size-12 items-center justify-center rounded-full text-ink transition hover:bg-surface-strong lg:hidden;
+        @apply inline-flex size-12 items-center justify-center rounded-full text-ink transition hover:bg-surface-strong xl:hidden;
     }
     /*
      * Боковое меню телефона (templates/base.html.twig): панель выезжает справа, где кнопка меню и большой палец,
      * страница за ней затемнена. Закрытие — крестик на месте бургера, тап по затемнению, Esc.
      */
     .zp-drawer {
-        @apply fixed inset-0 z-[60] lg:hidden;
+        @apply fixed inset-0 z-[60] xl:hidden;
     }
     .zp-drawer[hidden] {
         display: none;
