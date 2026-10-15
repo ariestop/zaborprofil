@@ -1,0 +1,11 @@
+{# Подпункт выпадающего списка шапки. Подпись с цифрами — это цена («от 3 400 ₽/м²»): справа шрифтом цен,
+   остальной текст — под названием. #}
+{% set hint = item.hint ?? null %}
+{% set is_price = hint is not empty and hint matches '/\\d/' %}
+<a class="zp-nav__link" href="{{ item.url }}">
+    <span class="min-w-0">
+        <span class="block">{{ item.label }}</span>
+        {% if hint is not empty and not is_price %}<span class="zp-nav__hint">{{ hint }}</span>{% endif %}
+    </span>
+    {% if is_price %}<span class="zp-nav__price">{{ hint }}</span>{% endif %}
+</a>

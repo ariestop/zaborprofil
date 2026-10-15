@@ -127,8 +127,8 @@ export function MenuItemDialog({ open, mode, position, positionLabel, initial, s
             <span>Подпись <span className="font-normal text-graphite">— необязательно</span></span>
             <span className="font-normal tabular-nums text-graphite">{draft.hint.trim().length}/{HINT_MAX_LENGTH}</span>
           </label>
-          <Input id={ids.hint} value={draft.hint} onChange={(event) => set('hint', event.target.value)} aria-invalid={touched && hintError !== null} placeholder="Например: Металлические ламели" />
-          <p className="mt-1.5 text-sm text-graphite dark:text-slate-400">Короткое пояснение под названием в раскрытом меню.</p>
+          <Input id={ids.hint} value={draft.hint} onChange={(event) => set('hint', event.target.value)} aria-invalid={touched && hintError !== null} placeholder="Например: от 3 400 ₽/м²" />
+          <p className="mt-1.5 text-sm text-graphite dark:text-slate-400">В раскрытом меню шапки цена («от 3 400 ₽/м²») встанет справа от названия, другой текст — под ним.</p>
           {fieldError(hintError, ids.hint)}
         </div>
 

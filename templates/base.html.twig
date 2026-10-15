@@ -99,9 +99,30 @@
                     </a>
 
                     {% if header_menu %}
-                        <nav class="zp-nav" aria-label="Основная навигация">
+                        {# Брендбук «Периметр», вариант меню B: раздел с подпунктами раскрывает компактный список
+                           (наведение, клик, клавиатура — assets/site/ui.ts, initNavDropdowns). #}
+                        <nav class="zp-nav" aria-label="Основная навигация" data-nav-menu>
                             {% for item in header_menu %}
-                                <a href="{{ item.url }}">{{ item.label }}</a>
+                                {% set children = item.children ?? [] %}
+                                {% if children %}
+                                    <div class="zp-nav__group" data-nav-group>
+                                        <button class="zp-nav__item" type="button" aria-expanded="false" aria-controls="nav-list-{{ loop.index }}" data-nav-trigger>
+                                            {{ item.label }}<svg class="zp-nav__chevron" aria-hidden="true"><use href="#i-chevron"/></svg>
+                                        </button>
+                                        <div class="zp-nav__dropdown" id="nav-list-{{ loop.index }}" data-nav-dropdown hidden>
+                                            <ul class="zp-nav__list">
+                                                {% for child in children %}
+                                                    <li>{% include 'public/partials/nav-link.html.twig' with {item: child} only %}</li>
+                                                {% endfor %}
+                                            </ul>
+                                            {% if item.url not in children|map(child => child.url) %}
+                                                <a class="zp-nav__all" href="{{ item.url }}">Все {{ item.label|lower }}<svg class="size-4 shrink-0" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <a class="zp-nav__item" href="{{ item.url }}">{{ item.label }}</a>
+                                {% endif %}
                             {% endfor %}
                         </nav>
                     {% endif %}
@@ -109,10 +130,10 @@
                     <div class="zp-header__actions">
                         <a class="zp-header__phone" href="{{ site.phone_href }}">
                             <svg class="size-5 shrink-0 text-brand-500" aria-hidden="true"><use href="#i-phone"/></svg>
-                            <span class="hidden lg:inline">{{ site.phone }}</span>
-                            <span class="sr-only lg:hidden">Позвонить: {{ site.phone }}</span>
+                            <span class="hidden min-[1440px]:inline">{{ site.phone }}</span>
+                            <span class="sr-only min-[1440px]:hidden">Позвонить: {{ site.phone }}</span>
                         </a>
-                        <a class="zp-btn zp-btn--primary zp-btn--sm hidden md:inline-flex" href="#lead-form" data-lead-cta>Рассчитать стоимость</a>
+                        <a class="zp-btn zp-btn--primary zp-btn--sm hidden md:inline-flex lg:hidden xl:inline-flex" href="#lead-form" data-lead-cta>Рассчитать стоимость</a>
                         <button class="zp-burger" type="button" aria-expanded="false" aria-controls="mobile-nav" data-nav-toggle>
                             <svg class="size-6" aria-hidden="true" data-icon-open><use href="#i-menu"/></svg>
                             <svg class="hidden size-6" aria-hidden="true" data-icon-close><use href="#i-close"/></svg>
@@ -136,10 +157,29 @@
                     </div>
                     <nav class="zp-drawer__nav" aria-label="Мобильная навигация">
                         {% for item in header_menu %}
-                            <a href="{{ item.url }}">
-                                <span class="flex min-w-0 items-center gap-3"><svg class="size-6 shrink-0 text-ink" aria-hidden="true"><use href="#{{ menu_icon(item.label, item.url) }}"/></svg>{{ item.label }}</span>
-                                <svg class="size-4 shrink-0 text-graphite/70" aria-hidden="true"><use href="#i-arrow"/></svg>
-                            </a>
+                            {% set children = item.children ?? [] %}
+                            {% if children %}
+                                {# Раздел — аккордеон: первый раскрыт, остальные по нажатию. #}
+                                <details class="zp-drawer__group" {{ loop.first ? 'open' }}>
+                                    <summary>
+                                        <span class="flex min-w-0 items-center gap-3"><svg class="size-6 shrink-0 text-ink" aria-hidden="true"><use href="#{{ menu_icon(item.label, item.url) }}"/></svg>{{ item.label }}</span>
+                                        <svg class="zp-drawer__chevron" aria-hidden="true"><use href="#i-chevron"/></svg>
+                                    </summary>
+                                    <ul class="zp-drawer__sub">
+                                        {% for child in children %}
+                                            <li><a href="{{ child.url }}">{{ child.label }}</a></li>
+                                        {% endfor %}
+                                        {% if item.url not in children|map(child => child.url) %}
+                                            <li><a class="zp-drawer__all" href="{{ item.url }}">Все {{ item.label|lower }}</a></li>
+                                        {% endif %}
+                                    </ul>
+                                </details>
+                            {% else %}
+                                <a href="{{ item.url }}">
+                                    <span class="flex min-w-0 items-center gap-3"><svg class="size-6 shrink-0 text-ink" aria-hidden="true"><use href="#{{ menu_icon(item.label, item.url) }}"/></svg>{{ item.label }}</span>
+                                    <svg class="size-4 shrink-0 text-graphite/70" aria-hidden="true"><use href="#i-arrow"/></svg>
+                                </a>
+                            {% endif %}
                         {% endfor %}
                     </nav>
                     <div class="zp-drawer__foot">

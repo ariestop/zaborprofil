@@ -20,6 +20,10 @@ final class MenuIconResolverTest extends TestCase
         yield 'основное меню: как работаем' => ['Как мы работаем', '/#process', 'i-zp-steps'];
         yield 'основное меню: контакты' => ['Контакты', '#contacts', 'i-zp-pin'];
         yield 'каталог заборов — каталог, а не забор' => ['Каталог заборов', '/zabory/', 'i-zp-catalog'];
+        yield 'раздел по названию, а не по ссылке на каталог' => ['Заборы', '/#catalog', 'i-zp-fence'];
+        yield 'раздел материалов' => ['Материалы', '/fasad/profnastil/', 'i-zp-catalog'];
+        yield 'раздел комплектующих' => ['Комплектующие', '/krepezh-3d-zabor/', 'i-zp-catalog'];
+        yield 'по ссылке, если название ни о чём не говорит' => ['Подробнее', '/zabor-3d-setka/', 'i-zp-fence'];
         yield 'доставка' => ['Доставка и оплата', '/dostavka/', 'i-zp-truck'];
         yield 'замер по ссылке' => ['Вызвать специалиста', '/zamer/', 'i-zp-measure'];
         yield 'гарантии' => ['Гарантии', '/garantii/', 'i-zp-shield'];

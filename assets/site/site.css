@@ -96,7 +96,7 @@
         @apply sticky top-0 z-40 border-b border-line bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/85;
     }
     .zp-header__bar {
-        @apply flex h-14 items-center gap-2 md:h-[4.5rem] md:gap-4;
+        @apply flex h-14 items-center gap-2 md:h-[4.5rem] md:gap-4 lg:max-w-[90rem];
     }
     .zp-logo {
         @apply flex shrink-0 items-center;
@@ -104,11 +104,48 @@
     .zp-logo img {
         @apply h-7 w-auto sm:h-8 md:h-9;
     }
+    /*
+     * Меню шапки, вариант B брендбука: пункты и разделы в одну строку, раздел раскрывает компактный список
+     * подпунктов с ценой справа. Пункты от 48 px, текст 17 px. Чтобы строка помещалась: на 1024–1279 px
+     * телефон — иконкой и без кнопки «Рассчитать стоимость», номер телефона текстом — от 1440 px.
+     */
     .zp-nav {
-        @apply hidden flex-1 items-center justify-center gap-0.5 lg:flex;
+        @apply hidden min-w-0 flex-1 items-center justify-center gap-0.5 lg:flex;
     }
-    .zp-nav a {
-        @apply rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap text-ink transition hover:bg-brand-50 hover:text-brand-800;
+    .zp-nav__group {
+        @apply relative;
+    }
+    .zp-nav__item {
+        @apply inline-flex min-h-12 cursor-pointer items-center gap-1.5 rounded-[var(--radius-btn)] px-3 text-[17px] font-medium whitespace-nowrap text-ink transition-colors hover:bg-brand-50 hover:text-brand-800 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600 aria-expanded:bg-brand-50 aria-expanded:text-brand-800 lg:px-2 xl:px-3;
+    }
+    .zp-nav__chevron {
+        @apply size-4 shrink-0 transition-transform duration-200;
+    }
+    .zp-nav__item[aria-expanded='true'] .zp-nav__chevron {
+        @apply rotate-180;
+    }
+    .zp-nav__dropdown {
+        @apply absolute top-[calc(100%+0.5rem)] left-0 z-50 w-max max-w-[min(26rem,90vw)] min-w-[21rem] rounded-[var(--radius-card)] border border-line bg-white p-2 shadow-[0_16px_32px_rgb(35_39_45/0.12)];
+        animation: zp-fade-in 0.15s ease-out;
+    }
+    /* Мостик над списком: курсор идёт от пункта к списку и не закрывает его. */
+    .zp-nav__dropdown::before {
+        @apply absolute inset-x-0 -top-2 h-2 content-[''];
+    }
+    .zp-nav__dropdown[hidden] {
+        display: none;
+    }
+    .zp-nav__link {
+        @apply flex min-h-12 items-center justify-between gap-5 rounded-[var(--radius-btn)] px-3 py-2 text-[17px] leading-snug text-ink transition-colors hover:bg-brand-50 hover:text-brand-800 focus-visible:bg-brand-50 focus-visible:text-brand-800 focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-brand-600;
+    }
+    .zp-nav__hint {
+        @apply mt-0.5 block text-sm text-graphite;
+    }
+    .zp-nav__price {
+        @apply shrink-0 font-cond text-[17px] font-extrabold whitespace-nowrap text-graphite tabular-nums;
+    }
+    .zp-nav__all {
+        @apply mt-1 flex min-h-12 items-center gap-2 border-t border-line px-3 pt-1 text-[17px] font-semibold text-brand-700 transition-colors hover:text-brand-800 focus-visible:rounded-[var(--radius-btn)] focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-brand-600;
     }
     .zp-header__actions {
         @apply ml-auto flex items-center gap-1.5 sm:gap-2;
@@ -118,7 +155,7 @@
         @apply font-cond leading-none font-extrabold tracking-normal tabular-nums;
     }
     .zp-header__phone {
-        @apply inline-flex size-12 items-center justify-center gap-2 rounded-full bg-brand-50 font-cond font-extrabold text-ink tabular-nums transition hover:bg-brand-100 lg:size-auto lg:rounded-lg lg:bg-transparent lg:px-3 lg:py-2 lg:text-xl lg:whitespace-nowrap;
+        @apply inline-flex size-12 shrink-0 items-center justify-center gap-2 rounded-full bg-brand-50 font-cond font-extrabold text-ink tabular-nums transition hover:bg-brand-100 min-[1440px]:size-auto min-[1440px]:rounded-lg min-[1440px]:bg-transparent min-[1440px]:px-3 min-[1440px]:py-2 min-[1440px]:text-xl min-[1440px]:whitespace-nowrap;
     }
     .zp-burger {
         @apply inline-flex size-12 items-center justify-center rounded-full text-ink transition hover:bg-surface-strong lg:hidden;
@@ -153,6 +190,30 @@
     }
     .zp-drawer__nav a {
         @apply flex min-h-14 items-center justify-between gap-3 border-b border-line text-lg font-medium text-ink transition-colors last:border-b-0 hover:text-brand-800 focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-brand-600;
+    }
+    .zp-drawer__group {
+        @apply border-b border-line last:border-b-0;
+    }
+    .zp-drawer__group > summary {
+        @apply flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 text-lg font-medium text-ink transition-colors hover:text-brand-800 focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-brand-600;
+    }
+    .zp-drawer__group > summary::-webkit-details-marker {
+        display: none;
+    }
+    .zp-drawer__chevron {
+        @apply size-5 shrink-0 text-graphite transition-transform duration-200;
+    }
+    .zp-drawer__group[open] .zp-drawer__chevron {
+        @apply rotate-180;
+    }
+    .zp-drawer__sub {
+        @apply pb-2 pl-9;
+    }
+    .zp-drawer__nav .zp-drawer__sub a {
+        @apply min-h-12 border-b-0 text-[17px] font-normal;
+    }
+    .zp-drawer__nav .zp-drawer__sub a.zp-drawer__all {
+        @apply font-semibold text-brand-700;
     }
     .zp-drawer__foot {
         @apply grid shrink-0 gap-3 border-t border-line px-5 pt-4;
@@ -780,7 +841,8 @@
 }
 @media (prefers-reduced-motion: reduce) {
     .zp-drawer__backdrop,
-    .zp-drawer__sheet {
+    .zp-drawer__sheet,
+    .zp-nav__dropdown {
         animation: none;
     }
 }
