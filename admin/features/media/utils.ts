@@ -112,6 +112,7 @@ const USAGE_TYPE_LABELS: Record<MediaUsageItem['type'], string> = {
   product: 'Товар',
   category: 'Категория',
   menu_item: 'Меню',
+  portfolio: 'Портфолио',
   setting: 'Настройки',
 }
 

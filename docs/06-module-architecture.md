@@ -19,7 +19,7 @@
 | `Lead` | да | Заявки: публичная форма, CRM в админке |
 | `AuditLog` | да | Журнал критичных действий |
 | `Catalog` | да | Категории, товары, варианты; публичный каталог |
-| `Portfolio` | зарезервировано (только README) | Портфолио проектов |
+| `Portfolio` | да | Портфолио работ: категории, работы, фото и видео (в том числе VK/Rutube), публичный раздел `/portfolio/` |
 | `Redirect` | зарезервировано (только README) | Если редиректы вырастут в самостоятельный домен (сейчас — в `Seo`) |
 | `Order`/`Partner` | зарезервировано (только README) | E-commerce/B2B |
 
@@ -103,6 +103,7 @@ flowchart LR
 | `Lead` | Admin, Auth, Content, User |
 | `Media` | Auth, Content |
 | `Menu` | Auth, Content, Media |
+| `Portfolio` | Auth, Content, Media |
 | `Seo` | Auth, Catalog, Content, Settings |
 | `Settings` | Admin, Auth, Content, Media, User |
 | `User` | Auth |

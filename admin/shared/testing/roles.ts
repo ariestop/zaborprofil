@@ -6,8 +6,9 @@ export const ROLE_PERMISSIONS: Record<'ROLE_EDITOR' | 'ROLE_SEO' | 'ROLE_MANAGER
   ROLE_EDITOR: [
     'pages.view', 'pages.create', 'pages.edit', 'pages.submit_review', 'pages.view_revisions',
     'blocks.create', 'blocks.edit', 'blocks.reorder', 'blocks.clone', 'media.upload', 'catalog.view',
+    'portfolio.view', 'portfolio.manage',
   ],
-  ROLE_SEO: ['pages.view', 'pages.submit_review', 'pages.approve', 'pages.view_revisions', 'seo.edit', 'seo.approve'],
+  ROLE_SEO: ['pages.view', 'pages.submit_review', 'pages.approve', 'pages.view_revisions', 'seo.edit', 'seo.approve', 'portfolio.view'],
   ROLE_MANAGER: ['leads.view', 'leads.manage', 'catalog.view'],
 }
 

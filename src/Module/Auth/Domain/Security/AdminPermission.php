@@ -33,6 +33,8 @@ final class AdminPermission
     public const string LEADS_EXPORT = 'leads.export';
     public const string CATALOG_VIEW = 'catalog.view';
     public const string CATALOG_MANAGE = 'catalog.manage';
+    public const string PORTFOLIO_VIEW = 'portfolio.view';
+    public const string PORTFOLIO_MANAGE = 'portfolio.manage';
     public const string SETTINGS_EDIT = 'settings.edit';
     public const string USERS_MANAGE = 'users.manage';
     public const string SYSTEM_VIEW = 'system.view';
@@ -72,6 +74,8 @@ final class AdminPermission
             self::LEADS_EXPORT,
             self::CATALOG_VIEW,
             self::CATALOG_MANAGE,
+            self::PORTFOLIO_VIEW,
+            self::PORTFOLIO_MANAGE,
             self::SETTINGS_EDIT,
             self::USERS_MANAGE,
             self::SYSTEM_VIEW,

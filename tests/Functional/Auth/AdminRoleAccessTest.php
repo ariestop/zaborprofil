@@ -175,6 +175,8 @@ final class AdminRoleAccessTest extends WebTestCase
             AdminPermission::BLOCKS_CLONE,
             AdminPermission::MEDIA_UPLOAD,
             AdminPermission::CATALOG_VIEW,
+            AdminPermission::PORTFOLIO_VIEW,
+            AdminPermission::PORTFOLIO_MANAGE,
         ]];
         yield 'seo' => ['ROLE_SEO', [
             AdminPermission::PAGES_VIEW,
@@ -183,6 +185,7 @@ final class AdminRoleAccessTest extends WebTestCase
             AdminPermission::PAGES_VIEW_REVISIONS,
             AdminPermission::SEO_EDIT,
             AdminPermission::SEO_APPROVE,
+            AdminPermission::PORTFOLIO_VIEW,
         ]];
         yield 'manager' => ['ROLE_MANAGER', [
             AdminPermission::LEADS_VIEW,

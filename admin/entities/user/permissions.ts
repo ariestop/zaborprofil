@@ -31,6 +31,8 @@ export const ADMIN_PERMISSIONS = [
   'leads.export',
   'catalog.view',
   'catalog.manage',
+  'portfolio.view',
+  'portfolio.manage',
   'settings.edit',
   'users.manage',
   'system.view',
