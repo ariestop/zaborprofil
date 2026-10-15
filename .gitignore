@@ -44,3 +44,6 @@
 ###< phpunit/phpunit ###
 
 /shared/
+
+# Python
+__pycache__/

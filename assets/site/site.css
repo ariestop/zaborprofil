@@ -357,6 +357,54 @@
     .zp-lead {
         @apply mt-3 max-w-2xl text-base leading-7 text-graphite md:text-lg;
     }
+    /*
+     * Карточка товара (брендбук, раздел 7; блок portfolio): рамка line, скругление 12 px, картинка 4:3 сверху,
+     * название, чипы характеристик Sofia Sans Condensed, цена «от … ₽». Вся карточка — ссылка (растянутый after).
+     */
+    .zp-product {
+        @apply relative flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-line bg-white transition-[border-color,box-shadow] duration-150 hover:border-brand-500 hover:shadow-[0_14px_30px_rgb(35_39_45/0.1)] has-[a:focus-visible]:outline-3 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-brand-600;
+    }
+    .zp-product__media {
+        @apply relative overflow-hidden bg-brand-50;
+    }
+    .zp-product__img {
+        @apply aspect-4/3 w-full object-cover transition-transform duration-300;
+    }
+    .zp-product:hover .zp-product__img {
+        @apply scale-[1.03];
+    }
+    .zp-product__badge {
+        @apply absolute top-3 right-3 rounded-lg bg-badge px-2.5 py-1.5 font-cond text-sm leading-none font-extrabold tracking-[0.06em] text-ink uppercase;
+    }
+    .zp-product__body {
+        @apply flex flex-1 flex-col gap-2.5 p-3 sm:p-4 md:px-[1.125rem] md:pb-[1.125rem];
+    }
+    .zp-product__title {
+        @apply text-base leading-snug font-semibold text-ink md:text-lg;
+    }
+    .zp-product__title a {
+        @apply outline-none after:absolute after:inset-0 hover:text-brand-800;
+    }
+    .zp-product__specs {
+        @apply hidden flex-wrap gap-1.5 md:flex;
+    }
+    .zp-product__specs li {
+        @apply rounded-lg bg-surface px-2.5 py-1.5 font-cond text-sm leading-none font-semibold text-graphite;
+    }
+    .zp-product__foot {
+        @apply mt-auto flex items-center justify-between gap-2;
+    }
+    .zp-product__price {
+        @apply font-cond text-[17px] leading-none font-extrabold text-brand-800 tabular-nums md:text-[22px];
+    }
+    .zp-product__go {
+        @apply hidden items-center gap-1.5 font-semibold text-brand-700 md:inline-flex;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .zp-product:hover .zp-product__img {
+            @apply scale-100;
+        }
+    }
     .zp-card {
         @apply rounded-2xl bg-white p-4 ring-1 ring-line md:p-5;
     }

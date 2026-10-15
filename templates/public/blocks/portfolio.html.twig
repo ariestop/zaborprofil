@@ -1,32 +1,52 @@
-{# Карточки разделов/работ: фото, название, ссылка. На телефоне две колонки — каталог виден без длинной прокрутки. #}
+{#
+  Карточки разделов/работ (брендбук, «Карточка товара»): картинка 4:3, название, чипы характеристик, цена «от … ₽»
+  и «Смотреть». Цена, характеристики (specs) и бейдж (badge) — необязательные поля пункта. На телефоне две колонки:
+  название и цена, чипы скрыты — каталог виден без длинной прокрутки.
+#}
 {% set works = (block.content.items ?? [])|filter(item => (item.image ?? item.src ?? '') is not empty or (item.title ?? '') is not empty) %}
 {% if works|length > 0 %}
     <section class="zp-section {{ (block.settings.alt ?? false) ? 'zp-section--alt' : '' }}" data-block-type="portfolio" {% if (block.settings.anchor ?? '') is not empty %}id="{{ block.settings.anchor }}"{% endif %}>
         <div class="zp-container">
             <h2 class="zp-h2 mb-6 md:mb-8">{{ (block.content.title ?? '') is not empty ? block.content.title : 'Наши работы' }}</h2>
-            <div class="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
+            <div class="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-5">
                 {% for item in works %}
                     {% set href = item.href ?? '' %}
                     {% set linked = href is not empty and href != '#' %}
-                    <article class="group relative overflow-hidden rounded-2xl border border-line bg-white shadow-xs transition hover:border-brand-500 hover:shadow-md">
+                    {% set specs = (item.specs ?? []) is iterable ? (item.specs ?? [])|filter(spec => spec is not empty) : [] %}
+                    <article class="zp-product">
                         {% if (item.image ?? item.src ?? '') is not empty %}
-                            {{ responsive_image(item.image ?? item.src, {
-                                alt: item.alt ?? null,
-                                fallback_alt: item.title ?? block.name,
-                                class: 'aspect-4/3 w-full object-cover transition duration-300 group-hover:scale-105',
-                                sizes: '(min-width: 1152px) 360px, (min-width: 768px) 33vw, 50vw'
-                            }) }}
-                        {% endif %}
-                        {% if (item.title ?? '') is not empty %}
-                            <h3 class="flex items-center justify-between gap-2 p-3 text-sm leading-snug font-semibold text-ink sm:p-4 sm:text-base">
-                                {% if linked %}
-                                    <a class="after:absolute after:inset-0 hover:text-brand-800" href="{{ href }}">{{ item.title }}</a>
-                                    <svg class="size-4 shrink-0 text-brand-600" aria-hidden="true"><use href="#i-arrow"/></svg>
-                                {% else %}
-                                    {{ item.title }}
+                            <div class="zp-product__media">
+                                {{ responsive_image(item.image ?? item.src, {
+                                    alt: item.alt ?? null,
+                                    fallback_alt: item.title ?? block.name,
+                                    class: 'zp-product__img',
+                                    sizes: '(min-width: 1152px) 360px, (min-width: 768px) 33vw, 50vw'
+                                }) }}
+                                {% if (item.badge ?? '') is not empty %}
+                                    <span class="zp-product__badge">{{ item.badge }}</span>
                                 {% endif %}
-                            </h3>
+                            </div>
                         {% endif %}
+                        <div class="zp-product__body">
+                            {% if (item.title ?? '') is not empty %}
+                                <h3 class="zp-product__title">
+                                    {% if linked %}<a href="{{ href }}">{{ item.title }}</a>{% else %}{{ item.title }}{% endif %}
+                                </h3>
+                            {% endif %}
+                            {% if specs|length > 0 %}
+                                <ul class="zp-product__specs" aria-label="Характеристики">
+                                    {% for spec in specs %}<li>{{ spec }}</li>{% endfor %}
+                                </ul>
+                            {% endif %}
+                            {% if (item.price ?? '') is not empty or linked %}
+                                <div class="zp-product__foot">
+                                    {% if (item.price ?? '') is not empty %}<span class="zp-product__price">{{ item.price }}</span>{% endif %}
+                                    {% if linked %}
+                                        <span class="zp-product__go" aria-hidden="true">Смотреть<svg class="size-5 shrink-0"><use href="#i-arrow"/></svg></span>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
                     </article>
                 {% endfor %}
             </div>

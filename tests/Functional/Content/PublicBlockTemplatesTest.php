@@ -10,6 +10,7 @@ use App\Tests\Support\Database\SchemaTestHelper;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\DomCrawler\Crawler;
 
 /**
  * Публичные шаблоны блоков: каждый тип должен отрисоваться своим шаблоном, а не молча упасть в default.html.twig
@@ -80,6 +81,28 @@ final class PublicBlockTemplatesTest extends KernelTestCase
         self::assertStringContainsString('Показать все фото (5)', $html);
         self::assertStringContainsString('aspect-3/4', $html);
         self::assertStringContainsString('object-contain', $html);
+    }
+
+    public function testPortfolioCardShowsPriceSpecsAndBadgeOnlyWhenFilled(): void
+    {
+        $html = $this->render('portfolio', ['title' => 'Какой забор выбрать', 'items' => [
+            ['title' => 'Забор Жалюзи', 'image' => '/img/catalog/jaluzi.png', 'href' => '/zabor-jaluzi/', 'price' => 'от 3 400 ₽/м²', 'specs' => ['Largo и Doppio', '', 'покрытие до 40 лет'], 'badge' => 'Хит'],
+            ['title' => 'Заглушки', 'image' => '/img/catalog/caps.png', 'href' => '#'],
+        ]]);
+        $crawler = new Crawler($html);
+
+        $cards = $crawler->filter('article.zp-product');
+        self::assertCount(2, $cards);
+        $first = $cards->eq(0);
+        self::assertSame('/zabor-jaluzi/', $first->filter('.zp-product__title a')->attr('href'));
+        self::assertSame('от 3 400 ₽/м²', $first->filter('.zp-product__price')->text());
+        self::assertSame(['Largo и Doppio', 'покрытие до 40 лет'], $first->filter('.zp-product__specs li')->each(static fn (Crawler $li): string => $li->text()), 'Пустые характеристики не выводятся.');
+        self::assertSame('Хит', $first->filter('.zp-product__badge')->text());
+        self::assertSame('Забор Жалюзи', $first->filter('img')->attr('alt'));
+
+        $second = $cards->eq(1);
+        self::assertSame(0, $second->filter('a, .zp-product__price, .zp-product__specs, .zp-product__badge, .zp-product__foot')->count(), 'Без ссылки, цены, чипов и бейджа — только картинка и название.');
+        self::assertSame('Заглушки', trim($second->filter('.zp-product__title')->text()));
     }
 
     public function testHeroTakesPageHeadingOnlyWhenItIsFirstBlock(): void
