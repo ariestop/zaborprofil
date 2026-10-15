@@ -38,6 +38,7 @@ import {
 import { MarkButton } from "@/components/tiptap-ui/mark-button"
 import { TextAlignButton } from "@/components/tiptap-ui/text-align-button"
 import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button"
+import { EmojiPopover } from "@/components/tiptap-ui/emoji-popover"
 
 // --- Icons ---
 import { ArrowLeftIcon } from "@/components/tiptap-icons/arrow-left-icon"
@@ -53,7 +54,7 @@ import "@/components/tiptap-templates/simple/simple-editor.scss"
 
 /**
  * Редактор предлагает только то, что пропускает санитайзер блоков rich-text (config/packages/html_sanitizer.yaml):
- * H2–H4, списки, цитата, жирный, курсив, подчёркивание, ссылка, верхний и нижний индекс, выравнивание.
+ * H2–H4, списки, цитата, жирный, курсив, подчёркивание, ссылка, верхний и нижний индекс, выравнивание; эмодзи — обычный текст.
  * Картинки, выделение цветом, зачёркивание, код, линия, список задач и H1 сервер вырезает при сохранении,
  * поэтому здесь их нет: правка не должна выглядеть применённой и пропадать после сохранения.
  * Изображения вставляются отдельными блоками конструктора.
@@ -92,6 +93,7 @@ const MainToolbarContent = ({
         <MarkButton type="italic" />
         <MarkButton type="underline" />
         {!isMobile ? <LinkPopover /> : <LinkButton onClick={onLinkClick} />}
+        <EmojiPopover />
       </ToolbarGroup>
 
       <ToolbarSeparator />

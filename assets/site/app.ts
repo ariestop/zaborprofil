@@ -14,6 +14,7 @@ import {
     initPriceMatrices,
     initVideoEmbeds,
 } from './ui'
+import { initPortfolioGalleries, initPortfolioRows, initPortfolioViewToggle } from './portfolio'
 
 function formPayload(form: HTMLFormElement): Record<string, unknown> {
     const data = new FormData(form)
@@ -137,6 +138,14 @@ initFenceConfigurators()
 initAudienceSwitch()
 initCopyButtons()
 initMapEmbeds()
+initPortfolioGalleries()
+initPortfolioRows()
+initPortfolioViewToggle()
+
+// Плеер media-chrome грузится только на страницах с загруженным видео.
+if (document.querySelector('[data-zp-player]') !== null) {
+    void import('./player').then((module) => module.initVideoPlayers())
+}
 
 // Swiper (~40 КБ JS + CSS) нужен только страницам со слайдером — остальным он не загружается.
 if (document.querySelector('.js-site-slider') !== null) {

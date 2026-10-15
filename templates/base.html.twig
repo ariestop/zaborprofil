@@ -73,6 +73,7 @@
                 {% set header_menu = [
                     {label: 'Забор Жалюзи', url: '/zabor-jaluzi/'},
                     {label: 'Каталог', url: '/#catalog'},
+                    {label: 'Портфолио', url: '/portfolio/'},
                     {label: 'Как мы работаем', url: '/#process'},
                     {label: 'Контакты', url: '#contacts'}
                 ] %}
@@ -130,10 +131,10 @@
                     <div class="zp-header__actions">
                         <a class="zp-header__phone" href="{{ site.phone_href }}">
                             <svg class="size-5 shrink-0 text-brand-500" aria-hidden="true"><use href="#i-phone"/></svg>
-                            <span class="hidden min-[1440px]:inline">{{ site.phone }}</span>
-                            <span class="sr-only min-[1440px]:hidden">Позвонить: {{ site.phone }}</span>
+                            <span class="hidden min-[1800px]:inline">{{ site.phone }}</span>
+                            <span class="sr-only min-[1800px]:hidden">Позвонить: {{ site.phone }}</span>
                         </a>
-                        <a class="zp-btn zp-btn--primary zp-btn--sm hidden md:inline-flex lg:hidden xl:inline-flex" href="#lead-form" data-lead-cta>Рассчитать стоимость</a>
+                        <a class="zp-btn zp-btn--primary zp-btn--sm hidden md:max-xl:inline-flex min-[1440px]:inline-flex" href="#lead-form" data-lead-cta>Рассчитать стоимость</a>
                         <button class="zp-burger" type="button" aria-expanded="false" aria-controls="mobile-nav" data-nav-toggle>
                             <svg class="size-6" aria-hidden="true" data-icon-open><use href="#i-menu"/></svg>
                             <svg class="hidden size-6" aria-hidden="true" data-icon-close><use href="#i-close"/></svg>

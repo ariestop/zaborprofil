@@ -55,6 +55,7 @@
     "@tiptap/starter-kit": "^3.31.4",
     "dompurify": "^3.4.16",
     "lodash.throttle": "^4.1.1",
+    "media-chrome": "^4.19.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.65.0",

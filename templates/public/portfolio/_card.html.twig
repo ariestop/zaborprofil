@@ -1,0 +1,44 @@
+{#
+    Карточка работы: обложка 4:3 с числом фото/видео, раздел, название (вся карточка — ссылка), три характеристики, место и год.
+    Параметры: project, heading (тег заголовка, по умолчанию h3), eager.
+#}
+{% set heading = heading|default('h3') %}
+{% set cover = project.cover %}
+<article class="zp-pf-card">
+    <div class="zp-pf-card__media">
+        {% if cover %}
+            {{ responsive_image(cover.src, {
+                alt: cover.caption,
+                fallback_alt: project.title,
+                class: 'size-full object-cover',
+                sizes: '(min-width: 1280px) 384px, (min-width: 768px) 45vw, 92vw',
+                eager: eager|default(false)
+            }) }}
+        {% endif %}
+        {# Значок вида для компактной сетки на телефоне (как в Instagram): ▶ — есть видео, ⧉ — несколько фото. #}
+        {% if project.videos|length > 0 or project.photos|length > 1 %}
+            <span class="zp-pf-card__kind" aria-hidden="true"><svg><use href="#{{ project.videos|length > 0 ? 'i-play' : 'i-photos' }}"/></svg></span>
+        {% endif %}
+        <span class="zp-pf-badge">
+            {% if project.videos|length > 0 %}<svg aria-hidden="true"><use href="#i-play"/></svg>{% endif %}
+            {% include 'public/portfolio/_media-count.html.twig' with {project: project} only %}
+        </span>
+    </div>
+    <div class="zp-pf-card__body">
+        <p class="zp-pf-eyebrow">{{ project.category.shortTitle }}</p>
+        <{{ heading }} class="zp-pf-card__title"><a href="{{ project.path }}">{{ project.title }}</a></{{ heading }}>
+        {% if project.specs is not empty %}
+            <ul class="zp-pf-specs" aria-label="Характеристики">
+                {% for spec in project.specs|slice(0, 3) %}
+                    <li title="{{ spec.label }}">{{ spec.value }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        {% if project.place or project.year %}
+            <p class="zp-pf-meta">
+                <svg aria-hidden="true"><use href="#i-pin"/></svg>
+                {{ [project.place, project.year]|filter(v => v)|join(' · ') }}
+            </p>
+        {% endif %}
+    </div>
+</article>

@@ -232,7 +232,7 @@ export interface MediaAssetItem {
 }
 
 export interface MediaUsageItem {
-  type: 'page_seo' | 'page_block' | 'product' | 'category' | 'menu_item' | 'setting'
+  type: 'page_seo' | 'page_block' | 'product' | 'category' | 'menu_item' | 'setting' | 'portfolio'
   sourceId: string
   title: string
   location: string

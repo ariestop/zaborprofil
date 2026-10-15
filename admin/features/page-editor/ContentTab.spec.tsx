@@ -138,7 +138,7 @@ describe('ContentTab: рабочее место блоков', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Добавить блок после «Первый экран»' }))
     const dialog = await screen.findByRole('dialog', { name: 'Добавить блок' })
     expect(within(dialog).getByText('Вставим после блока «Первый экран»')).toBeTruthy()
-    expect(within(dialog).getAllByRole('listitem')).toHaveLength(11)
+    expect(within(dialog).getAllByRole('listitem')).toHaveLength(12)
 
     fireEvent.change(within(dialog).getByLabelText('Найти блок'), { target: { value: 'вопрос' } })
     fireEvent.click(within(dialog).getByRole('button', { name: /Вопросы и ответы/ }))

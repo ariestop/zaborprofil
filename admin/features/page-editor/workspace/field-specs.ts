@@ -53,6 +53,8 @@ export type FieldSpec =
           optionsFrom?: { key: string; valueKey: string }
       }
     | { kind: 'note'; text: string }
+    /** Выбор работ из раздела «Портфолио»: content.projectIds, content.category, content.limit. */
+    | { kind: 'portfolio-projects' }
 
 const STEP_ICONS = [
     { value: '', label: 'Без иконки (номер)' },
@@ -518,6 +520,11 @@ const SPECS: Partial<Record<BuilderBlockType, FieldSpec[]>> = {
                 { kind: 'link', key: 'href', label: 'Кнопка ведёт' },
             ],
         },
+    ],
+    'portfolio-projects': [
+        { kind: 'text', key: 'title', label: 'Заголовок', placeholder: 'Наши работы' },
+        { kind: 'textarea', key: 'subtitle', label: 'Подзаголовок', rows: 2, help: 'Необязательно: одна строка под заголовком.' },
+        { kind: 'portfolio-projects' },
     ],
     'contact-form': [
         { kind: 'text', key: 'title', label: 'Заголовок формы', required: true },

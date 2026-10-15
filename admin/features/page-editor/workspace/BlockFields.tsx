@@ -2,6 +2,7 @@ import { useId, useState, type ReactNode } from 'react'
 import { MediaPicker } from '../../media/MediaPicker'
 import { MediaPickerDialog } from '../../media/MediaPickerDialog'
 import { RichTextEditor } from '../../rich-text/RichTextEditor'
+import { PortfolioBlockField } from '../../portfolio/PortfolioBlockField'
 import { NavIcon } from '../../../layouts/nav-icons'
 import { cn } from '../../../shared/lib/cn'
 import { Input, Textarea } from '../../../shared/ui'
@@ -808,6 +809,14 @@ export function BlockFields({ specs, value, onChange, errors, resetKey, root }: 
                                 value={asString(value[spec.key])}
                                 root={blockContent}
                                 onChange={(next) => set(spec.key, next)}
+                            />
+                        )
+                    case 'portfolio-projects':
+                        return (
+                            <PortfolioBlockField
+                                key={`portfolio-${index}`}
+                                content={value}
+                                onChange={(patch) => onChange({ ...value, ...patch })}
                             />
                         )
                     case 'note':

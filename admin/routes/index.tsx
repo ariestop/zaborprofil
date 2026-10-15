@@ -8,6 +8,8 @@ import {
   loadDashboardPage,
   loadMediaPage,
   loadMenuPage,
+  loadPortfolioPage,
+  loadPortfolioProjectPage,
   loadPageCreatePage,
   loadPageEditorPage,
   loadPagesPage,
@@ -35,6 +37,8 @@ const PageCreatePage = lazy(loadPageCreatePage)
 const PageEditorPage = lazy(loadPageEditorPage)
 const MediaPage = lazy(loadMediaPage)
 const MenuPage = lazy(loadMenuPage)
+const PortfolioPage = lazy(loadPortfolioPage)
+const PortfolioProjectPage = lazy(loadPortfolioProjectPage)
 const SeoPage = lazy(loadSeoPage)
 const CrmPage = lazy(loadCrmPage)
 const SettingsPage = lazy(loadSettingsPage)
@@ -82,6 +86,9 @@ function createAdminRouter() {
         },
         { path: '/admin/media', element: <RouteGuard routeKey="media"><MediaPage /></RouteGuard> },
         { path: '/admin/menu', element: <RouteGuard routeKey="menu"><MenuPage /></RouteGuard> },
+        { path: '/admin/portfolio', element: <RouteGuard routeKey="portfolio"><PortfolioPage /></RouteGuard> },
+        { path: '/admin/portfolio/new', element: <RouteGuard routeKey="portfolioNew"><PortfolioProjectPage /></RouteGuard> },
+        { path: '/admin/portfolio/:id', element: <RouteGuard routeKey="portfolioProject"><PortfolioProjectPage /></RouteGuard> },
         { path: '/admin/seo', element: <RouteGuard routeKey="seo"><SeoPage /></RouteGuard> },
         // Список и карточка заявки — один экран без перемонтирования: карточка открывается справа, фильтры и поиск сохраняются.
         {

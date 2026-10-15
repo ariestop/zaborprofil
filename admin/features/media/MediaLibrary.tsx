@@ -20,7 +20,7 @@ import { MediaFilterRow } from './MediaFilterRow'
 import { MediaPagination } from './MediaPagination'
 import { MediaUploadList } from './MediaUploadList'
 import { SELECT_CLASS, SORT_OPTIONS, TYPE_OPTIONS } from './mediaLibraryOptions'
-import { describeMediaError, MEDIA_ACCEPT } from './utils'
+import { describeMediaError, MEDIA_ACCEPT, VIDEO_ACCEPT } from './utils'
 import { useMediaLibraryFilters } from './useMediaLibraryFilters'
 import { useMediaUploads } from './useMediaUploads'
 
@@ -30,6 +30,8 @@ interface MediaLibraryProps {
     mode: 'manage' | 'select'
     onSelect?: (asset: MediaAssetItem) => void
     imagesOnly?: boolean
+    /** Только видео (MP4, WebM): для галереи портфолио. */
+    videosOnly?: boolean
     perPage?: number
     className?: string
 }
@@ -38,11 +40,13 @@ export function MediaLibrary({
     mode,
     onSelect,
     imagesOnly = false,
+    videosOnly = false,
     perPage = DEFAULT_MEDIA_LIST_PARAMS.perPage,
     className,
 }: MediaLibraryProps) {
     const { push } = useToast()
-    const filters = useMediaLibraryFilters(imagesOnly, perPage)
+    const fixedType: MediaTypeFilter = videosOnly ? 'video' : imagesOnly ? 'image' : ''
+    const filters = useMediaLibraryFilters(fixedType, perPage)
     const { page, setPage } = filters
     const [view, setView] = useState<ViewMode>('grid')
     const [selectedAsset, setSelectedAsset] = useState<MediaAssetItem | null>(null)
@@ -155,7 +159,7 @@ export function MediaLibrary({
                     value={filters.searchInput}
                     onChange={(event) => filters.setSearch(event.target.value)}
                 />
-                {imagesOnly ? null : (
+                {fixedType !== '' ? null : (
                     <select
                         aria-label="Тип файлов"
                         className={SELECT_CLASS}
@@ -224,19 +228,29 @@ export function MediaLibrary({
                         type="file"
                         multiple
                         hidden
-                        accept={imagesOnly ? '.jpg,.jpeg,.png,.webp,.avif,image/*' : MEDIA_ACCEPT}
+                        accept={
+                            fixedType === 'image'
+                                ? '.jpg,.jpeg,.png,.webp,.avif,image/*'
+                                : fixedType === 'video'
+                                  ? VIDEO_ACCEPT
+                                  : MEDIA_ACCEPT
+                        }
                         onChange={onFilesPicked}
                         data-testid="media-file-input"
                     />
                 </div>
             </div>
 
-            <MediaFilterRow filters={filters} folders={folders} imagesOnly={imagesOnly} />
+            <MediaFilterRow filters={filters} folders={folders} fixedType={fixedType} />
 
             {uploads.items.length === 0 ? (
                 <p className="rounded-xl border border-dashed border-line-strong px-4 py-3 text-center text-sm text-graphite dark:border-slate-700 dark:text-slate-400">
-                    Перетащите файлы сюда или нажмите «Загрузить файлы». JPG, PNG, WebP, AVIF
-                    {imagesOnly ? '' : ', PDF'} до 10 МБ.
+                    Перетащите файлы сюда или нажмите «Загрузить файлы».{' '}
+                    {fixedType === 'video'
+                        ? 'Видео MP4 или WebM до 60 МБ.'
+                        : fixedType === 'image'
+                          ? 'JPG, PNG, WebP, AVIF до 10 МБ.'
+                          : 'JPG, PNG, WebP, AVIF, PDF до 10 МБ, видео MP4 и WebM до 60 МБ.'}
                 </p>
             ) : (
                 <MediaUploadList

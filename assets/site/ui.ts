@@ -4,7 +4,7 @@
  */
 import { applyLeadPlan } from './leadForm'
 
-const DESKTOP_NAV_QUERY = '(min-width: 1024px)'
+const DESKTOP_NAV_QUERY = '(min-width: 1280px)'
 
 export function initMobileNav(root: ParentNode = document): void {
     const toggle = root.querySelector<HTMLButtonElement>('[data-nav-toggle]')

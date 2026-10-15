@@ -7,7 +7,7 @@ import { useCan } from '../../stores/auth'
 import { FocalPointPicker } from './FocalPointPicker'
 import { MediaAssetThumb } from './MediaAssetThumb'
 import { MediaUsageList } from './MediaUsageList'
-import { assetExtension, describeMediaError, formatFileSize, isImageAsset } from './utils'
+import { assetExtension, describeMediaError, formatFileSize, isImageAsset, isVideoAsset } from './utils'
 
 /** Свойства выбранного файла: превью, где используется, alt/title/описание/папка, фокальная точка. */
 export function MediaAssetDetails({
@@ -102,6 +102,14 @@ export function MediaAssetDetails({
                         className="max-h-56 w-full rounded-lg bg-surface-strong object-contain dark:bg-slate-800"
                     />
                 </a>
+            ) : isVideoAsset(asset) ? (
+                <video
+                    src={asset.publicPath}
+                    controls
+                    preload="metadata"
+                    className="max-h-56 w-full rounded-lg bg-night"
+                    data-testid="asset-video-preview"
+                />
             ) : (
                 <MediaAssetThumb asset={asset} className="h-32 w-full rounded-lg" />
             )}

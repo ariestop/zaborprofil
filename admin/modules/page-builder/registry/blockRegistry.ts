@@ -686,6 +686,20 @@ const structuredBlockRegistry: BlockDefinition[] = [
         }),
     ),
     def(
+        'portfolio-projects',
+        'Работы из портфолио',
+        'business',
+        32,
+        'Работы из раздела «Портфолио» горизонтальным рядом: выбранные или новые.',
+        z.object({
+            title: z.string().default('Наши работы'),
+            subtitle: z.string().default(''),
+            projectIds: z.array(z.string()).max(24).default([]),
+            category: z.string().default(''),
+            limit: z.number().int().min(1).max(24).default(6),
+        }),
+    ),
+    def(
         'price-matrix',
         'Прайс-лист с выбором',
         'business',

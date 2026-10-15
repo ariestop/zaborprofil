@@ -35,6 +35,7 @@ final class ModuleDependencyTest extends TestCase
         'Lead' => ['Admin', 'Auth', 'Content', 'User'],
         'Media' => ['Auth', 'Content'],
         'Menu' => ['Auth', 'Content', 'Media'],
+        'Portfolio' => ['Auth', 'Content', 'Media', 'Seo'],
         'Seo' => ['Auth', 'Catalog', 'Content', 'Settings'],
         'Settings' => ['Admin', 'Auth', 'Content', 'Media', 'User'],
         'User' => ['Auth'],

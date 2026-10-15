@@ -53,6 +53,7 @@ export const STRUCTURED_BLOCK_TYPES = [
     'fence-types',
     'materials',
     'portfolio',
+    'portfolio-projects',
     'works-gallery',
     'service-cards',
     'advantages',

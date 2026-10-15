@@ -1,0 +1,23 @@
+{#
+    Плеер загруженного видео (MP4, WebM) на media-chrome, assets/site/player.ts.
+    Без JS работает нативный <video controls>; после загрузки модуля — панель в цветах бренда.
+    Параметры: src (обязателен), poster, title, preload (по умолчанию metadata).
+#}
+{% set player_title = title|default('Видео') %}
+<media-controller class="zp-player" data-zp-player aria-label="Видео: {{ player_title }}">
+    <video slot="media" src="{{ src }}"{% if poster|default('') is not empty %} poster="{{ poster }}"{% endif %} preload="{{ preload|default('metadata') }}" playsinline controls title="{{ player_title }}">
+        <a href="{{ src }}">Скачать видео «{{ player_title }}»</a>
+    </video>
+    <media-loading-indicator slot="centered-chrome" noautohide></media-loading-indicator>
+    <media-play-button slot="centered-chrome" class="zp-player__center"></media-play-button>
+    <media-control-bar class="zp-player__bar">
+        <media-play-button></media-play-button>
+        <media-time-range></media-time-range>
+        <media-time-display showduration></media-time-display>
+        <media-mute-button></media-mute-button>
+        <media-volume-range class="zp-player__volume"></media-volume-range>
+        <media-playback-rate-button rates="0.75 1 1.25 1.5 2" class="zp-player__rate"></media-playback-rate-button>
+        <media-pip-button class="zp-player__pip"></media-pip-button>
+        <media-fullscreen-button></media-fullscreen-button>
+    </media-control-bar>
+</media-controller>

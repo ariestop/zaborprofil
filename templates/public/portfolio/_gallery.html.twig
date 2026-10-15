@@ -1,0 +1,63 @@
+{#
+    Галерея работы: большой кадр и лента миниатюр. Фото открываются на весь экран (initGalleries),
+    загруженные видео — плеер media-chrome, VK/Rutube — заглушка, iframe подключается по нажатию.
+    Без JS кадры идут друг под другом; assets/site/portfolio.ts показывает по одному и связывает ленту.
+#}
+{% set items = project.media %}
+<div class="zp-pf-gallery" data-pf-gallery data-gallery>
+    <div class="zp-pf-gallery__stage">
+        {% for item in items %}
+            {% set label = item.isPhoto ? 'Фото' : 'Видео' %}
+            <figure class="zp-pf-slide" data-pf-slide id="pf-slide-{{ loop.index }}" aria-label="{{ label }} {{ loop.index }} из {{ items|length }}">
+                {% if item.kind.value == 'photo' %}
+                    <a class="zp-pf-slide__photo" href="{{ item.src }}" data-lightbox aria-label="Открыть фото {{ loop.index }} на весь экран">
+                        {{ responsive_image(item.src, {
+                            alt: item.caption,
+                            fallback_alt: project.title ~ ' — фото ' ~ loop.index,
+                            class: 'size-full object-cover',
+                            sizes: '(min-width: 1280px) 1216px, 100vw',
+                            eager: loop.first
+                        }) }}
+                    </a>
+                {% elseif item.kind.value == 'video' %}
+                    {{ include('public/partials/video-player.html.twig', {src: item.src, poster: item.poster, title: item.caption ?? project.title, preload: 'none'}, with_context = false) }}
+                {% else %}
+                    {% set provider = 'rutube.ru' in item.src ? 'Rutube' : 'VK Видео' %}
+                    <div class="zp-video">
+                        <button type="button" class="zp-pf-embed" data-video-embed="{{ item.src }}" data-video-title="{{ item.caption ?? project.title }}">
+                            {% if item.poster %}<img src="{{ item.poster }}" alt="" loading="lazy" class="zp-pf-embed__poster">{% endif %}
+                            <span class="zp-pf-embed__provider">{{ provider }}</span>
+                            <span class="zp-pf-embed__play"><svg aria-hidden="true"><use href="#i-play"/></svg></span>
+                            <span class="zp-pf-embed__label">Смотреть на {{ provider }}</span>
+                        </button>
+                    </div>
+                {% endif %}
+                {% if item.caption %}
+                    <figcaption class="zp-pf-slide__caption">{{ item.caption }}</figcaption>
+                {% endif %}
+            </figure>
+        {% endfor %}
+        {% if items|length > 1 %}
+            <span class="zp-pf-gallery__badge" data-pf-badge hidden aria-hidden="true">1 / {{ items|length }}</span>
+            <span class="zp-pf-dots" data-pf-dots hidden aria-hidden="true"></span>
+            <div class="zp-pf-gallery__nav" data-pf-nav hidden>
+                <button type="button" class="zp-pf-arrow" data-pf-prev aria-label="Предыдущий кадр"><svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+                <span class="zp-pf-gallery__counter" data-pf-counter aria-live="polite">1 / {{ items|length }}</span>
+                <button type="button" class="zp-pf-arrow" data-pf-next aria-label="Следующий кадр"><svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+            </div>
+        {% endif %}
+    </div>
+    {% if items|length > 1 %}
+        <div class="zp-pf-strip" role="group" aria-label="Все фото и видео работы" data-pf-strip hidden>
+            {% for item in items %}
+                {% set thumb = item.isPhoto ? item.src : item.poster %}
+                <button type="button" class="zp-pf-thumb{{ item.isPhoto ? '' : ' zp-pf-thumb--video' }}" data-pf-thumb="{{ loop.index0 }}" aria-label="{{ item.isPhoto ? 'Фото' : 'Видео' }} {{ loop.index }}"{% if loop.first %} aria-current="true"{% endif %}>
+                    {% if thumb %}
+                        {{ responsive_image(thumb, {alt: '', class: 'size-full object-cover', sizes: '144px'}) }}
+                    {% endif %}
+                    {% if not item.isPhoto %}<span class="zp-pf-thumb__play"><svg aria-hidden="true"><use href="#i-play"/></svg></span>{% endif %}
+                </button>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>

@@ -123,6 +123,8 @@ final class AdminSpaShellTest extends WebTestCase
         yield 'page detail' => ['/admin/pages/demo-page'];
         yield 'builder' => ['/admin/pages/demo-page/builder'];
         yield 'media' => ['/admin/media'];
+        yield 'portfolio' => ['/admin/portfolio'];
+        yield 'portfolio project' => ['/admin/portfolio/01hzportfolio0000000000000'];
         yield 'seo' => ['/admin/seo'];
         yield 'crm' => ['/admin/crm'];
         yield 'settings' => ['/admin/settings'];
