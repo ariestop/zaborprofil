@@ -103,7 +103,7 @@ flowchart LR
 | `Lead` | Admin, Auth, Content, User |
 | `Media` | Auth, Content |
 | `Menu` | Auth, Content, Media |
-| `Portfolio` | Auth, Content, Media |
+| `Portfolio` | Auth, Content, Media, Seo |
 | `Seo` | Auth, Catalog, Content, Settings |
 | `Settings` | Admin, Auth, Content, Media, User |
 | `User` | Auth |
@@ -124,7 +124,8 @@ flowchart LR
 - Утилиты идентификаторов (`EntityId`).
 - Общие traits (`HasTimestamps`, `HasSoftDelete`).
 - HTTP-инфраструктуру, общую для всех зон (`RequestIdSubscriber`, `SecurityHeadersSubscriber`).
-- Healthcheck, ViteAssetExtension.
+- Healthcheck, ViteAssetExtension, `plural_ru`.
+- Точки расширения через теги: `SitemapUrlSourceInterface` — модуль добавляет адреса в sitemap.xml, не создавая зависимость Seo → модуль (так подключено портфолио).
 - Logging processors, redactor.
 
 `Shared` **не** импортирует `App\Module\*`.

@@ -43,6 +43,7 @@ enum BlockType: string
     case FenceTypes = 'fence-types';
     case Materials = 'materials';
     case Portfolio = 'portfolio';
+    case PortfolioProjects = 'portfolio-projects';
     case WorksGallery = 'works-gallery';
     case ServiceCards = 'service-cards';
     case Advantages = 'advantages';

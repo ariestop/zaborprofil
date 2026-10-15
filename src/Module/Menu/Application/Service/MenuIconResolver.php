@@ -19,6 +19,7 @@ final readonly class MenuIconResolver
      * @var array<string, list<string>>
      */
     private const array KEYWORDS = [
+        'i-zp-photo' => ['портфолио', 'portfolio', 'наши работы', 'фото работ', 'объекты'],
         'i-zp-catalog' => ['каталог', 'catalog', 'katalog', 'материал', 'комплектующ'],
         'i-zp-steps' => ['работаем', 'этап', 'process', 'kak-my'],
         'i-zp-pin' => ['контакт', 'contact', 'адрес', 'как проехать'],

@@ -1,0 +1,58 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Портфолио — наши работы | {{ site.name }}{% endblock %}
+
+{% block body %}
+    <main>
+        <section class="zp-pf-band">
+            {% include 'public/portfolio/_stripes.html.twig' %}
+            <div class="zp-container">
+                {% include 'public/portfolio/_breadcrumbs.html.twig' %}
+                <h1 class="zp-pf-h1">Портфолио</h1>
+                <p class="zp-pf-lead">Наши заборы на реальных участках: фото и видео с объектов, размеры и сроки монтажа. Выберите вид забора.</p>
+                {% if categories is not empty %}
+                    <ul class="zp-pf-cats" aria-label="Разделы портфолио">
+                        {% for card in categories %}
+                            <li>
+                                <a class="zp-pf-cat" href="{{ card.category.path }}">
+                                    {% if card.cover %}
+                                        {{ responsive_image(card.cover, {
+                                            alt: '',
+                                            class: 'size-full object-cover',
+                                            sizes: '(min-width: 1280px) 230px, (min-width: 768px) 20vw, 46vw',
+                                            eager: loop.index <= 4
+                                        }) }}
+                                    {% endif %}
+                                    <span class="zp-pf-cat__text">
+                                        <span class="zp-pf-cat__title">{{ card.category.shortTitle }}</span>
+                                        <span class="zp-pf-cat__count">{{ card.count }} {{ card.count|plural_ru('работа', 'работы', 'работ') }}</span>
+                                    </span>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="zp-section">
+            <div class="zp-container">
+                {% if latest is empty %}
+                    <p class="zp-lead">Скоро здесь появятся фото наших работ. А пока позвоните — расскажем о похожих объектах и покажем фото.</p>
+                {% else %}
+                    <div class="zp-pf-head">
+                        <h2 class="zp-h2">Новые работы</h2>
+                        <p class="zp-pf-head__note">Всего {{ total }} {{ total|plural_ru('работа', 'работы', 'работ') }}</p>
+                    </div>
+                    <div class="zp-pf-grid">
+                        {% for project in latest %}
+                            {% include 'public/portfolio/_card.html.twig' with {project: project, eager: loop.index <= 3} only %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                {% include 'public/portfolio/_cta.html.twig' %}
+            </div>
+        </section>
+        {% include 'public/portfolio/_lead.html.twig' %}
+    </main>
+{% endblock %}

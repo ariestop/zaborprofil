@@ -123,7 +123,7 @@ final class DoctrinePortfolioProjectRepository extends ServiceEntityRepository i
 
     public function countPublishedByCategory(): array
     {
-        /** @var list<array{categoryId: Ulid, total: int|string}> $rows */
+        /** @var list<array{categoryId: Ulid|string, total: int|string}> $rows */
         $rows = $this->published()
             ->select('IDENTITY(p.category) AS categoryId, COUNT(p.id) AS total')
             ->groupBy('p.category')
@@ -131,7 +131,9 @@ final class DoctrinePortfolioProjectRepository extends ServiceEntityRepository i
 
         $result = [];
         foreach ($rows as $row) {
-            $result[(string) $row['categoryId']] = (int) $row['total'];
+            // IDENTITY() отдаёт колонку как есть: ULID в 16 байтах, а не объект.
+            $id = $row['categoryId'] instanceof Ulid ? $row['categoryId'] : Ulid::fromString($row['categoryId']);
+            $result[(string) $id] = (int) $row['total'];
         }
 
         return $result;

@@ -43,6 +43,7 @@ export const CATALOG_KINDS: BlockKind[] = [
   { type: 'steps', name: 'Этапы работы', description: 'Пронумерованные шаги от заявки до монтажа', category: 'lists', icon: 'steps', often: true, hint: 'Опишите реальный порядок работы компании, 3–5 шагов.' },
   { type: 'gallery', name: 'Фотогалерея', description: 'Фото из медиатеки с подписями', category: 'photo', icon: 'gallery', often: true, hint: 'Добавьте 6–12 фотографий из медиатеки и заполните подписи (alt).' },
   { type: 'portfolio', name: 'Наши работы', description: 'Объекты: фото, название и ссылка', category: 'photo', icon: 'portfolio', often: false, hint: 'Выберите 3–6 лучших объектов: фото, название и ссылка на страницу работы.' },
+  { type: 'portfolio-projects', name: 'Портфолио', description: 'Работы из раздела «Портфолио» в ряд', category: 'photo', icon: 'portfolio', often: true, hint: 'Выберите работы из раздела «Портфолио» или покажите новые работы нужного раздела. На сайте — горизонтальный ряд карточек.' },
   { type: 'price-table', name: 'Цены', description: 'Позиции, единицы и цены «от»', category: 'sales', icon: 'prices', often: true, hint: 'Укажите актуальные цены «от». Обновляйте при каждом изменении прайса.' },
   { type: 'cta', name: 'Призыв к действию', description: 'Короткий призыв и одна кнопка', category: 'sales', icon: 'cta', often: false, hint: 'Короткий призыв с одной кнопкой. «К форме заявки» ведёт к форме на этой странице.' },
   { type: 'contact-form', name: 'Форма заявки', description: 'Имя и телефон, заявка попадает в «Заявки»', category: 'sales', icon: 'form', often: true, hint: 'Форма заявки встаёт в это место страницы. Заявки попадают в раздел «Заявки».' },
@@ -206,6 +207,12 @@ export function blockSummary(block: Pick<BuilderBlock, 'type' | 'content'>): str
     }
     case 'portfolio':
       return items.length === 0 ? 'Работы не выбраны' : shorten(`${items.length} ${plural(items.length, 'работа', 'работы', 'работ')} · ${titles('title').join(', ')}`)
+    case 'portfolio-projects': {
+      const ids = Array.isArray(content.projectIds) ? content.projectIds.length : 0
+      const category = asString(content.category)
+      const limit = typeof content.limit === 'number' ? content.limit : 6
+      return ids > 0 ? `${ids} ${plural(ids, 'работа', 'работы', 'работ')} на выбор` : `Новые работы${category !== '' ? ` · ${category}` : ''} · до ${limit}`
+    }
     case 'slider':
       return items.length === 0 ? 'Нет слайдов' : `${items.length} ${plural(items.length, 'слайд', 'слайда', 'слайдов')}`
     case 'price-table': {

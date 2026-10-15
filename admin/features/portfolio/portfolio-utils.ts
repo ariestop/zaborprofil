@@ -254,3 +254,46 @@ export function mediaCountLabel(photos: number, videos: number): string {
 export function projectsCountLabel(count: number): string {
   return `${count} ${plural(count, 'работа', 'работы', 'работ')}`
 }
+
+/** Настройки блока «Работы из портфолио» в конструкторе страниц (content блока). */
+export interface PortfolioBlockSettings {
+  projectIds: string[]
+  category: string
+  limit: number
+}
+
+export const PORTFOLIO_BLOCK_MAX = 24
+
+export function portfolioBlockSettings(content: Record<string, unknown>): PortfolioBlockSettings {
+  const ids = Array.isArray(content.projectIds) ? content.projectIds.filter((id): id is string => typeof id === 'string') : []
+  const limit = typeof content.limit === 'number' && Number.isInteger(content.limit) ? Math.min(PORTFOLIO_BLOCK_MAX, Math.max(1, content.limit)) : 6
+
+  return { projectIds: ids, category: typeof content.category === 'string' ? content.category : '', limit }
+}
+
+/**
+ * Какие работы блок покажет на сайте — так же, как PublicPortfolioQuery::forBlock():
+ * выбранные вручную (опубликованные, в их порядке) или новые опубликованные работы раздела.
+ */
+export function projectsForBlock(
+  overview: { categories: PortfolioCategory[]; projects: PortfolioProjectSummary[] },
+  settings: PortfolioBlockSettings,
+): PortfolioProjectSummary[] {
+  const published = overview.projects.filter((project) => project.status === 'published')
+  if (settings.projectIds.length > 0) {
+    return settings.projectIds
+      .map((id) => published.find((project) => project.id === id))
+      .filter((project): project is PortfolioProjectSummary => project !== undefined)
+      .slice(0, settings.limit)
+  }
+
+  const category = settings.category === '' ? null : overview.categories.find((candidate) => candidate.slug === settings.category)
+  if (settings.category !== '' && category === undefined) {
+    return []
+  }
+
+  return published
+    .filter((project) => category === null || category === undefined || project.categoryId === category.id)
+    .sort((left, right) => (right.publishedAt ?? '').localeCompare(left.publishedAt ?? '') || left.sortOrder - right.sortOrder)
+    .slice(0, settings.limit)
+}

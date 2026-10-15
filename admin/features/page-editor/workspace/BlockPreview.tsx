@@ -2,6 +2,7 @@ import type { BuilderBlock } from '../../../modules/page-builder/types'
 import { asItems, asString, canonicalType, isRecord, plainText } from './block-kinds'
 import { fenceSummary, formatMeters, formatRub } from './fence-summary'
 import { sanitizeRichTextHtml } from '../../../shared/lib/sanitize-html'
+import { PortfolioBlockPreview } from '../../portfolio/PortfolioBlockField'
 
 /**
  * Предпросмотр блока в редакторе: повторяет вёрстку templates/public/blocks/*.html.twig,
@@ -543,6 +544,8 @@ export function BlockPreview({ block }: { block: BuilderBlock }) {
             return <Gallery content={content} portfolio={false} />
         case 'portfolio':
             return <Gallery content={content} portfolio />
+        case 'portfolio-projects':
+            return <PortfolioBlockPreview content={content} />
         case 'slider':
             return <Slider content={content} />
         case 'price-table':

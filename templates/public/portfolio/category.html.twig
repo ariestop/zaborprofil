@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ category.title }} — портфолио | {{ site.name }}{% endblock %}
+
+{% block body %}
+    <main>
+        <section class="zp-pf-band">
+            {% include 'public/portfolio/_stripes.html.twig' %}
+            <div class="zp-container">
+                {% include 'public/portfolio/_breadcrumbs.html.twig' %}
+                <h1 class="zp-pf-h1">{{ category.title }}</h1>
+                <p class="zp-pf-lead">
+                    {{ category.description ?? (projects|length ~ ' ' ~ projects|length|plural_ru('работа', 'работы', 'работ') ~ ' в Саратове и области') }}
+                </p>
+                <nav class="zp-pf-switch" aria-label="Разделы портфолио">
+                    <a class="zp-pf-switch__item" href="/portfolio/">Все работы <b>{{ total }}</b></a>
+                    {% for card in categories %}
+                        <a class="zp-pf-switch__item" href="{{ card.category.path }}"{% if card.category.id.equals(category.id) %} aria-current="page"{% endif %}>
+                            {{ card.category.shortTitle }} <b>{{ card.count }}</b>
+                        </a>
+                    {% endfor %}
+                </nav>
+            </div>
+        </section>
+
+        <section class="zp-section">
+            <div class="zp-container">
+                <h2 class="sr-only">Работы раздела «{{ category.title }}»</h2>
+                <div class="zp-pf-grid">
+                    {% for project in projects %}
+                        {% include 'public/portfolio/_card.html.twig' with {project: project, eager: loop.index <= 3} only %}
+                    {% endfor %}
+                </div>
+                {% include 'public/portfolio/_cta.html.twig' %}
+            </div>
+        </section>
+        {% include 'public/portfolio/_lead.html.twig' %}
+    </main>
+{% endblock %}

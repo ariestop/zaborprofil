@@ -1,0 +1,35 @@
+{#
+    Работы из раздела «Портфолио» горизонтальным рядом: выбранные в конструкторе (projectIds) или новые работы раздела (category, limit).
+    Карточки те же, что на /portfolio/; стрелки прокрутки — assets/site/portfolio.ts, без JS ряд листается пальцем.
+#}
+{% set projects = portfolio_projects(block.content.projectIds ?? [], block.content.category ?? '', block.content.limit ?? 6) %}
+{% if projects is not empty %}
+    {% set first_category = projects[0].category %}
+    {% set same_category = projects|filter(p => p.category.id.equals(first_category.id))|length == projects|length %}
+    {% set all_href = same_category and (block.content.category ?? '') is not empty ? first_category.path : '/portfolio/' %}
+    <section class="zp-section" data-block-type="portfolio-projects" data-pf-row>
+        <div class="zp-container">
+            <div class="zp-pf-row__head">
+                <div class="min-w-0">
+                    <p class="zp-pf-eyebrow">Портфолио</p>
+                    <h2 class="zp-h2 mt-2">{{ (block.content.title ?? '') is not empty ? block.content.title : 'Наши работы' }}</h2>
+                    {% if (block.content.subtitle ?? '') is not empty %}
+                        <p class="zp-lead">{{ block.content.subtitle }}</p>
+                    {% endif %}
+                </div>
+                <div class="zp-pf-row__tools">
+                    <a class="zp-pf-link" href="{{ all_href }}">Все работы <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+                    <div class="zp-pf-row__arrows" data-pf-row-arrows>
+                        <button type="button" class="zp-pf-arrow" data-pf-row-prev aria-label="Прокрутить назад"><svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+                        <button type="button" class="zp-pf-arrow" data-pf-row-next aria-label="Прокрутить вперёд"><svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+                    </div>
+                </div>
+            </div>
+            <div class="zp-pf-scroller" data-pf-scroller>
+                {% for project in projects %}
+                    {% include 'public/portfolio/_card.html.twig' with {project: project} only %}
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+{% endif %}

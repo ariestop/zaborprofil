@@ -8,24 +8,48 @@ use App\Module\Catalog\Domain\Entity\Product;
 use App\Module\Catalog\Domain\Repository\ProductRepositoryInterface;
 use App\Module\Content\Domain\Entity\Page;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
+use App\Shared\Application\Sitemap\SitemapUrl;
+use App\Shared\Application\Sitemap\SitemapUrlSourceInterface;
 use InvalidArgumentException;
+use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 
+/**
+ * sitemap.xml: опубликованные страницы, товары и адреса модулей-источников ({@see SitemapUrlSourceInterface},
+ * например портфолио). Все адреса идут единым списком и режутся на части по `chunkSize`.
+ */
 final readonly class SitemapBuilder
 {
+    /**
+     * @var list<SitemapUrlSourceInterface>
+     */
+    private array $sources;
+
+    /**
+     * @param iterable<SitemapUrlSourceInterface> $sources
+     */
     public function __construct(
         private PageRepositoryInterface $pages,
         private ProductRepositoryInterface $products,
         private string $siteUrl,
         private int $chunkSize,
+        #[AutowireIterator(SitemapUrlSourceInterface::TAG)]
+        iterable $sources = [],
     ) {
         if ($this->chunkSize < 1) {
             throw new InvalidArgumentException('Sitemap chunk size must be greater than zero.');
         }
+
+        $this->sources = \is_array($sources) ? array_values($sources) : iterator_to_array($sources, false);
     }
 
     public function chunkCount(): int
     {
-        return (int) ceil(($this->pages->countPublishedIndexable() + $this->products->countPublishedIndexable()) / $this->chunkSize);
+        $total = 0;
+        foreach ($this->segments() as [$count]) {
+            $total += $count;
+        }
+
+        return (int) ceil($total / $this->chunkSize);
     }
 
     public function buildRootSitemap(): string
@@ -52,29 +76,30 @@ final readonly class SitemapBuilder
     public function buildPageChunk(int $pageNumber): string
     {
         $offset = ($pageNumber - 1) * $this->chunkSize;
-        $pageCount = $this->pages->countPublishedIndexable();
-        $pages = [];
-        $products = [];
+        $limit = $this->chunkSize;
+        $urls = [];
 
-        if ($offset < $pageCount) {
-            $pages = $this->pages->findPublishedIndexableSlice($this->chunkSize, $offset);
-        }
+        foreach ($this->segments() as [$count, $fetch]) {
+            if ($limit === 0) {
+                break;
+            }
+            if ($offset >= $count) {
+                $offset -= $count;
 
-        $remaining = $this->chunkSize - \count($pages);
-        if ($remaining > 0) {
-            $productOffset = max(0, $offset - $pageCount);
-            $products = $this->products->findPublishedIndexableSlice($remaining, $productOffset);
+                continue;
+            }
+
+            $batch = $fetch(min($limit, $count - $offset), $offset);
+            $urls = [...$urls, ...$batch];
+            $limit -= \count($batch);
+            $offset = 0;
         }
 
         $xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
         $xml .= "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
 
-        foreach ($pages as $page) {
-            $xml .= $this->pageUrlEntry($page);
-        }
-
-        foreach ($products as $product) {
-            $xml .= $this->productUrlEntry($product);
+        foreach ($urls as $url) {
+            $xml .= $this->urlEntry($url);
         }
 
         $xml .= "</urlset>\n";
@@ -82,25 +107,42 @@ final readonly class SitemapBuilder
         return $xml;
     }
 
-    private function pageUrlEntry(Page $page): string
+    /**
+     * Части списка по порядку: количество адресов и функция выборки (limit, offset).
+     *
+     * @return list<array{0: int, 1: callable(int, int): list<SitemapUrl>}>
+     */
+    private function segments(): array
     {
-        $loc = $this->xml($this->absoluteUrl($page->path()));
-        $lastmod = $page->updatedAt()->format('Y-m-d');
+        $segments = [
+            [
+                $this->pages->countPublishedIndexable(),
+                fn (int $limit, int $offset): array => array_map(
+                    static fn (Page $page): SitemapUrl => new SitemapUrl($page->path(), $page->updatedAt()),
+                    $this->pages->findPublishedIndexableSlice($limit, $offset),
+                ),
+            ],
+            [
+                $this->products->countPublishedIndexable(),
+                fn (int $limit, int $offset): array => array_map(
+                    static fn (Product $product): SitemapUrl => new SitemapUrl($product->path(), $product->updatedAt()),
+                    $this->products->findPublishedIndexableSlice($limit, $offset),
+                ),
+            ],
+        ];
 
-        return "    <url>\n"
-            .'        <loc>'.$loc."</loc>\n"
-            .'        <lastmod>'.$lastmod."</lastmod>\n"
-            ."    </url>\n";
+        foreach ($this->sources as $source) {
+            $segments[] = [$source->countUrls(), $source->urls(...)];
+        }
+
+        return $segments;
     }
 
-    private function productUrlEntry(Product $product): string
+    private function urlEntry(SitemapUrl $url): string
     {
-        $loc = $this->xml($this->absoluteUrl($product->path()));
-        $lastmod = $product->updatedAt()->format('Y-m-d');
-
         return "    <url>\n"
-            .'        <loc>'.$loc."</loc>\n"
-            .'        <lastmod>'.$lastmod."</lastmod>\n"
+            .'        <loc>'.$this->xml($this->absoluteUrl($url->path))."</loc>\n"
+            .'        <lastmod>'.$url->lastModified->format('Y-m-d')."</lastmod>\n"
             ."    </url>\n";
     }
 

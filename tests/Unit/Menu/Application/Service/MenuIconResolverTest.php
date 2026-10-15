@@ -27,6 +27,8 @@ final class MenuIconResolverTest extends TestCase
         yield 'доставка' => ['Доставка и оплата', '/dostavka/', 'i-zp-truck'];
         yield 'замер по ссылке' => ['Вызвать специалиста', '/zamer/', 'i-zp-measure'];
         yield 'гарантии' => ['Гарантии', '/garantii/', 'i-zp-shield'];
+        yield 'портфолио' => ['Портфолио', '/portfolio/', 'i-zp-photo'];
+        yield 'наши работы — портфолио, даже про заборы' => ['Наши работы: заборы', '/portfolio/zabor-jaluzi/', 'i-zp-photo'];
         yield 'регистр не важен' => ['КОНТАКТЫ', '/', 'i-zp-pin'];
         yield 'неизвестный пункт — нейтральная иконка' => ['Новости', '/news/', MenuIconResolver::DEFAULT];
     }

@@ -1,0 +1,6 @@
+{# Форма заявки внизу страниц портфолио; кнопки «Рассчитать стоимость» ведут сюда. #}
+<section class="zp-section zp-section--alt">
+    <div class="zp-container max-w-3xl">
+        {% include 'public/partials/lead_form.html.twig' with {lead_form_title: lead_form_title|default('Хотите такой же забор? Посчитаем стоимость')} %}
+    </div>
+</section>

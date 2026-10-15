@@ -1,0 +1,84 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ page_title }} | {{ site.name }}{% endblock %}
+
+{% block body %}
+    {% set specs = project.specs %}
+    <main>
+        <section class="zp-pf-band zp-pf-band--project">
+            {% include 'public/portfolio/_stripes.html.twig' %}
+            <div class="zp-container">
+                {% include 'public/portfolio/_breadcrumbs.html.twig' %}
+                <h1 class="zp-pf-h1">{{ project.title }}</h1>
+                <p class="zp-pf-facts">
+                    {% if project.place %}<span><svg aria-hidden="true"><use href="#i-pin"/></svg>{{ project.place }}</span>{% endif %}
+                    {% if project.year %}<span>{{ project.year }}</span>{% endif %}
+                    <span>{% include 'public/portfolio/_media-count.html.twig' with {project: project} only %}</span>
+                </p>
+                {% if specs is not empty %}
+                    <dl class="zp-pf-nums">
+                        {% for spec in specs|slice(0, 4) %}
+                            <div>
+                                <dt>{{ spec.label }}</dt>
+                                <dd>{{ spec.value }}</dd>
+                            </div>
+                        {% endfor %}
+                    </dl>
+                {% endif %}
+            </div>
+        </section>
+
+        <div class="zp-container">
+            {% include 'public/portfolio/_gallery.html.twig' %}
+
+            <div class="zp-pf-body">
+                <div class="min-w-0">
+                    {% if project.description is not empty %}
+                        <h2 class="zp-h2">О работе</h2>
+                        <div class="zp-pf-prose">{{ project.description|raw }}</div>
+                    {% elseif project.summary %}
+                        <h2 class="zp-h2">О работе</h2>
+                        <p class="zp-pf-prose">{{ project.summary }}</p>
+                    {% endif %}
+                    {% if specs|length > 4 %}
+                        <h2 class="zp-h2 mt-10">Характеристики</h2>
+                        <dl class="zp-pf-speclist">
+                            {% for spec in specs %}
+                                <div><dt>{{ spec.label }}</dt><dd>{{ spec.value }}</dd></div>
+                            {% endfor %}
+                        </dl>
+                    {% endif %}
+                </div>
+                <aside class="zp-pf-aside" aria-label="Заказать похожий забор">
+                    <p class="zp-pf-eyebrow">{{ category.title }}</p>
+                    <p class="zp-pf-aside__title">Хочу такой забор</p>
+                    <p class="zp-pf-aside__text">Посчитаем смету по вашим размерам и приедем на бесплатный замер.</p>
+                    <a class="zp-btn zp-btn--primary w-full" href="#lead-form">Рассчитать стоимость</a>
+                    <a class="zp-btn zp-btn--ghost mt-3 w-full" href="{{ site.phone_href }}"><svg aria-hidden="true"><use href="#i-phone"/></svg>{{ site.phone }}</a>
+                    <a class="zp-pf-link mt-5" href="{{ category.path }}">Все работы: {{ category.shortTitle }} <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+                </aside>
+            </div>
+
+            {% if neighbours.previous or neighbours.next %}
+                <nav class="zp-pf-pn" aria-label="Другие работы раздела">
+                    {% for side in ['previous', 'next'] %}
+                        {% set other = attribute(neighbours, side) %}
+                        {% if other %}
+                            <a class="zp-pf-pn__link zp-pf-pn__link--{{ side }}" href="{{ other.path }}" rel="{{ side == 'previous' ? 'prev' : 'next' }}">
+                                {% if other.cover %}
+                                    {{ responsive_image(other.cover.src, {alt: '', class: 'zp-pf-pn__img', sizes: '96px'}) }}
+                                {% endif %}
+                                <span class="min-w-0">
+                                    <small>{{ side == 'previous' ? '← Предыдущая работа' : 'Следующая работа →' }}</small>
+                                    <b>{{ other.title }}</b>
+                                </span>
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+                </nav>
+            {% endif %}
+        </div>
+
+        {% include 'public/portfolio/_lead.html.twig' with {lead_form_title: 'Хочу такой забор — посчитайте стоимость'} %}
+    </main>
+{% endblock %}
