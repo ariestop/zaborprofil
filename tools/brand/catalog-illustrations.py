@@ -138,25 +138,109 @@ def mesh(x, y, w, h, c):
     return ''.join(s)
 
 
+# ---------- Заглушки: две заглушки «домик» в изометрии (по фото товара) ----------
+
+COS30, SIN30 = 0.866, 0.5
+LIGHT = (-0.35, -0.55, 0.76)  # свет сверху слева: верх и левые грани светлее
+
+
+def iso(p, scale, ox, oy):
+    x, y, z = p
+    return ox + (x - y) * COS30 * scale, oy + (x + y) * SIN30 * scale - z * scale
+
+
+def shade(base, normal):
+    k = sum(a * b for a, b in zip(normal, LIGHT))
+    return light(base, .32 * k) if k > 0 else dark(base, -.45 * k)
+
+
+def rotate(p, axis, deg, origin):
+    import math
+    a = math.radians(deg)
+    x, y, z = (p[i] - origin[i] for i in range(3))
+    ca, sa = math.cos(a), math.sin(a)
+    if axis == 'x':
+        y, z = y * ca - z * sa, y * sa + z * ca
+    elif axis == 'y':
+        x, z = x * ca + z * sa, -x * sa + z * ca
+    else:
+        x, y = x * ca - y * sa, x * sa + y * ca
+    return x + origin[0], y + origin[1], z + origin[2]
+
+
+def cap_solids(size=60.0):
+    """Заглушка «домик» в мм: полая вставка с четырьмя рёбрами (снизу вверх), фланец и пирамида. Ось — z."""
+    c, flange, core, fin = size / 2, size + 6, size - 12, size
+    solids = []
+    z = -30.0
+    for i in range(4):
+        solids.append(('box', c, core, z, z + 4))
+        solids.append(('box', c, fin, z + 4, z + 7))
+        z += 7
+    solids.append(('box', c, core, z, 0.0))
+    solids.append(('box', c, flange, 0.0, 6.0))
+    solids.append(('pyramid', c, flange, 6.0, 20.0))
+    return solids
+
+
+def solid_faces(solid):
+    kind, c, side, z0, z1 = solid
+    a, b = c - side / 2, c + side / 2
+    if kind == 'box':
+        v = [(a, a, z0), (b, a, z0), (b, b, z0), (a, b, z0), (a, a, z1), (b, a, z1), (b, b, z1), (a, b, z1)]
+        quads = [(4, 5, 6, 7), (0, 3, 2, 1), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)]
+        return [[v[i] for i in q] for q in quads]
+    apex = (c, c, z1)
+    base = [(a, a, z0), (b, a, z0), (b, b, z0), (a, b, z0)]
+    return [[base[i], base[(i + 1) % 4], apex] for i in range(4)]
+
+
+def normal(face):
+    (x1, y1, z1), (x2, y2, z2), (x3, y3, z3) = face[0], face[1], face[2]
+    ux, uy, uz = x2 - x1, y2 - y1, z2 - z1
+    vx, vy, vz = x3 - x1, y3 - y1, z3 - z1
+    n = (uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx)
+    length = sum(i * i for i in n) ** .5 or 1
+    return tuple(i / length for i in n)
+
+
+def cap_svg(transform, scale, cx, ground, base):
+    """Рисует заглушку, поставленную на землю (низ — ground) с центром cx: тела от дальних к ближним, у каждого — видимые грани."""
+    solids = [[[transform(p) for p in f] for f in solid_faces(sol)] for sol in cap_solids()]
+    points = [iso(p, scale, 0, 0) for faces in solids for f in faces for p in f]
+    ox = cx - (min(x for x, _ in points) + max(x for x, _ in points)) / 2
+    oy = ground - max(y for _, y in points)
+    centers = [tuple(sum(p[i] for f in faces for p in f) / sum(len(f) for f in faces) for i in range(3)) for faces in solids]
+    out = []
+    for i in sorted(range(len(solids)), key=lambda k: centers[k][0] + centers[k][1] + centers[k][2]):
+        for face in solids[i]:
+            n = normal(face)
+            if n[0] + n[1] + n[2] <= 1e-6:
+                continue
+            out.append(poly([iso(p, scale, ox, oy) for p in face], shade(base, n), 'stroke-linejoin="round"'))
+            if i == 0 and face is solids[0][1]:
+                # Торец вставки полый: тёмный проём с тонкой стенкой.
+                cx3 = [sum(p[k] for p in face) / 4 for k in range(3)]
+                inner = [tuple(cx3[k] + (p[k] - cx3[k]) * .74 for k in range(3)) for p in face]
+                out.append(poly([iso(p, scale, ox, oy) for p in inner], dark(base, .55)))
+    return ''.join(out)
+
+
 def caps(x, y, w, h, c):
-    """Столбы с заглушками: плоская, «домик» и круглая; одна заглушка «домик» лежит отдельно."""
-    s = []
-    plastic = T['ink']
-    posts = [(x + w * .12, y + h * .28, 64, 'flat'), (x + w * .42, y + h * .08, 64, 'house'), (x + w * .72, y + h * .36, 56, 'round')]
-    for px, py, pw, kind in posts:
-        ph = y + h - py
-        s.append(rect(px, py, pw, ph, c) + rect(px + pw * .62, py, pw * .38, ph, dark(c, .22)) + rect(px, py, pw * .16, ph, light(c, .14)))
-        if kind == 'flat':
-            s.append(rect(px - 5, py - 14, pw + 10, 16, plastic, 3, ''))
-            s.append(rect(px - 5, py - 14, pw + 10, 4, light(plastic, .25), 3))
-        elif kind == 'house':
-            s.append(poly([(px - 5, py + 1), (px + pw / 2, py - 30), (px + pw + 5, py + 1)], plastic, ''))
-            s.append(poly([(px + pw / 2, py - 30), (px + pw + 5, py + 1), (px + pw / 2, py + 1)], dark(plastic, .35)))
-        else:
-            s.append(f'<path d="M{px - 4} {py + 2} Q{px + pw / 2} {py - 26} {px + pw + 4} {py + 2} Z" fill="{plastic}" />')
-    lx, ly = x + w * .5, y + h - 6
-    s.append(poly([(lx, ly), (lx + 34, ly - 26), (lx + 68, ly)], plastic) + poly([(lx + 34, ly - 26), (lx + 68, ly), (lx + 34, ly)], dark(plastic, .35)))
+    """Две заглушки «домик», как на фото товара: одна лежит на боку рёбрами к зрителю, вторая стоит."""
+    base, ground = T['ink'], y + h
+    def lying(p):
+        return rotate(rotate(p, LYING_AXIS, LYING_TILT, (30, 30, 0)), 'z', LYING_TURN, (30, 30, 0))
+
+    s = [f'<ellipse cx="{x + w * .26:.1f}" cy="{ground - 4:.1f}" rx="{w * .22:.1f}" ry="14" fill="#000" opacity=".1"/>',
+         f'<ellipse cx="{x + w * .73:.1f}" cy="{ground - 4:.1f}" rx="{w * .23:.1f}" ry="14" fill="#000" opacity=".1"/>']
+    s.append(cap_svg(lying, CAP_SCALE, x + w * .26, ground - 6, base))
+    s.append(cap_svg(lambda p: p, CAP_SCALE, x + w * .73, ground - 2, base))
     return ''.join(s)
+
+
+# Лежащая заглушка: на боку, рёбрами и полым торцом к зрителю, пирамидой назад (как на фото товара).
+LYING_AXIS, LYING_TILT, LYING_TURN, CAP_SCALE = 'x', 90, 20, 2.7
 
 
 PRODUCTS = [
@@ -170,15 +254,16 @@ PRODUCTS = [
 
 
 def illustration(fn, c, slug):
-    """Сцена с изделием: забор между двумя столбами у дома; заглушки — на трёх столбах разной высоты."""
+    """Сцена с изделием: забор между двумя столбами у дома; заглушки — крупным планом на газоне."""
     g = 520
     s = [rect(0, 0, W, H, T['brand50'])]
     s.append(rect(470, 200, 230, 180, T['surface_strong']) + poly([(452, 205), (585, 118), (718, 205)], T['line']))
     s.append(rect(505, 245, 46, 54, T['white']) + rect(620, 245, 46, 54, T['white']))
-    s.append(f'<circle cx="150" cy="270" r="92" fill="{T["brand200"]}"/>' + rect(142, 320, 16, 200, T['line_strong']))
+    if slug != 'caps':
+        s.append(f'<circle cx="150" cy="270" r="92" fill="{T["brand200"]}"/>' + rect(142, 320, 16, 200, T['line_strong']))
     s.append(rect(0, g, W, H - g, T['brand100']) + rect(0, g, W, 6, T['brand200']))
     if slug == 'caps':
-        s.append(f'<g transform="translate(-130 -150) scale(1.35)">' + caps(150, 230, 600, g / 1.35 + 150 / 1.35 - 230 - 4, c) + '</g>')
+        s.append(caps(80, 150, 640, g - 150, c))
     else:
         top = 112 if slug != 'mesh' else 132
         s.append(post(44, top - 10, 32, g - top + 10, dark(c, .1)) + post(724, top - 10, 32, g - top + 10, dark(c, .1)))
