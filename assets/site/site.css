@@ -72,8 +72,12 @@
 }
 
 @layer components {
+    /*
+     * overflow-x: clip — страховка: если что-то в контенте окажется шире экрана, страница не станет шире,
+     * и телефон не уменьшит масштаб (иначе шапка и нижняя панель выглядят узкими). В отличие от hidden, не ломает sticky-шапку.
+     */
     .zp-body {
-        @apply bg-white pb-[4.5rem] text-base text-ink antialiased md:pb-0;
+        @apply bg-white pb-[4.5rem] text-base text-ink antialiased [overflow-x:clip] md:pb-0;
     }
 
     .zp-skip {
@@ -107,8 +111,9 @@
     .zp-logo {
         @apply flex shrink-0 items-center;
     }
+    /* На экранах уже 360 px логотип на ступень ниже: иначе он с кнопками звонка и меню не помещается в строку. */
     .zp-logo img {
-        @apply h-7 w-auto sm:h-8 md:h-9;
+        @apply h-7 w-auto max-[359px]:h-6 sm:h-8 md:h-9;
     }
     /*
      * Меню шапки, вариант B брендбука: пункты и разделы в одну строку, раздел раскрывает компактный список

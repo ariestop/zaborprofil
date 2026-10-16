@@ -52,9 +52,9 @@ final class PortfolioProjectMediaTest extends TestCase
             new PortfolioMediaDraft(PortfolioMediaKind::Photo, '/uploads/media/d.jpg'),
         ]);
 
-        $src = static fn (array $photos): array => array_map(static fn (PortfolioMedia $m): string => $m->src(), $photos);
-        self::assertSame(['/uploads/media/c.jpg', '/uploads/media/a.jpg', '/uploads/media/d.jpg'], $src($project->feedPhotos(10)));
-        self::assertSame(['/uploads/media/c.jpg', '/uploads/media/a.jpg'], $src($project->feedPhotos(2)));
+        $src = static fn (PortfolioMedia $m): string => $m->src();
+        self::assertSame(['/uploads/media/c.jpg', '/uploads/media/a.jpg', '/uploads/media/d.jpg'], array_map($src, $project->feedPhotos(10)));
+        self::assertSame(['/uploads/media/c.jpg', '/uploads/media/a.jpg'], array_map($src, $project->feedPhotos(2)));
     }
 
     public function testOnlyOnePhotoCanBeCover(): void

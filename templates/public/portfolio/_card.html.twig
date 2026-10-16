@@ -31,18 +31,16 @@
             </div>
             <span class="zp-pf-post__counter" data-pf-track-counter hidden>1 / {{ photos|length }}</span>
         {% elseif cover %}
-            {% set image = responsive_image(cover.src, {
+            {# Не через {% set %}: так HTML картинки потерял бы пометку «безопасно» и вывелся бы текстом. #}
+            {% if post %}<a class="zp-pf-post__slide" href="{{ project.path }}" tabindex="-1" aria-hidden="true">{% endif %}
+            {{ responsive_image(cover.src, {
                 alt: cover.caption,
                 fallback_alt: project.title,
                 class: 'size-full object-cover',
                 sizes: '(min-width: 1280px) 384px, (min-width: 768px) 45vw, 92vw',
                 eager: eager|default(false)
-            }) %}
-            {% if post %}
-                <a class="zp-pf-post__slide" href="{{ project.path }}" tabindex="-1" aria-hidden="true">{{ image }}</a>
-            {% else %}
-                {{ image }}
-            {% endif %}
+            }) }}
+            {% if post %}</a>{% endif %}
         {% endif %}
         {# Значок вида для компактной сетки на телефоне (как в Instagram): ▶ — есть видео, ⧉ — несколько фото. #}
         {% if project.videos|length > 0 or project.photos|length > 1 %}
