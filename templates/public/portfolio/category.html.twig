@@ -37,7 +37,7 @@
                 </div>
                 <div class="zp-pf-grid" data-pf-grid>
                     {% for project in projects %}
-                        {% include 'public/portfolio/_card.html.twig' with {project: project, eager: loop.index <= 3} only %}
+                        {% include 'public/portfolio/_card.html.twig' with {project: project, eager: loop.index <= 3, post: true} only %}
                     {% endfor %}
                 </div>
                 {% include 'public/portfolio/_cta.html.twig' %}

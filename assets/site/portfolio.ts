@@ -1,8 +1,9 @@
 /**
- * Портфолио: галерея работы (один кадр + лента миниатюр, на телефоне — счётчик и точки), ряд карточек блока «Портфолио» со стрелками
- * и переключатель «Карточки / Сетка» в разделе.
+ * Портфолио: галерея работы (один кадр + лента миниатюр; на телефоне — свайп с остановкой на каждом кадре, счётчик и точки),
+ * ряд карточек блока «Портфолио» со стрелками и переключатель «Карточки / Сетка» в разделе.
  * Без JS кадры галереи идут друг под другом, а ряд прокручивается пальцем или колесом.
  */
+import { MOBILE_QUERY } from './portfolio-social'
 
 const MAX_DOTS = 12
 
@@ -89,7 +90,34 @@ export function initPortfolioGalleries(root: ParentNode = document): void {
             }
         })
 
-        // Свайп по кадру на телефоне.
+        // Телефон: кадры листаются прокруткой ленты (scroll-snap), активный кадр — тот, что в окне.
+        const track = gallery.querySelector<HTMLElement>('[data-pf-gallery-track]')
+        const mobile = window.matchMedia(MOBILE_QUERY)
+        let frame = 0
+        track?.addEventListener(
+            'scroll',
+            () => {
+                if (!mobile.matches || frame !== 0) {
+                    return
+                }
+                frame = window.requestAnimationFrame(() => {
+                    frame = 0
+                    const width = track.clientWidth
+                    const next = width > 0 ? Math.round(track.scrollLeft / width) : 0
+                    if (next !== index && next >= 0 && next < slides.length) {
+                        show(next)
+                    }
+                })
+            },
+            { passive: true },
+        )
+        mobile.addEventListener('change', () => {
+            if (mobile.matches && track !== null) {
+                track.scrollLeft = index * track.clientWidth
+            }
+        })
+
+        // Свайп по кадру на планшете (на компьютере кадр один, лента прокрутки не нужна).
         let startX: number | null = null
         const stage = gallery.querySelector<HTMLElement>('.zp-pf-gallery__stage')
         stage?.addEventListener(
@@ -102,6 +130,7 @@ export function initPortfolioGalleries(root: ParentNode = document): void {
         stage?.addEventListener('touchend', (event) => {
             const endX = event.changedTouches[0]?.clientX
             if (
+                !mobile.matches &&
                 startX !== null &&
                 endX !== undefined &&
                 Math.abs(endX - startX) > 50 &&

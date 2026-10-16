@@ -92,7 +92,8 @@ export function initNavDropdowns(root: ParentNode = document): void {
     const hoverable = window.matchMedia?.('(hover: hover) and (pointer: fine)').matches ?? false
     let closeTimer: number | undefined
 
-    const links = (dropdown: HTMLElement): HTMLAnchorElement[] => Array.from(dropdown.querySelectorAll<HTMLAnchorElement>('a[href]'))
+    const links = (dropdown: HTMLElement): HTMLAnchorElement[] =>
+        Array.from(dropdown.querySelectorAll<HTMLAnchorElement>('a[href]'))
 
     const setOpen = (entry: (typeof entries)[number], open: boolean): void => {
         if (open) {
@@ -108,7 +109,9 @@ export function initNavDropdowns(root: ParentNode = document): void {
         const { group, trigger, dropdown } = entry
 
         // Мышью список уже открыт наведением — клик его не закрывает; с клавиатуры (detail 0) и пальцем клик переключает.
-        trigger.addEventListener('click', (event) => setOpen(entry, hoverable && event.detail > 0 ? true : dropdown.hidden))
+        trigger.addEventListener('click', (event) =>
+            setOpen(entry, hoverable && event.detail > 0 ? true : dropdown.hidden),
+        )
         trigger.addEventListener('keydown', (event) => {
             if (event.key === 'ArrowDown') {
                 event.preventDefault()
@@ -463,23 +466,31 @@ export function initOfficeStatus(root: ParentNode = document, now: Date = new Da
 }
 
 /** Кнопки «скопировать» у адреса и реквизитов: копируют в буфер и на секунду меняют вид кнопки. */
+/** Копирует текст в буфер; без Clipboard API (старый браузер, http) — через скрытое поле. Возвращает успех. */
+export async function copyText(value: string): Promise<boolean> {
+    try {
+        await navigator.clipboard.writeText(value)
+
+        return true
+    } catch {
+        const field = document.createElement('textarea')
+        field.value = value
+        field.setAttribute('readonly', '')
+        field.style.position = 'fixed'
+        field.style.opacity = '0'
+        document.body.append(field)
+        field.select()
+        const copied = document.execCommand('copy')
+        field.remove()
+
+        return copied
+    }
+}
+
 export function initCopyButtons(root: ParentNode = document): void {
     root.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((button) => {
         button.addEventListener('click', async () => {
-            const value = button.dataset.copy ?? ''
-            try {
-                await navigator.clipboard.writeText(value)
-            } catch {
-                const field = document.createElement('textarea')
-                field.value = value
-                field.setAttribute('readonly', '')
-                field.style.position = 'fixed'
-                field.style.opacity = '0'
-                document.body.append(field)
-                field.select()
-                document.execCommand('copy')
-                field.remove()
-            }
+            await copyText(button.dataset.copy ?? '')
             const label = button.getAttribute('aria-label') ?? ''
             button.dataset.copied = 'true'
             button.setAttribute('aria-label', 'Скопировано')

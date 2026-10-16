@@ -25,6 +25,11 @@ framework:
             policy: sliding_window
             limit: 10
             interval: '1 hour'
+        # Лайки работ портфолио с одного IP (ставить и снимать). Хватает человеку, листающему всю ленту, но не скрипту.
+        public_likes:
+            policy: sliding_window
+            limit: 60
+            interval: '10 minutes'
 
 when@test:
     framework:
@@ -35,6 +40,8 @@ when@test:
             admin_client_errors:
                 storage_service: test.rate_limiter.storage
             public_leads:
+                storage_service: test.rate_limiter.storage
+            public_likes:
                 storage_service: test.rate_limiter.storage
         session:
             storage_factory_id: session.storage.factory.mock_file

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { initPortfolioGalleries, initPortfolioViewToggle } from './portfolio'
 
 function mount(html: string): HTMLElement {
@@ -12,7 +12,7 @@ function mount(html: string): HTMLElement {
 const gallery = (slides: number) => `
     <div data-pf-gallery>
         <div class="zp-pf-gallery__stage">
-            ${Array.from({ length: slides }, (_, i) => `<figure data-pf-slide>${i}</figure>`).join('')}
+            <div data-pf-gallery-track>${Array.from({ length: slides }, (_, i) => `<figure data-pf-slide>${i}</figure>`).join('')}</div>
             <span data-pf-badge hidden>1 / ${slides}</span>
             <span data-pf-dots hidden></span>
             <div data-pf-nav hidden><button data-pf-prev></button><span data-pf-counter></span><button data-pf-next></button></div>
@@ -24,9 +24,14 @@ afterEach(() => {
     document.body.innerHTML = ''
 })
 
+function setMobile(matches: boolean): void {
+    window.matchMedia = vi.fn().mockReturnValue({ matches, addEventListener: vi.fn() })
+}
+
 describe('portfolio gallery', () => {
     beforeEach(() => {
         Element.prototype.scrollIntoView = () => undefined
+        setMobile(false)
     })
 
     it('shows one slide, the counter badge and dots that follow the active slide', () => {
@@ -57,6 +62,26 @@ describe('portfolio gallery', () => {
         expect(root.querySelectorAll('[data-pf-dots] i')).toHaveLength(0)
         expect(root.querySelector<HTMLElement>('[data-pf-dots]')!.hidden).toBe(true)
         expect(root.querySelector<HTMLElement>('[data-pf-badge]')!.textContent).toBe('1 / 20')
+    })
+
+    it('follows the swiped frame on a phone instead of the thumbnail strip', () => {
+        setMobile(true)
+        vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+            callback(0)
+            return 1
+        })
+        const root = mount(gallery(3))
+        initPortfolioGalleries(root)
+        const track = root.querySelector<HTMLElement>('[data-pf-gallery-track]')!
+        Object.defineProperty(track, 'clientWidth', { value: 390 })
+
+        track.scrollLeft = 390
+        track.dispatchEvent(new Event('scroll'))
+        expect(root.querySelector<HTMLElement>('[data-pf-badge]')!.textContent).toBe('2 / 3')
+        expect(root.querySelectorAll('[data-pf-dots] i')[1].classList.contains('is-active')).toBe(
+            true,
+        )
+        expect(root.querySelector('[data-pf-slide].is-active')!.textContent).toBe('1')
     })
 })
 
