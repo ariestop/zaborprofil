@@ -42,6 +42,21 @@ final class PortfolioProjectMediaTest extends TestCase
         self::assertSame('/uploads/media/c.jpg', $project->cover()?->src());
     }
 
+    public function testFeedStartsWithTheCoverAndSkipsVideos(): void
+    {
+        $project = $this->project();
+        $project->replaceMedia([
+            new PortfolioMediaDraft(PortfolioMediaKind::Photo, '/uploads/media/a.jpg'),
+            new PortfolioMediaDraft(PortfolioMediaKind::Video, '/uploads/media/b.mp4'),
+            new PortfolioMediaDraft(PortfolioMediaKind::Photo, '/uploads/media/c.jpg', cover: true),
+            new PortfolioMediaDraft(PortfolioMediaKind::Photo, '/uploads/media/d.jpg'),
+        ]);
+
+        $src = static fn (PortfolioMedia $m): string => $m->src();
+        self::assertSame(['/uploads/media/c.jpg', '/uploads/media/a.jpg', '/uploads/media/d.jpg'], array_map($src, $project->feedPhotos(10)));
+        self::assertSame(['/uploads/media/c.jpg', '/uploads/media/a.jpg'], array_map($src, $project->feedPhotos(2)));
+    }
+
     public function testOnlyOnePhotoCanBeCover(): void
     {
         $this->expectExceptionMessage('Главное фото может быть только одно.');

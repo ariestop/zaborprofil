@@ -3,7 +3,7 @@
 В проекте две категории API:
 
 1. **Admin API** — `^/admin/api/...`, JSON, под admin firewall, CSRF + Origin (см. [12-admin-area](12-admin-area.md)). Реализован.
-2. **Public API** — JSON endpoints вне `/admin`. Частично реализован (`POST /api/leads`), версионированный внешний API `/api/v1/...` остаётся целевым.
+2. **Public API** — JSON endpoints вне `/admin`. Частично реализован (`POST /api/leads`, лайки портфолио `/api/portfolio/likes` — см. [51-portfolio](51-portfolio.md#лайки-и-поделиться)), версионированный внешний API `/api/v1/...` остаётся целевым.
 
 ## Admin API: текущее состояние
 

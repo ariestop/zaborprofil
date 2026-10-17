@@ -2,41 +2,44 @@
     Галерея работы: большой кадр и лента миниатюр. Фото открываются на весь экран (initGalleries),
     загруженные видео — плеер media-chrome, VK/Rutube — заглушка, iframe подключается по нажатию.
     Без JS кадры идут друг под другом; assets/site/portfolio.ts показывает по одному и связывает ленту.
+    На телефоне ленты миниатюр нет: кадры листаются пальцем с остановкой на каждом (scroll-snap), позицию показывают счётчик и точки.
 #}
 {% set items = project.media %}
 <div class="zp-pf-gallery" data-pf-gallery data-gallery>
     <div class="zp-pf-gallery__stage">
-        {% for item in items %}
-            {% set label = item.isPhoto ? 'Фото' : 'Видео' %}
-            <figure class="zp-pf-slide" data-pf-slide id="pf-slide-{{ loop.index }}" aria-label="{{ label }} {{ loop.index }} из {{ items|length }}">
-                {% if item.kind.value == 'photo' %}
-                    <a class="zp-pf-slide__photo" href="{{ item.src }}" data-lightbox aria-label="Открыть фото {{ loop.index }} на весь экран">
-                        {{ responsive_image(item.src, {
-                            alt: item.caption,
-                            fallback_alt: project.title ~ ' — фото ' ~ loop.index,
-                            class: 'size-full object-cover',
-                            sizes: '(min-width: 1280px) 1216px, 100vw',
-                            eager: loop.first
-                        }) }}
-                    </a>
-                {% elseif item.kind.value == 'video' %}
-                    {{ include('public/partials/video-player.html.twig', {src: item.src, poster: item.poster, title: item.caption ?? project.title, preload: 'none'}, with_context = false) }}
-                {% else %}
-                    {% set provider = 'rutube.ru' in item.src ? 'Rutube' : 'VK Видео' %}
-                    <div class="zp-video">
-                        <button type="button" class="zp-pf-embed" data-video-embed="{{ item.src }}" data-video-title="{{ item.caption ?? project.title }}">
-                            {% if item.poster %}<img src="{{ item.poster }}" alt="" loading="lazy" class="zp-pf-embed__poster">{% endif %}
-                            <span class="zp-pf-embed__provider">{{ provider }}</span>
-                            <span class="zp-pf-embed__play"><svg aria-hidden="true"><use href="#i-play"/></svg></span>
-                            <span class="zp-pf-embed__label">Смотреть на {{ provider }}</span>
-                        </button>
-                    </div>
-                {% endif %}
-                {% if item.caption %}
-                    <figcaption class="zp-pf-slide__caption">{{ item.caption }}</figcaption>
-                {% endif %}
-            </figure>
-        {% endfor %}
+        <div class="zp-pf-gallery__track" data-pf-gallery-track>
+            {% for item in items %}
+                {% set label = item.isPhoto ? 'Фото' : 'Видео' %}
+                <figure class="zp-pf-slide" data-pf-slide id="pf-slide-{{ loop.index }}" aria-label="{{ label }} {{ loop.index }} из {{ items|length }}">
+                    {% if item.kind.value == 'photo' %}
+                        <a class="zp-pf-slide__photo" href="{{ item.src }}" data-lightbox aria-label="Открыть фото {{ loop.index }} на весь экран">
+                            {{ responsive_image(item.src, {
+                                alt: item.caption,
+                                fallback_alt: project.title ~ ' — фото ' ~ loop.index,
+                                class: 'size-full object-cover',
+                                sizes: '(min-width: 1280px) 1216px, 100vw',
+                                eager: loop.first
+                            }) }}
+                        </a>
+                    {% elseif item.kind.value == 'video' %}
+                        {{ include('public/partials/video-player.html.twig', {src: item.src, poster: item.poster, title: item.caption ?? project.title, preload: 'none'}, with_context = false) }}
+                    {% else %}
+                        {% set provider = 'rutube.ru' in item.src ? 'Rutube' : 'VK Видео' %}
+                        <div class="zp-video">
+                            <button type="button" class="zp-pf-embed" data-video-embed="{{ item.src }}" data-video-title="{{ item.caption ?? project.title }}">
+                                {% if item.poster %}<img src="{{ item.poster }}" alt="" loading="lazy" class="zp-pf-embed__poster">{% endif %}
+                                <span class="zp-pf-embed__provider">{{ provider }}</span>
+                                <span class="zp-pf-embed__play"><svg aria-hidden="true"><use href="#i-play"/></svg></span>
+                                <span class="zp-pf-embed__label">Смотреть на {{ provider }}</span>
+                            </button>
+                        </div>
+                    {% endif %}
+                    {% if item.caption %}
+                        <figcaption class="zp-pf-slide__caption">{{ item.caption }}</figcaption>
+                    {% endif %}
+                </figure>
+            {% endfor %}
+        </div>
         {% if items|length > 1 %}
             <span class="zp-pf-gallery__badge" data-pf-badge hidden aria-hidden="true">1 / {{ items|length }}</span>
             <span class="zp-pf-dots" data-pf-dots hidden aria-hidden="true"></span>

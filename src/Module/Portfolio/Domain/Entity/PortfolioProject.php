@@ -305,6 +305,19 @@ final class PortfolioProject
     }
 
     /**
+     * Фото для ленты работ (свайп в карточке): сначала главное, затем остальные по порядку галереи.
+     *
+     * @return list<PortfolioMedia>
+     */
+    public function feedPhotos(int $limit): array
+    {
+        $cover = $this->cover();
+        $rest = array_filter($this->photos(), static fn (PortfolioMedia $photo): bool => $photo !== $cover);
+
+        return \array_slice($cover instanceof PortfolioMedia ? [$cover, ...$rest] : array_values($rest), 0, max(1, $limit));
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function toArray(): array

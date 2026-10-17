@@ -111,6 +111,26 @@ final class PublicPortfolioTest extends WebTestCase
         self::assertStringContainsString('id="lead-form"', $html);
     }
 
+    public function testFeedRendersPhotosAsImagesNotText(): void
+    {
+        $service = self::getContainer()->get(PortfolioAdminService::class);
+        self::assertInstanceOf(PortfolioAdminService::class, $service);
+        $category = (string) $service->createCategory(new PortfolioCategoryInput('Ранчо', 'rancho'))->id();
+        $single = $service->createProject(new PortfolioProjectInput($category, 'Одно фото', 'odno-foto', media: [
+            new PortfolioMediaInput('photo', '/uploads/media/odno-foto.jpg', null, null),
+        ]));
+        $service->setPublished((string) $single->id(), true);
+
+        foreach (['/portfolio/', '/portfolio/rancho/', '/portfolio/zabor-jaluzi/'] as $path) {
+            $html = $this->html($path);
+            self::assertStringNotContainsString('&lt;img', $html, $path.': разметка фото выведена текстом.');
+            self::assertStringNotContainsString('&lt;picture', $html, $path);
+            self::assertStringContainsString('data-pf-post=', $html, $path.': карточки — посты ленты.');
+        }
+        self::assertMatchesRegularExpression('#<a class="zp-pf-post__slide" href="/portfolio/rancho/odno-foto/"[^>]*>\s*<(img|picture)#', $this->html('/portfolio/rancho/'), 'Единственное фото — ссылка на работу.');
+        self::assertStringContainsString('data-pf-track', $this->html('/portfolio/zabor-jaluzi/'), 'Несколько фото — лента со свайпом.');
+    }
+
     public function testDraftsUnknownAndEmptySectionsAreNotFound(): void
     {
         foreach (['/portfolio/zabor-jaluzi/chernovik/', '/portfolio/vorota/', '/portfolio/nope/', '/portfolio/profnastil/grafit/'] as $path) {

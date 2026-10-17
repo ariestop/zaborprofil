@@ -72,8 +72,12 @@
 }
 
 @layer components {
+    /*
+     * overflow-x: clip — страховка: если что-то в контенте окажется шире экрана, страница не станет шире,
+     * и телефон не уменьшит масштаб (иначе шапка и нижняя панель выглядят узкими). В отличие от hidden, не ломает sticky-шапку.
+     */
     .zp-body {
-        @apply bg-white pb-[4.5rem] text-base text-ink antialiased md:pb-0;
+        @apply bg-white pb-[4.5rem] text-base text-ink antialiased [overflow-x:clip] md:pb-0;
     }
 
     .zp-skip {
@@ -107,8 +111,9 @@
     .zp-logo {
         @apply flex shrink-0 items-center;
     }
+    /* На экранах уже 360 px логотип на ступень ниже: иначе он с кнопками звонка и меню не помещается в строку. */
     .zp-logo img {
-        @apply h-7 w-auto sm:h-8 md:h-9;
+        @apply h-7 w-auto max-[359px]:h-6 sm:h-8 md:h-9;
     }
     /*
      * Меню шапки, вариант B брендбука: пункты и разделы в одну строку, раздел раскрывает компактный список
@@ -564,7 +569,11 @@
     }
     .zp-player__bar {
         @apply w-full gap-1 rounded-b-2xl px-1 pb-1;
-        background: linear-gradient(to top, color-mix(in srgb, var(--color-night) 92%, transparent), transparent);
+        background: linear-gradient(
+            to top,
+            color-mix(in srgb, var(--color-night) 92%, transparent),
+            transparent
+        );
     }
     .zp-player__bar > * {
         @apply min-h-12 rounded-[10px];
@@ -1067,6 +1076,16 @@
     .zp-pf-card__body {
         @apply flex flex-1 flex-col gap-2 px-4 pt-4 pb-4.5 md:px-[1.125rem];
     }
+    /* Раздел и характеристики в одной обёртке (в ленте на телефоне — одна строка), в карточке — раздел, название, характеристики. */
+    .zp-pf-card__line {
+        @apply contents;
+    }
+    .zp-pf-card__line .zp-pf-specs {
+        @apply order-1;
+    }
+    .zp-pf-card__body .zp-pf-meta {
+        @apply order-2;
+    }
     .zp-pf-card__title {
         @apply text-[17px] leading-snug font-semibold text-ink md:text-[19px];
     }
@@ -1129,9 +1148,12 @@
         @apply mt-6 md:mt-8;
     }
     .zp-pf-gallery__stage {
-        @apply relative grid gap-4;
+        @apply relative;
     }
-    .zp-pf-gallery.is-ready .zp-pf-gallery__stage {
+    .zp-pf-gallery__track {
+        @apply grid gap-4;
+    }
+    .zp-pf-gallery.is-ready .zp-pf-gallery__track {
         @apply block;
     }
     .zp-pf-slide {
@@ -1365,6 +1387,70 @@
         @apply bg-white text-ink shadow-sm;
     }
 
+    /*
+     * Лента работ (карточка post в хабе и разделе) и строка «лайк / поделиться». На компьютере карточка обычная:
+     * виден первый кадр, остальное скрыто. Пост на телефоне — в @media ниже.
+     */
+    .zp-pf-post__place,
+    .zp-pf-post__text,
+    .zp-pf-post__counter,
+    .zp-pf-actions {
+        @apply hidden;
+    }
+    .zp-pf-post__track {
+        @apply flex size-full;
+    }
+    .zp-pf-post__slide {
+        @apply block size-full shrink-0;
+    }
+    .zp-pf-post__slide + .zp-pf-post__slide {
+        @apply hidden;
+    }
+    .zp-pf-like {
+        @apply inline-flex min-h-12 min-w-12 items-center justify-center gap-1.5 rounded-[10px] px-2 text-ink transition-colors focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
+    }
+    .zp-pf-like svg {
+        @apply size-7 fill-none transition-colors;
+    }
+    /* Сердце «нравится» — красное, как принято в соцсетях: токен danger (единственный красный в палитре бренда). */
+    .zp-pf-like[aria-pressed='true'] svg {
+        @apply fill-danger text-danger;
+    }
+    .zp-pf-like.is-popping svg {
+        animation: zp-like-pop 0.35s ease-out;
+    }
+    .zp-pf-like__count {
+        @apply font-cond text-[17px] font-semibold tabular-nums empty:hidden;
+    }
+    .zp-pf-share {
+        @apply relative;
+    }
+    .zp-pf-share__toggle {
+        @apply grid size-12 place-items-center rounded-[10px] text-ink focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
+    }
+    .zp-pf-share__toggle svg {
+        @apply size-7;
+    }
+    .zp-pf-share__menu {
+        @apply absolute top-full left-0 z-30 mt-1 w-[17rem] rounded-[var(--radius-card)] border border-line bg-white p-2 shadow-[0_14px_30px_rgb(35_39_45/0.16)];
+    }
+    .zp-pf-share__menu[hidden] {
+        @apply hidden;
+    }
+    .zp-pf-share__note {
+        @apply flex items-center gap-2 px-2 pt-1 pb-2 text-[15px] break-all text-graphite;
+    }
+    .zp-pf-share__link {
+        @apply flex min-h-12 items-center gap-3 rounded-[10px] px-2.5 text-[17px] font-semibold text-ink hover:bg-surface focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-brand-600;
+    }
+    .zp-pf-share__link svg,
+    .zp-pf-share__max {
+        @apply size-6 shrink-0;
+    }
+    .zp-pf-share__max {
+        @apply grid place-items-center rounded-md bg-ink font-cond text-[15px] leading-none font-bold text-white;
+    }
+
     @media (max-width: 767px) {
         /* 1) Галерея работы как пост: во всю ширину, без скруглений, точки под кадром, ленту и стрелки заменяют свайп и точки. */
         .zp-pf-gallery {
@@ -1381,8 +1467,16 @@
         .zp-pf-gallery__nav {
             @apply hidden;
         }
+        /* Ленты миниатюр на телефоне нет: кадры листаются пальцем с остановкой на каждом. */
         .zp-pf-strip {
-            @apply px-4;
+            @apply hidden!;
+        }
+        .zp-pf-gallery.is-ready .zp-pf-gallery__track {
+            @apply flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
+        }
+        .zp-pf-gallery.is-ready .zp-pf-slide,
+        .zp-pf-gallery.is-ready .zp-pf-slide:not(.is-active) {
+            @apply block w-full shrink-0 snap-center snap-always;
         }
         .zp-pf-band--project {
             @apply pb-5;
@@ -1440,6 +1534,94 @@
         .zp-pf-grid.is-compact .zp-pf-card__body {
             @apply absolute inset-0 overflow-hidden p-0 opacity-0;
         }
+
+        /*
+         * 4) Лента работ как пост: место над фото, фото листаются пальцем с остановкой на каждом, счётчик кадров,
+         * лайк и «поделиться» с точками по центру, раздел слева и характеристики справа, название и начало описания с «ещё…».
+         */
+        .zp-pf-grid:not(.is-compact):has(.zp-pf-card--post) {
+            @apply gap-8;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post {
+            @apply -mx-4 overflow-visible rounded-none border-0 bg-transparent hover:shadow-none;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post .zp-pf-post__place {
+            @apply flex items-center gap-1.5 px-4 pb-2.5 text-[15px] font-semibold text-ink;
+        }
+        .zp-pf-post__place svg {
+            @apply size-4.5 shrink-0 text-brand-700;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post .zp-pf-badge {
+            @apply hidden;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post .zp-pf-card__media img {
+            @apply scale-100;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-post__track {
+            @apply snap-x snap-mandatory overflow-x-auto overscroll-x-contain scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-post__slide {
+            @apply snap-center snap-always;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-post__slide + .zp-pf-post__slide {
+            @apply block;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-post__counter:not([hidden]) {
+            @apply pointer-events-none absolute top-3 right-3 block rounded-full bg-night/75 px-2.5 py-1 font-cond text-[15px] font-semibold text-white tabular-nums;
+        }
+        .zp-pf-actions:not([hidden]) {
+            @apply relative flex items-center gap-0.5;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post .zp-pf-actions:not([hidden]) {
+            @apply px-2 pt-1;
+        }
+        .zp-pf-grid.is-compact .zp-pf-actions,
+        .zp-pf-grid.is-compact .zp-pf-post__counter {
+            @apply hidden!;
+        }
+        .zp-pf-actions--page:not([hidden]) {
+            @apply -mx-2 mt-1;
+        }
+        .zp-pf-actions__dots {
+            @apply pointer-events-none absolute left-1/2 flex -translate-x-1/2 gap-1.5;
+        }
+        .zp-pf-actions__dots i {
+            @apply size-[6px] rounded-full bg-line-strong transition-colors;
+        }
+        .zp-pf-actions__dots i.is-active {
+            @apply bg-brand-700;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post .zp-pf-card__body {
+            @apply gap-1.5 px-4 pt-1 pb-0;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post .zp-pf-card__line {
+            @apply flex items-baseline justify-between gap-3;
+        }
+        .zp-pf-card--post .zp-pf-card__line .zp-pf-eyebrow {
+            @apply shrink-0;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post .zp-pf-specs {
+            @apply min-w-0 justify-end gap-x-0 gap-y-0.5 text-right;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post .zp-pf-specs li {
+            @apply bg-transparent p-0 text-[15px] leading-tight;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post .zp-pf-specs li + li::before {
+            @apply px-1.5 text-line-strong content-['·'];
+        }
+        /* В посте ссылками служат фото и «ещё…»: растянутая ссылка заголовка закрыла бы ленту фото и кнопки. */
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post .zp-pf-card__title a {
+            @apply after:hidden;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post .zp-pf-post__text {
+            @apply block text-[17px] leading-normal text-ink;
+        }
+        .zp-pf-post__more {
+            @apply font-semibold text-graphite underline-offset-4 hover:text-brand-800 hover:underline focus-visible:rounded focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post .zp-pf-meta {
+            @apply hidden;
+        }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -1450,6 +1632,11 @@
     }
 }
 
+@keyframes zp-like-pop {
+    50% {
+        transform: scale(1.25);
+    }
+}
 @keyframes zp-fade-in {
     from {
         opacity: 0;
@@ -1463,7 +1650,8 @@
 @media (prefers-reduced-motion: reduce) {
     .zp-drawer__backdrop,
     .zp-drawer__sheet,
-    .zp-nav__dropdown {
+    .zp-nav__dropdown,
+    .zp-pf-like.is-popping svg {
         animation: none;
     }
 }

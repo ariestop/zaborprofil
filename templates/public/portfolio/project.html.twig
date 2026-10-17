@@ -23,6 +23,7 @@
 
         <div class="zp-container">
             {% include 'public/portfolio/_gallery.html.twig' %}
+            {% include 'public/portfolio/_actions.html.twig' with {project: project, class: 'zp-pf-actions--page'} only %}
             {# На телефоне фото идёт сразу под заголовком (как пост), цифры — под ним. #}
             {% if specs is not empty %}
                 {% include 'public/portfolio/_nums.html.twig' with {specs: specs, light: true, class: 'md:hidden'} only %}
