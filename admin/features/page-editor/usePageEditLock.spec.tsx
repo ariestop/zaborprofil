@@ -63,7 +63,7 @@ describe('usePageEditLock', () => {
       await result.current.takeOver()
     })
 
-    expect((lockCalls('POST').at(-1)?.[1] as { body: { takeOver: boolean } }).body.takeOver).toBe(true)
+    expect((lockCalls('POST').at(-1)![1] as { body: { takeOver: boolean } }).body.takeOver).toBe(true)
     expect(result.current.locked).toBe(false)
   })
 

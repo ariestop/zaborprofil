@@ -77,7 +77,7 @@ export function SettingsTab({ controller, page }: SettingsTabProps) {
       await statusMutation.mutateAsync('deleted')
       controller.disableLeaveGuard()
       push({ title: 'Страница удалена' })
-      navigate('/admin/pages')
+      void navigate('/admin/pages')
     } catch (error) {
       push({ title: 'Не удалось удалить страницу', description: describeApiError(error, 'Проверьте права pages.delete.') })
     }

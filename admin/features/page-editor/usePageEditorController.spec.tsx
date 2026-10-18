@@ -124,7 +124,7 @@ describe('usePageEditorController autosave', () => {
     await advance(1)
     const seoCalls = calls('PUT', '/seo')
     expect(seoCalls).toHaveLength(1)
-    expect((seoCalls[0]?.[1] as { body: { metaTitle: string } }).body.metaTitle).toBe('Второй')
+    expect((seoCalls[0]![1] as { body: { metaTitle: string } }).body.metaTitle).toBe('Второй')
   })
 
   it('autosaves changed blocks through the builder endpoint', async () => {
@@ -201,8 +201,8 @@ describe('usePageEditorController block ids', () => {
 
     const puts = calls('PUT', '/builder')
     expect(puts).toHaveLength(2)
-    expect((puts[0]?.[1] as { body: { blocks: Array<{ id: string }> } }).body.blocks[0]?.id).toBe(block.id)
-    expect((puts[1]?.[1] as { body: { blocks: Array<{ id: string }> } }).body.blocks[0]?.id).toBe('SERVER-0')
+    expect((puts[0]![1] as { body: { blocks: Array<{ id: string }> } }).body.blocks[0]?.id).toBe(block.id)
+    expect((puts[1]![1] as { body: { blocks: Array<{ id: string }> } }).body.blocks[0]?.id).toBe('SERVER-0')
     expect(useBuilderStore.getState().blocks[0]?.id).toBe(block.id)
     expect(useBuilderStore.getState().dirty).toBe(false)
   })
@@ -222,7 +222,7 @@ describe('usePageEditorController manual save', () => {
 
     const pageCalls = calls('PUT', '/pages/page-1')
     expect(pageCalls).toHaveLength(1)
-    const body = (pageCalls[0]?.[1] as { body: { title: string, parentId: string | null } }).body
+    const body = (pageCalls[0]![1] as { body: { title: string, parentId: string | null } }).body
     expect(body.title).toBe('Новое название')
     expect(body.parentId).toBe('parent-1')
     expect(result.current.settingsDirty).toBe(false)
@@ -263,13 +263,13 @@ describe('usePageEditorController edit conflicts', () => {
     await act(async () => {
       await result.current.saveAll()
     })
-    expect((calls('PUT', '/builder')[0]?.[1] as { body: { baseVersion: string } }).body.baseVersion).toBe('v1')
+    expect((calls('PUT', '/builder')[0]![1] as { body: { baseVersion: string } }).body.baseVersion).toBe('v1')
 
     act(() => useBuilderStore.getState().updateBlock(useBuilderStore.getState().blocks[0]?.id ?? '', (block) => ({ ...block })))
     await act(async () => {
       await result.current.saveAll()
     })
-    expect((calls('PUT', '/builder')[1]?.[1] as { body: { baseVersion: string } }).body.baseVersion).toBe('v-saved')
+    expect((calls('PUT', '/builder')[1]![1] as { body: { baseVersion: string } }).body.baseVersion).toBe('v-saved')
   })
 
   it('omits baseVersion when the editor was opened without a known version', async () => {
@@ -279,7 +279,7 @@ describe('usePageEditorController edit conflicts', () => {
     await act(async () => {
       await result.current.saveAll()
     })
-    expect(Object.keys((calls('PUT', '/builder')[0]?.[1] as { body: object }).body)).toEqual(['blocks'])
+    expect(Object.keys((calls('PUT', '/builder')[0]![1] as { body: object }).body)).toEqual(['blocks'])
   })
 
   it('reports a conflict instead of a generic error and stops autosave until it is resolved', async () => {
@@ -330,7 +330,7 @@ describe('usePageEditorController edit conflicts', () => {
 
     const puts = calls('PUT', '/builder')
     expect(puts).toHaveLength(2)
-    expect((puts[1]?.[1] as { body: { baseVersion: string } }).body.baseVersion).toBe('server-v2')
+    expect((puts[1]![1] as { body: { baseVersion: string } }).body.baseVersion).toBe('server-v2')
     expect(result.current.conflict).toBeNull()
     expect(result.current.saveState).toBe('saved')
     expect(useBuilderStore.getState().dirty).toBe(false)
@@ -366,7 +366,7 @@ describe('usePageEditorController edit conflicts', () => {
     await act(async () => {
       await result.current.saveAll()
     })
-    expect((calls('PUT', '/builder')[1]?.[1] as { body: { baseVersion: string } }).body.baseVersion).toBe('server-v2')
+    expect((calls('PUT', '/builder')[1]![1] as { body: { baseVersion: string } }).body.baseVersion).toBe('server-v2')
   })
 
   it('can dismiss the conflict dialog without losing the error state', async () => {
@@ -436,7 +436,7 @@ describe('usePageEditorController local draft', () => {
       await result.current.saveAll()
     })
 
-    expect((calls('PUT', '/builder')[0]?.[1] as { body: { baseVersion: string } }).body.baseVersion).toBe('v0')
+    expect((calls('PUT', '/builder')[0]![1] as { body: { baseVersion: string } }).body.baseVersion).toBe('v0')
     expect(result.current.conflict).not.toBeNull()
   })
 

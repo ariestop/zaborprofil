@@ -72,7 +72,7 @@ export function CommandPaletteDialog() {
     if (item === undefined) {
       return
     }
-    navigate(item.path)
+    void navigate(item.path)
     close()
     reset()
   }
