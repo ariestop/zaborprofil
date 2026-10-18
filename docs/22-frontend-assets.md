@@ -2,13 +2,13 @@
 
 ## Стек
 
-- **Vite 7.3** — bundler.
+- **Vite 8** — bundler.
 - **React 19 + TypeScript** — admin SPA.
 - **Tailwind CSS 4** + `@tailwindcss/typography` (конфигурация в CSS, без `tailwind.config.ts`).
 - **TypeScript 6.0**, `tsc --noEmit` для типов.
 - **PostCSS** с плагином `@tailwindcss/postcss` (префиксы добавляет сам Tailwind 4).
 - **Node.js >= 26.12.0**, npm >= 11.20.0 (поле `engines` в `package.json`).
-- **Vitest 3.2** + jsdom 30 для unit-тестов, ESLint 10.
+- **Vitest 5** + jsdom 30 для unit-тестов, ESLint 10 + `typescript-eslint` 8.71.
 
 См. [ADMIN_FRONTEND.md](ADMIN_FRONTEND.md) для деталей admin shell.
 
@@ -159,9 +159,7 @@ npm run build
 Все npm-пакеты обновлены до последних версий, `package-lock.json` пересобран с нуля. Осознанные исключения и решения:
 
 - **TypeScript 6.0, а не 7.** `@typescript-eslint` 8.x поддерживает TypeScript `<6.1`; переходить на 7.x — после выхода совместимого `typescript-eslint`.
-- **Vitest 3.2.7, а не 5.x.** В Vitest 4+ coverage-v8 считает ветви по AST: на том же коде branches падает с 81% до 58% при пороге 70% (`vitest.config.ts`). Порог не понижается; переход на Vitest 5 — отдельным решением вместе с пересчётом порогов. Для Vitest 3 оставлен override `tinypool ^2.1.2` (закрывает critical-advisory); moderate-advisory `@vitest/mocker` касается только тестового окружения.
-- **Vite 7.3 и `@vitejs/plugin-react` 5.2, а не Vite 8.** Vitest 3 работает только с Vite ≤7: с Vite 8 не сходятся типы плагинов в `vitest.config.ts` (`tsc --noEmit` падает). Vite 8 — вместе с переходом на Vitest 5.
-- **React 19.2.9, а не 19.3.** `react-dom` 19.3 после минификации Vite 7 весит 219 КБ при бюджете `vendor-react` 210 КБ (`npm run check:chunks`); бюджет не поднимается. React 19.3 — вместе с Vite 8 (там тот же код укладывается в 203 КБ).
+- **Vitest 5, Vite 8, React 19.3** (отдельным шагом после первого обновления). В Vitest 4+ coverage-v8 считает ветви по AST: тот же код даёт 58% вместо 81% в Vitest 3. Порог branches в `vitest.config.ts` пересчитан с 70% на 58% по новому подсчёту (текущий уровень с округлением вниз: регресс покрытия по-прежнему валит проверку). Override `tinypool` больше не нужен — в Vitest 5 его нет. `vendor-react` с React 19.3 на Vite 8 — 203 КБ при бюджете 210 КБ.
 - **Override `postcss-selector-parser ^7.1.6` для `@tailwindcss/typography`** — закрывает moderate-advisory (квадратичный разбор селекторов).
 - **TanStack Table 9.** `DataTable` (`admin/shared/ui/data-table.tsx`) переведён на `useTable` с явными features (`rowPaginationFeature` + `createPaginatedRowModel`). Колонки создаются через `createColumnHelper<DataTableFeatures, T>()`. Сортировка v8 не подключалась к UI и убрана.
 - **TypeScript 6 DOM-типы:** `HTMLElement.hidden` теперь `boolean | "until-found"`, поэтому сравнение — `hidden !== false`.
