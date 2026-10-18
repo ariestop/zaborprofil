@@ -26,7 +26,7 @@ final class PublicCatalogController extends AbstractController
         #[Autowire('%app.site_url%')]
         string $siteUrl,
     ): Response {
-        $canonical = $urlGenerator->generate('catalog_public_index', [], UrlGeneratorInterface::ABSOLUTE_URL);
+        $canonical = rtrim($siteUrl, '/').$urlGenerator->generate('catalog_public_index', []);
         $breadcrumbs = [
             ['label' => 'Главная', 'path' => '/', 'current' => false],
             ['label' => 'Каталог', 'path' => '/catalog/', 'current' => true],
@@ -74,7 +74,7 @@ final class PublicCatalogController extends AbstractController
     private function productResponse(Product $product, UrlGeneratorInterface $urlGenerator, SchemaOrgBuilder $schemaOrg, string $siteUrl): Response
     {
         $canonical = $product->canonicalUrl()
-            ?? $urlGenerator->generate('catalog_public_show', ['path' => $this->routePath($product->path())], UrlGeneratorInterface::ABSOLUTE_URL);
+            ?? rtrim($siteUrl, '/').$urlGenerator->generate('catalog_public_show', ['path' => $this->routePath($product->path())]);
         $breadcrumbs = $this->breadcrumbsForProduct($product);
         $description = $product->metaDescription() ?? $product->summary();
 
@@ -98,7 +98,7 @@ final class PublicCatalogController extends AbstractController
 
     private function categoryResponse(Category $category, ProductRepositoryInterface $products, UrlGeneratorInterface $urlGenerator, SchemaOrgBuilder $schemaOrg, string $siteUrl): Response
     {
-        $canonical = $urlGenerator->generate('catalog_public_show', ['path' => $this->routePath($category->path())], UrlGeneratorInterface::ABSOLUTE_URL);
+        $canonical = rtrim($siteUrl, '/').$urlGenerator->generate('catalog_public_show', ['path' => $this->routePath($category->path())]);
         $breadcrumbs = $this->breadcrumbsForCategory($category);
 
         return $this->render('public/catalog/category.html.twig', [

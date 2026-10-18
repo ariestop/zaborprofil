@@ -43,6 +43,21 @@ final class PublishedPageLiveSettingsTest extends WebTestCase
         self::assertStringNotContainsString('/live-path-old/', $html, 'Ни canonical, ни крошки, ни JSON-LD не должны ссылаться на старый адрес.');
     }
 
+    public function testAbsoluteUrlsComeFromSiteUrlNotFromRequestHost(): void
+    {
+        $client = $this->adminClient();
+        $this->createPublishedPage($client, 'live-host');
+
+        // Чужой порт в Host: nginx отдаёт такой запрос сайту, а ответ кэшируется под обычным ключом.
+        $client->request('GET', '/live-host/', server: ['HTTP_HOST' => 'zaborprofil.test:4443']);
+        self::assertResponseIsSuccessful();
+        $html = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('<link rel="canonical" href="https://zaborprofil.test/live-host/">', $html);
+        self::assertStringContainsString('<meta property="og:url" content="https://zaborprofil.test/live-host/">', $html);
+        self::assertStringContainsString('"url":"https://zaborprofil.test/"', $html, 'JSON-LD Organization — от SITE_URL.');
+        self::assertStringNotContainsString(':4443', $html);
+    }
+
     public function testIndexableChangeOfPublishedPageAppliesToRobotsAndSitemapTogether(): void
     {
         $client = $this->adminClient();
