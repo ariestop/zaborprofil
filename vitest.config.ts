@@ -24,7 +24,8 @@ export default defineConfig({
       exclude: ['**/*.spec.{ts,tsx}', '**/*.d.ts', 'admin/**/test-utils.ts', 'admin/**/fixtures.ts'],
       reporter: ['text-summary', 'json-summary'],
       reportsDirectory: 'coverage',
-      thresholds: { statements: 30, lines: 30, functions: 50, branches: 70 },
+      // Vitest 4+ считает ветви по AST: на том же коде 81% (Vitest 3) = 58% (Vitest 5). Порог ветвей — по новому подсчёту.
+      thresholds: { statements: 30, lines: 30, functions: 50, branches: 58 },
     },
     setupFiles: ['admin/shared/testing/setup.ts'],
   },

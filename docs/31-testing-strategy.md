@@ -139,7 +139,7 @@ Functional тесты на `/health`, `/sitemap.xml`, `/robots.txt`, `/admin/log
 ## Пороги покрытия
 
 - PHP: `composer test:coverage` (PHPUnit с `pcov`, Clover-отчёт `var/coverage/clover.xml`) и `composer check:coverage` — порог покрытия строк 75% (`tools/quality/check-coverage.php`). Фактическое значение на момент введения — около 81%.
-- Frontend: `npm run test:frontend:coverage` (Vitest + `@vitest/coverage-v8`); пороги в `vitest.config.ts` — statements/lines 30%, functions 50%, branches 70%.
+- Frontend: `npm run test:frontend:coverage` (Vitest + `@vitest/coverage-v8`); пороги в `vitest.config.ts` — statements/lines 30%, functions 50%, branches 58% (подсчёт ветвей Vitest 5 по AST, см. [22-frontend-assets](22-frontend-assets.md)).
 
 Пороги — защита от падения покрытия, а не цель. Повышайте их вместе с ростом покрытия, не снижайте без обсуждения.
 
