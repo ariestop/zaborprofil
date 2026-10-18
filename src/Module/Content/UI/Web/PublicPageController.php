@@ -44,7 +44,7 @@ final class PublicPageController extends AbstractController
         $headingInFirstBlock = $page->blocks !== [] && $blockRenderer->consumesPageHeading($page->blocks[array_key_first($page->blocks)]->type);
 
         $canonical = $page->canonicalUrl
-            ?? $urlGenerator->generate('content_public_page', ['path' => ltrim($page->path, '/')], UrlGeneratorInterface::ABSOLUTE_URL);
+            ?? rtrim($siteUrl, '/').$urlGenerator->generate('content_public_page', ['path' => ltrim($page->path, '/')]);
         $breadcrumbs = array_map(static fn ($breadcrumb): array => $breadcrumb->toArray(), $breadcrumbBuilder->forPage($page));
         $jsonLdBlocks = [
             $schemaOrg->webPage($page, $canonical),

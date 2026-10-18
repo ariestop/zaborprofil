@@ -1,3 +1,7 @@
 framework:
     mailer:
         dsn: '%env(MAILER_DSN)%'
+        # Отправитель по умолчанию для всех писем сайта: без From или Sender Symfony Mailer письмо не отправляет.
+        # Адрес должен быть разрешён SMTP-серверу (ящик или домен с SPF/DKIM), иначе письма уйдут в спам.
+        headers:
+            From: '%env(MAILER_FROM)%'

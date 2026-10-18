@@ -3,7 +3,7 @@
     без JS кнопки скрыты. «Поделиться» копирует ссылку и открывает отправку в Telegram или MAX (assets/site/portfolio-social.ts).
     Параметры: project, dots — число точек-индикаторов фото (0 — без точек), class.
 #}
-{% set url = absolute_url(project.path) %}
+{% set url = site_url|trim('/', 'right') ~ project.path %}
 {% set share_text = project.title ~ ' — ' ~ url %}
 <div class="zp-pf-actions {{ class|default('') }}" data-pf-actions hidden>
     <button type="button" class="zp-pf-like" data-pf-like="{{ project.id }}" aria-pressed="false">

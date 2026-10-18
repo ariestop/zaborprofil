@@ -131,6 +131,17 @@ final class PublicPortfolioTest extends WebTestCase
         self::assertStringContainsString('data-pf-track', $this->html('/portfolio/zabor-jaluzi/'), 'Несколько фото — лента со свайпом.');
     }
 
+    public function testShareLinksAndCanonicalIgnoreRequestHost(): void
+    {
+        $this->client->request('GET', '/portfolio/zabor-jaluzi/grafit/', server: ['HTTP_HOST' => 'zaborprofil.test:4443']);
+        self::assertResponseIsSuccessful();
+        $html = (string) $this->client->getResponse()->getContent();
+
+        self::assertStringContainsString('data-pf-share="https://zaborprofil.test/portfolio/zabor-jaluzi/grafit/"', $html);
+        self::assertStringContainsString('<link rel="canonical" href="https://zaborprofil.test/portfolio/zabor-jaluzi/grafit/">', $html);
+        self::assertStringNotContainsString(':4443', $html);
+    }
+
     public function testDraftsUnknownAndEmptySectionsAreNotFound(): void
     {
         foreach (['/portfolio/zabor-jaluzi/chernovik/', '/portfolio/vorota/', '/portfolio/nope/', '/portfolio/profnastil/grafit/'] as $path) {

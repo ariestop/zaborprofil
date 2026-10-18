@@ -28,7 +28,7 @@ jobs:
     if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || vars.VPS_DEPLOY_ENABLED == 'true') }}
     steps:
       - name: Require successful CI run for current SHA
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           script: |
             const sha = context.sha;
@@ -79,10 +79,10 @@ jobs:
     if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || vars.VPS_DEPLOY_ENABLED == 'true') }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 25.9.0
           cache: npm
@@ -104,7 +104,7 @@ jobs:
           tar -tzf frontend-build.tar.gz | head -n 20
 
       - name: Upload frontend build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: frontend-build
           path: frontend-build.tar.gz
@@ -120,42 +120,55 @@ jobs:
       - build-frontend
     if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || vars.VPS_DEPLOY_ENABLED == 'true') }}
     steps:
+      # appleboy/* без fingerprint принимает любой ключ хоста: подменённый сервер получил бы код и доступ.
+      - name: Require SSH host key fingerprint
+        env:
+          FINGERPRINT: ${{ secrets.STAGING_SSH_FINGERPRINT }}
+        run: |
+          if [ -z "$FINGERPRINT" ]; then
+            echo "::error::Не задан секрет STAGING_SSH_FINGERPRINT (SHA256-отпечаток ключа хоста). См. docs/35-cicd.md."
+            exit 1
+          fi
+
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Download frontend build artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: frontend-build
 
       - name: Upload deploy scripts
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@917f8b81dfc1ccd331fef9e2d61bdc6c8be94634 # v0.1.7
         with:
           host: ${{ secrets.STAGING_SSH_HOST }}
           username: ${{ secrets.STAGING_SSH_USER }}
           key: ${{ secrets.STAGING_SSH_KEY }}
           port: ${{ secrets.STAGING_SSH_PORT || 22 }}
+          fingerprint: ${{ secrets.STAGING_SSH_FINGERPRINT }}
           source: tools/deploy/*
           target: /tmp/zaborprofil-deploy
           strip_components: 2
 
       - name: Upload frontend build
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@917f8b81dfc1ccd331fef9e2d61bdc6c8be94634 # v0.1.7
         with:
           host: ${{ secrets.STAGING_SSH_HOST }}
           username: ${{ secrets.STAGING_SSH_USER }}
           key: ${{ secrets.STAGING_SSH_KEY }}
           port: ${{ secrets.STAGING_SSH_PORT || 22 }}
+          fingerprint: ${{ secrets.STAGING_SSH_FINGERPRINT }}
           source: frontend-build.tar.gz
           target: /tmp/zaborprofil-deploy
 
       - name: Deploy over SSH
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17 # v1.2.0
         with:
           host: ${{ secrets.STAGING_SSH_HOST }}
           username: ${{ secrets.STAGING_SSH_USER }}
           key: ${{ secrets.STAGING_SSH_KEY }}
           port: ${{ secrets.STAGING_SSH_PORT || 22 }}
+          fingerprint: ${{ secrets.STAGING_SSH_FINGERPRINT }}
           script: |
             set -euo pipefail
             trap 'rm -f /tmp/zaborprofil-deploy/frontend-build.tar.gz' EXIT
@@ -176,42 +189,55 @@ jobs:
       - deploy-staging
     if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'workflow_dispatch' || vars.VPS_DEPLOY_ENABLED == 'true') }}
     steps:
+      # appleboy/* без fingerprint принимает любой ключ хоста: подменённый сервер получил бы код и доступ.
+      - name: Require SSH host key fingerprint
+        env:
+          FINGERPRINT: ${{ secrets.PRODUCTION_SSH_FINGERPRINT }}
+        run: |
+          if [ -z "$FINGERPRINT" ]; then
+            echo "::error::Не задан секрет PRODUCTION_SSH_FINGERPRINT (SHA256-отпечаток ключа хоста). См. docs/35-cicd.md."
+            exit 1
+          fi
+
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Download frontend build artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: frontend-build
 
       - name: Upload deploy scripts
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@917f8b81dfc1ccd331fef9e2d61bdc6c8be94634 # v0.1.7
         with:
           host: ${{ secrets.PRODUCTION_SSH_HOST }}
           username: ${{ secrets.PRODUCTION_SSH_USER }}
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
           port: ${{ secrets.PRODUCTION_SSH_PORT || 22 }}
+          fingerprint: ${{ secrets.PRODUCTION_SSH_FINGERPRINT }}
           source: tools/deploy/*
           target: /tmp/zaborprofil-deploy
           strip_components: 2
 
       - name: Upload frontend build
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@917f8b81dfc1ccd331fef9e2d61bdc6c8be94634 # v0.1.7
         with:
           host: ${{ secrets.PRODUCTION_SSH_HOST }}
           username: ${{ secrets.PRODUCTION_SSH_USER }}
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
           port: ${{ secrets.PRODUCTION_SSH_PORT || 22 }}
+          fingerprint: ${{ secrets.PRODUCTION_SSH_FINGERPRINT }}
           source: frontend-build.tar.gz
           target: /tmp/zaborprofil-deploy
 
       - name: Deploy over SSH
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17 # v1.2.0
         with:
           host: ${{ secrets.PRODUCTION_SSH_HOST }}
           username: ${{ secrets.PRODUCTION_SSH_USER }}
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
           port: ${{ secrets.PRODUCTION_SSH_PORT || 22 }}
+          fingerprint: ${{ secrets.PRODUCTION_SSH_FINGERPRINT }}
           script: |
             set -euo pipefail
             trap 'rm -f /tmp/zaborprofil-deploy/frontend-build.tar.gz' EXIT
