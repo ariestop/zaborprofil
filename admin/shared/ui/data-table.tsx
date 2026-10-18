@@ -1,41 +1,42 @@
 import {
-  flexRender,
-  getCoreRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
+  createPaginatedRowModel,
+  rowPaginationFeature,
+  tableFeatures,
+  useTable,
   type ColumnDef,
-  type SortingState,
   type PaginationState,
 } from '@tanstack/react-table'
 import { useState } from 'react'
 import { Button } from './button'
 
-interface DataTableProps<TData> {
-  columns: Array<ColumnDef<TData, any>>
+/** Возможности таблиц админки: только постраничный вывод. Колонки создаются через createColumnHelper<DataTableFeatures, T>(). */
+export const dataTableFeatures = tableFeatures({
+  rowPaginationFeature,
+  paginatedRowModel: createPaginatedRowModel(),
+})
+
+export type DataTableFeatures = typeof dataTableFeatures
+
+interface DataTableProps<TData extends object> {
+  columns: Array<ColumnDef<DataTableFeatures, TData, any>>
   data: TData[]
   pageSize?: number
 }
 
-export function DataTable<TData>({ columns, data, pageSize = 10 }: DataTableProps<TData>) {
-  const [sorting, setSorting] = useState<SortingState>([])
+export function DataTable<TData extends object>({ columns, data, pageSize = 10 }: DataTableProps<TData>) {
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize,
   })
 
-  const table = useReactTable({
+  const table = useTable({
+    features: dataTableFeatures,
     data,
     columns,
     state: {
-      sorting,
       pagination,
     },
-    onSortingChange: setSorting,
     onPaginationChange: setPagination,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
   })
 
   return (
@@ -47,9 +48,7 @@ export function DataTable<TData>({ columns, data, pageSize = 10 }: DataTableProp
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <th key={header.id} className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-graphite dark:text-slate-500">
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
+                    {header.isPlaceholder ? null : <table.FlexRender header={header} />}
                   </th>
                 ))}
               </tr>
@@ -58,9 +57,9 @@ export function DataTable<TData>({ columns, data, pageSize = 10 }: DataTableProp
           <tbody className="divide-y divide-surface-strong bg-white dark:divide-slate-800 dark:bg-slate-950">
             {table.getRowModel().rows.map((row) => (
               <tr key={row.id}>
-                {row.getVisibleCells().map((cell) => (
+                {row.getAllCells().map((cell) => (
                   <td key={cell.id} className="px-3 py-2 text-sm text-ink dark:text-slate-200">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    <table.FlexRender cell={cell} />
                   </td>
                 ))}
               </tr>
@@ -71,7 +70,7 @@ export function DataTable<TData>({ columns, data, pageSize = 10 }: DataTableProp
 
       <div className="flex items-center justify-between">
         <p className="text-xs text-graphite dark:text-slate-400">
-          Страница {table.getState().pagination.pageIndex + 1} из {table.getPageCount()}
+          Страница {pagination.pageIndex + 1} из {table.getPageCount()}
         </p>
         <div className="flex items-center gap-2">
           <Button

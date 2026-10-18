@@ -27,7 +27,7 @@ export function initMobileNav(root: ParentNode = document): void {
         }
     }
 
-    toggle.addEventListener('click', () => setOpen(panel.hidden))
+    toggle.addEventListener('click', () => setOpen(panel.hidden !== false))
     panel.addEventListener('click', (event) => {
         const target = event.target as HTMLElement
         if (target.closest('[data-nav-close]') !== null) {
@@ -110,7 +110,7 @@ export function initNavDropdowns(root: ParentNode = document): void {
 
         // Мышью список уже открыт наведением — клик его не закрывает; с клавиатуры (detail 0) и пальцем клик переключает.
         trigger.addEventListener('click', (event) =>
-            setOpen(entry, hoverable && event.detail > 0 ? true : dropdown.hidden),
+            setOpen(entry, hoverable && event.detail > 0 ? true : dropdown.hidden !== false),
         )
         trigger.addEventListener('keydown', (event) => {
             if (event.key === 'ArrowDown') {

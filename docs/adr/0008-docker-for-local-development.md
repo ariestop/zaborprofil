@@ -23,7 +23,8 @@ Accepted, 2026.
   - `php:8.5-fpm-bookworm`,
   - `nginx:1.30.0-alpine`,
   - `mysql:8.4`,
-  - `node:25.9.0-bookworm`.
+  - `node:26.12.0-bookworm`,
+  - `composer/composer:2.10.3-bin` (бинарь Composer в образе `app`).
 
 ## Причины
 

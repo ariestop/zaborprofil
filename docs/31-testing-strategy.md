@@ -2,7 +2,7 @@
 
 ## Стек
 
-- PHPUnit 12.
+- PHPUnit 13.
 - `symfony/browser-kit` + `symfony/css-selector` для functional.
 - `symfony/phpunit-bridge` для интеграции.
 - Playwright (`@playwright/test`) для browser smoke E2E admin-flow.

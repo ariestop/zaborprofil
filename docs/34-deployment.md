@@ -35,7 +35,7 @@
 | systemd | как ОС | управляет php-fpm, nginx, mysql, messenger worker |
 | TLS | Let’s Encrypt / certbot | автоматическое продление |
 | Composer | 2.x | глобально |
-| Node.js | не нужен | frontend собирается в GitHub Actions и приезжает на сервер архивом (`FRONTEND_BUILD_ARCHIVE`). Node 25.9.0 нужен на VPS только для ручного deploy без архива (fallback `npm ci && npm run build`) |
+| Node.js | не нужен | frontend собирается в GitHub Actions и приезжает на сервер архивом (`FRONTEND_BUILD_ARCHIVE`). Node 26.12.0 нужен на VPS только для ручного deploy без архива (fallback `npm ci && npm run build`) |
 
 ## Скрипты
 

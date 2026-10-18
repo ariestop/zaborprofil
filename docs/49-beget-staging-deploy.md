@@ -44,7 +44,7 @@ git push origin dev
 
 Ключевые решения:
 
-- **Node.js на сервере не нужен.** Frontend собирается в GitHub Actions (Node 25.9.0) и приезжает архивом. Скрипт сверяет `BUILD_COMMIT` из архива с деплоимым коммитом: assets и шаблоны не разойдутся.
+- **Node.js на сервере не нужен.** Frontend собирается в GitHub Actions (Node 26.12.0) и приезжает архивом. Скрипт сверяет `BUILD_COMMIT` из архива с деплоимым коммитом: assets и шаблоны не разойдутся.
 - **Один стенд, одна очередь.** `concurrency: deploy-staging-beget` с `cancel-in-progress: false`: если пришло несколько пушей, выполняется только последний ожидающий.
 - **Staging-клон отдельный** (`~/dev.zaborprofil.ru`), локальная ветка `staging-deployed`, `checkout --force` — любая ветка или SHA, локальные правки отслеживаемых файлов затираются. Игнорируемые файлы (`.env.local`, `vendor/`, `var/`, `public_html/uploads/`, `public_html/build/`) не затрагиваются.
 - **Миграции на staging всегда применяются автоматически.** Изменения БД при откате кода не откатываются (только восстановление из бэкапа).
@@ -96,9 +96,11 @@ git checkout -f -B staging-deployed origin/dev
 ```bash
 ls /usr/local/bin/php*                                        # найти php8.5
 cd ~ && /usr/local/bin/php8.5 -r "copy('https://getcomposer.org/installer','composer-setup.php');" \
-  && /usr/local/bin/php8.5 composer-setup.php --filename=composer.phar && rm composer-setup.php
+  && /usr/local/bin/php8.5 composer-setup.php --filename=composer.phar --version=2.10.3 && rm composer-setup.php
 /usr/local/bin/php8.5 ~/composer.phar --version
 ```
+
+Проект зафиксирован на Composer 2.10.3 (как Docker и CI). Если `~/composer.phar` уже установлен, владелец обновляет его на сервере командой `/usr/local/bin/php8.5 ~/composer.phar self-update 2.10.3`.
 
 Значения по умолчанию в скрипте: `PHP_BIN=/usr/local/bin/php8.5`, `COMPOSER_PHAR=~/composer.phar`. Переопределяются переменными окружения.
 

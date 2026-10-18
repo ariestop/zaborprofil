@@ -4,7 +4,7 @@
 
 - PHP `>=8.5`. Используются: readonly properties, `final readonly class`, intersection / union types, enums, first-class callable, `#[Override]` (целевое 8.4+).
 - TypeScript `>=5.8`. `strict: true`.
-- Node `>=25.9.0`.
+- Node `>=26.12.0`.
 
 ## Стиль PHP
 
