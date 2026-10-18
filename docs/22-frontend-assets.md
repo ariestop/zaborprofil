@@ -2,7 +2,7 @@
 
 ## Стек
 
-- **Vite 8** — bundler.
+- **Vite 7.3** — bundler.
 - **React 19 + TypeScript** — admin SPA.
 - **Tailwind CSS 4** + `@tailwindcss/typography` (конфигурация в CSS, без `tailwind.config.ts`).
 - **TypeScript 6.0**, `tsc --noEmit` для типов.
@@ -160,6 +160,8 @@ npm run build
 
 - **TypeScript 6.0, а не 7.** `@typescript-eslint` 8.x поддерживает TypeScript `<6.1`; переходить на 7.x — после выхода совместимого `typescript-eslint`.
 - **Vitest 3.2.7, а не 5.x.** В Vitest 4+ coverage-v8 считает ветви по AST: на том же коде branches падает с 81% до 58% при пороге 70% (`vitest.config.ts`). Порог не понижается; переход на Vitest 5 — отдельным решением вместе с пересчётом порогов. Для Vitest 3 оставлен override `tinypool ^2.1.2` (закрывает critical-advisory); moderate-advisory `@vitest/mocker` касается только тестового окружения.
+- **Vite 7.3 и `@vitejs/plugin-react` 5.2, а не Vite 8.** Vitest 3 работает только с Vite ≤7: с Vite 8 не сходятся типы плагинов в `vitest.config.ts` (`tsc --noEmit` падает). Vite 8 — вместе с переходом на Vitest 5.
+- **React 19.2.9, а не 19.3.** `react-dom` 19.3 после минификации Vite 7 весит 219 КБ при бюджете `vendor-react` 210 КБ (`npm run check:chunks`); бюджет не поднимается. React 19.3 — вместе с Vite 8 (там тот же код укладывается в 203 КБ).
 - **Override `postcss-selector-parser ^7.1.6` для `@tailwindcss/typography`** — закрывает moderate-advisory (квадратичный разбор селекторов).
 - **TanStack Table 9.** `DataTable` (`admin/shared/ui/data-table.tsx`) переведён на `useTable` с явными features (`rowPaginationFeature` + `createPaginatedRowModel`). Колонки создаются через `createColumnHelper<DataTableFeatures, T>()`. Сортировка v8 не подключалась к UI и убрана.
 - **TypeScript 6 DOM-типы:** `HTMLElement.hidden` теперь `boolean | "until-found"`, поэтому сравнение — `hidden !== false`.
