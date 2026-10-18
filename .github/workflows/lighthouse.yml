@@ -25,7 +25,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
 
@@ -75,7 +75,7 @@ jobs:
       # Сам action отчёты не выкладывает: в них (JSON и HTML) записываются настройки запуска вместе
       # с заголовком Authorization, а артефакты публичного репозитория доступны всем.
       - name: Run Lighthouse
-        uses: treosh/lighthouse-ci-action@v12
+        uses: treosh/lighthouse-ci-action@3e7e23fb74242897f95c0ba9cabad3d0227b9b18 # v12
         with:
           urls: ${{ steps.urls.outputs.list }}
           configPath: ${{ runner.temp }}/lighthouserc.json
@@ -101,7 +101,7 @@ jobs:
 
       - name: Upload reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: lighthouse-results
           path: .lighthouseci

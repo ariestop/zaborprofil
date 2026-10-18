@@ -130,10 +130,12 @@ Production intentionally does not run as an unguarded manual path: сначал�
 
 | Secret | Где |
 |---|---|
-| `STAGING_SSH_HOST`, `STAGING_SSH_USER`, `STAGING_SSH_KEY`, `STAGING_SSH_PORT` | `staging` environment |
-| `PRODUCTION_SSH_HOST`, `PRODUCTION_SSH_USER`, `PRODUCTION_SSH_KEY`, `PRODUCTION_SSH_PORT` | `production` environment |
+| `STAGING_SSH_HOST`, `STAGING_SSH_USER`, `STAGING_SSH_KEY`, `STAGING_SSH_PORT`, `STAGING_SSH_FINGERPRINT` | `staging` environment |
+| `PRODUCTION_SSH_HOST`, `PRODUCTION_SSH_USER`, `PRODUCTION_SSH_KEY`, `PRODUCTION_SSH_PORT`, `PRODUCTION_SSH_FINGERPRINT` | `production` environment |
 | `STAGING_BRANCH`, `STAGING_APP_ROOT`, `STAGING_HEALTH_URL` | env vars (могут быть в repo vars) |
 | `PRODUCTION_BRANCH`, `PRODUCTION_APP_ROOT`, `PRODUCTION_HEALTH_URL` | env vars |
+
+`*_SSH_FINGERPRINT` — SHA256-отпечаток ключа хоста для `appleboy/scp-action` и `appleboy/ssh-action` в `deploy.yml`: без него эти actions принимают любой ключ, и подменённый сервер получил бы код и доступ. Без секрета job деплоя падает на первом шаге. Значение снимается на самом сервере: `ssh-keygen -l -f /etc/ssh/ssh_host_ed25519_key.pub | cut -d ' ' -f2` (вида `SHA256:…`).
 
 GitHub Environments дают:
 
@@ -200,6 +202,10 @@ GitHub Environments дают:
 
 Тег создаётся через `git tag v0.5.3 && git push --tags`. Это запускает production deploy.
 
+## Закрепление actions и Dependabot
+
+Все actions подключаются по полному SHA коммита с версией в комментарии (`actions/checkout@<sha> # v4`): тег можно перезаписать (как в случае `tj-actions/changed-files`, 2025), SHA — нет. Обновления приходят PR от Dependabot (`.github/dependabot.yml`: github-actions, composer, npm — раз в неделю в `dev`); он меняет SHA и комментарий вместе. Новый action добавлять сразу по SHA: `git ls-remote https://github.com/<owner>/<repo> 'refs/tags/<tag>^{}'`.
+
 ## Чек-лист изменения CI/CD
 
 - [ ] Изменение протестировано на feature branch.
@@ -207,6 +213,7 @@ GitHub Environments дают:
 - [ ] Логика gating CI green сохранена.
 - [ ] Документация обновлена в `docs/NN-*.md` (минимум этот файл + [34-deployment](34-deployment.md), если менялся deploy-процесс).
 - [ ] Не понижены проверки качества (cs/phpstan/rector/phpunit).
+- [ ] Новые actions закреплены по SHA, секреты переданы только в `env` нужных шагов, не в `env` всей job.
 
 ## Anti-patterns
 
