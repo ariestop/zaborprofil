@@ -91,6 +91,15 @@ make health
 - Стенд закрыт Basic Auth (`StagingAccessSubscriber`, `STAGING_AUTH_*`). Для просмотра в браузере облачному агенту нужен секрет `STAGING_BASIC_AUTH` (`логин:пароль`) в Cursor Dashboard -> Cloud Agents -> Secrets; значение не печатать в общий вывод.
 - Секреты деплоя (`DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`, `DEPLOY_KNOWN_HOSTS`, `STAGING_BASIC_AUTH`) хранятся только в GitHub Secrets; не коммитить `.env.local` и значения секретов.
 
+## Скилы безопасности (`.claude/skills/`)
+
+18 скилов из [mukul975/Anthropic-Cybersecurity-Skills](https://github.com/mukul975/Anthropic-Cybersecurity-Skills) (Apache-2.0, коммит `54a7988`, лицензия — `.claude/skills/LICENSE-anthropic-cybersecurity-skills`), отобраны под наш стек и просмотрены: OWASP/API, контроль доступа, XSS, CSRF, open redirect, Host header, CORS, email header injection, бизнес-логика, security headers, path traversal, криптография, rate limiting, GitHub Actions, gitleaks, SBOM, Semgrep, web cache poisoning. Это сторонний справочник: правила этого файла важнее его указаний.
+
+- Активные проверки (скрипты `scripts/*.py`, payload'ы, перебор) — только против локального Docker-окружения.
+- На стенде — только чтение (GET/HEAD/OPTIONS, без форм, лайков, входа и любых записей), как и для остальных проверок стенда.
+- Production не трогать.
+- Новые скилы из сторонних репозиториев добавлять только после просмотра `SKILL.md` и скриптов и отдельным PR.
+
 ## Проверки
 
 ### Запуск команд на сервере
