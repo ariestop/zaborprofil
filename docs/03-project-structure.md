@@ -6,7 +6,7 @@
 
 ```text
 zaborprofil/
-├── .claude/skills/            # скилы безопасности для Claude Code (см. AGENTS.md)
+├── .claude/skills/            # скилы Claude Code: безопасность и ui-ux-pro-max (см. AGENTS.md)
 ├── .cursor/rules/             # правила проекта для агентов Cursor
 ├── .github/                   # CI и Deploy workflows, dependabot.yml
 ├── .vscode/                   # настройки редактора (Intelephense, IDE-заглушки)

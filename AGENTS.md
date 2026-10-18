@@ -102,6 +102,14 @@ make health
 - Production не трогать.
 - Новые скилы из сторонних репозиториев добавлять только после просмотра `SKILL.md` и скриптов и отдельным PR.
 
+## UI/UX-скил (`.claude/skills/ui-ux-pro-max/`)
+
+Скил `ui-ux-pro-max` из [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) (MIT, v2.15.0, коммит `56ea9cf`, лицензия — `.claude/skills/LICENSE-ui-ux-pro-max`): локальный поиск по базе UX-правил, стеков, графиков и иконок (`python3 .claude/skills/ui-ux-pro-max/scripts/search.py`, только стандартная библиотека Python, без сети). Взяты только рабочие файлы (без тестов и валидатора данных); пути в `SKILL.md` исправлены под скил проекта.
+
+- Брендбук «Периметр» важнее скила: его палитры, шрифтовые пары и стили (`--design-system`) к сайту и админке не применяются — цвета только токенами, шрифты Golos Text / Onest / Sofia Sans Condensed через `@fontsource`, без Google Fonts CDN, кнопки и поля от 48 px.
+- Использовать для UX-проверок и советов по реализации: `--domain ux` (формы, доступность, касания, навигация), `--domain chart`, `--domain icons`, `--stack react` для админки, `--stack html-tailwind` для публичного SSR.
+- `--persist` не запускать: каталог `design-system/` в проекте не нужен.
+
 ## Проверки
 
 ### Запуск команд на сервере
