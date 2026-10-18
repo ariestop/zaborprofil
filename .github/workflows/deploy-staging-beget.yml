@@ -25,29 +25,119 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Сборка — без секретов: здесь выполняется код выкладываемой ветки (npm ci с install-скриптами пакетов,
+  # vite.config, tsc) и сторонние actions. SSH-ключ и пароль стенда сюда не попадают; готовая сборка
+  # передаётся в deploy артефактом.
+  build:
+    name: Build ${{ github.event_name == 'workflow_dispatch' && inputs.ref || 'dev' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name == 'workflow_dispatch' || !github.event.deleted
+    outputs:
+      sha: ${{ steps.pin.outputs.sha }}
+    env:
+      REQUESTED_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.sha }}
+
+    steps:
+      - name: Check ref
+        run: |
+          set -euo pipefail
+          if ! [[ "$REQUESTED_REF" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]*$ ]]; then
+            echo "::error::Недопустимый ref: $REQUESTED_REF"
+            exit 1
+          fi
+
+      - name: Checkout target
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.REQUESTED_REF }}
+          path: target
+          persist-credentials: false
+
+      - name: Checkout deploy tooling
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: tooling
+          sparse-checkout: tools/deploy
+          sparse-checkout-cone-mode: true
+          persist-credentials: false
+
+      - name: Pin commit
+        id: pin
+        working-directory: target
+        run: echo "sha=$(git rev-parse HEAD)" >>"$GITHUB_OUTPUT"
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          coverage: none
+
+      - name: Quick syntax checks
+        run: |
+          set -euo pipefail
+          cd target
+          git ls-files -z -- '*.php' bin/console | xargs -0 -r -n 50 -P 4 php -d display_errors=stderr -l >/dev/null
+          cd ..
+          bash -n tooling/tools/deploy/deploy-beget.sh
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 25.9.0
+          cache: npm
+          cache-dependency-path: target/package-lock.json
+
+      - name: Build frontend
+        working-directory: target
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run build
+          test -f public_html/build/.vite/manifest.json
+
+      - name: Package frontend build
+        run: |
+          set -euo pipefail
+          mkdir dist
+          cp -r target/public_html/build dist/build
+          printf '%s\n' "${{ steps.pin.outputs.sha }}" >dist/BUILD_COMMIT
+          tar -czf frontend-build.tar.gz -C dist .
+
+      # Сборка публична (её отдаёт сайт), поэтому артефакт не раскрывает ничего нового.
+      - name: Store frontend build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build-${{ steps.pin.outputs.sha }}
+          path: frontend-build.tar.gz
+          retention-days: 1
+          if-no-files-found: error
+
+  # Деплой: только скрипты из коммита workflow (tools/deploy) и готовый архив, без npm и кода ветки.
+  # Секреты передаются в env только тех шагов, где они нужны.
   deploy:
     name: Deploy dev.zaborprofil.ru
+    needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    if: github.event_name == 'workflow_dispatch' || !github.event.deleted
+    timeout-minutes: 15
     environment:
       name: staging
       url: ${{ vars.STAGING_URL || 'https://dev.zaborprofil.ru/' }}
 
     env:
-      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-      DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
-      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
-      STAGING_PATH: ${{ secrets.STAGING_PATH || vars.STAGING_PATH || '~/dev.zaborprofil.ru' }}
       STAGING_URL: ${{ vars.STAGING_URL || 'https://dev.zaborprofil.ru/' }}
-      STAGING_BASIC_AUTH: ${{ secrets.STAGING_BASIC_AUTH }}
-      REQUESTED_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.sha }}
+      BUILD_SHA: ${{ needs.build.outputs.sha }}
 
     steps:
       - name: Check configuration
         id: config
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          STAGING_PATH: ${{ secrets.STAGING_PATH || vars.STAGING_PATH || '~/dev.zaborprofil.ru' }}
+          HAS_BASIC_AUTH: ${{ secrets.STAGING_BASIC_AUTH != '' }}
         run: |
           set -euo pipefail
           missing=()
@@ -65,18 +155,12 @@ jobs:
             echo "::error::STAGING_PATH содержит недопустимые символы."
             exit 1
           fi
-          if ! [[ "$REQUESTED_REF" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]*$ ]]; then
-            echo "::error::Недопустимый ref: $REQUESTED_REF"
+          if ! [[ "$BUILD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Сборка не вернула SHA коммита."
             exit 1
           fi
           echo "configured=true" >>"$GITHUB_OUTPUT"
-
-      - name: Checkout target
-        if: steps.config.outputs.configured == 'true'
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ env.REQUESTED_REF }}
-          path: target
+          echo "basic_auth=$HAS_BASIC_AUTH" >>"$GITHUB_OUTPUT"
 
       - name: Checkout deploy tooling
         if: steps.config.outputs.configured == 'true'
@@ -86,57 +170,22 @@ jobs:
           path: tooling
           sparse-checkout: tools/deploy
           sparse-checkout-cone-mode: true
+          persist-credentials: false
 
-      - name: Pin commit
+      - name: Fetch frontend build
         if: steps.config.outputs.configured == 'true'
-        id: pin
-        working-directory: target
-        run: echo "sha=$(git rev-parse HEAD)" >>"$GITHUB_OUTPUT"
-
-      - name: Setup PHP
-        if: steps.config.outputs.configured == 'true'
-        uses: shivammathur/setup-php@v2
+        uses: actions/download-artifact@v4
         with:
-          php-version: '8.5'
-          coverage: none
-
-      - name: Quick syntax checks
-        if: steps.config.outputs.configured == 'true'
-        run: |
-          set -euo pipefail
-          cd target
-          git ls-files -z -- '*.php' bin/console | xargs -0 -r -n 50 -P 4 php -d display_errors=stderr -l >/dev/null
-          cd ..
-          bash -n tooling/tools/deploy/deploy-beget.sh
-
-      - name: Setup Node
-        if: steps.config.outputs.configured == 'true'
-        uses: actions/setup-node@v4
-        with:
-          node-version: 25.9.0
-          cache: npm
-          cache-dependency-path: target/package-lock.json
-
-      - name: Build frontend
-        if: steps.config.outputs.configured == 'true'
-        working-directory: target
-        run: |
-          set -euo pipefail
-          npm ci
-          npm run build
-          test -f public_html/build/.vite/manifest.json
-
-      - name: Package frontend build
-        if: steps.config.outputs.configured == 'true'
-        run: |
-          set -euo pipefail
-          mkdir dist
-          cp -r target/public_html/build dist/build
-          printf '%s\n' "${{ steps.pin.outputs.sha }}" >dist/BUILD_COMMIT
-          tar -czf frontend-build.tar.gz -C dist .
+          name: frontend-build-${{ env.BUILD_SHA }}
 
       - name: Configure SSH
         if: steps.config.outputs.configured == 'true'
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
         run: |
           set -euo pipefail
           install -m 700 -d ~/.ssh
@@ -166,15 +215,17 @@ jobs:
         if: steps.config.outputs.configured == 'true'
         run: |
           set -euo pipefail
-          remote_archive="\$HOME/.deploy-tmp/frontend-build-${{ steps.pin.outputs.sha }}.tar.gz"
+          remote_archive="\$HOME/.deploy-tmp/frontend-build-${BUILD_SHA}.tar.gz"
           # shellcheck disable=SC2029
           ssh deploy-target "umask 077 && mkdir -p \"\$HOME/.deploy-tmp\" && cat > \"$remote_archive\"" <frontend-build.tar.gz
 
       - name: Deploy over SSH
         if: steps.config.outputs.configured == 'true'
+        env:
+          STAGING_PATH: ${{ secrets.STAGING_PATH || vars.STAGING_PATH || '~/dev.zaborprofil.ru' }}
         run: |
           set -euo pipefail
-          sha="${{ steps.pin.outputs.sha }}"
+          sha="$BUILD_SHA"
           remote_env="DEPLOY_PATH=$(printf '%q' "$STAGING_PATH")"
           remote_env+=" FRONTEND_BUILD_ARCHIVE=\"\$HOME/.deploy-tmp/frontend-build-${sha}.tar.gz\""
           # shellcheck disable=SC2029
@@ -182,6 +233,8 @@ jobs:
 
       - name: Smoke check
         if: steps.config.outputs.configured == 'true'
+        env:
+          STAGING_BASIC_AUTH: ${{ secrets.STAGING_BASIC_AUTH }}
         run: |
           set -euo pipefail
           url="${STAGING_URL%/}"
@@ -242,8 +295,10 @@ jobs:
           fi
 
       - name: Warm up public pages
-        if: steps.config.outputs.configured == 'true' && env.STAGING_BASIC_AUTH != ''
+        if: steps.config.outputs.configured == 'true' && steps.config.outputs.basic_auth == 'true'
         continue-on-error: true
+        env:
+          STAGING_BASIC_AUTH: ${{ secrets.STAGING_BASIC_AUTH }}
         run: |
           url="${STAGING_URL%/}"
           for path in / /sitemap.xml /robots.txt; do
@@ -257,7 +312,7 @@ jobs:
             echo "## Deploy staging (Beget)"
             echo
             if [[ "${{ steps.config.outputs.configured }}" == "true" ]]; then
-              echo "- Коммит: \`${{ steps.pin.outputs.sha }}\`"
+              echo "- Коммит: \`${BUILD_SHA}\`"
               echo "- URL: ${STAGING_URL}"
               echo "- Лог на сервере: \`var/log/deploy.log\`, история: \`var/log/deploy-history.log\`"
             else

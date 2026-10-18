@@ -25,9 +25,11 @@
 ```text
 git push origin dev
    └─ workflow "Deploy staging (Beget)"
-        ├─ php -l по всем *.php, bash -n deploy-beget.sh   (быстрые проверки, полный CI не ждём)
-        ├─ npm ci && npm run build  -> frontend-build.tar.gz (build/ + BUILD_COMMIT)
-        ├─ ssh: cat > ~/.deploy-tmp/frontend-build-<sha>.tar.gz
+        ├─ job build (без секретов: здесь выполняется код ветки и install-скрипты npm)
+        │    ├─ php -l по всем *.php, bash -n deploy-beget.sh   (быстрые проверки, полный CI не ждём)
+        │    └─ npm ci && npm run build  -> frontend-build.tar.gz (build/ + BUILD_COMMIT) -> артефакт на 1 день
+        └─ job deploy (environment staging; секреты — только в env шагов SSH, деплоя и smoke-check)
+        ├─ скачивает артефакт сборки, ssh: cat > ~/.deploy-tmp/frontend-build-<sha>.tar.gz
         └─ ssh: bash -s -- <sha> < tools/deploy/deploy-beget.sh      (в ~/dev.zaborprofil.ru)
              ├─ preflight (APP_ENV=staging, отдельная БД, Basic Auth настроен или явно разрешён открытый staging)
              ├─ var/cache и var/sessions -> симлинки в shared/ (сессии переживают деплой)
