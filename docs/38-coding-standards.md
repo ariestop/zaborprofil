@@ -117,7 +117,7 @@ final class CreatePageHandler
 
 - `strict: true`.
 - Файлы UI-компонентов админки — `*.tsx`.
-- ESLint + Prettier (целевое — пока через `tsc --noEmit`).
+- Oxlint (`.oxlintrc.json`, проверки по типам через `oxlint-tsgolint`) + `tsc --noEmit` (TypeScript 7); Prettier — `npm run format:check`.
 - API клиент типизирован, не `any`.
 
 ## Имена коммитов

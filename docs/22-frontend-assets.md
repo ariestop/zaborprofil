@@ -5,10 +5,11 @@
 - **Vite 8** — bundler.
 - **React 19 + TypeScript** — admin SPA.
 - **Tailwind CSS 4** + `@tailwindcss/typography` (конфигурация в CSS, без `tailwind.config.ts`).
-- **TypeScript 6.0**, `tsc --noEmit` для типов.
+- **TypeScript 7.0** (компилятор на Go), `tsc --noEmit` для типов.
 - **PostCSS** с плагином `@tailwindcss/postcss` (префиксы добавляет сам Tailwind 4).
 - **Node.js >= 26.12.0**, npm >= 11.20.0 (поле `engines` в `package.json`).
-- **Vitest 5** + jsdom 30 для unit-тестов, ESLint 10 + `typescript-eslint` 8.71.
+- **Vitest 5** + jsdom 30 для unit-тестов.
+- **Oxlint 1.88** + `oxlint-tsgolint` — линтер TS/React с проверками по типам (`.oxlintrc.json`, `npm run lint:admin`, `npm run lint:site`). ESLint не используется.
 
 См. [ADMIN_FRONTEND.md](ADMIN_FRONTEND.md) для деталей admin shell.
 
@@ -158,7 +159,7 @@ npm run build
 
 Все npm-пакеты обновлены до последних версий, `package-lock.json` пересобран с нуля. Осознанные исключения и решения:
 
-- **TypeScript 6.0, а не 7.** `@typescript-eslint` 8.x поддерживает TypeScript `<6.1`; переходить на 7.x — после выхода совместимого `typescript-eslint`.
+- **Oxlint вместо ESLint, TypeScript 7.** `typescript-eslint` не поддерживает TypeScript 7 (у TS 7 нет JS API компилятора), поэтому ESLint заменён на Oxlint, а проверки по типам идут через `oxlint-tsgolint` (typescript-go). В `.oxlintrc.json` правила прежнего ESLint (рекомендованные `typescript-eslint` и `react-hooks` 7, кроме `react-hooks/config` и `gating`: React Compiler не подключён) остались ошибками с той же строгостью. Остальные проверки Oxlint (категория `correctness` и правила по типам: `no-floating-promises`, `no-base-to-string`, `no-unsafe-optional-chaining` и др.) пока предупреждения — их разбор и перевод в ошибки идёт отдельным шагом. `lint:frontend` (включая `admin/components`) в CI не входит: там есть известные нарушения правил React Compiler, как и при ESLint. В редакторе нужно расширение Oxc (`oxc.oxc-vscode`) вместо ESLint.
 - **Vitest 5, Vite 8, React 19.3** (отдельным шагом после первого обновления). В Vitest 4+ coverage-v8 считает ветви по AST: тот же код даёт 58% вместо 81% в Vitest 3. Порог branches в `vitest.config.ts` пересчитан с 70% на 58% по новому подсчёту (текущий уровень с округлением вниз: регресс покрытия по-прежнему валит проверку). Override `tinypool` больше не нужен — в Vitest 5 его нет. `vendor-react` с React 19.3 на Vite 8 — 203 КБ при бюджете 210 КБ.
 - **Override `postcss-selector-parser ^7.1.6` для `@tailwindcss/typography`** — закрывает moderate-advisory (квадратичный разбор селекторов).
 - **TanStack Table 9.** `DataTable` (`admin/shared/ui/data-table.tsx`) переведён на `useTable` с явными features (`rowPaginationFeature` + `createPaginatedRowModel`). Колонки создаются через `createColumnHelper<DataTableFeatures, T>()`. Сортировка v8 не подключалась к UI и убрана.

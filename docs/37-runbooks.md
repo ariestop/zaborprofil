@@ -2456,7 +2456,7 @@ tail -f /var/www/<project>/current/var/log/prod.log
 #### Возможные причины
 
 1. Тесты упали (phpunit / phpstan / php-cs-fixer / rector / vitest).
-2. Линтеры (composer validate, eslint, stylelint).
+2. Линтеры (composer validate, oxlint, stylelint).
 3. Сборка фронта упала.
 4. Деплой-runner недоступен.
 
