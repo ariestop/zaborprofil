@@ -23,8 +23,9 @@
 - Symfony Security, Messenger, Validator, Serializer, Mailer
 - Twig
 - Tailwind CSS (`@tailwindcss/typography`)
-- Vite
-- React + TypeScript для админ-панели
+- Vite 8, Vitest 5
+- React 19 + TypeScript 7 для админ-панели
+- Oxlint (`.oxlintrc.json`) — линтер TS/React вместо ESLint
 - PHPUnit, PHPStan, PHP-CS-Fixer, Rector
 
 Docker используется только для локальной разработки. Staging и production разворачиваются на VPS без Docker: Nginx, PHP-FPM, MySQL, systemd и Git-based release deploy.
