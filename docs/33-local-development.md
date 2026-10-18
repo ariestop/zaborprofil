@@ -238,7 +238,7 @@ make npm-dev          # vite на :5173
 - Cursor / VS Code:
   - PHP Intelephense / Phpactor;
   - Twig syntax;
-  - ESLint / TypeScript;
+  - Oxc (Oxlint) / TypeScript;
   - Volar для Vue.
 
 ## Pre-commit (целевое)

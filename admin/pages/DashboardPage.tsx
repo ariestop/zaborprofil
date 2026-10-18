@@ -99,6 +99,8 @@ export default function DashboardPage() {
     const rebuild = useAssetBuildRunMutation()
     const statusMutation = useLeadStatusMutation()
 
+    // Время для приветствия берём один раз при открытии страницы: в рендере Date нестабилен (React Compiler, правило purity).
+    const [openedAt] = useState(() => new Date())
     const [createOpen, setCreateOpen] = useState(false)
     const [undo, setUndo] = useState<(UndoToastState & { leadId: string }) | null>(null)
     const [busyLeadId, setBusyLeadId] = useState<string | null>(null)
@@ -239,7 +241,7 @@ export default function DashboardPage() {
                 <div className="flex flex-wrap items-end justify-between gap-3">
                     <div>
                         <h1 className="m-0 text-[26px] font-bold tracking-[-0.01em]">
-                            {greeting(new Date(), userName)}
+                            {greeting(openedAt, userName)}
                         </h1>
                         <p className={cn('mt-1', dashMuted)}>
                             {todayLabel()}
