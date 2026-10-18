@@ -85,8 +85,10 @@ final class DoctrineAdminUserRepository extends ServiceEntityRepository implemen
 
         $refreshedUser = $this->findOneBy(['email' => $user->email()]);
 
-        if (!$refreshedUser instanceof AdminUser) {
-            $exception = new UserNotFoundException(\sprintf('Admin user "%s" was not found.', $user->email()));
+        // Отключённый пользователь выходит из админки при следующем же запросе: без этой проверки
+        // уже открытая сессия жила бы дальше (AdminUserChecker вызывается только при входе).
+        if (!$refreshedUser instanceof AdminUser || !$refreshedUser->isActive()) {
+            $exception = new UserNotFoundException(\sprintf('Admin user "%s" was not found or is disabled.', $user->email()));
             $exception->setUserIdentifier($user->email());
 
             throw $exception;

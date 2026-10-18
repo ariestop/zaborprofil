@@ -14,7 +14,8 @@ use Symfony\Component\Security\Core\User\UserInterface;
 /**
  * Enforces account-status invariants for AdminUser at every authentication
  * step (pre- and post-credentials), so a deactivated administrator cannot
- * log in or keep an active session. After credentials are verified the account
+ * log in. An already open session of a deactivated user is ended by
+ * DoctrineAdminUserRepository::refreshUser() on the next request. After credentials are verified the account
  * must also hold at least one admin role (Editor/SEO/Manager/Admin/Super Admin).
  */
 final class AdminUserChecker implements UserCheckerInterface
