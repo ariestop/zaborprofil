@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       base_url:
-        description: 'Базовый URL без завершающего слэша (staging или production)'
+        description: 'Базовый URL без завершающего слэша (https://dev.zaborprofil.ru или https://zaborprofil.ru)'
         required: true
         default: 'https://dev.zaborprofil.ru'
       paths:
@@ -26,6 +26,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Prepare URL list
         id: urls
@@ -34,9 +36,17 @@ jobs:
           PATHS: ${{ inputs.paths }}
         run: |
           set -euo pipefail
+          if ! [[ "$BASE_URL" =~ ^https://[a-z0-9.-]+$ ]]; then
+            echo "::error::base_url — только https://хост без пути и завершающего слэша, например https://dev.zaborprofil.ru"
+            exit 1
+          fi
           urls=""
           for path in $PATHS; do
-            urls="${urls}${BASE_URL%/}${path}"$'\n'
+            if ! [[ "$path" =~ ^/[A-Za-z0-9._~/-]*$ ]]; then
+              echo "::error::Недопустимый путь: $path"
+              exit 1
+            fi
+            urls="${urls}${BASE_URL}${path}"$'\n'
           done
           {
             echo 'list<<EOF'
@@ -45,24 +55,55 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Prepare Lighthouse config
+        id: config
         env:
           STAGING_BASIC_AUTH: ${{ secrets.STAGING_BASIC_AUTH }}
           BASE_URL: ${{ inputs.base_url }}
         run: |
           set -euo pipefail
           cp lighthouserc.json "$RUNNER_TEMP/lighthouserc.json"
-          # Пароль staging отправляем только на стенд dev., а не на production.
-          if [ -n "$STAGING_BASIC_AUTH" ] && [[ "$BASE_URL" == *://dev.* ]]; then
+          # Пароль стенда отправляем только на сам стенд: точное совпадение хоста, а не шаблон *://dev.*
+          # (иначе пароль ушёл бы на https://dev.чужой-сайт).
+          if [ -n "$STAGING_BASIC_AUTH" ] && [[ "$BASE_URL" == "https://dev.zaborprofil.ru" ]]; then
             token="$(printf '%s' "$STAGING_BASIC_AUTH" | base64 -w0)"
             echo "::add-mask::$token"
             jq --arg header "Basic $token" '.ci.collect.settings.extraHeaders = {Authorization: $header}' \
               lighthouserc.json > "$RUNNER_TEMP/lighthouserc.json"
+            echo "auth=true" >>"$GITHUB_OUTPUT"
           fi
 
+      # Сам action отчёты не выкладывает: в них (JSON и HTML) записываются настройки запуска вместе
+      # с заголовком Authorization, а артефакты публичного репозитория доступны всем.
       - name: Run Lighthouse
         uses: treosh/lighthouse-ci-action@v12
         with:
           urls: ${{ steps.urls.outputs.list }}
           configPath: ${{ runner.temp }}/lighthouserc.json
-          uploadArtifacts: true
+          uploadArtifacts: false
           temporaryPublicStorage: false
+
+      - name: Remove credentials from reports
+        if: always() && steps.config.outputs.auth == 'true'
+        env:
+          STAGING_BASIC_AUTH: ${{ secrets.STAGING_BASIC_AUTH }}
+        run: |
+          set -euo pipefail
+          [ -d .lighthouseci ] || exit 0
+          token="$(printf '%s' "$STAGING_BASIC_AUTH" | base64 -w0)"
+          export TOKEN="$token"
+          # shellcheck disable=SC2016 # $ENV{TOKEN} раскрывает perl, а не shell.
+          find .lighthouseci -type f -print0 | xargs -0 -r perl -pi -e 's/\Q$ENV{TOKEN}\E/***/g'
+          if grep -rqF -- "$token" .lighthouseci; then
+            echo "::error::В отчётах остался токен Basic Auth — артефакт не выкладываем."
+            rm -rf .lighthouseci
+            exit 1
+          fi
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-results
+          path: .lighthouseci
+          retention-days: 14
+          if-no-files-found: ignore

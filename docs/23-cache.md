@@ -284,7 +284,7 @@ nginx кэширует ответ только если его заголовк�
 
 ### Lighthouse
 
-Workflow `Lighthouse` (`.github/workflows/lighthouse.yml`) запускается вручную (`workflow_dispatch`) и замеряет 3–5 ключевых URL выбранного стенда по порогам из `lighthouserc.json` (предупреждения, без блокировки PR). Для staging используется секрет `STAGING_BASIC_AUTH`.
+Workflow `Lighthouse` (`.github/workflows/lighthouse.yml`) запускается вручную (`workflow_dispatch`) и замеряет 3–5 ключевых URL выбранного стенда по порогам из `lighthouserc.json` (предупреждения, без блокировки PR). Для staging используется секрет `STAGING_BASIC_AUTH`. Пароль уходит только при `base_url` ровно `https://dev.zaborprofil.ru`; `base_url` — только `https://хост`, пути — только `/…`. Отчёты выкладываются артефактом `lighthouse-results` (14 дней) после того, как из JSON и HTML вычищен заголовок `Authorization`: артефакты публичного репозитория доступны всем.
 
 ## Что нельзя кешировать
 
