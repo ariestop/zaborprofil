@@ -66,13 +66,6 @@ export function fetchPageDetail(pageId: string): Promise<ContentPageDetail> {
   return apiRequest<ContentPageDetail>(`/admin/api/content/pages/${pageId}`)
 }
 
-export function usePageDetailQuery(pageId: string) {
-  return useQuery(queryOptions(
-    pageQueryKey(pageId),
-    () => fetchPageDetail(pageId),
-  ))
-}
-
 export function usePageRevisionsQuery(pageId: string) {
   return useQuery(queryOptions(
     ['admin', 'pages', pageId, 'revisions'],
@@ -80,23 +73,6 @@ export function usePageRevisionsQuery(pageId: string) {
       const response = await apiRequest<PageRevisionsResponse>(`/admin/api/content/pages/${pageId}/revisions`)
       return response.revisions
     },
-  ))
-}
-
-export function usePageBuilderVersionsQuery(pageId: string) {
-  return useQuery(queryOptions(
-    ['admin', 'pages', pageId, 'builder-versions'],
-    async () => {
-      const response = await apiRequest<PageRevisionsResponse>(`/admin/api/content/pages/${pageId}/builder/versions`)
-      return response.revisions
-    },
-  ))
-}
-
-export function usePagePreviewLinkQuery(pageId: string) {
-  return useQuery(queryOptions(
-    ['admin', 'pages', pageId, 'preview-link'],
-    () => apiRequest<PagePreviewResponse>(`/admin/api/content/pages/${pageId}/preview-link`),
   ))
 }
 
@@ -317,10 +293,6 @@ export interface SavePageBuilderVariables {
   baseVersion: string | null
 }
 
-export interface BuilderPreviewResponse {
-  html: string
-}
-
 function deserializeBuilderDocument(document: BuilderDocumentResponse): BuilderDocumentResponse {
   return {
     ...document,
@@ -332,13 +304,6 @@ export async function fetchPageBuilder(pageId: string): Promise<BuilderDocumentR
   return deserializeBuilderDocument(
     await apiRequest<BuilderDocumentResponse>(`/admin/api/content/pages/${pageId}/builder`),
   )
-}
-
-export function usePageBuilderQuery(pageId: string) {
-  return useQuery(queryOptions(
-    ['admin', 'pages', pageId, 'builder'],
-    () => fetchPageBuilder(pageId),
-  ))
 }
 
 export function useSavePageBuilderMutation(pageId: string) {
@@ -354,10 +319,7 @@ export function useSavePageBuilderMutation(pageId: string) {
       }),
     ),
     onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['admin', 'pages', pageId, 'builder'] }),
-        queryClient.invalidateQueries({ queryKey: pageQueryKey(pageId) }),
-      ])
+      await queryClient.invalidateQueries({ queryKey: pageQueryKey(pageId) })
     },
   })
 }
@@ -381,48 +343,5 @@ export function releasePageEditLock(pageId: string, sessionId: string): Promise<
   return apiRequest<void>(`/admin/api/content/pages/${pageId}/edit-lock`, {
     method: 'DELETE',
     body: { sessionId },
-  })
-}
-
-export async function previewPageBuilder(pageId: string, blocks: BuilderBlock[]): Promise<BuilderPreviewResponse> {
-  return apiRequest<BuilderPreviewResponse>(`/admin/api/content/pages/${pageId}/builder/preview`, {
-    method: 'POST',
-    body: { blocks: serializeBuilderBlocks(blocks) },
-  })
-}
-
-export function usePublishPageBuilderMutation(pageId: string) {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: () => apiRequest<ContentPageItem>(`/admin/api/content/pages/${pageId}/builder/publish`, {
-      method: 'POST',
-      body: {},
-    }),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['admin', 'pages', pageId, 'builder'] }),
-        queryClient.invalidateQueries({ queryKey: pageQueryKey(pageId) }),
-        queryClient.invalidateQueries({ queryKey: pagesQueryKey() }),
-      ])
-    },
-  })
-}
-
-export function useRollbackPageBuilderMutation(pageId: string) {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (revisionId: string) => apiRequest<ContentPageItem>(`/admin/api/content/pages/${pageId}/builder/rollback`, {
-      method: 'POST',
-      body: { revisionId },
-    }),
-    onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['admin', 'pages', pageId, 'builder'] }),
-        queryClient.invalidateQueries({ queryKey: ['admin', 'pages', pageId, 'builder-versions'] }),
-        queryClient.invalidateQueries({ queryKey: pageQueryKey(pageId) }),
-      ])
-    },
   })
 }

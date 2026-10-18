@@ -35,6 +35,15 @@ describe('media utils', () => {
     expect(validateUploadFile({ name: 'a.png', size: 11 * 1024 * 1024, type: 'image/png' })).toContain('Файл больше')
   })
 
+  it('accepts MP4 and WebM videos up to their own 60 MB limit', () => {
+    expect(validateUploadFile({ name: 'clip.mp4', size: 50 * 1024 * 1024, type: 'video/mp4' })).toBeNull()
+    expect(validateUploadFile({ name: 'clip.webm', size: 100, type: 'video/webm' })).toBeNull()
+    expect(validateUploadFile({ name: 'clip.mp4', size: 61 * 1024 * 1024, type: 'video/mp4' })).toBe('Файл больше 60,0 МБ.')
+    expect(validateUploadFile({ name: 'IMG_0001.MOV', size: 100, type: 'video/quicktime' })).toBe(
+      'Видео MOV не поддерживается: сохраните его в MP4.',
+    )
+  })
+
   it('prefers a webp variant of at least 320px as thumbnail', () => {
     const variants = [
       { type: 'webp', publicPath: '/v/320.webp', width: 320, height: 160, mimeType: 'image/webp', size: 1 },

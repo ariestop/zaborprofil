@@ -64,6 +64,18 @@ services:
     App\Module\Content\Application\Service\PublicHttpCachePurgerInterface:
         alias: App\Module\Content\Infrastructure\Http\NginxFastcgiCachePurger
 
+    App\Module\Auth\Application\Security\CurrentAdminInterface:
+        alias: App\Module\Auth\Infrastructure\Security\SecurityCurrentAdmin
+
+    App\Shared\Application\Http\RequestContextInterface:
+        alias: App\Shared\Infrastructure\Http\SymfonyRequestContext
+
+    App\Module\Admin\Application\Service\DangerousActionTokenStoreInterface:
+        alias: App\Module\Admin\Infrastructure\Http\SessionDangerousActionTokenStore
+
+    App\Module\User\Domain\Repository\AdminUserRepositoryInterface:
+        alias: App\Module\User\Infrastructure\Doctrine\Repository\DoctrineAdminUserRepository
+
     App\Module\Content\Domain\Repository\PageRepositoryInterface:
         alias: App\Module\Content\Infrastructure\Repository\DoctrinePageRepository
 
@@ -134,6 +146,10 @@ services:
 
     App\Module\Media\Domain\Repository\MediaAssetRepositoryInterface:
         alias: App\Module\Media\Infrastructure\Doctrine\Repository\DoctrineMediaAssetRepository
+
+    App\Module\Media\Application\Upload\MediaUploadHandler:
+        arguments:
+            $mediaUploadDir: '%app.media_upload_dir%'
 
     App\Module\Media\UI\Admin\MediaApiController:
         arguments:

@@ -10,6 +10,7 @@ use App\Tests\Support\Database\SchemaTestHelper;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\DomCrawler\Crawler;
 
 /**
  * Публичные шаблоны блоков: каждый тип должен отрисоваться своим шаблоном, а не молча упасть в default.html.twig
@@ -80,6 +81,28 @@ final class PublicBlockTemplatesTest extends KernelTestCase
         self::assertStringContainsString('Показать все фото (5)', $html);
         self::assertStringContainsString('aspect-3/4', $html);
         self::assertStringContainsString('object-contain', $html);
+    }
+
+    public function testPortfolioCardShowsPriceSpecsAndBadgeOnlyWhenFilled(): void
+    {
+        $html = $this->render('portfolio', ['title' => 'Какой забор выбрать', 'items' => [
+            ['title' => 'Забор Жалюзи', 'image' => '/img/catalog/jaluzi.png', 'href' => '/zabor-jaluzi/', 'price' => 'от 3 400 ₽/м²', 'specs' => ['Largo и Doppio', '', 'покрытие до 40 лет'], 'badge' => 'Хит'],
+            ['title' => 'Заглушки', 'image' => '/img/catalog/caps.png', 'href' => '#'],
+        ]]);
+        $crawler = new Crawler($html);
+
+        $cards = $crawler->filter('article.zp-product');
+        self::assertCount(2, $cards);
+        $first = $cards->eq(0);
+        self::assertSame('/zabor-jaluzi/', $first->filter('.zp-product__title a')->attr('href'));
+        self::assertSame('от 3 400 ₽/м²', $first->filter('.zp-product__price')->text());
+        self::assertSame(['Largo и Doppio', 'покрытие до 40 лет'], $first->filter('.zp-product__specs li')->each(static fn (Crawler $li): string => $li->text()), 'Пустые характеристики не выводятся.');
+        self::assertSame('Хит', $first->filter('.zp-product__badge')->text());
+        self::assertSame('Забор Жалюзи', $first->filter('img')->attr('alt'));
+
+        $second = $cards->eq(1);
+        self::assertSame(0, $second->filter('a, .zp-product__price, .zp-product__specs, .zp-product__badge, .zp-product__foot')->count(), 'Без ссылки, цены, чипов и бейджа — только картинка и название.');
+        self::assertSame('Заглушки', trim($second->filter('.zp-product__title')->text()));
     }
 
     public function testHeroTakesPageHeadingOnlyWhenItIsFirstBlock(): void
@@ -270,7 +293,7 @@ final class PublicBlockTemplatesTest extends KernelTestCase
                         ['title' => 'VALORY', 'group' => 'ПРЕМЬЕР', 'tone' => 'orange', 'prices' => ['С8' => null, 'МП18' => 960]],
                     ],
                 ],
-                ['label' => 'Оцинкованный', 'compact' => true, 'rows' => ['С8'], 'options' => [['title' => '0.30 мм', 'prices' => ['С8' => 363]]]],
+                ['label' => 'Оцинкованный', 'rowsLabel' => 'Высота', 'compact' => true, 'rows' => ['С8'], 'options' => [['title' => '0.30 мм', 'prices' => ['С8' => 363]]]],
             ],
         ]);
 
@@ -283,6 +306,8 @@ final class PublicBlockTemplatesTest extends KernelTestCase
         self::assertStringContainsString('name="pm-b1-filter-0"', $html);
         self::assertStringContainsString('Показать полную таблицу цен', $html);
         self::assertStringContainsString('<th scope="col" class="text-right">МП18</th>', $html);
+        self::assertStringContainsString('data-pm-panel="0" data-pm-rows-label="Профиль"', $html, 'Без rowsLabel строки подписаны «Профиль».');
+        self::assertStringContainsString('data-pm-panel="1" data-pm-rows-label="Высота"', $html);
     }
 
     public function testFenceTypesSplitsBulletsAndSubtitle(): void
@@ -292,6 +317,21 @@ final class PublicBlockTemplatesTest extends KernelTestCase
         self::assertStringContainsString('Дизайнерское решение', $html);
         self::assertStringContainsString('<span>толщина 30 мкм</span>', $html);
         self::assertSame(2, substr_count($html, '<li><svg'));
+    }
+
+    public function testListMarkersAreRemovedWithoutBreakingCyrillicLineEndings(): void
+    {
+        // «р» в UTF-8 — D1 80; побайтовый trim с маской «–•» (E2 80 93, E2 80 A2) отрезал у неё второй байт.
+        $hero = $this->render('hero.classic', ['title' => 'Заголовок', 'text' => "Цены за погонный метр\n– Изготовим в любой цвет и размер\n• Доставка"]);
+
+        self::assertStringContainsString('<span>Цены за погонный метр</span>', $hero);
+        self::assertStringContainsString('<span>Изготовим в любой цвет и размер</span>', $hero);
+        self::assertStringContainsString('<span>Доставка</span>', $hero);
+
+        $types = $this->render('fence-types', ['items' => [['title' => 'Полиэстер', 'text' => "Экономно\n– любой размер\n- RAL 9003 «белый»"]]]);
+
+        self::assertStringContainsString('<span>любой размер</span>', $types);
+        self::assertStringContainsString('<span>RAL 9003 «белый»</span>', $types);
     }
 
     public function testInternalLinksRenderQuickNavigation(): void

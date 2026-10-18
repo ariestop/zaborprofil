@@ -25,9 +25,11 @@
 ```text
 git push origin dev
    └─ workflow "Deploy staging (Beget)"
-        ├─ php -l по всем *.php, bash -n deploy-beget.sh   (быстрые проверки, полный CI не ждём)
-        ├─ npm ci && npm run build  -> frontend-build.tar.gz (build/ + BUILD_COMMIT)
-        ├─ ssh: cat > ~/.deploy-tmp/frontend-build-<sha>.tar.gz
+        ├─ job build (без секретов: здесь выполняется код ветки и install-скрипты npm)
+        │    ├─ php -l по всем *.php, bash -n deploy-beget.sh   (быстрые проверки, полный CI не ждём)
+        │    └─ npm ci && npm run build  -> frontend-build.tar.gz (build/ + BUILD_COMMIT) -> артефакт на 1 день
+        └─ job deploy (environment staging; секреты — только в env шагов SSH, деплоя и smoke-check)
+        ├─ скачивает артефакт сборки, ssh: cat > ~/.deploy-tmp/frontend-build-<sha>.tar.gz
         └─ ssh: bash -s -- <sha> < tools/deploy/deploy-beget.sh      (в ~/dev.zaborprofil.ru)
              ├─ preflight (APP_ENV=staging, отдельная БД, Basic Auth настроен или явно разрешён открытый staging)
              ├─ var/cache и var/sessions -> симлинки в shared/ (сессии переживают деплой)
@@ -131,10 +133,10 @@ chmod 600 .env.local
 
 ### 5b. Cron очереди Messenger
 
-Critical-алерты в Telegram уходят через асинхронную очередь (Doctrine transport). Постоянного worker на Beget нет,
+Critical-алерты в Telegram и уведомления менеджерам о новых заявках (email, Telegram) уходят через асинхронную очередь (Doctrine transport). Постоянного worker на Beget нет,
 поэтому очередь разбирает cron «каждую минуту» (`* * * * *`):
 `cd ~/dev.zaborprofil.ru && /usr/local/bin/php8.5 bin/console messenger:consume async --time-limit=50 --memory-limit=128M --env=staging --no-interaction >> var/log/messenger.log 2>&1`.
-Без этой задачи алерты копятся в таблице `messenger_messages`. Токен и чат — `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` в `.env.local`.
+Без этой задачи алерты и уведомления о заявках копятся в таблице `messenger_messages` и не доходят до менеджеров. Токен и чат — `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` в `.env.local`.
 
 ### 6. SSH-ключ деплоя
 
@@ -175,7 +177,7 @@ GitHub Environment `staging`: Required reviewers не включать, инач
 1. Изменения попадают в ветку `dev` (через PR или прямым push), workflow запускается автоматически.
 2. Результат виден через несколько минут на `https://dev.zaborprofil.ru/`.
 3. Следить за деплоем: `gh run list --workflow=deploy-staging-beget.yml -L 3`, `gh run watch <id>`.
-4. Ручной запуск любой ветки/SHA: Actions -> «Deploy staging (Beget)» -> Run workflow -> `ref`.
+4. Ручной запуск любой ветки/SHA: Actions -> «Deploy staging (Beget)» -> Run workflow -> `ref`. Так ветку PR проверяют на стенде до мержа; после мержа push в `dev` выкладывает тот же код.
 5. Логи на сервере: `~/dev.zaborprofil.ru/var/log/deploy.log`, история — `var/log/deploy-history.log`.
 
 Важно: push в `dev` запускает workflow, только если файл `.github/workflows/deploy-staging-beget.yml` уже есть в коммите, на который указывает `dev`. Поэтому workflow сначала должен попасть в `dev` (например, merge `main` в `dev` после принятия PR с этим деплоем). Ветки `main` и `dev` исторически разошлись, конфликты разрешает владелец ветки.
@@ -280,6 +282,7 @@ STAGING_ALLOW_PUBLIC=1
 | `/health/ready` отвечает 503 | недоступна БД или каталог кэша | проверить `DATABASE_URL`, права на `shared/cache` и `shared/sessions` |
 | В админке «Сборка упала», `npm не найден в PATH` (код 127) | кнопка «Перекомпилировать» запускает `npm run build` в PHP-FPM, а Node.js на Beget нет: фронтенд собирает CI и деплой кладёт готовый `public_html/build` | ничего чинить не нужно: пересборка из админки по умолчанию выключена (`APP_ASSET_BUILD_ENABLED`, по умолчанию равна `APP_DEBUG`), виджет скрыт, сводка не показывает ошибку. Фронтенд обновляется только деплоем |
 | Пользователей «разлогинило» после деплоя | `var/sessions` не был симлинком на `shared/sessions` | деплой сам создаёт симлинк; проверить `ls -l var/` |
+| В заявках и журнале IP хостинга или IP, который подставил посетитель | в `.env.local` задан `SYMFONY_TRUSTED_PROXIES` (`REMOTE_ADDR`, `PRIVATE_SUBNETS`): Beget и так кладёт IP посетителя в `REMOTE_ADDR`, а `X-Forwarded-For` от клиента не перезаписывает | удалить `SYMFONY_TRUSTED_PROXIES`, см. [27-config-and-env](27-config-and-env.md#trusted-proxies--hosts) |
 
 ## Проверки перед изменением деплоя
 

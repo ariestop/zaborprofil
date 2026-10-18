@@ -26,4 +26,8 @@ describe('sanitizeRichTextHtml', () => {
   it('drops unknown wrappers but keeps their text', () => {
     expect(sanitizeRichTextHtml('<div><mark>важно</mark></div>')).toBe('важно')
   })
+
+  it('keeps superscript and subscript like the server sanitizer', () => {
+    expect(sanitizeRichTextHtml('<p>1 м<sup>2</sup>, H<sub>2</sub>O</p>')).toBe('<p>1 м<sup>2</sup>, H<sub>2</sub>O</p>')
+  })
 })

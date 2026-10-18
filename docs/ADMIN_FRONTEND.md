@@ -8,7 +8,7 @@
 ## Маршрутизация
 
 - `/admin/login` остается серверной Twig-страницей.
-- `/admin`, `/admin/dashboard`, `/admin/settings`, `/admin/seo` (SEO-панель: редиректы, robots.txt, журнал 404, аудит) рендерят один SPA shell.
+- `/admin`, `/admin/dashboard`, `/admin/settings`, `/admin/menu` (меню сайта), `/admin/seo` (SEO-панель: редиректы, robots.txt, журнал 404, аудит) рендерят один SPA shell.
 - `/admin/api/*` остается JSON API и защищается CSRF subscriber.
 
 Используется `react-router-dom` для клиентской навигации и `zustand` для
@@ -28,6 +28,8 @@ layout/navigation — в `admin/layouts/`,
 - `credentials: same-origin`.
 
 CSRF-токен передается из Twig через meta-теги.
+
+Истёкшая сессия: API отвечает `401` (`code: UNAUTHORIZED`). Клиент (`apiRequest`, `apiUpload`) превращает в такую же ошибку и ответ после редиректа — на всякий случай, если сервер или прокси всё же перенаправит на форму входа, — и сообщает о ней через `admin/shared/api/session.ts`. Оболочка показывает постоянное уведомление `admin/widgets/SessionExpiredNotice.tsx` со ссылкой «Войти снова»; несохранённые правки редактора страницы при уходе остаются в черновике браузера.
 
 ## Редактор контента
 

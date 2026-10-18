@@ -1,0 +1,30 @@
+{#
+    Лайк и «поделиться» под фото работы (телефон). Счётчик и «мой лайк» приходят из /api/portfolio/likes (страницы кэшируются),
+    без JS кнопки скрыты. «Поделиться» копирует ссылку и открывает отправку в Telegram или MAX (assets/site/portfolio-social.ts).
+    Параметры: project, dots — число точек-индикаторов фото (0 — без точек), class.
+#}
+{% set url = site_url|trim('/', 'right') ~ project.path %}
+{% set share_text = project.title ~ ' — ' ~ url %}
+<div class="zp-pf-actions {{ class|default('') }}" data-pf-actions hidden>
+    <button type="button" class="zp-pf-like" data-pf-like="{{ project.id }}" aria-pressed="false">
+        <svg aria-hidden="true"><use href="#i-heart"/></svg>
+        <span class="zp-pf-like__count" data-pf-like-count></span>
+        <span class="sr-only">Нравится</span>
+    </button>
+    <div class="zp-pf-share">
+        <button type="button" class="zp-pf-share__toggle" data-pf-share="{{ url }}" aria-expanded="false" aria-controls="pf-share-{{ project.id }}">
+            <svg aria-hidden="true"><use href="#i-send"/></svg>
+            <span class="sr-only">Поделиться работой</span>
+        </button>
+        <div class="zp-pf-share__menu" id="pf-share-{{ project.id }}" data-pf-share-menu hidden>
+            <p class="zp-pf-share__note" data-pf-share-note role="status">Ссылка скопирована</p>
+            <a class="zp-pf-share__link" href="https://t.me/share/url?url={{ url|url_encode }}&amp;text={{ project.title|url_encode }}" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#i-telegram"/></svg>Отправить в Telegram</a>
+            <a class="zp-pf-share__link" href="https://max.ru/:share?text={{ share_text|url_encode }}" target="_blank" rel="noopener"><span class="zp-pf-share__max" aria-hidden="true">M</span>Отправить в MAX</a>
+        </div>
+    </div>
+    {% if dots|default(0) > 1 and dots <= 12 %}
+        <span class="zp-pf-actions__dots" data-pf-track-dots aria-hidden="true">
+            {% for i in 1..dots %}<i{% if loop.first %} class="is-active"{% endif %}></i>{% endfor %}
+        </span>
+    {% endif %}
+</div>

@@ -71,6 +71,23 @@ final class PageEditConflictApiTest extends AdminApiTestCase
         self::assertResponseStatusCodeSame(422);
     }
 
+    public function testMalformedBlockIsRejectedOnSaveWithoutChanges(): void
+    {
+        $client = $this->adminClient();
+        $pageId = $this->createPage($client, 'edit-malformed');
+        $this->api($client, 'PUT', $this->url($pageId, 'builder'), ['blocks' => [$this->heroBlock('Сохранённый')]]);
+        $savedVersion = $this->text($this->json($client)['version']);
+
+        foreach ([['не объект'], [['список', 'без ключей']]] as $blocks) {
+            $this->api($client, 'PUT', $this->url($pageId, 'builder'), ['blocks' => [$this->heroBlock('Новый'), ...$blocks]]);
+            self::assertResponseStatusCodeSame(422);
+            self::assertSame('Each block must be an object.', $this->json($client)['error'] ?? null);
+        }
+
+        $this->api($client, 'GET', $this->url($pageId, 'builder'));
+        self::assertSame($savedVersion, $this->json($client)['version']);
+    }
+
     public function testEditLockWarnsSecondSessionAndAllowsTakeOver(): void
     {
         $client = $this->adminClient();

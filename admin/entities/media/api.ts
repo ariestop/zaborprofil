@@ -3,9 +3,9 @@ import { apiRequest, apiUpload } from '../../shared/api/client'
 import { adminQueryKeys } from '../../shared/api/query'
 import type { MediaAssetItem, MediaFolderItem, MediaPagination, MediaUsageResponse } from '../../types/api'
 
-export type MediaTypeFilter = '' | 'image' | 'document'
+export type MediaTypeFilter = '' | 'image' | 'video' | 'document'
 export type MediaSort = 'newest' | 'oldest' | 'name' | 'size' | 'size_asc'
-export type MediaFormatFilter = '' | 'jpeg' | 'png' | 'webp' | 'avif' | 'pdf'
+export type MediaFormatFilter = '' | 'jpeg' | 'png' | 'webp' | 'avif' | 'pdf' | 'mp4' | 'webm'
 export type MediaUsageFilter = '' | 'used' | 'unused'
 
 /** Служебное значение фильтра по папке: файлы без папки. */

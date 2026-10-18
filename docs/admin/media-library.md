@@ -86,6 +86,8 @@
 
 При загрузке считается `sha256` исходного файла (до оптимизации, которая переупаковывает изображение) и сохраняется в `media_assets.file_hash`. Если файл с таким хешем уже есть, новый ассет не создаётся: API отвечает `200` с существующим ассетом и `duplicate: true` (новая загрузка — `201`, `duplicate: false`). В UI строка загрузки получает статус «Уже в медиатеке». Ограничение: у файлов, загруженных до миграции `Version20261007100000`, хеша нет (`null`), поэтому дедупликация действует только для новых загрузок.
 
+Загрузку выполняет `MediaUploadHandler` (`src/Module/Media/Application/Upload`): проверка (`UploadValidator`), поиск дубликата, перенос в `public_html/uploads/media/`, оптимизация и запись в БД. Если после переноса упала оптимизация или запись в БД, файл и уже созданные превью удаляются — на диске не остаётся файлов, о которых медиатека не знает. Контроллер `MediaApiController` только разбирает запрос и формирует ответ.
+
 ## Устройство frontend
 
 `admin/features/media/MediaLibrary.tsx` собирает экран из частей:
@@ -116,12 +118,12 @@
 Где используется:
 
 - Редактор блоков: поля изображений в форме блока (`admin/features/page-editor/workspace/BlockFields.tsx`) используют `MediaPicker`; при выборе пустой `alt`/`imageAlt` заполняется из `alt` ассета. В списках фото (`gallery`, `portfolio`, `slider` и т. п.) кнопка добавления открывает `MediaPickerDialog`. Для блоков без ручной формы поля изображений определяются по ключам (`image`, `src`, `imageUrl`, `poster`, `backgroundImage`, …), логика — `blocks/shared/mediaFields.ts`.
-- TipTap (`SimpleEditor`): кнопка «Загрузить» отправляет файл в медиатеку (`handleImageUpload` → `POST /admin/api/media/assets`, прогресс и ошибки показываются), кнопка «Медиатека» вставляет изображение из библиотеки с `alt`/`title`.
+- TipTap (`SimpleEditor`) изображений не вставляет: санитайзер блоков rich-text их вырезает, поэтому картинки добавляются отдельными блоками ([rich-text-editor](rich-text-editor.md)).
 - Редактор страницы (`admin/features/page-editor`): «Изображение для соцсетей» (`ogImage`, абсолютный URL по `window.location.origin`) и изображение блока `text_image`.
 
 ## Лимиты загрузки
 
-Серверный максимум — 10 МБ (`UploadValidator`). Для staging/production `client_max_body_size` в nginx и `upload_max_filesize` / `post_max_size` в PHP должны быть не меньше этого значения (в Docker: 64 МБ, `docker/nginx/default.conf`, `docker/php/php.ini`). Ответ nginx `413` фронтенд показывает как «Файл больше лимита сервера».
+Серверный максимум — 10 МБ для картинок и PDF и 60 МБ для видео MP4/WebM (`UploadValidator::MAX_SIZE_BYTES`, `MAX_VIDEO_SIZE_BYTES`). У видео сверяется сигнатура контейнера (MP4 — блок `ftyp`, WebM — заголовок EBML с doctype `webm`); MOV с iPhone не принимается — его нужно сохранить в MP4. Видео не перекодируется и превью не получает: обложку (постер) редактор выбирает отдельно, например в карточке работы портфолио. Для staging/production `client_max_body_size` в nginx и `upload_max_filesize` / `post_max_size` в PHP должны быть не меньше 64 МБ, иначе видео до 60 МБ не дойдёт до приложения (в Docker: 64 МБ, `docker/nginx/default.conf`, `docker/php/php.ini`). Ответ nginx `413` фронтенд показывает как «Файл больше лимита сервера».
 
 ## Тесты
 

@@ -216,7 +216,16 @@ export default function UsersPage() {
         const isSelf = user.email.toLowerCase() === currentEmail
         return (
           <div className="flex flex-wrap gap-2">
-            <Button type="button" size="sm" variant="outline" onClick={() => setResetTarget(user)}>Сбросить пароль</Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              disabled={isSelf}
+              title={isSelf ? 'Свой пароль меняется в форме «Сменить свой пароль»' : undefined}
+              onClick={() => setResetTarget(user)}
+            >
+              Сбросить пароль
+            </Button>
             <Button type="button" size="sm" variant="outline" disabled={isSelf && user.active} onClick={() => void toggleActive(user)}>
               {user.active ? 'Деактивировать' : 'Активировать'}
             </Button>

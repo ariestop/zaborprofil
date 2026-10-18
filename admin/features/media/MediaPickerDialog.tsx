@@ -7,10 +7,11 @@ interface MediaPickerDialogProps {
   onOpenChange: (open: boolean) => void
   onSelect: (asset: MediaAssetItem) => void
   imagesOnly?: boolean
+  videosOnly?: boolean
   title?: string
 }
 
-export function MediaPickerDialog({ open, onOpenChange, onSelect, imagesOnly = true, title = 'Выбор из медиатеки' }: MediaPickerDialogProps) {
+export function MediaPickerDialog({ open, onOpenChange, onSelect, imagesOnly = true, videosOnly = false, title = 'Выбор из медиатеки' }: MediaPickerDialogProps) {
   return (
     <Dialog
       open={open}
@@ -22,7 +23,8 @@ export function MediaPickerDialog({ open, onOpenChange, onSelect, imagesOnly = t
       {open ? (
         <MediaLibrary
           mode="select"
-          imagesOnly={imagesOnly}
+          imagesOnly={imagesOnly && !videosOnly}
+          videosOnly={videosOnly}
           perPage={12}
           onSelect={(asset) => {
             onSelect(asset)

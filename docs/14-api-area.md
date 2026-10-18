@@ -3,7 +3,7 @@
 В проекте две категории API:
 
 1. **Admin API** — `^/admin/api/...`, JSON, под admin firewall, CSRF + Origin (см. [12-admin-area](12-admin-area.md)). Реализован.
-2. **Public API** — JSON endpoints вне `/admin`. Частично реализован (`POST /api/leads`), версионированный внешний API `/api/v1/...` остаётся целевым.
+2. **Public API** — JSON endpoints вне `/admin`. Частично реализован (`POST /api/leads`, лайки портфолио `/api/portfolio/likes` — см. [51-portfolio](51-portfolio.md#лайки-и-поделиться)), версионированный внешний API `/api/v1/...` остаётся целевым.
 
 ## Admin API: текущее состояние
 
@@ -26,8 +26,9 @@
 - принимает lead payload (`source`, `name`, `phone`, `email`, `message`, `consent`, `consentText`, `pageUrl`, `policyUrl`, `formLoadedAt`, honeypot `website`);
 - normal lead: `201` и статус `new`;
 - spam lead: нейтральный `202`, статус `spam`, `spamScore`/`spamReasons`;
-- антиспам: honeypot, минимальное время заполнения, IP rate limit, link scoring;
-- уведомления: email и Telegram (если заданы env переменные).
+- антиспам: honeypot, минимальное время заполнения, счётчик по IP, link scoring;
+- жёсткий лимит: 10 запросов в час с одного IP (`limiter.public_leads`, sliding window), считается каждый запрос; сверх — `429` с `code: TOO_MANY_REQUESTS` и `Retry-After`, заявка не сохраняется;
+- уведомления: email и Telegram (если заданы env переменные) — через очередь Messenger с повторами, ответ посетителю их не ждёт ([24-messenger-and-queues](24-messenger-and-queues.md#уведомления-о-заявках)).
 
 ### Версионирование
 
@@ -62,7 +63,7 @@
 - Anonymous: 60 req/min на IP.
 - Authenticated: 600 req/min на токен.
 - Login endpoint: 10 req/min.
-- Lead submission: 5 req/min на IP.
+- Lead submission: 10 запросов в час на IP — **действует** (`limiter.public_leads`).
 
 ### Идемпотентность
 

@@ -162,8 +162,11 @@ final class DoctrineMediaAssetRepository extends ServiceEntityRepository impleme
 
         if ($criteria->type === MediaAssetCriteria::TYPE_IMAGE) {
             $query->andWhere('asset.mimeType LIKE :imageMime')->setParameter('imageMime', 'image/%');
+        } elseif ($criteria->type === MediaAssetCriteria::TYPE_VIDEO) {
+            $query->andWhere('asset.mimeType LIKE :videoMime')->setParameter('videoMime', 'video/%');
         } elseif ($criteria->type === MediaAssetCriteria::TYPE_DOCUMENT) {
-            $query->andWhere('asset.mimeType NOT LIKE :imageMime')->setParameter('imageMime', 'image/%');
+            $query->andWhere('asset.mimeType NOT LIKE :imageMime')->setParameter('imageMime', 'image/%')
+                ->andWhere('asset.mimeType NOT LIKE :videoMime')->setParameter('videoMime', 'video/%');
         }
 
         if ($criteria->format !== null) {

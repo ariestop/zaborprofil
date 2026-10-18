@@ -51,7 +51,7 @@ Domain — самый стабильный, самый важный слой. З
 - `Infrastructure/Doctrine/Entity/PagePersistence` — Doctrine model.
 - Mapper в репозитории.
 
-В текущем проекте такая декомпозиция применена точечно — `AdminUser` лежит в `User/Infrastructure/Doctrine/Entity/`, потому что это persistence model для Symfony Security и не имеет богатого поведения.
+В текущем проекте такая декомпозиция не применяется: сущности, включая `AdminUser`, лежат в `Domain/Entity/` с атрибутами маппинга Doctrine.
 
 ### Правила
 

@@ -9,7 +9,7 @@ import { describeApiError } from '../seo/redirects/redirect-rules'
 import { Field, NativeSelect } from './fields'
 import { pathFromSlug, slugify } from './form'
 import { buildParentOptions } from './parent-options'
-import { pageStatusLabels, pageTypeLabels, quickStatusActions, statusTone, templateLabels, visibilityLabels } from './page-status'
+import { pageStatusLabels, pageTypeLabels, quickStatusActions, statusTone, templateLabels, visibilityHints, visibilityLabels } from './page-status'
 import type { PageEditorController } from './usePageEditorController'
 
 interface SettingsTabProps {
@@ -39,6 +39,7 @@ export function SettingsTab({ controller, page }: SettingsTabProps) {
   const parentId = useWatch({ control, name: 'parentId' })
   const template = useWatch({ control, name: 'template' })
   const isIndexable = useWatch({ control, name: 'isIndexable' })
+  const visibility = useWatch({ control, name: 'visibility' })
 
   const typeOptions = useMemo(() => {
     const known = Object.keys(pageTypeLabels)
@@ -147,9 +148,9 @@ export function SettingsTab({ controller, page }: SettingsTabProps) {
 
       <Card title="Видимость и индексация">
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Видимость" error={errors.visibility?.message}>
-            {(id) => (
-              <NativeSelect id={id} {...register('visibility')}>
+          <Field label="Видимость" error={errors.visibility?.message} hint={visibilityHints[visibility]}>
+            {(id, describedBy) => (
+              <NativeSelect id={id} aria-describedby={describedBy} {...register('visibility')}>
                 {Object.entries(visibilityLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </NativeSelect>
             )}

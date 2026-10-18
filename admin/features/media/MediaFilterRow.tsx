@@ -1,4 +1,4 @@
-import type { MediaFormatFilter, MediaUsageFilter } from '../../entities/media/api'
+import type { MediaFormatFilter, MediaTypeFilter, MediaUsageFilter } from '../../entities/media/api'
 import { MEDIA_FOLDER_NONE } from '../../entities/media/api'
 import { Button, Input } from '../../shared/ui'
 import type { MediaFolderItem } from '../../types/api'
@@ -9,11 +9,12 @@ import type { MediaLibraryFilters } from './useMediaLibraryFilters'
 export function MediaFilterRow({
     filters,
     folders,
-    imagesOnly,
+    fixedType,
 }: {
     filters: MediaLibraryFilters
     folders: MediaFolderItem[]
-    imagesOnly: boolean
+    /** Медиатека показывает файлы одного типа: в списке форматов только его форматы. */
+    fixedType: MediaTypeFilter
 }) {
     return (
         <>
@@ -30,7 +31,7 @@ export function MediaFilterRow({
                         filters.setFormatFilter(event.target.value as MediaFormatFilter)
                     }
                 >
-                    {FORMAT_OPTIONS.filter((option) => !imagesOnly || option.value !== 'pdf').map(
+                    {FORMAT_OPTIONS.filter((option) => formatMatchesType(option.value, fixedType)).map(
                         (option) => (
                             <option key={option.value} value={option.value}>
                                 {option.label}
@@ -102,4 +103,22 @@ export function MediaFilterRow({
             ) : null}
         </>
     )
+}
+
+const VIDEO_FORMATS: MediaFormatFilter[] = ['mp4', 'webm']
+
+function formatMatchesType(format: MediaFormatFilter, type: MediaTypeFilter): boolean {
+    if (format === '' || type === '') {
+        return true
+    }
+
+    if (type === 'video') {
+        return VIDEO_FORMATS.includes(format)
+    }
+
+    if (type === 'image') {
+        return format !== 'pdf' && !VIDEO_FORMATS.includes(format)
+    }
+
+    return format === 'pdf'
 }

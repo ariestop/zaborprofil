@@ -7,7 +7,7 @@ namespace App\Module\User\UI\Console;
 use App\Module\User\Application\Service\AdminUserService;
 use App\Module\User\Application\Service\EnsureAdminResult;
 use App\Module\User\Domain\Exception\UserManagementException;
-use App\Module\User\Infrastructure\Repository\AdminUserRepository;
+use App\Module\User\Domain\Repository\AdminUserRepositoryInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -21,7 +21,7 @@ final class CreateAdminCommand extends Command
 {
     public function __construct(
         private readonly AdminUserService $service,
-        private readonly AdminUserRepository $users,
+        private readonly AdminUserRepositoryInterface $users,
     ) {
         parent::__construct();
     }

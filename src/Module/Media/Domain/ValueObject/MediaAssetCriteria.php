@@ -12,6 +12,7 @@ final readonly class MediaAssetCriteria
 {
     public const string TYPE_IMAGE = 'image';
     public const string TYPE_DOCUMENT = 'document';
+    public const string TYPE_VIDEO = 'video';
 
     public const string SORT_NEWEST = 'newest';
     public const string SORT_OLDEST = 'oldest';
@@ -31,6 +32,8 @@ final readonly class MediaAssetCriteria
         'webp' => ['image/webp'],
         'avif' => ['image/avif'],
         'pdf' => ['application/pdf', 'application/x-pdf'],
+        'mp4' => ['video/mp4'],
+        'webm' => ['video/webm'],
     ];
 
     public const int DEFAULT_PER_PAGE = 24;
@@ -65,7 +68,7 @@ final readonly class MediaAssetCriteria
             throw new InvalidArgumentException(\sprintf('Per page must be between 1 and %d.', self::MAX_PER_PAGE));
         }
 
-        if ($type !== null && !\in_array($type, [self::TYPE_IMAGE, self::TYPE_DOCUMENT], true)) {
+        if ($type !== null && !\in_array($type, [self::TYPE_IMAGE, self::TYPE_DOCUMENT, self::TYPE_VIDEO], true)) {
             throw new InvalidArgumentException('Unknown media type filter.');
         }
 

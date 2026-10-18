@@ -10,7 +10,7 @@ use App\Module\Content\Application\Journal\PageWorkflowEvent;
 use App\Module\Content\Application\Journal\PageWorkflowHistoryEntry;
 use App\Module\Content\Application\Journal\PageWorkflowJournalInterface;
 use App\Module\Content\Domain\Entity\Page;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Module\User\Domain\Entity\AdminUser;
 use App\Shared\Infrastructure\Http\RequestIdSubscriber;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\RequestStack;

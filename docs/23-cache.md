@@ -280,9 +280,11 @@ nginx кэширует ответ только если его заголовк�
 
 Ограничение: сброс знает только хост из `SITE_URL`; для дополнительных доменов (`www.`) действует `s-maxage`.
 
+**Абсолютные ссылки — только от `SITE_URL`.** Ключ кэша содержит `$host` без порта, а Symfony берёт хост и порт из заголовка `Host`. Поэтому canonical, `og:url`, JSON-LD и ссылки «Поделиться» строятся от `SITE_URL` (`%app.site_url%`, в Twig — глобал `site_url`), а не через `absolute_url()`, `UrlGeneratorInterface::ABSOLUTE_URL` или `app.request.schemeAndHttpHost`: иначе запрос с `Host: zaborprofil.ru:4443` положил бы в общий кэш страницу с чужим адресом. Тесты: `PublishedPageLiveSettingsTest::testAbsoluteUrlsComeFromSiteUrlNotFromRequestHost`, `PublicPortfolioTest::testShareLinksAndCanonicalIgnoreRequestHost`.
+
 ### Lighthouse
 
-Workflow `Lighthouse` (`.github/workflows/lighthouse.yml`) запускается вручную (`workflow_dispatch`) и замеряет 3–5 ключевых URL выбранного стенда по порогам из `lighthouserc.json` (предупреждения, без блокировки PR). Для staging используется секрет `STAGING_BASIC_AUTH`.
+Workflow `Lighthouse` (`.github/workflows/lighthouse.yml`) запускается вручную (`workflow_dispatch`) и замеряет 3–5 ключевых URL выбранного стенда по порогам из `lighthouserc.json` (предупреждения, без блокировки PR). Для staging используется секрет `STAGING_BASIC_AUTH`. Пароль уходит только при `base_url` ровно `https://dev.zaborprofil.ru`; `base_url` — только `https://хост`, пути — только `/…`. Отчёты выкладываются артефактом `lighthouse-results` (14 дней) после того, как из JSON и HTML вычищен заголовок `Authorization`: артефакты публичного репозитория доступны всем.
 
 ## Что нельзя кешировать
 

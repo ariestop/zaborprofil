@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Module\Content\Domain\Entity;
 
+use App\Module\Content\Domain\ValueObject\PageVisibility;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Ulid;
@@ -124,6 +125,11 @@ final class PageRevision
     public function changeIndexable(bool $indexable): void
     {
         $this->seoSnapshot['isIndexable'] = $indexable;
+    }
+
+    public function changeVisibility(PageVisibility $visibility): void
+    {
+        $this->settingsSnapshot['visibility'] = $visibility->value;
     }
 
     public function id(): Ulid

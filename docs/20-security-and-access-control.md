@@ -40,6 +40,8 @@ ROLE_MANAGER: []
 
 Конкретные разделы и эндпоинты закрывает `AdminPermissionVoter`: каждый контроллер `/admin/api/*` проверяет своё право.
 
+Запрос без действующей сессии (истекла, сброшена сменой пароля, выход в другой вкладке) обрабатывает `AdminAuthenticationEntryPoint` (Auth-модуль, `entry_point` firewall `main`): HTML-страницы `/admin/*` перенаправляются на `/admin/login`, а `/admin/api/*` получает `401` JSON `{"error": "Сессия истекла. Войдите в админку снова.", "code": "UNAUTHORIZED"}`. Редирект для API не годится: fetch и XHR молча следуют ему, получают HTML формы входа со статусом `200`, и SPA принимала его за успешный ответ (например, публикация выглядела выполненной).
+
 ### Права для SPA
 
 `GET /admin/api/me` возвращает `{email, roles, permissions}`; те же `roles` и `permissions` шаблон `admin/dashboard.html.twig` отдаёт в `data-roles` / `data-permissions` корня `#admin-app`. Список прав вычисляет `AdminAccessProfile` теми же voter'ами, что защищают эндпоинты. Фронтенд (`admin/stores/auth.ts`) использует его, чтобы:
@@ -153,12 +155,20 @@ password_hashers:
 
 `symfony/rate-limiter` уже подключён.
 
-Целевое (фактически только login throttling сейчас):
+Действует:
 
 | Endpoint | Limit |
 |---|---|
 | `admin_login` | 5 / 15 min (login_throttling) |
-| `lead.submit` | 5 req/min/IP |
+| `POST /api/leads` | 10 / час / IP (`limiter.public_leads`, sliding window): считается каждый запрос, сверх — `429 TOO_MANY_REQUESTS` с `Retry-After`, заявка не сохраняется |
+| `POST /admin/api/client-errors` | 20 / 10 min на пользователя (`limiter.admin_client_errors`) |
+
+IP для лимитов — `Request::getClientIp()`; доверенные прокси не заданы, см. [27-config-and-env](27-config-and-env.md#trusted-proxies--hosts).
+
+Целевое:
+
+| Endpoint | Limit |
+|---|---|
 | `api.public` (анонимный) | 60 req/min/IP |
 | `api.public` (auth) | 600 req/min/token |
 

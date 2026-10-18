@@ -38,6 +38,7 @@
 | `DATABASE_URL` | `mysql://user:pass@host:3306/db?serverVersion=8.4&charset=utf8mb4` | везде |
 | `MESSENGER_TRANSPORT_DSN` | `doctrine://default?auto_setup=0` (prod) | везде |
 | `MAILER_DSN` | `smtp://...` или `null://null` для dev без почты | везде |
+| `MAILER_FROM` | отправитель писем сайта, например `"Сайт zaborprofil.ru <noreply@zaborprofil.ru>"`; адрес должен быть разрешён SMTP-серверу (SPF/DKIM домена). Без отправителя Symfony Mailer письма не отправляет | везде |
 | `SITE_URL` | `https://zaborprofil.ru` или `http://localhost` | везде |
 | `DEFAULT_URI` | `https://zaborprofil.ru` | для CLI генерации URL |
 
@@ -46,8 +47,8 @@
 | Переменная | Значение | Кто читает |
 |---|---|---|
 | `APP_SHARE_DIR` | `/var/www/zaborprofil/shared` (prod) или `var/share` (dev) | целевое: `FileStorage` |
-| `TRUSTED_PROXIES` | список IP nginx/proxy | Symfony framework |
-| `TRUSTED_HOSTS` | regex hostname | Symfony framework |
+| `SYMFONY_TRUSTED_PROXIES` | IP/подсети прокси, которым разрешено сообщать IP и протокол клиента. По умолчанию не задано, и так должно оставаться на Beget и на VPS без CDN ([ниже](#trusted-proxies--hosts)) | Symfony framework |
+| `SYMFONY_TRUSTED_HOSTS` | regex допустимых `Host` | Symfony framework |
 | `STAGING_AUTH_ENABLED` | `1` включает Basic Auth на `APP_ENV=staging` (по умолчанию выключено) | `StagingAccessSubscriber` |
 | `STAGING_AUTH_USER` / `STAGING_AUTH_HASH` | логин и bcrypt-хеш пароля; хеш в `.env.local` в **одинарных кавычках**. При `STAGING_AUTH_ENABLED=1` и неверных значениях доступ закрыт для всех | `StagingAccessSubscriber` |
 | `STAGING_ALLOW_PUBLIC` | `1` вместе с `STAGING_AUTH_ENABLED=0` разрешает деплой временно открытого staging без Basic Auth; без явного `1` preflight `deploy-beget.sh` требует `STAGING_AUTH_ENABLED=1`. Приложение флаг не читает; noindex действует всегда ([49-beget-staging-deploy](49-beget-staging-deploy.md)) | `tools/deploy/deploy-beget.sh` |
@@ -63,7 +64,7 @@
 | `MAILPIT_PORT`/`ADMINER_PORT`/`VITE_PORT` | хост-порты | Compose, dev only |
 | `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | для critical alerts; читаются через контейнер (`.env.local` или `secrets:set`), отправляет worker `messenger:consume async` | `TelegramErrorHandler`, `SendTelegramLogMessageHandler` |
 | `RELEASE_TAG` | версия для логов/Sentry | `ReleaseProcessor` |
-| `LEAD_NOTIFICATION_EMAIL` / `LEAD_TELEGRAM_BOT_TOKEN` / `LEAD_TELEGRAM_CHAT_ID` | куда уходят уведомления о новых заявках; если доставка не удалась ни по одному каналу, пишется `error` в канал `observability` (алерт) | `LeadNotifier` |
+| `LEAD_NOTIFICATION_EMAIL` / `LEAD_TELEGRAM_BOT_TOKEN` / `LEAD_TELEGRAM_CHAT_ID` | куда уходят уведомления о новых заявках (через очередь Messenger с повторами); если канал не доставил после всех повторов, пишется `error` в канал `observability` (алерт) | `LeadNotifier` |
 | `SENTRY_DSN` | DSN Sentry или self-hosted (GlitchTip); пусто — error tracking выключен. Персональные данные не отправляются ([28-logging-observability](28-logging-observability.md)) | `sentry/sentry-symfony` |
 | `SENTRY_RELEASE` | необязательная метка релиза в Sentry | `sentry/sentry-symfony` |
 
@@ -110,12 +111,31 @@ php bin/console secrets:set TELEGRAM_BOT_TOKEN
 
 ## Trusted proxies / hosts
 
-Если перед Symfony стоит nginx/CDN — указать:
+Symfony читает только `SYMFONY_TRUSTED_PROXIES`, `SYMFONY_TRUSTED_HEADERS` и `SYMFONY_TRUSTED_HOSTS`. Переменные без префикса `SYMFONY_` ни на что не влияют.
+
+От того, какой IP вернёт `Request::getClientIp()`, зависят IP в снимке согласия на обработку данных, лимит заявок с одного IP в антиспаме, журнал аудита и логи.
+
+**Доверенные прокси по умолчанию не заданы, и это правильно для наших схем:**
+
+| Схема | Откуда приходит IP клиента | Что настраивать |
+|---|---|---|
+| Beget (staging) — nginx хостинга → Apache → PHP | `REMOTE_ADDR` уже содержит IP посетителя; nginx хостинга перезаписывает `X-Real-IP`, а `X-Forwarded-For` от клиента пропускает **без изменений** | ничего. `SYMFONY_TRUSTED_PROXIES=REMOTE_ADDR` или `PRIVATE_SUBNETS` здесь опасны: любой посетитель подставит себе IP через `X-Forwarded-For` |
+| VPS — nginx → PHP-FPM ([шаблоны](../tools/deploy/templates/)) | `REMOTE_ADDR` — адрес клиента, протокол задаёт `fastcgi_param HTTPS on` | ничего |
+| VPS за CDN или балансировщиком | `X-Forwarded-For` от этого прокси | перечислить **только** его IP-диапазоны; `REMOTE_ADDR` допустим, лишь если до PHP можно достучаться только через этот прокси и он перезаписывает `X-Forwarded-For` |
+
+Пример для CDN (диапазоны взять у провайдера):
 
 ```dotenv
-TRUSTED_PROXIES=127.0.0.1,REMOTE_ADDR
-TRUSTED_HOSTS='^(zaborprofil\.ru|staging\.zaborprofil\.ru)$'
+SYMFONY_TRUSTED_PROXIES=192.0.2.0/24,198.51.100.0/24
+SYMFONY_TRUSTED_HEADERS=x-forwarded-for,x-forwarded-proto
+SYMFONY_TRUSTED_HOSTS='^(zaborprofil\.ru|www\.zaborprofil\.ru)$'
 ```
+
+`SYMFONY_TRUSTED_HOSTS` должен покрывать все домены окружения (на staging — `dev\.zaborprofil\.ru`): иначе на запросы с другим `Host` приложение отвечает `400`.
+
+Особенность Beget: признак HTTPS хостинг выставляет по заголовку `X-Forwarded-Proto` из запроса клиента. Подделав его, посетитель получит `http://`-редиректы только у себя; на других посетителей и на данные это не влияет.
+
+Поведение закреплено тестом `LeadApiTest::testConsentSnapshotStoresConnectionIpAndIgnoresClientForwardedHeaders`. Проверено на dev.zaborprofil.ru 12.10.2026 (R08).
 
 ## Чек-лист добавления новой env переменной
 

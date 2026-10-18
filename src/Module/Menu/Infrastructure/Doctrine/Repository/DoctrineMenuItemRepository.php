@@ -35,7 +35,11 @@ final class DoctrineMenuItemRepository extends ServiceEntityRepository implement
 
     public function get(string $id): MenuItem
     {
-        return $this->find(Ulid::fromString($id)) ?? throw new ContentNotFoundException('Menu item not found.');
+        if (!Ulid::isValid($id)) {
+            throw new ContentNotFoundException('Пункт меню не найден.');
+        }
+
+        return $this->find(Ulid::fromString($id)) ?? throw new ContentNotFoundException('Пункт меню не найден.');
     }
 
     public function findAllForAdmin(): array
@@ -50,6 +54,14 @@ final class DoctrineMenuItemRepository extends ServiceEntityRepository implement
     {
         /** @var list<MenuItem> $result */
         $result = $this->findBy(['position' => $position, 'active' => true], ['sortOrder' => 'ASC']);
+
+        return $result;
+    }
+
+    public function findByPosition(string $position): array
+    {
+        /** @var list<MenuItem> $result */
+        $result = $this->findBy(['position' => $position], ['sortOrder' => 'ASC']);
 
         return $result;
     }

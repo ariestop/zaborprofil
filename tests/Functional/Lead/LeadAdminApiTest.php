@@ -6,7 +6,7 @@ namespace App\Tests\Functional\Lead;
 
 use App\Module\AuditLog\Domain\Entity\AuditLogEntry;
 use App\Module\Lead\Domain\Entity\Lead;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Module\User\Domain\Entity\AdminUser;
 use App\Tests\Support\Admin\AdminApiTestCase;
 use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
@@ -134,7 +134,7 @@ final class LeadAdminApiTest extends AdminApiTestCase
         $client = $this->adminClient();
         $lead = $this->seedLeads()['Борис'];
 
-        $this->api($client, 'GET', '/admin/api/leads/'.$lead->id());
+        $client->request('GET', '/admin/api/leads/'.$lead->id(), server: ['REMOTE_ADDR' => '198.51.100.40', 'HTTP_USER_AGENT' => 'AuditTest/1.0']);
         self::assertResponseIsSuccessful();
         $card = $this->json($client);
         self::assertSame('Борис', $card['name']);
@@ -147,6 +147,12 @@ final class LeadAdminApiTest extends AdminApiTestCase
         self::assertCount(1, $audit);
         self::assertSame((string) $lead->id(), $audit[0]->entityId());
         self::assertStringNotContainsString('900', json_encode($audit[0]->newValues(), JSON_THROW_ON_ERROR));
+        // Кто и откуда: текущий администратор (CurrentAdminInterface) и данные запроса (RequestContextInterface).
+        self::assertNotNull($audit[0]->actorId());
+        self::assertSame('admin-api@example.test', $audit[0]->actorEmail());
+        self::assertSame('198.51.100.40', $audit[0]->ip());
+        self::assertSame('AuditTest/1.0', $audit[0]->userAgent());
+        self::assertNotEmpty($audit[0]->requestId());
     }
 
     public function testUnknownLeadReturnsNotFoundCode(): void

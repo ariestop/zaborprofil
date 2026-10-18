@@ -26,6 +26,7 @@ export type NavIconName =
   | 'calculator'
   | 'bell'
   | 'redirect'
+  | 'portfolio'
 
 const paths: Record<NavIconName, ReactElement> = {
   dashboard: (
@@ -89,6 +90,13 @@ const paths: Record<NavIconName, ReactElement> = {
     </>
   ),
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+  portfolio: (
+    <>
+      <path d="M3.5 8.5h17v10a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5z" />
+      <path d="M9 8.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v2.5" />
+      <path d="M7 20V12.5M10.5 20v-7.5M14 20v-7.5M17.5 20v-7.5M5.5 14.5h13" />
+    </>
+  ),
   close: <path d="M6.5 6.5l11 11M17.5 6.5l-11 11" />,
   external: (
     <>

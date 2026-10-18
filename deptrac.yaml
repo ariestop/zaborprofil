@@ -1,0 +1,108 @@
+# Границы слоёв внутри модулей и Shared (docs/04-layer-rules.md). Зависимости между модулями проверяет
+# tests/Unit/Architecture/ModuleDependencyTest.php.
+#
+# Запуск: composer check:deptrac. Уже существующие нарушения перечислены в deptrac.baseline.yaml:
+# новые запрещены, исправленные нужно удалять из baseline (deptrac сообщит о лишних записях).
+imports:
+    - deptrac.baseline.yaml
+
+deptrac:
+    paths:
+        - ./src
+
+    exclude_files:
+        - '#.*/Migrations/.*#'
+
+    layers:
+        - name: Domain
+          collectors:
+              - type: classLike
+                value: '^App\\(Module\\[^\\]+|Shared)\\Domain\\.*'
+        - name: Application
+          collectors:
+              - type: classLike
+                value: '^App\\(Module\\[^\\]+|Shared)\\Application\\.*'
+        - name: Infrastructure
+          collectors:
+              - type: bool
+                must:
+                    - type: classLike
+                      value: '^App\\(Module\\[^\\]+|Shared)\\Infrastructure\\.*'
+                must_not:
+                    - type: classLike
+                      value: '^App\\Module\\[^\\]+\\Infrastructure\\(.+\\)?Doctrine\w+Repository$'
+        # Doctrine-репозитории — часть Infrastructure, но отдельным слоем: на них ссылается маппинг сущностей
+        # (#[ORM\Entity(repositoryClass: …)]), а docs/04 разрешает атрибуты Doctrine в Domain.
+        - name: Persistence
+          collectors:
+              - type: classLike
+                value: '^App\\Module\\[^\\]+\\Infrastructure\\(.+\\)?Doctrine\w+Repository$'
+        - name: UI
+          collectors:
+              - type: classLike
+                value: '^App\\(Module\\[^\\]+|Shared)\\UI\\.*'
+
+        # Внешние зависимости, которые docs/04 запрещает внутренним слоям.
+        - name: Http
+          collectors:
+              - type: classLike
+                value: '^Symfony\\Component\\HttpFoundation\\.*'
+        - name: Twig
+          collectors:
+              - type: classLike
+                value: '^Twig\\.*'
+        - name: EntityManager
+          collectors:
+              - type: classLike
+                value: '^Doctrine\\ORM\\(EntityManagerInterface|EntityManager|EntityRepository|QueryBuilder)$'
+              - type: classLike
+                value: '^Doctrine\\Bundle\\DoctrineBundle\\Repository\\.*'
+        - name: SymfonyBundle
+          collectors:
+              - type: classLike
+                value: '^Symfony\\Bundle\\.*'
+        - name: Cache
+          collectors:
+              - type: classLike
+                value: '^Symfony\\Component\\Cache\\.*'
+        - name: Mailer
+          collectors:
+              - type: classLike
+                value: '^Symfony\\Component\\Mailer\\.*'
+
+    ruleset:
+        # Domain — только сам Domain и внешние библиотеки, кроме перечисленных ниже слоёв.
+        # Persistence — исключительно для repositoryClass в атрибуте маппинга сущности.
+        Domain:
+            - Persistence
+        Application:
+            - Domain
+        Infrastructure:
+            - Domain
+            - Application
+            - Persistence
+            - Http
+            - Twig
+            - EntityManager
+            - SymfonyBundle
+            - Cache
+            - Mailer
+        # UI вызывает Application; Domain — для типов в запросах и ответах. Infrastructure — только через интерфейсы
+        # (известные исключения: Health, Maintenance, LeadActorProvider — в baseline).
+        UI:
+            - Domain
+            - Application
+            - Http
+            - Twig
+            - SymfonyBundle
+        Persistence:
+            - Domain
+            - Application
+            - Infrastructure
+            - EntityManager
+        Http: ~
+        Twig: ~
+        EntityManager: ~
+        SymfonyBundle: ~
+        Cache: ~
+        Mailer: ~

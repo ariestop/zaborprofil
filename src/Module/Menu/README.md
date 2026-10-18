@@ -2,8 +2,18 @@
 
 Модуль управляет публичной навигацией сайта.
 
-- Поддерживаемые позиции: `header`, `footer`, `service`.
-- Admin API: `/admin/api/menu/items` для list/create/update/delete.
-- Twig helper: `menu_items(position)` возвращает активные пункты из кэша `cache.menu`.
-- При create/update/delete `MenuProvider::invalidate()` сбрасывает затронутые позиции.
+- Позиции: `header` (шапка), `footer` (подвал), `service` (верхняя строка над шапкой).
+- Меню двухуровневое: пункт верхнего уровня (раздел) и его подпункты (`parentId`) в той же позиции.
+  Третий уровень, вложение в пункт другой позиции и в самого себя запрещены (`MenuTreeService`).
+- У пункта есть необязательная подпись `hint` (до 160 символов) — короткое пояснение в раскрытом меню.
+- Admin API (право `seo.edit`):
+  - `GET /admin/api/menu/items` — все пункты всех позиций и список позиций;
+  - `POST /admin/api/menu/items` — создать; без `sortOrder` пункт встаёт в конец среди соседей;
+  - `PUT /admin/api/menu/items/{id}` — изменить; смена `position` переносит раздел вместе с подпунктами;
+  - `DELETE /admin/api/menu/items/{id}` — удалить вместе с подпунктами;
+  - `PUT /admin/api/menu/positions/{position}/order` — новый порядок всей позиции одним запросом:
+    `{"items": [{"id": "…", "parentId": null}, …]}`, каждый пункт позиции ровно один раз.
+- Логика — в `Application/Service/MenuTreeService`: каждая операция в транзакции, кэш сбрасывается после фиксации.
+- Twig: `menu_items(position)` возвращает активные разделы с `children` (активные подпункты) из кэша `cache.menu`;
+  подпункты выключенного раздела на сайт не попадают.
 - `BreadcrumbBuilder` строит HTML breadcrumbs для публичных страниц; `SchemaOrgBuilder` добавляет JSON-LD `BreadcrumbList`.

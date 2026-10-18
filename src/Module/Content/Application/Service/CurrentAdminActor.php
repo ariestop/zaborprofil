@@ -4,25 +4,22 @@ declare(strict_types=1);
 
 namespace App\Module\Content\Application\Service;
 
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
-use Symfony\Bundle\SecurityBundle\Security;
+use App\Module\Auth\Application\Security\CurrentAdminInterface;
 
 final readonly class CurrentAdminActor
 {
-    public function __construct(private Security $security)
+    public function __construct(private CurrentAdminInterface $currentAdmin)
     {
     }
 
     public function id(): ?string
     {
-        $user = $this->security->getUser();
-
-        return $user instanceof AdminUser ? (string) $user->id() : null;
+        return $this->currentAdmin->id();
     }
 
     public function label(): ?string
     {
-        return $this->security->getUser()?->getUserIdentifier();
+        return $this->currentAdmin->identifier();
     }
 
     /**
@@ -30,6 +27,6 @@ final readonly class CurrentAdminActor
      */
     public function roles(): array
     {
-        return array_values($this->security->getUser()?->getRoles() ?? []);
+        return $this->currentAdmin->roles();
     }
 }

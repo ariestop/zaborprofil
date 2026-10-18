@@ -12,14 +12,32 @@ export const pageStatusLabels: Record<PageStatus, string> = {
 }
 
 export const pageStatusTransitions: Record<PageStatus, PageStatus[]> = {
-  draft: ['review', 'approved', 'published', 'deleted'],
-  review: ['approved', 'draft', 'deleted'],
-  approved: ['published', 'scheduled', 'draft', 'deleted'],
+  draft: ['review', 'approved', 'published', 'archived', 'deleted'],
+  review: ['approved', 'draft', 'archived', 'deleted'],
+  approved: ['published', 'scheduled', 'draft', 'archived', 'deleted'],
   published: ['unpublished', 'scheduled', 'archived', 'deleted'],
   scheduled: ['published', 'draft', 'deleted'],
   unpublished: ['draft', 'published', 'archived', 'deleted'],
   archived: ['draft', 'deleted'],
   deleted: ['draft'],
+}
+
+function statusLabel(value: string): string {
+  return value in pageStatusLabels ? pageStatusLabels[value as PageStatus] : value
+}
+
+/** Переводит ошибки смены статуса из API (тексты домена на английском) в понятное сообщение. */
+export function describePageStatusError(message: string): string {
+  const transition = /cannot transition from "([a-z]+)" to "([a-z]+)"/.exec(message)
+  if (transition !== null) {
+    return `нельзя перевести из «${statusLabel(transition[1])}» в «${statusLabel(transition[2])}»`
+  }
+  const role = /cannot set page status "([a-z]+)"/.exec(message)
+  if (role !== null) {
+    return `нет прав на статус «${statusLabel(role[1])}»`
+  }
+
+  return message
 }
 
 /** Переходы, для которых в шапке редактора нет отдельной кнопки (их берёт на себя слот публикации). */
@@ -60,6 +78,13 @@ export const visibilityLabels: Record<string, string> = {
   public: 'Публичная',
   hidden: 'Скрытая',
   unlisted: 'Доступна по ссылке',
+}
+
+/** Что видит посетитель. Как и индексация, действует сразу после сохранения, без переопубликации. */
+export const visibilityHints: Record<string, string> = {
+  public: 'Открывается на сайте, попадает в sitemap и индексируется (если индексация разрешена).',
+  hidden: 'На сайте не открывается (404), в sitemap и хлебных крошках не появляется. Предпросмотр работает.',
+  unlisted: 'Открывается по прямой ссылке, но не индексируется (noindex) и не попадает в sitemap.',
 }
 
 export const templateLabels: Record<string, string> = {

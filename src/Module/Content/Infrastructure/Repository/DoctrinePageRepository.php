@@ -10,8 +10,10 @@ use App\Module\Content\Domain\Exception\ContentNotFoundException;
 use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use App\Module\Content\Domain\Repository\PageSearchCriteria;
 use App\Module\Content\Domain\Repository\PageSearchResult;
+use App\Module\Content\Domain\ValueObject\PageVisibility;
 use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bridge\Doctrine\Types\UlidType;
@@ -38,6 +40,12 @@ final class DoctrinePageRepository extends ServiceEntityRepository implements Pa
         return $this->findById($id) ?? throw new ContentNotFoundException('Page not found.');
     }
 
+    public function getForUpdate(string $id): Page
+    {
+        return $this->getEntityManager()->find(Page::class, $this->toUlid($id), LockMode::PESSIMISTIC_WRITE)
+            ?? throw new ContentNotFoundException('Page not found.');
+    }
+
     public function findById(string $id): ?Page
     {
         return $this->findOneBy(['id' => $this->toUlid($id)]);
@@ -56,13 +64,24 @@ final class DoctrinePageRepository extends ServiceEntityRepository implements Pa
         return $this->findOneBy(['path' => $this->normalizePath($path)]);
     }
 
+    /**
+     * Страница, доступная посетителям: опубликована и не скрыта.
+     */
     public function findPublishedByPath(string $path): ?Page
     {
-        return $this->findOneBy([
-            'path' => $this->normalizePath($path),
-            'status' => PageStatus::Published,
-            'deletedAt' => null,
-        ]);
+        /** @var Page|null $page */
+        $page = $this->createQueryBuilder('page')
+            ->andWhere('page.path = :path')
+            ->andWhere('page.status = :status')
+            ->andWhere('page.deletedAt IS NULL')
+            ->andWhere('page.visibility != :hidden')
+            ->setParameter('path', $this->normalizePath($path))
+            ->setParameter('status', PageStatus::Published)
+            ->setParameter('hidden', PageVisibility::Hidden)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        return $page;
     }
 
     /**
@@ -258,14 +277,19 @@ final class DoctrinePageRepository extends ServiceEntityRepository implements Pa
         return $publish + $unpublish;
     }
 
+    /**
+     * Страницы для sitemap: опубликованы, индексируются и публичны («по ссылке» и «скрытые» не попадают).
+     */
     private function publishedIndexableQueryBuilder(): QueryBuilder
     {
         return $this->createQueryBuilder('page')
             ->andWhere('page.status = :status')
             ->andWhere('page.deletedAt IS NULL')
             ->andWhere('page.indexable = :indexable')
+            ->andWhere('page.visibility = :visibility')
             ->setParameter('status', PageStatus::Published)
-            ->setParameter('indexable', true);
+            ->setParameter('indexable', true)
+            ->setParameter('visibility', PageVisibility::Public);
     }
 
     private function toUlid(string $id): Ulid

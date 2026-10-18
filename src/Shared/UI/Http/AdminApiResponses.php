@@ -14,6 +14,7 @@ final class AdminApiResponses
 {
     public const string CODE_VALIDATION = 'VALIDATION';
     public const string CODE_NOT_FOUND = 'NOT_FOUND';
+    public const string CODE_UNAUTHORIZED = 'UNAUTHORIZED';
     public const string CODE_ACCESS_DENIED = 'ACCESS_DENIED';
     public const string CODE_BAD_REQUEST = 'BAD_REQUEST';
     public const string CODE_CONFLICT = 'CONFLICT';
@@ -34,6 +35,15 @@ final class AdminApiResponses
     public static function notFound(string $message = 'Not found.'): JsonResponse
     {
         return self::json($message, self::CODE_NOT_FOUND, 404);
+    }
+
+    /**
+     * Запрос без действующей сессии (истекла, сброшена сменой пароля, выход в другой вкладке).
+     * Текст показывается в интерфейсе админки как есть.
+     */
+    public static function unauthorized(): JsonResponse
+    {
+        return self::json('Сессия истекла. Войдите в админку снова.', self::CODE_UNAUTHORIZED, 401);
     }
 
     public static function accessDenied(): JsonResponse

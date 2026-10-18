@@ -7,7 +7,7 @@ namespace App\Tests\Functional\Content;
 use App\Module\Admin\Infrastructure\Http\AdminApiCsrfSubscriber;
 use App\Module\Content\Application\Service\PublicPageCacheKey;
 use App\Module\Content\Application\Service\PublicPagePathNormalizer;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Module\User\Domain\Entity\AdminUser;
 use App\Tests\Support\Database\SchemaTestHelper;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
@@ -765,12 +765,12 @@ final class AdminContentApiTest extends WebTestCase
         self::assertResponseStatusCodeSame(201);
         $pageId = $this->stringFromResponse((string) $client->getResponse()->getContent(), 'id');
 
-        $this->jsonRequestWithCsrf($client, 'POST', \sprintf('/admin/api/content/pages/%s/builder/publish', $pageId), []);
+        $this->jsonRequestWithCsrf($client, 'POST', \sprintf('/admin/api/content/pages/%s/publish', $pageId), []);
         self::assertResponseIsSuccessful();
         self::assertStringContainsString('"status":"published"', (string) $client->getResponse()->getContent());
     }
 
-    public function testBuilderVersionHooksExposeVersionsAndRollback(): void
+    public function testRevisionsExposeVersionsAndRollbackWithoutBuilderDuplicates(): void
     {
         $client = self::createClient();
         $this->prepareDatabase();
@@ -786,10 +786,10 @@ final class AdminContentApiTest extends WebTestCase
         self::assertResponseStatusCodeSame(201);
         $pageId = $this->stringFromResponse((string) $client->getResponse()->getContent(), 'id');
 
-        $this->jsonRequestWithCsrf($client, 'POST', \sprintf('/admin/api/content/pages/%s/builder/publish', $pageId), []);
+        $this->jsonRequestWithCsrf($client, 'POST', \sprintf('/admin/api/content/pages/%s/publish', $pageId), []);
         self::assertResponseIsSuccessful();
 
-        $this->jsonRequestWithCsrf($client, 'GET', \sprintf('/admin/api/content/pages/%s/builder/versions', $pageId));
+        $this->jsonRequestWithCsrf($client, 'GET', \sprintf('/admin/api/content/pages/%s/revisions', $pageId));
         self::assertResponseIsSuccessful();
         $versionsPayload = json_decode((string) $client->getResponse()->getContent(), true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($versionsPayload);
@@ -801,10 +801,15 @@ final class AdminContentApiTest extends WebTestCase
         $revisionId = $firstRevision['id'] ?? null;
         self::assertIsString($revisionId);
 
-        $this->jsonRequestWithCsrf($client, 'POST', \sprintf('/admin/api/content/pages/%s/builder/rollback', $pageId), [
-            'revisionId' => $revisionId,
-        ]);
+        $this->jsonRequestWithCsrf($client, 'POST', \sprintf('/admin/api/content/pages/%s/revisions/%s/rollback', $pageId, $revisionId));
         self::assertResponseIsSuccessful();
+
+        // Дубли под /builder/* убраны: публикация, версии и откат — только через /publish и /revisions.
+        foreach ([['POST', 'builder/publish'], ['GET', 'builder/versions'], ['POST', 'builder/rollback'], ['POST', 'builder/preview']] as [$method, $suffix]) {
+            $this->jsonRequestWithCsrf($client, $method, \sprintf('/admin/api/content/pages/%s/%s', $pageId, $suffix), []);
+            // 404 или 405: путь подхватывает публичный catch-all (только GET), до админки запрос не доходит.
+            self::assertContains($client->getResponse()->getStatusCode(), [404, 405], $method.' '.$suffix);
+        }
     }
 
     public function testPageApiExposesParentIdAndKeepsItOnRoundTrip(): void

@@ -20,6 +20,8 @@ export const FORMAT_OPTIONS: Array<{ value: MediaFormatFilter; label: string }> 
     { value: 'webp', label: 'WebP' },
     { value: 'avif', label: 'AVIF' },
     { value: 'pdf', label: 'PDF' },
+    { value: 'mp4', label: 'MP4' },
+    { value: 'webm', label: 'WebM' },
 ]
 
 export const USAGE_OPTIONS: Array<{ value: MediaUsageFilter; label: string }> = [
@@ -36,5 +38,6 @@ export const SELECT_CLASS =
 export const TYPE_OPTIONS: Array<{ value: MediaTypeFilter; label: string }> = [
     { value: '', label: 'Все файлы' },
     { value: 'image', label: 'Изображения' },
+    { value: 'video', label: 'Видео' },
     { value: 'document', label: 'Документы' },
 ]

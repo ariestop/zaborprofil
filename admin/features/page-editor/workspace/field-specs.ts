@@ -53,6 +53,8 @@ export type FieldSpec =
           optionsFrom?: { key: string; valueKey: string }
       }
     | { kind: 'note'; text: string }
+    /** Выбор работ из раздела «Портфолио»: content.projectIds, content.category, content.limit. */
+    | { kind: 'portfolio-projects' }
 
 const STEP_ICONS = [
     { value: '', label: 'Без иконки (номер)' },
@@ -468,6 +470,22 @@ const SPECS: Partial<Record<BuilderBlockType, FieldSpec[]>> = {
                 { kind: 'image', key: 'image', label: 'Фото' },
                 { kind: 'text', key: 'title', label: 'Название' },
                 { kind: 'link', key: 'href', label: 'Ссылка на страницу работы' },
+                {
+                    kind: 'text',
+                    key: 'price',
+                    label: 'Цена',
+                    placeholder: 'от 3 400 ₽/м²',
+                    help: 'Только реальная цена со страницы товара. Пусто — карточка без цены.',
+                },
+                { kind: 'strings', key: 'specs', label: 'Характеристики (чипы)', addLabel: 'Добавить характеристику' },
+                {
+                    kind: 'text',
+                    key: 'badge',
+                    label: 'Бейдж',
+                    placeholder: 'Хит',
+                    maxLength: 16,
+                    help: 'Коротко: «Хит», «Акция». Пусто — без бейджа.',
+                },
             ],
         },
     ],
@@ -502,6 +520,11 @@ const SPECS: Partial<Record<BuilderBlockType, FieldSpec[]>> = {
                 { kind: 'link', key: 'href', label: 'Кнопка ведёт' },
             ],
         },
+    ],
+    'portfolio-projects': [
+        { kind: 'text', key: 'title', label: 'Заголовок', placeholder: 'Наши работы' },
+        { kind: 'textarea', key: 'subtitle', label: 'Подзаголовок', rows: 2, help: 'Необязательно: одна строка под заголовком.' },
+        { kind: 'portfolio-projects' },
     ],
     'contact-form': [
         { kind: 'text', key: 'title', label: 'Заголовок формы', required: true },

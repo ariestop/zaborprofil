@@ -12,12 +12,13 @@ import { RevisionDiffView } from './RevisionDiffView'
 interface RevisionHistoryProps {
   pageId: string
   revisions: PageRevisionItem[]
-  /** `false` — только сравнение, без отката (откат доступен в другом месте экрана). */
-  allowRollback?: boolean
+  /** В редакторе есть несохранённые правки: откат их потеряет, диалог подтверждения об этом предупреждает. */
+  hasUnsavedChanges?: boolean
   onRolledBack: () => Promise<void> | void
 }
 
-export function RevisionHistory({ pageId, revisions, allowRollback = true, onRolledBack }: RevisionHistoryProps) {
+/** История версий страницы: сравнение версии с текущей и откат к ней. */
+export function RevisionHistory({ pageId, revisions, hasUnsavedChanges = false, onRolledBack }: RevisionHistoryProps) {
   const queryClient = useQueryClient()
   const { push } = useToast()
   const [diffRevision, setDiffRevision] = useState<PageRevisionItem | null>(null)
@@ -47,7 +48,8 @@ export function RevisionHistory({ pageId, revisions, allowRollback = true, onRol
 
   return (
     <section className="rounded-2xl border border-line bg-white p-6 shadow-xs" aria-label="История ревизий">
-      <h3 className="text-base font-semibold text-ink">{allowRollback ? 'История публикаций' : 'Сравнение с текущей версией'}</h3>
+      <h3 className="text-base font-semibold text-ink">История версий</h3>
+      <p className="mt-1 text-sm text-graphite">Версия создаётся при публикации. Откат заменяет содержимое страницы выбранной версией.</p>
       {revisions.length === 0 && <p className="mt-2 text-sm text-graphite">Публикаций пока нет.</p>}
       {error && <p role="alert" className="mt-2 text-sm text-red-700">{error}</p>}
       {revisions.map((revision) => (
@@ -58,9 +60,7 @@ export function RevisionHistory({ pageId, revisions, allowRollback = true, onRol
           </div>
           <div className="flex gap-2">
             <Button type="button" variant="outline" size="sm" onClick={() => setDiffRevision(revision)}>Сравнить с текущей</Button>
-            {allowRollback && (
-              <Button type="button" variant="outline" size="sm" disabled={rollbackMutation.isPending} onClick={() => setRollbackTarget(revision)}>Откатить</Button>
-            )}
+            <Button type="button" variant="outline" size="sm" disabled={rollbackMutation.isPending} onClick={() => setRollbackTarget(revision)}>Откатить</Button>
           </div>
         </div>
       ))}
@@ -85,7 +85,9 @@ export function RevisionHistory({ pageId, revisions, allowRollback = true, onRol
       <ConfirmDialog
         open={rollbackTarget !== null}
         title={rollbackTarget ? `Откатить к версии v${rollbackTarget.version}?` : 'Откат'}
-        description="Рабочая версия страницы будет заменена содержимым ревизии. Это действие записывается в журнал и создаёт новую ревизию."
+        description={hasUnsavedChanges
+          ? 'Несохранённые изменения в редакторе будут потеряны. Рабочая версия страницы будет заменена содержимым ревизии.'
+          : 'Рабочая версия страницы будет заменена содержимым ревизии. Это действие записывается в журнал и создаёт новую ревизию.'}
         confirmLabel="Откатить"
         onCancel={() => setRollbackTarget(null)}
         onConfirm={() => { if (rollbackTarget) rollbackMutation.mutate(rollbackTarget) }}

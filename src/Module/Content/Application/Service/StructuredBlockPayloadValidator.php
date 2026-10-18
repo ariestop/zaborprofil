@@ -28,6 +28,7 @@ final readonly class StructuredBlockPayloadValidator
             BlockType::PriceTable => $this->requirePriceTable($content),
             BlockType::PriceMatrix => $this->requireObjectList($content, 'groups'),
             BlockType::FenceConfigurator => $this->requireObjectList($content, 'grades'),
+            BlockType::PortfolioProjects => $this->requirePortfolioProjects($content),
             default => null,
         };
     }
@@ -81,6 +82,29 @@ final readonly class StructuredBlockPayloadValidator
             if (!\is_string($answer) || trim($answer) === '') {
                 throw new InvalidArgumentException('FAQ item answer must be a non-empty string.');
             }
+        }
+    }
+
+    /**
+     * Блок «Работы из портфолио»: выбранные работы (идентификаторы) или раздел и число новых работ.
+     *
+     * @param array<string, mixed> $content
+     */
+    private function requirePortfolioProjects(array $content): void
+    {
+        $ids = $content['projectIds'] ?? [];
+        if (!\is_array($ids) || array_filter($ids, static fn (mixed $id): bool => !\is_string($id)) !== []) {
+            throw new InvalidArgumentException('Block content field "projectIds" must be a list of strings.');
+        }
+        if (\count($ids) > 24) {
+            throw new InvalidArgumentException('Block content field "projectIds" must contain at most 24 projects.');
+        }
+        if (isset($content['category']) && !\is_string($content['category'])) {
+            throw new InvalidArgumentException('Block content field "category" must be a string.');
+        }
+        $limit = $content['limit'] ?? 6;
+        if (!\is_int($limit) || $limit < 1 || $limit > 24) {
+            throw new InvalidArgumentException('Block content field "limit" must be an integer from 1 to 24.');
         }
     }
 

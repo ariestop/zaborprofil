@@ -1,7 +1,7 @@
 import { Badge } from '../../shared/ui'
 import { cn } from '../../shared/lib/cn'
 import type { MediaAssetItem } from '../../types/api'
-import { formatUsageCount, thumbnailPath } from './utils'
+import { formatUsageCount, isVideoAsset, thumbnailPath } from './utils'
 
 export function MediaAssetThumb({
     asset,
@@ -20,7 +20,7 @@ export function MediaAssetThumb({
                     className,
                 )}
             >
-                {asset.mimeType === 'application/pdf' ? 'PDF' : 'Файл'}
+                {asset.mimeType === 'application/pdf' ? 'PDF' : isVideoAsset(asset) ? '▶ Видео' : 'Файл'}
             </div>
         )
     }

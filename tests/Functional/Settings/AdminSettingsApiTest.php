@@ -7,7 +7,7 @@ namespace App\Tests\Functional\Settings;
 use App\Module\Admin\Infrastructure\Http\AdminApiCsrfSubscriber;
 use App\Module\Content\Application\Service\PublicPageCacheKey;
 use App\Module\Content\Application\Service\PublicPagePathNormalizer;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Module\User\Domain\Entity\AdminUser;
 use App\Tests\Support\Database\SchemaTestHelper;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;

@@ -1,0 +1,14 @@
+{# Хлебные крошки на тёмной полосе портфолио: Главная / Портфолио / раздел / работа. #}
+<nav class="zp-pf-crumbs" aria-label="Хлебные крошки">
+    <ol>
+        {% for crumb in breadcrumbs %}
+            <li>
+                {% if crumb.current %}
+                    <span aria-current="page">{{ crumb.label }}</span>
+                {% else %}
+                    <a href="{{ crumb.path }}">{{ crumb.label }}</a>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ol>
+</nav>

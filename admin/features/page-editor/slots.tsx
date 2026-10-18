@@ -1,11 +1,10 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { usePageRevisionsQuery, type PageStatus } from '../../entities/page/api'
+import type { PageStatus } from '../../entities/page/api'
 import { adminQueryKeys } from '../../shared/api/query'
 import { Button } from '../../shared/ui/button'
 import { Dialog } from '../../shared/ui/dialog'
 import { PagePublishingPanel } from '../publishing/PagePublishingPanel'
-import { RevisionHistory } from '../publishing/RevisionHistory'
 import { workflowQueryKey } from '../publishing/api'
 import type { SaveState } from './save-state'
 
@@ -82,20 +81,4 @@ export function PagePublishingSlot({ pageId, status, saveState, hasUnsavedChange
       </Dialog>
     </>
   )
-}
-
-export interface PageRevisionsSlotProps {
-  pageId: string
-  status: PageStatus
-}
-
-/** Сравнение сохранённых ревизий с текущей рабочей версией. Откат остаётся в списке «История версий». */
-export function PageRevisionsSlot({ pageId }: PageRevisionsSlotProps): ReactNode {
-  const revisionsQuery = usePageRevisionsQuery(pageId)
-
-  if (!revisionsQuery.isSuccess || revisionsQuery.data.length === 0) {
-    return null
-  }
-
-  return <RevisionHistory pageId={pageId} revisions={revisionsQuery.data} allowRollback={false} onRolledBack={() => undefined} />
 }

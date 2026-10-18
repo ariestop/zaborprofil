@@ -9,10 +9,13 @@ import {
     initLeadPlans,
     initMapEmbeds,
     initMobileNav,
+    initNavDropdowns,
     initOfficeStatus,
     initPriceMatrices,
     initVideoEmbeds,
 } from './ui'
+import { initPortfolioGalleries, initPortfolioRows, initPortfolioViewToggle } from './portfolio'
+import { initPortfolioLikes, initPortfolioShare, initPortfolioTracks } from './portfolio-social'
 
 function formPayload(form: HTMLFormElement): Record<string, unknown> {
     const data = new FormData(form)
@@ -100,7 +103,7 @@ function initLeadForm(form: HTMLFormElement): void {
             if (!response.ok) {
                 say(
                     response.status === 429
-                        ? 'Слишком много попыток. Подождите минуту или позвоните нам.'
+                        ? 'Слишком много заявок с вашего адреса. Позвоните нам или попробуйте позже.'
                         : 'Не удалось отправить заявку. Проверьте поля или позвоните нам.',
                     true,
                 )
@@ -125,6 +128,7 @@ function initLeadForm(form: HTMLFormElement): void {
 document.querySelectorAll<HTMLFormElement>('.js-lead-form').forEach(initLeadForm)
 
 initMobileNav()
+initNavDropdowns()
 initCallbar()
 initGalleries()
 initVideoEmbeds()
@@ -135,6 +139,17 @@ initFenceConfigurators()
 initAudienceSwitch()
 initCopyButtons()
 initMapEmbeds()
+initPortfolioGalleries()
+initPortfolioRows()
+initPortfolioViewToggle()
+initPortfolioTracks()
+initPortfolioLikes()
+initPortfolioShare()
+
+// Плеер media-chrome грузится только на страницах с загруженным видео.
+if (document.querySelector('[data-zp-player]') !== null) {
+    void import('./player').then((module) => module.initVideoPlayers())
+}
 
 // Swiper (~40 КБ JS + CSS) нужен только страницам со слайдером — остальным он не загружается.
 if (document.querySelector('.js-site-slider') !== null) {

@@ -6,7 +6,7 @@ namespace App\Module\Admin\UI\Admin;
 
 use App\Module\Admin\Application\ClientError\ClientErrorReport;
 use App\Module\Admin\Application\ClientError\ClientErrorReporter;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Module\User\Domain\Entity\AdminUser;
 use App\Shared\UI\Http\AdminApiErrorResponder;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;

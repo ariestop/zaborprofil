@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Module\Auth\Application\Service;
 
+use App\Module\Auth\Application\Security\CurrentAdminInterface;
 use App\Module\Auth\Domain\Security\AdminPermission;
-use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 /**
@@ -16,7 +16,7 @@ use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 final readonly class AdminAccessProfile
 {
     public function __construct(
-        private Security $security,
+        private CurrentAdminInterface $currentAdmin,
         private AuthorizationCheckerInterface $authorizationChecker,
     ) {
     }
@@ -26,14 +26,14 @@ final readonly class AdminAccessProfile
      */
     public function current(): array
     {
-        $user = $this->security->getUser();
-        if ($user === null) {
+        $identifier = $this->currentAdmin->identifier();
+        if ($identifier === null) {
             return ['email' => '', 'roles' => [], 'permissions' => []];
         }
 
         return [
-            'email' => $user->getUserIdentifier(),
-            'roles' => array_values($user->getRoles()),
+            'email' => $identifier,
+            'roles' => $this->currentAdmin->roles(),
             'permissions' => array_values(array_filter(
                 AdminPermission::all(),
                 fn (string $permission): bool => $this->authorizationChecker->isGranted($permission),

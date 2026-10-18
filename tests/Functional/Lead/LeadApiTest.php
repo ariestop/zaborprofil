@@ -47,6 +47,48 @@ final class LeadApiTest extends WebTestCase
         self::assertSame('https://zaborprofil.test/catalog/', $consentSnapshot['pageUrl'] ?? null);
     }
 
+    /**
+     * Прокси-заголовкам по умолчанию не доверяем: на Beget настоящий IP приходит в REMOTE_ADDR, а X-Forwarded-For
+     * от клиента хостинг пропускает как есть. Доверие к ним подменило бы IP в согласии и обошло антиспам.
+     */
+    public function testConsentSnapshotStoresConnectionIpAndIgnoresClientForwardedHeaders(): void
+    {
+        // Как в PHP-FPM: REMOTE_ADDR известен уже при загрузке ядра, иначе Symfony молча отбросила бы
+        // ключевое слово REMOTE_ADDR из trusted_proxies и тест не заметил бы такую настройку.
+        $previousRemoteAddr = $_SERVER['REMOTE_ADDR'] ?? null;
+        $_SERVER['REMOTE_ADDR'] = '198.51.100.20';
+        try {
+            $client = self::createClient();
+        } finally {
+            if ($previousRemoteAddr === null) {
+                unset($_SERVER['REMOTE_ADDR']);
+            } else {
+                $_SERVER['REMOTE_ADDR'] = $previousRemoteAddr;
+            }
+        }
+        SchemaTestHelper::recreateSchema($this->entityManager());
+
+        $client->jsonRequest('POST', '/api/leads', [
+            'source' => 'public_page_form',
+            'name' => 'Иван',
+            'phone' => '+79990000000',
+            'consent' => true,
+            'formLoadedAt' => (new \DateTimeImmutable('-10 seconds'))->format(DATE_ATOM),
+        ], server: [
+            'REMOTE_ADDR' => '198.51.100.20',
+            'HTTP_X_FORWARDED_FOR' => '203.0.113.7',
+            'HTTP_X_REAL_IP' => '203.0.113.8',
+            'HTTP_FORWARDED' => 'for=203.0.113.9',
+        ]);
+
+        self::assertResponseStatusCodeSame(201);
+        $lead = $this->leads()->findLatest(1)[0] ?? null;
+        self::assertNotNull($lead);
+        $consentSnapshot = $lead->toArray()['consentSnapshot'] ?? null;
+        self::assertIsArray($consentSnapshot);
+        self::assertSame('198.51.100.20', $consentSnapshot['ip'] ?? null);
+    }
+
     public function testSpamLeadIsAcceptedAndStoredAsSpam(): void
     {
         $client = self::createClient();
@@ -125,6 +167,42 @@ final class LeadApiTest extends WebTestCase
             json_decode($client->getResponse()->getContent() ?: '{}', true, flags: JSON_THROW_ON_ERROR),
         );
         self::assertSame([], $this->leads()->findLatest(1));
+    }
+
+    public function testSubmissionsOverIpLimitAreRejectedWithoutStoring(): void
+    {
+        $client = self::createClient();
+        $client->disableReboot();
+        SchemaTestHelper::recreateSchema($this->entityManager());
+        $lead = [
+            'source' => 'public_page_form',
+            'name' => 'Иван',
+            'phone' => '+79990000000',
+            'consent' => true,
+            'formLoadedAt' => (new \DateTimeImmutable('-10 seconds'))->format(DATE_ATOM),
+        ];
+
+        // Битые запросы тоже расходуют лимит: иначе его обходили бы мусором.
+        for ($i = 0; $i < 9; ++$i) {
+            $client->request('POST', '/api/leads', server: ['CONTENT_TYPE' => 'application/json', 'REMOTE_ADDR' => '198.51.100.30'], content: '{"name": "broken');
+            self::assertResponseStatusCodeSame(400);
+        }
+        $client->jsonRequest('POST', '/api/leads', $lead, server: ['REMOTE_ADDR' => '198.51.100.30']);
+        self::assertResponseStatusCodeSame(201);
+
+        $client->jsonRequest('POST', '/api/leads', $lead, server: ['REMOTE_ADDR' => '198.51.100.30']);
+        self::assertResponseStatusCodeSame(429);
+        self::assertSame(
+            ['error' => 'Too many lead submissions. Try again later.', 'code' => 'TOO_MANY_REQUESTS'],
+            json_decode($client->getResponse()->getContent() ?: '{}', true, flags: JSON_THROW_ON_ERROR),
+        );
+        self::assertGreaterThan(0, (int) $client->getResponse()->headers->get('Retry-After'));
+        self::assertCount(1, $this->leads()->findLatest(10));
+
+        // Лимит считается отдельно для каждого IP.
+        $client->jsonRequest('POST', '/api/leads', $lead, server: ['REMOTE_ADDR' => '198.51.100.31']);
+        self::assertResponseStatusCodeSame(201);
+        self::assertCount(2, $this->leads()->findLatest(10));
     }
 
     public function testPublicFormRejectsPhoneWithoutEnoughDigits(): void

@@ -3,11 +3,16 @@ import * as SwitchPrimitive from '@radix-ui/react-switch'
 interface SwitchProps {
     checked: boolean
     onCheckedChange: (checked: boolean) => void
+    /** Связь с <label htmlFor> или подпись для чтения с экрана. */
+    id?: string
+    'aria-label'?: string
 }
 
-export function Switch({ checked, onCheckedChange }: SwitchProps) {
+export function Switch({ checked, onCheckedChange, id, 'aria-label': ariaLabel }: SwitchProps) {
     return (
         <SwitchPrimitive.Root
+            id={id}
+            aria-label={ariaLabel}
             checked={checked}
             onCheckedChange={onCheckedChange}
             className="relative h-6 w-11 rounded-full bg-line-strong transition data-[state=checked]:bg-brand-600 dark:bg-slate-700"

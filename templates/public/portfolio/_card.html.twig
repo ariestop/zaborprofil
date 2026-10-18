@@ -1,0 +1,83 @@
+{#
+    Карточка работы: обложка 4:3 с числом фото/видео, раздел, название (вся карточка — ссылка), три характеристики, место и год.
+    Параметры: project, heading (тег заголовка, по умолчанию h3), eager, post.
+    post — карточка в ленте хаба и раздела. На телефоне она становится постом (как в Instagram): место над фото,
+    фото листаются свайпом, лайк и «поделиться», раздел и характеристики в одну строку, начало описания и «ещё…».
+    На компьютере такая карточка выглядит как обычная (лишнее скрыто стилями). Блок «Портфолио» на страницах — без post.
+#}
+{% set heading = heading|default('h3') %}
+{% set post = post|default(false) %}
+{% set cover = project.cover %}
+{% set photos = post ? project.feedPhotos(10) : [] %}
+{% set place = [project.place, project.year]|filter(v => v)|join(' · ') %}
+<article class="zp-pf-card{{ post ? ' zp-pf-card--post' }}"{% if post %} data-pf-post="{{ project.id }}"{% endif %}>
+    {% if post and place %}
+        <p class="zp-pf-post__place"><svg aria-hidden="true"><use href="#i-pin"/></svg>{{ place }}</p>
+    {% endif %}
+    <div class="zp-pf-card__media">
+        {% if photos|length > 1 %}
+            {# Лента фото: на телефоне листается пальцем с остановкой на каждом кадре, на компьютере виден только первый. #}
+            <div class="zp-pf-post__track" data-pf-track>
+                {% for photo in photos %}
+                    <a class="zp-pf-post__slide" href="{{ project.path }}" tabindex="-1" aria-hidden="true">
+                        {{ responsive_image(photo.src, {
+                            alt: '',
+                            class: 'size-full object-cover',
+                            sizes: '(min-width: 1280px) 384px, (min-width: 768px) 45vw, 100vw',
+                            eager: loop.first and eager|default(false)
+                        }) }}
+                    </a>
+                {% endfor %}
+            </div>
+            <span class="zp-pf-post__counter" data-pf-track-counter hidden>1 / {{ photos|length }}</span>
+        {% elseif cover %}
+            {# Не через {% set %}: так HTML картинки потерял бы пометку «безопасно» и вывелся бы текстом. #}
+            {% if post %}<a class="zp-pf-post__slide" href="{{ project.path }}" tabindex="-1" aria-hidden="true">{% endif %}
+            {{ responsive_image(cover.src, {
+                alt: cover.caption,
+                fallback_alt: project.title,
+                class: 'size-full object-cover',
+                sizes: '(min-width: 1280px) 384px, (min-width: 768px) 45vw, 92vw',
+                eager: eager|default(false)
+            }) }}
+            {% if post %}</a>{% endif %}
+        {% endif %}
+        {# Значок вида для компактной сетки на телефоне (как в Instagram): ▶ — есть видео, ⧉ — несколько фото. #}
+        {% if project.videos|length > 0 or project.photos|length > 1 %}
+            <span class="zp-pf-card__kind" aria-hidden="true"><svg><use href="#{{ project.videos|length > 0 ? 'i-play' : 'i-photos' }}"/></svg></span>
+        {% endif %}
+        <span class="zp-pf-badge">
+            {% if project.videos|length > 0 %}<svg aria-hidden="true"><use href="#i-play"/></svg>{% endif %}
+            {% include 'public/portfolio/_media-count.html.twig' with {project: project} only %}
+        </span>
+    </div>
+    {% if post %}
+        {% include 'public/portfolio/_actions.html.twig' with {project: project, dots: photos|length > 1 ? photos|length : 0} only %}
+    {% endif %}
+    <div class="zp-pf-card__body">
+        <div class="zp-pf-card__line">
+            <p class="zp-pf-eyebrow">{{ project.category.shortTitle }}</p>
+            {% if project.specs is not empty %}
+                <ul class="zp-pf-specs" aria-label="Характеристики">
+                    {% for spec in project.specs|slice(0, 3) %}
+                        <li title="{{ spec.label }}">{{ spec.value }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        <{{ heading }} class="zp-pf-card__title"><a href="{{ project.path }}">{{ project.title }}</a></{{ heading }}>
+        {% if post %}
+            {% set excerpt = (project.summary ?? project.description)|pf_excerpt(110) %}
+            <p class="zp-pf-post__text">
+                {%- if excerpt %}{{ excerpt }} {% endif -%}
+                <a class="zp-pf-post__more" href="{{ project.path }}">ещё…<span class="sr-only"> о работе «{{ project.title }}»</span></a>
+            </p>
+        {% endif %}
+        {% if place %}
+            <p class="zp-pf-meta">
+                <svg aria-hidden="true"><use href="#i-pin"/></svg>
+                {{ place }}
+            </p>
+        {% endif %}
+    </div>
+</article>

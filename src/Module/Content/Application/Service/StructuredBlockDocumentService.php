@@ -76,15 +76,31 @@ final readonly class StructuredBlockDocumentService
     }
 
     /**
-     * @param list<array<string, mixed>> $blocksPayload
+     * Блоки документа из JSON-запроса (как пришли, в порядке вывода): каждый должен быть объектом.
+     * Позиция блока — его индекс в списке.
+     *
+     * @param array<mixed> $rawBlocks
      *
      * @return list<array{id:string, type:BlockType, name:string|null, enabled:bool, position:int, content:array<string, mixed>, settings:array<string, mixed>}>
      */
-    public function parseBlocks(array $blocksPayload): array
+    public function parseRawBlocks(array $rawBlocks): array
     {
         $parsed = [];
-        foreach ($blocksPayload as $position => $blockPayload) {
-            $parsed[] = $this->parseBlockPayload($blockPayload, $position);
+        foreach (array_values($rawBlocks) as $position => $rawBlock) {
+            if (!\is_array($rawBlock)) {
+                throw new InvalidArgumentException('Each block must be an object.');
+            }
+
+            /** @var array<string, mixed> $stringKeyed */
+            $stringKeyed = [];
+            foreach ($rawBlock as $key => $value) {
+                if (!\is_string($key)) {
+                    throw new InvalidArgumentException('Each block must be an object.');
+                }
+                $stringKeyed[$key] = $value;
+            }
+
+            $parsed[] = $this->parseBlockPayload($stringKeyed, $position);
         }
 
         return $parsed;

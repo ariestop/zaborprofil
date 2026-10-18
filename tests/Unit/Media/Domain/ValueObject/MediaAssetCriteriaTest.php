@@ -31,7 +31,7 @@ final class MediaAssetCriteriaTest extends TestCase
         yield 'page zero' => [static fn (): MediaAssetCriteria => new MediaAssetCriteria(page: 0)];
         yield 'per page zero' => [static fn (): MediaAssetCriteria => new MediaAssetCriteria(perPage: 0)];
         yield 'per page too large' => [static fn (): MediaAssetCriteria => new MediaAssetCriteria(perPage: 101)];
-        yield 'unknown type' => [static fn (): MediaAssetCriteria => new MediaAssetCriteria(type: 'video')];
+        yield 'unknown type' => [static fn (): MediaAssetCriteria => new MediaAssetCriteria(type: 'audio')];
         yield 'unknown sort' => [static fn (): MediaAssetCriteria => new MediaAssetCriteria(sort: 'random')];
         yield 'unknown format' => [static fn (): MediaAssetCriteria => new MediaAssetCriteria(format: 'gif')];
         yield 'unknown usage' => [static fn (): MediaAssetCriteria => new MediaAssetCriteria(usage: 'maybe')];

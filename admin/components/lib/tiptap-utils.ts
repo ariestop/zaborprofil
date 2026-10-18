@@ -12,12 +12,6 @@ import {
   type Editor,
   type NodeWithPos,
 } from "@tiptap/react"
-import { queryClient } from "../../app/providers/query-client"
-import { uploadMediaAsset } from "../../entities/media/api"
-import { describeMediaError, MEDIA_MAX_UPLOAD_BYTES } from "../../features/media/utils"
-import { adminQueryKeys } from "../../shared/api/query"
-
-export const MAX_FILE_SIZE = MEDIA_MAX_UPLOAD_BYTES
 
 export const MAC_SYMBOLS: Record<string, string> = {
   mod: "⌘",
@@ -353,45 +347,6 @@ export function selectionWithinConvertibleTypes(
   }
 
   return false
-}
-
-/**
- * Handles image upload with progress tracking and abort capability
- * @param file The file to upload
- * @param onProgress Optional callback for tracking upload progress
- * @param abortSignal Optional AbortSignal for cancelling the upload
- * @returns Promise resolving to the URL of the uploaded image
- */
-export const handleImageUpload = async (
-  file: File,
-  onProgress?: (event: { progress: number }) => void,
-  abortSignal?: AbortSignal
-): Promise<string> => {
-  if (!file) {
-    throw new Error("Файл не выбран")
-  }
-
-  if (file.size > MAX_FILE_SIZE) {
-    throw new Error(
-      `Файл больше допустимых ${MAX_FILE_SIZE / (1024 * 1024)} МБ`
-    )
-  }
-
-  try {
-    const asset = await uploadMediaAsset(file, {
-      signal: abortSignal,
-      onProgress: (fraction) => onProgress?.({ progress: Math.round(fraction * 100) }),
-    })
-    void queryClient.invalidateQueries({ queryKey: adminQueryKeys.media })
-
-    return asset.publicPath
-  } catch (error) {
-    if (error instanceof DOMException && error.name === "AbortError") {
-      throw new Error("Загрузка отменена")
-    }
-
-    throw new Error(describeMediaError(error))
-  }
 }
 
 type ProtocolOptions = {

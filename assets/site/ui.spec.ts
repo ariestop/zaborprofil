@@ -5,6 +5,7 @@ import {
     initGalleries,
     initLeadPlans,
     initMobileNav,
+    initNavDropdowns,
     initOfficeStatus,
     initPriceMatrices,
     formatMoney,
@@ -27,6 +28,69 @@ function mount(html: string): HTMLElement {
 afterEach(() => {
     document.body.innerHTML = ''
     document.documentElement.className = ''
+})
+
+describe('initNavDropdowns', () => {
+    const markup = `
+    <nav>
+      <div data-nav-group>
+        <button data-nav-trigger aria-expanded="false">Заборы</button>
+        <div data-nav-dropdown hidden><a href="/zabor-jaluzi/">Жалюзи</a><a href="/gorizont/">Ранчо</a></div>
+      </div>
+      <div data-nav-group>
+        <button data-nav-trigger aria-expanded="false">Материалы</button>
+        <div data-nav-dropdown hidden><a href="/fasad/profnastil/">Профнастил</a></div>
+      </div>
+      <a href="/contacts/">Контакты</a>
+    </nav>`
+
+    const parts = (root: HTMLElement) => {
+        const [fences, materials] = Array.from(root.querySelectorAll<HTMLElement>('[data-nav-group]'))
+        const pick = (group: HTMLElement) => ({
+            trigger: group.querySelector<HTMLButtonElement>('[data-nav-trigger]')!,
+            dropdown: group.querySelector<HTMLElement>('[data-nav-dropdown]')!,
+        })
+
+        return { fences: pick(fences), materials: pick(materials) }
+    }
+
+    it('opens one list at a time and closes it by a click outside', () => {
+        const root = mount(markup)
+        initNavDropdowns(root)
+        const { fences, materials } = parts(root)
+
+        fences.trigger.click()
+        expect(fences.dropdown.hidden).toBe(false)
+        expect(fences.trigger.getAttribute('aria-expanded')).toBe('true')
+
+        materials.trigger.click()
+        expect(fences.dropdown.hidden).toBe(true)
+        expect(materials.dropdown.hidden).toBe(false)
+
+        root.querySelector<HTMLAnchorElement>('a[href="/contacts/"]')!.click()
+        expect(materials.dropdown.hidden).toBe(true)
+        expect(materials.trigger.getAttribute('aria-expanded')).toBe('false')
+    })
+
+    it('works from the keyboard: arrow down opens and moves focus, Escape returns to the button', () => {
+        const root = mount(markup)
+        initNavDropdowns(root)
+        const { fences } = parts(root)
+
+        fences.trigger.focus()
+        fences.trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }))
+        expect(fences.dropdown.hidden).toBe(false)
+        expect(document.activeElement?.textContent).toBe('Жалюзи')
+
+        document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }))
+        expect(document.activeElement?.textContent).toBe('Ранчо')
+        document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }))
+        expect(document.activeElement?.textContent).toBe('Жалюзи')
+
+        document.activeElement!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+        expect(fences.dropdown.hidden).toBe(true)
+        expect(document.activeElement).toBe(fences.trigger)
+    })
 })
 
 describe('initMobileNav', () => {
@@ -63,6 +127,68 @@ describe('initMobileNav', () => {
         toggle.click()
         root.querySelector<HTMLAnchorElement>('[data-nav-panel] a')!.click()
         expect(panel.hidden).toBe(true)
+    })
+
+    const drawer = `
+    <button data-nav-toggle aria-expanded="false"><svg data-icon-open></svg><svg data-icon-close class="hidden"></svg></button>
+    <div data-nav-panel hidden>
+        <div data-nav-backdrop data-nav-close></div>
+        <button type="button" data-nav-close>Закрыть</button>
+        <a href="/zabor-jaluzi/">Жалюзи</a>
+        <a href="/#catalog">Каталог</a>
+    </div>`
+
+    it('при открытии отдаёт фокус крестику, а закрытие крестиком и затемнением возвращает его на кнопку меню', () => {
+        const root = mount(drawer)
+        initMobileNav(root)
+        const toggle = root.querySelector<HTMLButtonElement>('[data-nav-toggle]')!
+        const panel = root.querySelector<HTMLElement>('[data-nav-panel]')!
+        const close = root.querySelector<HTMLButtonElement>('button[data-nav-close]')!
+
+        toggle.click()
+        expect(document.activeElement).toBe(close)
+
+        close.click()
+        expect(panel.hidden).toBe(true)
+        expect(document.activeElement).toBe(toggle)
+
+        toggle.click()
+        root.querySelector<HTMLElement>('[data-nav-backdrop]')!.click()
+        expect(panel.hidden).toBe(true)
+        expect(document.activeElement).toBe(toggle)
+    })
+
+    it('не выпускает Tab за пределы панели', () => {
+        const root = mount(drawer)
+        initMobileNav(root)
+        root.querySelector<HTMLButtonElement>('[data-nav-toggle]')!.click()
+        const [first, , last] = [
+            root.querySelector<HTMLElement>('button[data-nav-close]')!,
+            root.querySelector<HTMLElement>('a[href="/zabor-jaluzi/"]')!,
+            root.querySelector<HTMLElement>('a[href="/#catalog"]')!,
+        ]
+
+        last.focus()
+        const forward = new KeyboardEvent('keydown', { key: 'Tab', cancelable: true })
+        document.dispatchEvent(forward)
+        expect(forward.defaultPrevented).toBe(true)
+        expect(document.activeElement).toBe(first)
+
+        const back = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, cancelable: true })
+        document.dispatchEvent(back)
+        expect(back.defaultPrevented).toBe(true)
+        expect(document.activeElement).toBe(last)
+    })
+
+    it('Tab внутри панели не трогает фокус, пока он не на краю', () => {
+        const root = mount(drawer)
+        initMobileNav(root)
+        root.querySelector<HTMLButtonElement>('[data-nav-toggle]')!.click()
+        root.querySelector<HTMLElement>('a[href="/zabor-jaluzi/"]')!.focus()
+
+        const middle = new KeyboardEvent('keydown', { key: 'Tab', cancelable: true })
+        document.dispatchEvent(middle)
+        expect(middle.defaultPrevented).toBe(false)
     })
 
     it('не падает на странице без меню', () => {
@@ -313,6 +439,23 @@ describe('прайс-лист с выбором', () => {
 
         expect(root.querySelector<HTMLElement>('[data-pm-order]')!.dataset.leadPlan).toBe(
             'Полиэстер (гладкий), профиль С8',
+        )
+    })
+
+    it('подписывает строки по настройке группы, а не всегда «Профиль»', () => {
+        const root = mount(
+            markup.replace(
+                'data-pm-panel="0"',
+                'data-pm-panel="0" data-pm-rows-label="Высота панели"',
+            ),
+        )
+        initPriceMatrices(root)
+
+        expect(root.querySelector('[data-pm-count]')!.textContent).toBe(
+            'Высота панели С8: 3 варианта',
+        )
+        expect(root.querySelector<HTMLElement>('[data-pm-order]')!.dataset.leadPlan).toBe(
+            'Полиэстер (гладкий), высота панели С8',
         )
     })
 

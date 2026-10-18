@@ -32,12 +32,23 @@ final class BuilderDocumentVersionTest extends TestCase
         self::assertSame($service->fromBlocks([]), $service->fromBlocks([]));
     }
 
+    public function testVersionChangesWhenBlockIsRenamed(): void
+    {
+        $service = new BuilderDocumentVersion();
+
+        self::assertNotSame(
+            $service->fromBlocks([$this->block('b1', 0, ['title' => 'A'])]),
+            $service->fromBlocks([$this->block('b1', 0, ['title' => 'A'], name: 'Баннер акции')]),
+            'Переименование блока в другой вкладке — тоже правка: иначе её молча затрёт сохранение со старым именем.',
+        );
+    }
+
     /**
      * @param array<string, mixed> $content
      * @param array<string, string> $metadata
      */
-    private function block(string $id, int $position, array $content, array $metadata = [], bool $enabled = true): BuilderBlockOutput
+    private function block(string $id, int $position, array $content, array $metadata = [], bool $enabled = true, string $name = 'Первый экран'): BuilderBlockOutput
     {
-        return new BuilderBlockOutput($id, 'hero.classic', 'Первый экран', $enabled, $position, $content, [], $metadata);
+        return new BuilderBlockOutput($id, 'hero.classic', $name, $enabled, $position, $content, [], $metadata);
     }
 }

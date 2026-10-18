@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Functional\Seo;
 
 use App\Module\Admin\Infrastructure\Http\AdminApiCsrfSubscriber;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Module\User\Domain\Entity\AdminUser;
 use App\Tests\Support\Database\SchemaTestHelper;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
@@ -138,10 +138,10 @@ final class MetaTitleTest extends WebTestCase
         $pageId = $this->createPage($client, 'Откат заголовка', '/rollback-title/');
 
         $this->request($client, 'PUT', \sprintf('/admin/api/content/pages/%s/seo', $pageId), ['metaTitle' => 'Старый SEO title страницы']);
-        $this->request($client, 'POST', \sprintf('/admin/api/content/pages/%s/builder/publish', $pageId));
+        $this->request($client, 'POST', \sprintf('/admin/api/content/pages/%s/publish', $pageId));
         self::assertResponseIsSuccessful();
 
-        $this->request($client, 'GET', \sprintf('/admin/api/content/pages/%s/builder/versions', $pageId));
+        $this->request($client, 'GET', \sprintf('/admin/api/content/pages/%s/revisions', $pageId));
         $revisions = $this->json($client)['revisions'] ?? null;
         self::assertIsArray($revisions);
         $first = $revisions[0] ?? null;
@@ -152,7 +152,7 @@ final class MetaTitleTest extends WebTestCase
         $this->request($client, 'PUT', \sprintf('/admin/api/content/pages/%s/seo', $pageId), ['metaTitle' => 'Новый SEO title страницы']);
         self::assertResponseIsSuccessful();
 
-        $this->request($client, 'POST', \sprintf('/admin/api/content/pages/%s/builder/rollback', $pageId), ['revisionId' => $revisionId]);
+        $this->request($client, 'POST', \sprintf('/admin/api/content/pages/%s/revisions/%s/rollback', $pageId, $revisionId));
         self::assertResponseIsSuccessful();
         self::assertSame('Старый SEO title страницы', $this->metaTitle($client));
     }

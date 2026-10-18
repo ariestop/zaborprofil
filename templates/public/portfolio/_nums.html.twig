@@ -1,0 +1,9 @@
+{# Крупные цифры работы (первые 4 характеристики). light — вариант на белом фоне под галереей (телефон). #}
+<dl class="zp-pf-nums{{ light|default(false) ? ' zp-pf-nums--light' : '' }} {{ class|default('') }}">
+    {% for spec in specs|slice(0, 4) %}
+        <div>
+            <dt>{{ spec.label }}</dt>
+            <dd>{{ spec.value }}</dd>
+        </div>
+    {% endfor %}
+</dl>

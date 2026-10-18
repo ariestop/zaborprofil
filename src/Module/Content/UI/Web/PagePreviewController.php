@@ -11,6 +11,7 @@ use App\Module\Content\Domain\Repository\PageRepositoryInterface;
 use App\Module\Seo\Application\Service\SeoTitleResolver;
 use App\Shared\Application\Logging\BusinessEventLogger;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -27,6 +28,8 @@ final class PagePreviewController extends AbstractController
         UrlGeneratorInterface $urlGenerator,
         SeoTitleResolver $seoTitle,
         BusinessEventLogger $businessEvents,
+        #[Autowire('%app.site_url%')]
+        string $siteUrl,
     ): Response {
         if (!$previewToken->isValid($id, $token)) {
             throw $this->createNotFoundException('Preview not found.');
@@ -53,7 +56,7 @@ final class PagePreviewController extends AbstractController
         }
 
         $canonical = $page->canonicalUrl()
-            ?? $urlGenerator->generate('content_public_page', ['path' => ltrim($page->path(), '/')], UrlGeneratorInterface::ABSOLUTE_URL);
+            ?? rtrim($siteUrl, '/').$urlGenerator->generate('content_public_page', ['path' => ltrim($page->path(), '/')]);
 
         $response = $this->render('public/page/show.html.twig', [
             'page' => PublicPageView::fromPage($page),

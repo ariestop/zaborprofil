@@ -8,6 +8,7 @@ use App\Module\Content\Domain\Entity\Page;
 use App\Module\Content\Domain\Entity\PagePublication;
 use App\Module\Content\Domain\Enum\PageStatus;
 use App\Module\Content\Domain\Repository\PagePublicationRepositoryInterface;
+use App\Module\Content\Domain\ValueObject\PageVisibility;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\Persistence\ManagerRegistry;
@@ -83,9 +84,11 @@ final class DoctrinePagePublicationRepository extends ServiceEntityRepository im
             ->andWhere('page.path = :path')
             ->andWhere('page.status = :status')
             ->andWhere('page.deletedAt IS NULL')
+            ->andWhere('page.visibility != :hidden')
             ->andWhere('publication.publishedRevision IS NOT NULL')
             ->setParameter('path', $normalized)
             ->setParameter('status', PageStatus::Published)
+            ->setParameter('hidden', PageVisibility::Hidden)
             ->getQuery()
             ->getOneOrNullResult();
 

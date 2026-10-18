@@ -117,9 +117,14 @@ Infrastructure ------|  (implements Domain/Application interfaces)
 ## Целевое state: автоматический контроль
 
 - Включить `phpstan-deprecation-rules` (уже частично).
-- Уже есть: `tests/Unit/Architecture/ModuleDependencyTest.php` проверяет зависимости **между модулями** (`Shared` → `Module` запрещено, новые зависимости и циклы — только осознанно, см. [06-module-architecture](06-module-architecture.md#фактический-граф-и-известные-циклы)). Границы слоёв внутри модуля он не проверяет.
-- Целевое: добавить deptrac или `phpat` rules-set (см. [45-roadmap-and-extension-points](45-roadmap-and-extension-points.md)) для статической проверки границ слоёв.
-- В CI добавить `phpat` job до merge.
+- `tests/Unit/Architecture/ModuleDependencyTest.php` проверяет зависимости **между модулями** (`Shared` → `Module` запрещено, новые зависимости и циклы — только осознанно, см. [06-module-architecture](06-module-architecture.md#фактический-граф-и-известные-циклы)).
+- **Deptrac** проверяет границы **слоёв** внутри модулей и `Shared`: `deptrac.yaml`, запуск — `composer check:deptrac` (или `make deptrac`), шаг в CI Backend job.
+  - Слои: `Domain`, `Application`, `Infrastructure`, `UI` (по пространству имён `App\Module\*\<Слой>` и `App\Shared\<Слой>`) и `Persistence` — классы `Doctrine*Repository`. На `Persistence` Domain может ссылаться только из атрибута маппинга `#[ORM\Entity(repositoryClass: …)]`.
+  - Внешние запреты из таблицы выше вынесены в отдельные слои: `Http` (`HttpFoundation`), `Twig`, `EntityManager` (`EntityManagerInterface`, `EntityRepository`, `QueryBuilder`, `ServiceEntityRepository`), `SymfonyBundle`, `Cache`, `Mailer`. Domain и Application не могут от них зависеть; Infrastructure — может; UI — `Http`, `Twig`, `SymfonyBundle`.
+  - UI зависит от Application и Domain, но **не от Infrastructure**: реализации подключаются через интерфейсы (например, `AdminUserRepositoryInterface`).
+  - Текущий пользователь и HTTP-запрос — через порты: `Auth\Application\Security\CurrentAdminInterface` (id, email, роли; реализация на Symfony Security), `Shared\Application\Http\RequestContextInterface` (IP, User-Agent, request id — для аудита и журналов), `Shared\Application\Http\ClientInfo` (IP и User-Agent, которые контроллер передаёт в use case, например при приёме заявки). Токены подтверждения опасных действий хранятся через `DangerousActionTokenStoreInterface` (реализация — сессия).
+  - Существующие отступления (Application → Infrastructure: `UploadValidator`, `HealthRegistry`, `TelegramMessageSenderInterface`; Application → `UploadedFile` в медиа; UI → `Shared\Infrastructure\Health` и `Maintenance`, `LeadActorProvider`; Infrastructure → `Shared\UI\Http`) зафиксированы в `deptrac.baseline.yaml`. Новые нарушения роняют проверку; исправленное нарушение нужно удалить из baseline — лишняя запись тоже роняет проверку.
+- Межмодульные зависимости deptrac не проверяет: это задача `ModuleDependencyTest`.
 
 ## Связанные документы
 

@@ -6,6 +6,7 @@ namespace App\Module\Menu\UI\Twig;
 
 use App\Module\Content\Application\Service\PublicPageView;
 use App\Module\Menu\Application\Service\BreadcrumbBuilder;
+use App\Module\Menu\Application\Service\MenuIconResolver;
 use App\Module\Menu\Application\Service\MenuProvider;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
@@ -15,6 +16,7 @@ final class MenuExtension extends AbstractExtension
     public function __construct(
         private readonly MenuProvider $menus,
         private readonly BreadcrumbBuilder $breadcrumbs,
+        private readonly MenuIconResolver $icons,
     ) {
     }
 
@@ -22,6 +24,7 @@ final class MenuExtension extends AbstractExtension
     {
         return [
             new TwigFunction('menu_items', $this->menus->items(...)),
+            new TwigFunction('menu_icon', $this->icons->symbolFor(...)),
             new TwigFunction('breadcrumbs_for_page', $this->breadcrumbsForPage(...)),
         ];
     }

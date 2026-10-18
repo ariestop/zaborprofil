@@ -1,0 +1,104 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Module\User\Infrastructure\Doctrine\Repository;
+
+use App\Module\User\Domain\Entity\AdminUser;
+use App\Module\User\Domain\Repository\AdminUserRepositoryInterface;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
+use Symfony\Component\Security\Core\Exception\UserNotFoundException;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\User\UserProviderInterface;
+use Symfony\Component\Uid\Ulid;
+
+/**
+ * @extends ServiceEntityRepository<AdminUser>
+ * @implements UserProviderInterface<AdminUser>
+ */
+final class DoctrineAdminUserRepository extends ServiceEntityRepository implements AdminUserRepositoryInterface, UserProviderInterface
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, AdminUser::class);
+    }
+
+    public function save(AdminUser $user): void
+    {
+        $this->getEntityManager()->persist($user);
+        $this->getEntityManager()->flush();
+    }
+
+    public function remove(AdminUser $user): void
+    {
+        $this->getEntityManager()->remove($user);
+        $this->getEntityManager()->flush();
+    }
+
+    public function findById(string $id): ?AdminUser
+    {
+        return Ulid::isValid($id) ? $this->find(Ulid::fromString($id)) : null;
+    }
+
+    /**
+     * @return list<AdminUser>
+     */
+    public function findAllNewestFirst(): array
+    {
+        return $this->findBy([], ['createdAt' => 'DESC']);
+    }
+
+    public function findOneByEmail(string $email): ?AdminUser
+    {
+        return $this->findOneBy(['email' => mb_strtolower(trim($email))]);
+    }
+
+    /**
+     * @return list<AdminUser>
+     */
+    public function findAllActive(): array
+    {
+        return $this->findBy(['active' => true]);
+    }
+
+    public function loadUserByIdentifier(string $identifier): UserInterface
+    {
+        $user = $this->findOneBy(['email' => mb_strtolower(trim($identifier))]);
+
+        if (!$user instanceof AdminUser) {
+            $exception = new UserNotFoundException(\sprintf('Admin user "%s" was not found.', $identifier));
+            $exception->setUserIdentifier($identifier);
+
+            throw $exception;
+        }
+
+        return $user;
+    }
+
+    public function refreshUser(UserInterface $user): UserInterface
+    {
+        if (!$user instanceof AdminUser) {
+            throw new UnsupportedUserException(\sprintf('Instances of "%s" are not supported.', get_debug_type($user)));
+        }
+
+        $refreshedUser = $this->findOneBy(['email' => $user->email()]);
+
+        // Отключённый пользователь выходит из админки при следующем же запросе: без этой проверки
+        // уже открытая сессия жила бы дальше (AdminUserChecker вызывается только при входе).
+        if (!$refreshedUser instanceof AdminUser || !$refreshedUser->isActive()) {
+            $exception = new UserNotFoundException(\sprintf('Admin user "%s" was not found or is disabled.', $user->email()));
+            $exception->setUserIdentifier($user->email());
+
+            throw $exception;
+        }
+
+        return $refreshedUser;
+    }
+
+    public function supportsClass(string $class): bool
+    {
+        return $class === AdminUser::class || is_subclass_of($class, AdminUser::class);
+    }
+}

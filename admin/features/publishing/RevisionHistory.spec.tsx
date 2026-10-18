@@ -50,11 +50,13 @@ describe('RevisionHistory', () => {
     expect(apiRequest).toHaveBeenCalledWith('/admin/api/content/pages/page-1/revisions/diff?from=rev-1&to=current')
   })
 
-  it('hides the rollback button in compare-only mode', () => {
-    renderWithProviders(<RevisionHistory pageId="page-1" revisions={[revision]} allowRollback={false} onRolledBack={vi.fn()} />)
+  it('warns that rollback discards unsaved editor changes', async () => {
+    renderWithProviders(<RevisionHistory pageId="page-1" revisions={[revision]} hasUnsavedChanges onRolledBack={vi.fn()} />)
 
-    expect(screen.getByRole('button', { name: 'Сравнить с текущей' })).toBeTruthy()
-    expect(screen.queryByRole('button', { name: 'Откатить' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Откатить' }))
+
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByText(/Несохранённые изменения в редакторе будут потеряны/)).toBeTruthy()
   })
 
   it('rolls back only after confirmation', async () => {

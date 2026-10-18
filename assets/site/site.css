@@ -72,8 +72,12 @@
 }
 
 @layer components {
+    /*
+     * overflow-x: clip — страховка: если что-то в контенте окажется шире экрана, страница не станет шире,
+     * и телефон не уменьшит масштаб (иначе шапка и нижняя панель выглядят узкими). В отличие от hidden, не ломает sticky-шапку.
+     */
     .zp-body {
-        @apply bg-white pb-[4.5rem] text-base text-ink antialiased md:pb-0;
+        @apply bg-white pb-[4.5rem] text-base text-ink antialiased [overflow-x:clip] md:pb-0;
     }
 
     .zp-skip {
@@ -96,19 +100,63 @@
         @apply sticky top-0 z-40 border-b border-line bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/85;
     }
     .zp-header__bar {
-        @apply flex h-14 items-center gap-2 md:h-[4.5rem] md:gap-4;
+        @apply flex h-14 items-center gap-2 md:h-[4.5rem] md:gap-4 lg:max-w-[90rem];
+    }
+    /* Номер телефона текстом (от 1800 px) требует шапку шире 90rem; отдельным правилом, чтобы перебить lg:max-w. */
+    @media (min-width: 1800px) {
+        .zp-header__bar {
+            max-width: 112rem;
+        }
     }
     .zp-logo {
         @apply flex shrink-0 items-center;
     }
+    /* На экранах уже 360 px логотип на ступень ниже: иначе он с кнопками звонка и меню не помещается в строку. */
     .zp-logo img {
-        @apply h-7 w-auto sm:h-8 md:h-9;
+        @apply h-7 w-auto max-[359px]:h-6 sm:h-8 md:h-9;
     }
+    /*
+     * Меню шапки, вариант B брендбука: пункты и разделы в одну строку, раздел раскрывает компактный список
+     * подпунктов с ценой справа. Пункты от 48 px, текст 17 px. Чтобы строка из 6 пунктов помещалась: меню строкой —
+     * от 1280 px (уже — боковое меню), на 1280–1439 px без кнопки «Рассчитать стоимость», номер телефона текстом — от 1800 px.
+     */
     .zp-nav {
-        @apply hidden flex-1 items-center justify-center gap-0.5 lg:flex;
+        @apply hidden min-w-0 flex-1 items-center justify-center gap-0.5 xl:flex;
     }
-    .zp-nav a {
-        @apply rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap text-ink transition hover:bg-brand-50 hover:text-brand-800;
+    .zp-nav__group {
+        @apply relative;
+    }
+    .zp-nav__item {
+        @apply inline-flex min-h-12 cursor-pointer items-center gap-1.5 rounded-[var(--radius-btn)] px-3 text-[17px] font-medium whitespace-nowrap text-ink transition-colors hover:bg-brand-50 hover:text-brand-800 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600 aria-expanded:bg-brand-50 aria-expanded:text-brand-800 lg:px-2 xl:px-3;
+    }
+    .zp-nav__chevron {
+        @apply size-4 shrink-0 transition-transform duration-200;
+    }
+    .zp-nav__item[aria-expanded='true'] .zp-nav__chevron {
+        @apply rotate-180;
+    }
+    .zp-nav__dropdown {
+        @apply absolute top-[calc(100%+0.5rem)] left-0 z-50 w-max max-w-[min(26rem,90vw)] min-w-[21rem] rounded-[var(--radius-card)] border border-line bg-white p-2 shadow-[0_16px_32px_rgb(35_39_45/0.12)];
+        animation: zp-fade-in 0.15s ease-out;
+    }
+    /* Мостик над списком: курсор идёт от пункта к списку и не закрывает его. */
+    .zp-nav__dropdown::before {
+        @apply absolute inset-x-0 -top-2 h-2 content-[''];
+    }
+    .zp-nav__dropdown[hidden] {
+        display: none;
+    }
+    .zp-nav__link {
+        @apply flex min-h-12 items-center justify-between gap-5 rounded-[var(--radius-btn)] px-3 py-2 text-[17px] leading-snug text-ink transition-colors hover:bg-brand-50 hover:text-brand-800 focus-visible:bg-brand-50 focus-visible:text-brand-800 focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-brand-600;
+    }
+    .zp-nav__hint {
+        @apply mt-0.5 block text-sm text-graphite;
+    }
+    .zp-nav__price {
+        @apply shrink-0 font-cond text-[17px] font-extrabold whitespace-nowrap text-graphite tabular-nums;
+    }
+    .zp-nav__all {
+        @apply mt-1 flex min-h-12 items-center gap-2 border-t border-line px-3 pt-1 text-[17px] font-semibold text-brand-700 transition-colors hover:text-brand-800 focus-visible:rounded-[var(--radius-btn)] focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-brand-600;
     }
     .zp-header__actions {
         @apply ml-auto flex items-center gap-1.5 sm:gap-2;
@@ -118,25 +166,69 @@
         @apply font-cond leading-none font-extrabold tracking-normal tabular-nums;
     }
     .zp-header__phone {
-        @apply inline-flex size-12 items-center justify-center gap-2 rounded-full bg-brand-50 font-cond font-extrabold text-ink tabular-nums transition hover:bg-brand-100 lg:size-auto lg:rounded-lg lg:bg-transparent lg:px-3 lg:py-2 lg:text-xl lg:whitespace-nowrap;
+        @apply inline-flex size-12 shrink-0 items-center justify-center gap-2 rounded-full bg-brand-50 font-cond font-extrabold text-ink tabular-nums transition hover:bg-brand-100 min-[1800px]:size-auto min-[1800px]:rounded-lg min-[1800px]:bg-transparent min-[1800px]:px-3 min-[1800px]:py-2 min-[1800px]:text-xl min-[1800px]:whitespace-nowrap;
     }
     .zp-burger {
-        @apply inline-flex size-12 items-center justify-center rounded-full text-ink transition hover:bg-surface-strong lg:hidden;
+        @apply inline-flex size-12 items-center justify-center rounded-full text-ink transition hover:bg-surface-strong xl:hidden;
     }
+    /*
+     * Боковое меню телефона (templates/base.html.twig): панель выезжает справа, где кнопка меню и большой палец,
+     * страница за ней затемнена. Закрытие — крестик на месте бургера, тап по затемнению, Esc.
+     */
     .zp-drawer {
-        @apply absolute inset-x-0 top-full max-h-[calc(100dvh-3.5rem)] overflow-y-auto border-b border-line bg-white shadow-xl lg:hidden;
+        @apply fixed inset-0 z-[60] xl:hidden;
     }
     .zp-drawer[hidden] {
         display: none;
     }
+    .zp-drawer__backdrop {
+        @apply absolute inset-0 bg-night/55;
+        animation: zp-fade-in 0.2s ease-out;
+    }
+    .zp-drawer__sheet {
+        @apply absolute inset-y-0 right-0 flex w-[min(88vw,22.5rem)] flex-col rounded-l-[var(--radius-card)] bg-white shadow-xl;
+        animation: zp-slide-in 0.25s ease-out;
+    }
+    .zp-drawer__top {
+        @apply flex shrink-0 items-center justify-between border-b border-line py-1 pr-4 pl-5;
+        padding-top: max(0.25rem, env(safe-area-inset-top));
+    }
+    .zp-drawer__title {
+        @apply font-cond text-sm font-extrabold tracking-[0.08em] text-graphite uppercase;
+    }
     .zp-drawer__nav {
-        @apply flex flex-col py-2;
+        @apply flex flex-1 flex-col overflow-y-auto overscroll-contain px-5 py-2;
     }
     .zp-drawer__nav a {
-        @apply flex min-h-12 items-center justify-between border-b border-line text-base font-medium text-ink last:border-b-0;
+        @apply flex min-h-14 items-center justify-between gap-3 border-b border-line text-lg font-medium text-ink transition-colors last:border-b-0 hover:text-brand-800 focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-brand-600;
+    }
+    .zp-drawer__group {
+        @apply border-b border-line last:border-b-0;
+    }
+    .zp-drawer__group > summary {
+        @apply flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 text-lg font-medium text-ink transition-colors hover:text-brand-800 focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-brand-600;
+    }
+    .zp-drawer__group > summary::-webkit-details-marker {
+        display: none;
+    }
+    .zp-drawer__chevron {
+        @apply size-5 shrink-0 text-graphite transition-transform duration-200;
+    }
+    .zp-drawer__group[open] .zp-drawer__chevron {
+        @apply rotate-180;
+    }
+    .zp-drawer__sub {
+        @apply pb-2 pl-9;
+    }
+    .zp-drawer__nav .zp-drawer__sub a {
+        @apply min-h-12 border-b-0 text-[17px] font-normal;
+    }
+    .zp-drawer__nav .zp-drawer__sub a.zp-drawer__all {
+        @apply font-semibold text-brand-700;
     }
     .zp-drawer__foot {
-        @apply grid gap-3 pt-3 pb-5;
+        @apply grid shrink-0 gap-3 border-t border-line px-5 pt-4;
+        padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
     }
 
     /* ---------- Кнопки (flat): сплошные заливки, без теней и градиентов ---------- */
@@ -276,6 +368,54 @@
     .zp-lead {
         @apply mt-3 max-w-2xl text-base leading-7 text-graphite md:text-lg;
     }
+    /*
+     * Карточка товара (брендбук, раздел 7; блок portfolio): рамка line, скругление 12 px, картинка 4:3 сверху,
+     * название, чипы характеристик Sofia Sans Condensed, цена «от … ₽». Вся карточка — ссылка (растянутый after).
+     */
+    .zp-product {
+        @apply relative flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-line bg-white transition-[border-color,box-shadow] duration-150 hover:border-brand-500 hover:shadow-[0_14px_30px_rgb(35_39_45/0.1)] has-[a:focus-visible]:outline-3 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-brand-600;
+    }
+    .zp-product__media {
+        @apply relative overflow-hidden bg-brand-50;
+    }
+    .zp-product__img {
+        @apply aspect-4/3 w-full object-cover transition-transform duration-300;
+    }
+    .zp-product:hover .zp-product__img {
+        @apply scale-[1.03];
+    }
+    .zp-product__badge {
+        @apply absolute top-3 right-3 rounded-lg bg-badge px-2.5 py-1.5 font-cond text-sm leading-none font-extrabold tracking-[0.06em] text-ink uppercase;
+    }
+    .zp-product__body {
+        @apply flex flex-1 flex-col gap-2.5 p-3 sm:p-4 md:px-[1.125rem] md:pb-[1.125rem];
+    }
+    .zp-product__title {
+        @apply text-base leading-snug font-semibold text-ink md:text-lg;
+    }
+    .zp-product__title a {
+        @apply outline-none after:absolute after:inset-0 hover:text-brand-800;
+    }
+    .zp-product__specs {
+        @apply hidden flex-wrap gap-1.5 md:flex;
+    }
+    .zp-product__specs li {
+        @apply rounded-lg bg-surface px-2.5 py-1.5 font-cond text-sm leading-none font-semibold text-graphite;
+    }
+    .zp-product__foot {
+        @apply mt-auto flex items-center justify-between gap-2;
+    }
+    .zp-product__price {
+        @apply font-cond text-[17px] leading-none font-extrabold text-brand-800 tabular-nums md:text-[22px];
+    }
+    .zp-product__go {
+        @apply hidden items-center gap-1.5 font-semibold text-brand-700 md:inline-flex;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .zp-product:hover .zp-product__img {
+            @apply scale-100;
+        }
+    }
     .zp-card {
         @apply rounded-2xl bg-white p-4 ring-1 ring-line md:p-5;
     }
@@ -392,15 +532,83 @@
     .zp-video video {
         @apply absolute inset-0 h-full w-full border-0;
     }
+    .zp-video .zp-player {
+        @apply absolute inset-0;
+    }
+
+    /* ---------- Плеер загруженного видео (media-chrome, assets/site/player.ts) ---------- */
+    .zp-player {
+        @apply block aspect-video w-full overflow-hidden rounded-2xl bg-night;
+        --media-font-family: var(--font-sans);
+        --media-font-size: 15px;
+        --media-primary-color: var(--color-white);
+        --media-secondary-color: transparent;
+        --media-icon-color: var(--color-white);
+        --media-control-background: transparent;
+        --media-control-hover-background: color-mix(in srgb, var(--color-white) 14%, transparent);
+        --media-control-height: 26px;
+        --media-control-padding: 11px;
+        --media-button-icon-height: 26px;
+        --media-range-bar-color: var(--color-brand-500);
+        --media-range-track-height: 5px;
+        --media-range-track-border-radius: 3px;
+        --media-range-track-background: color-mix(in srgb, var(--color-white) 28%, transparent);
+        --media-time-range-buffered-color: color-mix(in srgb, var(--color-white) 45%, transparent);
+        --media-range-thumb-background: var(--color-white);
+        --media-range-thumb-height: 15px;
+        --media-range-thumb-width: 15px;
+        --media-focus-box-shadow: inset 0 0 0 3px var(--color-badge);
+        --media-loading-indicator-icon-height: 72px;
+    }
+    .zp-player video {
+        @apply h-full w-full object-contain;
+    }
+    /* До загрузки модуля элементы media-chrome не определены: видна только нативная панель <video>. */
+    .zp-player:not(:defined) > :not(video) {
+        @apply hidden;
+    }
+    .zp-player__bar {
+        @apply w-full gap-1 rounded-b-2xl px-1 pb-1;
+        background: linear-gradient(
+            to top,
+            color-mix(in srgb, var(--color-night) 92%, transparent),
+            transparent
+        );
+    }
+    .zp-player__bar > * {
+        @apply min-h-12 rounded-[10px];
+    }
+    .zp-player__center {
+        @apply size-[72px] rounded-full bg-brand-700 shadow-lg md:size-20;
+        --media-button-icon-height: 34px;
+        --media-control-hover-background: var(--color-brand-800);
+        --media-control-padding: 19px;
+    }
+    /* Пока ролик идёт, большая кнопка не перекрывает кадр. */
+    .zp-player:not([mediapaused]) .zp-player__center,
+    .zp-player[medialoading]:not([mediapaused]) .zp-player__center {
+        @apply hidden;
+    }
+    .zp-player[mediapaused] .zp-player__bar {
+        @apply opacity-100;
+    }
+    @media (max-width: 639px) {
+        .zp-player__volume,
+        .zp-player__rate,
+        .zp-player__pip {
+            @apply hidden;
+        }
+    }
 }
 
 @layer components {
     /* ---------- Прайс-лист с выбором ---------- */
+    /* Если вкладки не помещаются (три длинных названия на телефоне), переключатель прокручивается, а не вылезает за край. */
     .zp-seg {
-        @apply inline-flex max-w-full rounded-2xl bg-surface-strong p-1.5;
+        @apply inline-flex max-w-full overflow-x-auto rounded-2xl bg-surface-strong p-1.5;
     }
     .zp-seg__item {
-        @apply min-h-12 flex-1 rounded-xl px-5 text-base font-semibold whitespace-nowrap text-graphite transition-colors hover:text-ink focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
+        @apply min-h-12 flex-1 rounded-xl px-4 text-base sm:px-5 font-semibold whitespace-nowrap text-graphite transition-colors hover:text-ink focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
     }
     .zp-seg__item[aria-selected='true'] {
         @apply bg-white text-ink;
@@ -744,5 +952,706 @@
     }
     .zp-audience button:focus-visible {
         @apply outline-3 outline-offset-2 outline-brand-600;
+    }
+}
+
+/* ---------- Портфолио (/portfolio/, вариант V4 «Микс»): тёмная полоса с полосами бренда, плитки разделов, карточки работ ---------- */
+@layer components {
+    .zp-pf-band {
+        @apply relative overflow-hidden bg-night pt-6 pb-8 text-white md:pt-8 md:pb-10;
+    }
+    .zp-pf-stripes {
+        @apply pointer-events-none absolute top-8 right-0 hidden justify-items-end gap-3 md:grid;
+    }
+    .zp-pf-stripes i {
+        @apply block h-3 bg-brand-500 [clip-path:polygon(12px_0,100%_0,100%_100%,0_100%)];
+    }
+    .zp-pf-stripes i:nth-child(1) {
+        @apply w-50;
+    }
+    .zp-pf-stripes i:nth-child(2) {
+        @apply w-40;
+    }
+    .zp-pf-stripes i:nth-child(3) {
+        @apply w-30;
+    }
+    .zp-pf-crumbs ol {
+        @apply flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[15px] leading-snug text-white/75;
+    }
+    .zp-pf-crumbs li {
+        @apply flex items-center gap-1.5;
+    }
+    .zp-pf-crumbs li + li::before {
+        content: '/';
+        @apply text-white/35;
+    }
+    .zp-pf-crumbs a {
+        @apply inline-flex min-h-8 items-center rounded text-white/75 underline-offset-4 hover:text-white hover:underline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-focus;
+    }
+    .zp-pf-crumbs [aria-current] {
+        @apply text-white;
+    }
+    .zp-pf-h1 {
+        @apply mt-3 max-w-4xl font-heading text-[30px] leading-[1.1] font-bold tracking-[-0.02em] text-balance md:text-[44px];
+    }
+    .zp-pf-lead {
+        @apply mt-3 max-w-2xl text-[17px] leading-relaxed text-white/80 md:text-lg;
+    }
+    .zp-pf-eyebrow {
+        @apply font-cond text-[13px] leading-none font-extrabold tracking-[0.1em] text-brand-700 uppercase;
+    }
+
+    /* Хаб: плитки разделов */
+    .zp-pf-cats {
+        @apply mt-7 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-3.5 lg:grid-cols-5;
+    }
+    .zp-pf-cat {
+        @apply relative block aspect-4/3 overflow-hidden rounded-[var(--radius-card)] bg-ink focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-focus;
+    }
+    .zp-pf-cat img {
+        @apply opacity-85 transition-[transform,opacity] duration-300;
+    }
+    .zp-pf-cat:hover img {
+        @apply scale-[1.04] opacity-100;
+    }
+    .zp-pf-cat::after {
+        content: '';
+        @apply absolute inset-0 bg-linear-to-b from-transparent from-35% to-night/90;
+    }
+    .zp-pf-cat__text {
+        @apply absolute inset-x-3.5 bottom-3 z-10 grid gap-0.5;
+    }
+    .zp-pf-cat__title {
+        @apply text-[17px] leading-tight font-semibold text-white md:text-lg;
+    }
+    .zp-pf-cat__count {
+        @apply font-cond text-[15px] font-extrabold text-brand-300;
+    }
+
+    /* Раздел: переключатель разделов */
+    .zp-pf-switch {
+        @apply -mx-4 mt-6 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0;
+    }
+    .zp-pf-switch__item {
+        @apply inline-flex min-h-12 shrink-0 items-center gap-2 rounded-full border-[1.5px] border-white/30 px-4 text-base font-medium whitespace-nowrap text-white transition-colors hover:border-white focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-focus;
+    }
+    .zp-pf-switch__item b {
+        @apply font-cond text-[15px] font-extrabold text-brand-300;
+    }
+    .zp-pf-switch__item[aria-current='page'] {
+        @apply border-white bg-white text-ink;
+    }
+    .zp-pf-switch__item[aria-current='page'] b {
+        @apply text-brand-700;
+    }
+
+    /* Сетка и карточка работы */
+    .zp-pf-head {
+        @apply mb-6 flex flex-wrap items-end justify-between gap-3;
+    }
+    .zp-pf-head__note {
+        @apply text-[17px] text-graphite;
+    }
+    .zp-pf-grid {
+        @apply grid gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6;
+    }
+    .zp-pf-card {
+        @apply relative flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-line bg-white transition-[border-color,box-shadow] duration-150 hover:border-brand-500 hover:shadow-[0_14px_30px_rgb(35_39_45/0.1)] has-[a:focus-visible]:outline-3 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-brand-600;
+    }
+    .zp-pf-card__media {
+        @apply relative aspect-4/3 overflow-hidden bg-surface;
+    }
+    .zp-pf-card__media img {
+        @apply transition-transform duration-300;
+    }
+    .zp-pf-card:hover .zp-pf-card__media img {
+        @apply scale-[1.03];
+    }
+    .zp-pf-badge {
+        @apply absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-lg bg-night/80 px-2.5 py-1.5 font-cond text-[15px] leading-none font-semibold tracking-[0.02em] text-white backdrop-blur-sm;
+    }
+    .zp-pf-badge svg {
+        @apply size-4;
+    }
+    .zp-pf-card__body {
+        @apply flex flex-1 flex-col gap-2 px-4 pt-4 pb-4.5 md:px-[1.125rem];
+    }
+    /* Раздел и характеристики в одной обёртке (в ленте на телефоне — одна строка), в карточке — раздел, название, характеристики. */
+    .zp-pf-card__line {
+        @apply contents;
+    }
+    .zp-pf-card__line .zp-pf-specs {
+        @apply order-1;
+    }
+    .zp-pf-card__body .zp-pf-meta {
+        @apply order-2;
+    }
+    .zp-pf-card__title {
+        @apply text-[17px] leading-snug font-semibold text-ink md:text-[19px];
+    }
+    .zp-pf-card__title a {
+        @apply outline-none after:absolute after:inset-0 hover:text-brand-800;
+    }
+    .zp-pf-specs {
+        @apply flex flex-wrap gap-1.5;
+    }
+    .zp-pf-specs li {
+        @apply rounded-lg bg-surface px-2.5 py-1.5 font-cond text-[15px] leading-none font-semibold text-graphite;
+    }
+    .zp-pf-meta {
+        @apply mt-auto flex items-center gap-1.5 pt-1 text-[15px] text-graphite;
+    }
+    .zp-pf-meta svg {
+        @apply size-4.5 shrink-0 text-brand-700;
+    }
+    .zp-pf-cta {
+        @apply mt-10 flex flex-wrap items-center justify-between gap-5 rounded-2xl bg-brand-50 p-5 md:mt-12 md:p-7;
+    }
+    .zp-pf-cta__title {
+        @apply font-heading text-[22px] leading-tight font-bold text-ink md:text-2xl;
+    }
+    .zp-pf-cta__text {
+        @apply mt-1.5 max-w-xl text-[17px] text-graphite;
+    }
+    .zp-pf-link {
+        @apply inline-flex min-h-12 items-center gap-1.5 text-[17px] font-semibold text-brand-700 hover:text-brand-800 focus-visible:rounded focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
+    }
+    .zp-pf-link svg {
+        @apply size-5;
+    }
+
+    /* Работа: факты и крупные цифры */
+    .zp-pf-facts {
+        @apply mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-[15px] text-white/75 md:text-base;
+    }
+    .zp-pf-facts span {
+        @apply inline-flex items-center gap-1.5;
+    }
+    .zp-pf-facts svg {
+        @apply size-4.5 text-brand-300;
+    }
+    .zp-pf-nums {
+        @apply mt-6 grid max-w-3xl grid-cols-2 gap-3 md:grid-cols-4;
+    }
+    .zp-pf-nums div {
+        @apply flex flex-col-reverse justify-end gap-1.5 rounded-[var(--radius-card)] border border-white/12 bg-white/6 px-4 py-3.5;
+    }
+    .zp-pf-nums dd {
+        @apply font-cond text-[26px] leading-none font-extrabold text-white md:text-[32px];
+    }
+    .zp-pf-nums dt {
+        @apply text-[15px] text-white/70 lowercase first-letter:uppercase;
+    }
+
+    /* Работа: галерея */
+    .zp-pf-gallery {
+        @apply mt-6 md:mt-8;
+    }
+    .zp-pf-gallery__stage {
+        @apply relative;
+    }
+    .zp-pf-gallery__track {
+        @apply grid gap-4;
+    }
+    .zp-pf-gallery.is-ready .zp-pf-gallery__track {
+        @apply block;
+    }
+    .zp-pf-slide {
+        @apply relative m-0;
+    }
+    .zp-pf-gallery.is-ready .zp-pf-slide:not(.is-active) {
+        @apply hidden;
+    }
+    .zp-pf-slide__photo {
+        @apply block aspect-4/3 overflow-hidden rounded-2xl bg-ink focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600 md:aspect-video;
+    }
+    .zp-pf-slide__caption {
+        @apply mt-2 text-[15px] text-graphite;
+    }
+    .zp-pf-gallery__nav {
+        @apply mt-3 flex items-center justify-center gap-4 md:pointer-events-none md:absolute md:inset-x-4 md:top-1/2 md:mt-0 md:-translate-y-1/2 md:justify-between;
+    }
+    .zp-pf-gallery__nav[hidden] {
+        @apply hidden;
+    }
+    .zp-pf-arrow {
+        @apply pointer-events-auto grid size-12 place-items-center rounded-full border-[1.5px] border-line-strong bg-white text-ink shadow-sm transition-colors hover:border-brand-600 hover:text-brand-800 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600 md:border-0;
+    }
+    .zp-pf-arrow svg {
+        @apply size-5;
+    }
+    .zp-pf-arrow[data-pf-prev] svg {
+        @apply rotate-180;
+    }
+    /* На компьютере позицию показывает лента миниатюр, счётчик нужен только на телефоне. */
+    .zp-pf-gallery__counter {
+        @apply font-cond text-[17px] font-bold text-ink tabular-nums md:hidden;
+    }
+    .zp-pf-strip {
+        @apply mt-3 flex gap-2.5 overflow-x-auto pb-1 [scrollbar-width:thin];
+    }
+    .zp-pf-strip[hidden] {
+        @apply hidden;
+    }
+    .zp-pf-thumb {
+        @apply relative aspect-4/3 w-28 shrink-0 cursor-pointer overflow-hidden rounded-[10px] bg-night opacity-75 transition-opacity hover:opacity-100 focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-brand-600 md:w-36;
+    }
+    .zp-pf-thumb[aria-current='true'] {
+        @apply opacity-100 outline-3 outline-offset-[-3px] outline-brand-500;
+    }
+    .zp-pf-thumb__play {
+        @apply absolute inset-0 grid place-items-center bg-night/35 text-white;
+    }
+    .zp-pf-thumb__play svg {
+        @apply size-7;
+    }
+    .zp-pf-embed {
+        @apply absolute inset-0 flex size-full cursor-pointer flex-col items-center justify-center gap-3 bg-night text-white;
+    }
+    .zp-pf-embed__poster {
+        @apply absolute inset-0 size-full object-cover opacity-70;
+    }
+    .zp-pf-embed__provider {
+        @apply absolute top-3.5 right-3.5 rounded-lg bg-white px-2.5 py-1.5 font-cond text-sm font-extrabold text-ink;
+    }
+    .zp-pf-embed__play {
+        @apply relative grid size-[76px] place-items-center rounded-full bg-brand-700 shadow-lg transition-colors;
+    }
+    .zp-pf-embed:hover .zp-pf-embed__play {
+        @apply bg-brand-800;
+    }
+    .zp-pf-embed__play svg {
+        @apply ml-1 size-8;
+    }
+    .zp-pf-embed__label {
+        @apply relative text-[17px] font-semibold;
+    }
+    .zp-pf-embed:focus-visible {
+        @apply outline-3 -outline-offset-3 outline-focus;
+    }
+
+    /* Работа: текст и боковая заявка */
+    .zp-pf-body {
+        @apply my-10 grid gap-10 md:my-12 lg:grid-cols-[minmax(0,1fr)_340px];
+    }
+    .zp-pf-prose {
+        @apply mt-4 max-w-3xl text-[17px] leading-[1.65] text-ink md:text-lg;
+    }
+    .zp-pf-prose > * + * {
+        @apply mt-3.5;
+    }
+    .zp-pf-prose h2,
+    .zp-pf-prose h3,
+    .zp-pf-prose h4 {
+        @apply mt-6 font-heading font-bold text-ink;
+    }
+    .zp-pf-prose ul {
+        @apply list-disc pl-6;
+    }
+    .zp-pf-prose ol {
+        @apply list-decimal pl-6;
+    }
+    .zp-pf-prose li + li {
+        @apply mt-1.5;
+    }
+    .zp-pf-prose a {
+        @apply font-medium text-brand-700 underline underline-offset-4 hover:text-brand-800;
+    }
+    .zp-pf-prose blockquote {
+        @apply border-l-4 border-brand-500 pl-4 text-graphite;
+    }
+    .zp-pf-speclist {
+        @apply mt-4 grid max-w-xl divide-y divide-line rounded-[var(--radius-card)] border border-line;
+    }
+    .zp-pf-speclist div {
+        @apply flex justify-between gap-4 px-4 py-3 text-[17px];
+    }
+    .zp-pf-speclist dt {
+        @apply text-graphite;
+    }
+    .zp-pf-speclist dd {
+        @apply text-right font-cond text-lg font-bold text-ink;
+    }
+    .zp-pf-aside {
+        @apply self-start rounded-[var(--radius-card)] border border-line bg-surface p-6 lg:sticky lg:top-24;
+    }
+    .zp-pf-aside__title {
+        @apply mt-2 font-heading text-[22px] leading-tight font-bold text-ink;
+    }
+    .zp-pf-aside__text {
+        @apply mt-2 mb-5 text-[17px] text-graphite;
+    }
+
+    /* Работа: предыдущая и следующая */
+    .zp-pf-pn {
+        @apply grid gap-4 border-t border-line pt-7 pb-12 md:grid-cols-2 md:pb-16;
+    }
+    .zp-pf-pn__link {
+        @apply flex min-h-12 items-center gap-3.5 rounded-[var(--radius-card)] border border-line p-3 text-ink transition-colors hover:border-brand-500 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
+    }
+    .zp-pf-pn__link--next {
+        @apply md:col-start-2 md:flex-row-reverse md:text-right;
+    }
+    .zp-pf-pn__img {
+        @apply aspect-4/3 w-18 shrink-0 rounded-lg object-cover md:w-24;
+    }
+    .zp-pf-pn__link small {
+        @apply block text-[15px] text-graphite;
+    }
+    .zp-pf-pn__link b {
+        @apply block text-[17px] leading-snug font-semibold;
+    }
+
+    /* Блок «Портфолио» на страницах: горизонтальный ряд карточек */
+    .zp-pf-row__head {
+        @apply mb-6 flex flex-wrap items-end justify-between gap-4;
+    }
+    .zp-pf-row__tools {
+        @apply flex items-center gap-4;
+    }
+    .zp-pf-row__arrows {
+        @apply hidden gap-2 md:flex;
+    }
+    .zp-pf-row__arrows[hidden] {
+        @apply hidden;
+    }
+    .zp-pf-row__arrows .zp-pf-arrow {
+        @apply border-[1.5px];
+    }
+    .zp-pf-row__arrows .zp-pf-arrow:disabled {
+        @apply pointer-events-none opacity-40;
+    }
+    .zp-pf-row__arrows [data-pf-row-prev] svg {
+        @apply rotate-180;
+    }
+    .zp-pf-scroller {
+        @apply -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-2 [scrollbar-width:none] md:mx-0 md:scroll-px-0 md:px-0;
+    }
+    .zp-pf-scroller > * {
+        @apply w-[82%] shrink-0 snap-start sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)];
+    }
+
+    /*
+     * V5: три приёма из Instagram на телефоне (до 767 px). На компьютере вид прежний.
+     * 1) работа: фото во всю ширину сразу под заголовком, счётчик и точки, крупные цифры — под фото;
+     * 2) хаб: разделы — кружки в одну прокручиваемую строку вместо плиток;
+     * 3) раздел: переключатель «Карточки / Сетка», сетка — фото 3 в ряд со значками ▶ и ⧉.
+     */
+    .zp-pf-gallery__badge {
+        @apply pointer-events-none absolute top-3 right-3 z-10 rounded-full bg-night/75 px-2.5 py-1 font-cond text-[15px] font-semibold text-white tabular-nums md:hidden;
+    }
+    .zp-pf-gallery__badge[hidden],
+    .zp-pf-dots[hidden] {
+        @apply hidden;
+    }
+    .zp-pf-dots {
+        @apply flex justify-center gap-1.5 pt-3 pb-1 md:hidden;
+    }
+    .zp-pf-dots i {
+        @apply size-[7px] rounded-full bg-line-strong transition-colors;
+    }
+    .zp-pf-dots i.is-active {
+        @apply bg-brand-700;
+    }
+    .zp-pf-nums--light {
+        @apply mt-4;
+    }
+    .zp-pf-nums--light div {
+        @apply border-line bg-surface;
+    }
+    .zp-pf-nums--light dd {
+        @apply text-ink;
+    }
+    .zp-pf-nums--light dt {
+        @apply text-graphite;
+    }
+    .zp-pf-card__kind {
+        @apply pointer-events-none absolute top-2 right-2 hidden size-5 text-white drop-shadow-[0_1px_3px_rgb(0_0_0/0.55)];
+    }
+    .zp-pf-card__kind svg {
+        @apply size-full;
+    }
+    .zp-pf-view {
+        @apply mb-4 inline-flex gap-1 rounded-[var(--radius-btn)] bg-surface-strong p-1 md:hidden;
+    }
+    .zp-pf-view[hidden] {
+        @apply hidden;
+    }
+    .zp-pf-view button {
+        @apply inline-flex min-h-12 items-center gap-2 rounded-lg px-4 text-[17px] font-semibold text-graphite transition-colors focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
+    }
+    .zp-pf-view button svg {
+        @apply size-5;
+    }
+    .zp-pf-view button[aria-pressed='true'] {
+        @apply bg-white text-ink shadow-sm;
+    }
+
+    /*
+     * Лента работ (карточка post в хабе и разделе) и строка «лайк / поделиться». На компьютере карточка обычная:
+     * виден первый кадр, остальное скрыто. Пост на телефоне — в @media ниже.
+     */
+    .zp-pf-post__place,
+    .zp-pf-post__text,
+    .zp-pf-post__counter,
+    .zp-pf-actions {
+        @apply hidden;
+    }
+    .zp-pf-post__track {
+        @apply flex size-full;
+    }
+    .zp-pf-post__slide {
+        @apply block size-full shrink-0;
+    }
+    .zp-pf-post__slide + .zp-pf-post__slide {
+        @apply hidden;
+    }
+    .zp-pf-like {
+        @apply inline-flex min-h-12 min-w-12 items-center justify-center gap-1.5 rounded-[10px] px-2 text-ink transition-colors focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
+    }
+    .zp-pf-like svg {
+        @apply size-7 fill-none transition-colors;
+    }
+    /* Сердце «нравится» — красное, как принято в соцсетях: токен danger (единственный красный в палитре бренда). */
+    .zp-pf-like[aria-pressed='true'] svg {
+        @apply fill-danger text-danger;
+    }
+    .zp-pf-like.is-popping svg {
+        animation: zp-like-pop 0.35s ease-out;
+    }
+    .zp-pf-like__count {
+        @apply font-cond text-[17px] font-semibold tabular-nums empty:hidden;
+    }
+    .zp-pf-share {
+        @apply relative;
+    }
+    .zp-pf-share__toggle {
+        @apply grid size-12 place-items-center rounded-[10px] text-ink focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
+    }
+    .zp-pf-share__toggle svg {
+        @apply size-7;
+    }
+    .zp-pf-share__menu {
+        @apply absolute top-full left-0 z-30 mt-1 w-[17rem] rounded-[var(--radius-card)] border border-line bg-white p-2 shadow-[0_14px_30px_rgb(35_39_45/0.16)];
+    }
+    .zp-pf-share__menu[hidden] {
+        @apply hidden;
+    }
+    .zp-pf-share__note {
+        @apply flex items-center gap-2 px-2 pt-1 pb-2 text-[15px] break-all text-graphite;
+    }
+    .zp-pf-share__link {
+        @apply flex min-h-12 items-center gap-3 rounded-[10px] px-2.5 text-[17px] font-semibold text-ink hover:bg-surface focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-brand-600;
+    }
+    .zp-pf-share__link svg,
+    .zp-pf-share__max {
+        @apply size-6 shrink-0;
+    }
+    .zp-pf-share__max {
+        @apply grid place-items-center rounded-md bg-ink font-cond text-[15px] leading-none font-bold text-white;
+    }
+
+    @media (max-width: 767px) {
+        /* 1) Галерея работы как пост: во всю ширину, без скруглений, точки под кадром, ленту и стрелки заменяют свайп и точки. */
+        .zp-pf-gallery {
+            @apply -mx-4 mt-0;
+        }
+        .zp-pf-slide__photo,
+        .zp-pf-slide .zp-video,
+        .zp-pf-slide .zp-player {
+            @apply rounded-none;
+        }
+        .zp-pf-slide__caption {
+            @apply px-4;
+        }
+        .zp-pf-gallery__nav {
+            @apply hidden;
+        }
+        /* Ленты миниатюр на телефоне нет: кадры листаются пальцем с остановкой на каждом. */
+        .zp-pf-strip {
+            @apply hidden!;
+        }
+        .zp-pf-gallery.is-ready .zp-pf-gallery__track {
+            @apply flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
+        }
+        .zp-pf-gallery.is-ready .zp-pf-slide,
+        .zp-pf-gallery.is-ready .zp-pf-slide:not(.is-active) {
+            @apply block w-full shrink-0 snap-center snap-always;
+        }
+        .zp-pf-band--project {
+            @apply pb-5;
+        }
+
+        /* 2) Разделы в хабе: кружки с фото, подпись и число работ под ними. */
+        .zp-pf-cats {
+            @apply -mx-4 mt-5 flex gap-4 overflow-x-auto px-4 pb-1 [scrollbar-width:none];
+        }
+        .zp-pf-cats li {
+            @apply shrink-0;
+        }
+        .zp-pf-cat {
+            @apply flex aspect-auto w-24 flex-col items-center gap-1.5 overflow-visible rounded-none bg-transparent text-center;
+        }
+        .zp-pf-cat picture {
+            @apply contents;
+        }
+        .zp-pf-cat::after {
+            @apply hidden;
+        }
+        /* Важность нужна, чтобы перебить size-full у <img> из responsive_image(). */
+        .zp-pf-cat img {
+            @apply size-[4.5rem]! shrink-0 rounded-full border-[3px] border-night opacity-100 outline-2 outline-brand-500;
+        }
+        .zp-pf-cat:hover img {
+            @apply scale-100;
+        }
+        .zp-pf-cat__text {
+            @apply static gap-0;
+        }
+        .zp-pf-cat__title {
+            @apply text-[15px] leading-tight hyphens-auto;
+        }
+        .zp-pf-cat__count {
+            @apply text-sm;
+        }
+
+        /* 3) Плотная сетка в разделе. Вся плитка остаётся ссылкой: подпись невидима, но растянутая ссылка на месте. */
+        .zp-pf-grid.is-compact {
+            @apply -mx-4 grid-cols-3 gap-0.5;
+        }
+        .zp-pf-grid.is-compact .zp-pf-card {
+            @apply rounded-none border-0 hover:shadow-none;
+        }
+        .zp-pf-grid.is-compact .zp-pf-card__media {
+            @apply aspect-square;
+        }
+        .zp-pf-grid.is-compact .zp-pf-badge {
+            @apply hidden;
+        }
+        .zp-pf-grid.is-compact .zp-pf-card__kind {
+            @apply block;
+        }
+        .zp-pf-grid.is-compact .zp-pf-card__body {
+            @apply absolute inset-0 overflow-hidden p-0 opacity-0;
+        }
+
+        /*
+         * 4) Лента работ как пост: место над фото, фото листаются пальцем с остановкой на каждом, счётчик кадров,
+         * лайк и «поделиться» с точками по центру, раздел слева и характеристики справа, название и начало описания с «ещё…».
+         */
+        .zp-pf-grid:not(.is-compact):has(.zp-pf-card--post) {
+            @apply gap-8;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post {
+            @apply -mx-4 overflow-visible rounded-none border-0 bg-transparent hover:shadow-none;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post .zp-pf-post__place {
+            @apply flex items-center gap-1.5 px-4 pb-2.5 text-[15px] font-semibold text-ink;
+        }
+        .zp-pf-post__place svg {
+            @apply size-4.5 shrink-0 text-brand-700;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post .zp-pf-badge {
+            @apply hidden;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post .zp-pf-card__media img {
+            @apply scale-100;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-post__track {
+            @apply snap-x snap-mandatory overflow-x-auto overscroll-x-contain scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-post__slide {
+            @apply snap-center snap-always;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-post__slide + .zp-pf-post__slide {
+            @apply block;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-post__counter:not([hidden]) {
+            @apply pointer-events-none absolute top-3 right-3 block rounded-full bg-night/75 px-2.5 py-1 font-cond text-[15px] font-semibold text-white tabular-nums;
+        }
+        .zp-pf-actions:not([hidden]) {
+            @apply relative flex items-center gap-0.5;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post .zp-pf-actions:not([hidden]) {
+            @apply px-2 pt-1;
+        }
+        .zp-pf-grid.is-compact .zp-pf-actions,
+        .zp-pf-grid.is-compact .zp-pf-post__counter {
+            @apply hidden!;
+        }
+        .zp-pf-actions--page:not([hidden]) {
+            @apply -mx-2 mt-1;
+        }
+        .zp-pf-actions__dots {
+            @apply pointer-events-none absolute left-1/2 flex -translate-x-1/2 gap-1.5;
+        }
+        .zp-pf-actions__dots i {
+            @apply size-[6px] rounded-full bg-line-strong transition-colors;
+        }
+        .zp-pf-actions__dots i.is-active {
+            @apply bg-brand-700;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post .zp-pf-card__body {
+            @apply gap-1.5 px-4 pt-1 pb-0;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post .zp-pf-card__line {
+            @apply flex items-baseline justify-between gap-3;
+        }
+        .zp-pf-card--post .zp-pf-card__line .zp-pf-eyebrow {
+            @apply shrink-0;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post .zp-pf-specs {
+            @apply min-w-0 justify-end gap-x-0 gap-y-0.5 text-right;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post .zp-pf-specs li {
+            @apply bg-transparent p-0 text-[15px] leading-tight;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post .zp-pf-specs li + li::before {
+            @apply px-1.5 text-line-strong content-['·'];
+        }
+        /* В посте ссылками служат фото и «ещё…»: растянутая ссылка заголовка закрыла бы ленту фото и кнопки. */
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post .zp-pf-card__title a {
+            @apply after:hidden;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post .zp-pf-post__text {
+            @apply block text-[17px] leading-normal text-ink;
+        }
+        .zp-pf-post__more {
+            @apply font-semibold text-graphite underline-offset-4 hover:text-brand-800 hover:underline focus-visible:rounded focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
+        }
+        .zp-pf-grid:not(.is-compact) .zp-pf-card--post .zp-pf-meta {
+            @apply hidden;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .zp-pf-card:hover .zp-pf-card__media img,
+        .zp-pf-cat:hover img {
+            @apply scale-100;
+        }
+    }
+}
+
+@keyframes zp-like-pop {
+    50% {
+        transform: scale(1.25);
+    }
+}
+@keyframes zp-fade-in {
+    from {
+        opacity: 0;
+    }
+}
+@keyframes zp-slide-in {
+    from {
+        transform: translateX(100%);
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .zp-drawer__backdrop,
+    .zp-drawer__sheet,
+    .zp-nav__dropdown,
+    .zp-pf-like.is-popping svg {
+        animation: none;
     }
 }

@@ -6,9 +6,10 @@
 
 ```text
 zaborprofil/
-├── .github/workflows/         # CI и Deploy workflows
-├── .osp/                      # OSPanel project config
-├── .trunk/                    # trunk.io linters
+├── .claude/skills/            # скилы безопасности для Claude Code (см. AGENTS.md)
+├── .cursor/rules/             # правила проекта для агентов Cursor
+├── .github/                   # CI и Deploy workflows, dependabot.yml
+├── .vscode/                   # настройки редактора (Intelephense, IDE-заглушки)
 ├── assets/
 │   ├── admin/                 # React + TypeScript admin SPA entrypoint
 │   └── site/                  # public site assets

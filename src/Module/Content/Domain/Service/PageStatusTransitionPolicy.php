@@ -10,12 +10,15 @@ use InvalidArgumentException;
 final readonly class PageStatusTransitionPolicy
 {
     /**
+     * В архив можно отправить и неопубликованную работу (черновик, на проверке, одобрено): из архива страница
+     * возвращается в черновики, и обратный путь должен быть открыт. Запланированную сначала снимают с расписания.
+     *
      * @var array<string, list<PageStatus>>
      */
     private const array TRANSITIONS = [
-        'draft' => [PageStatus::Review, PageStatus::Approved, PageStatus::Published, PageStatus::Deleted],
-        'review' => [PageStatus::Approved, PageStatus::Draft, PageStatus::Published, PageStatus::Deleted],
-        'approved' => [PageStatus::Published, PageStatus::Scheduled, PageStatus::Draft, PageStatus::Deleted],
+        'draft' => [PageStatus::Review, PageStatus::Approved, PageStatus::Published, PageStatus::Archived, PageStatus::Deleted],
+        'review' => [PageStatus::Approved, PageStatus::Draft, PageStatus::Published, PageStatus::Archived, PageStatus::Deleted],
+        'approved' => [PageStatus::Published, PageStatus::Scheduled, PageStatus::Draft, PageStatus::Archived, PageStatus::Deleted],
         'published' => [PageStatus::Unpublished, PageStatus::Scheduled, PageStatus::Archived, PageStatus::Deleted],
         'scheduled' => [PageStatus::Published, PageStatus::Approved, PageStatus::Draft, PageStatus::Deleted],
         'unpublished' => [PageStatus::Draft, PageStatus::Published, PageStatus::Archived, PageStatus::Deleted],

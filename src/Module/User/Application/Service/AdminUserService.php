@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Module\User\Application\Service;
 
 use App\Module\User\Domain\AdminRole;
+use App\Module\User\Domain\Entity\AdminUser;
 use App\Module\User\Domain\Exception\UserManagementException;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
-use App\Module\User\Infrastructure\Repository\AdminUserRepository;
+use App\Module\User\Domain\Repository\AdminUserRepositoryInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -20,7 +20,7 @@ final readonly class AdminUserService
     public const int NAME_MAX_LENGTH = 120;
 
     public function __construct(
-        private AdminUserRepository $users,
+        private AdminUserRepositoryInterface $users,
         private UserPasswordHasherInterface $passwordHasher,
         private ValidatorInterface $validator,
     ) {
@@ -127,6 +127,20 @@ final readonly class AdminUserService
         $this->users->save($user);
     }
 
+    /**
+     * Сброс пароля другому пользователю из админки: без текущего пароля, поэтому свой пароль так менять нельзя
+     * (только {@see changeOwnPassword()}), а пароль суперадминистратора сбрасывает только суперадминистратор.
+     */
+    public function resetPassword(AdminUser $actor, AdminUser $target, string $plainPassword): void
+    {
+        if ($this->isSame($actor, $target)) {
+            throw UserManagementException::ownPasswordChangeRequired();
+        }
+
+        $this->assertMayManage($actor, $target, 'Сбрасывать пароль суперадминистратору может только суперадминистратор.');
+        $this->changePassword($target, $plainPassword);
+    }
+
     public function changeOwnPassword(AdminUser $user, string $currentPassword, string $newPassword): void
     {
         if (!$this->passwordHasher->isPasswordValid($user, $currentPassword)) {
@@ -172,6 +186,8 @@ final readonly class AdminUserService
 
     public function setActive(AdminUser $actor, AdminUser $target, bool $active): void
     {
+        $this->assertMayManage($actor, $target, 'Деактивировать и активировать суперадминистратора может только суперадминистратор.');
+
         if (!$active) {
             if ($this->isSame($actor, $target)) {
                 throw UserManagementException::selfLockout('Нельзя деактивировать собственную учётную запись.');
@@ -190,9 +206,24 @@ final readonly class AdminUserService
             throw UserManagementException::selfLockout('Нельзя удалить собственную учётную запись.');
         }
 
+        $this->assertMayManage($actor, $target, 'Удалить суперадминистратора может только суперадминистратор.');
         $this->assertAdministratorsRemain($target, [], false);
 
         $this->users->remove($target);
+    }
+
+    /**
+     * Учётной записью суперадминистратора управляет только суперадминистратор: иначе администратор
+     * получил бы его права через сброс пароля, а деактивацией или удалением — отнял бы их.
+     */
+    private function assertMayManage(AdminUser $actor, AdminUser $target, string $message): void
+    {
+        if (
+            \in_array(AdminRole::SUPER_ADMIN, $target->storedRoles(), true)
+            && !\in_array(AdminRole::SUPER_ADMIN, $actor->storedRoles(), true)
+        ) {
+            throw UserManagementException::roleNotAllowed($message);
+        }
     }
 
     /**

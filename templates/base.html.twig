@@ -43,9 +43,9 @@
             '@context': 'https://schema.org',
             '@type': 'Organization',
             'name': site.name,
-            'url': app.request.schemeAndHttpHost ~ '/',
-            'logo': app.request.schemeAndHttpHost ~ '/img/logo.png',
-            'telephone': '+7-8452-98-88-08',
+            'url': site_url|trim('/', 'right') ~ '/',
+            'logo': site_url|trim('/', 'right') ~ '/img/logo.png',
+            'telephone': site.phone_href|replace({'tel:': ''}),
             'email': site.email,
             'areaServed': ['Саратов', 'Россия', 'Казахстан'],
             'sameAs': [site.telegram, site.instagram]
@@ -73,6 +73,7 @@
                 {% set header_menu = [
                     {label: 'Забор Жалюзи', url: '/zabor-jaluzi/'},
                     {label: 'Каталог', url: '/#catalog'},
+                    {label: 'Портфолио', url: '/portfolio/'},
                     {label: 'Как мы работаем', url: '/#process'},
                     {label: 'Контакты', url: '#contacts'}
                 ] %}
@@ -99,9 +100,30 @@
                     </a>
 
                     {% if header_menu %}
-                        <nav class="zp-nav" aria-label="Основная навигация">
+                        {# Брендбук «Периметр», вариант меню B: раздел с подпунктами раскрывает компактный список
+                           (наведение, клик, клавиатура — assets/site/ui.ts, initNavDropdowns). #}
+                        <nav class="zp-nav" aria-label="Основная навигация" data-nav-menu>
                             {% for item in header_menu %}
-                                <a href="{{ item.url }}">{{ item.label }}</a>
+                                {% set children = item.children ?? [] %}
+                                {% if children %}
+                                    <div class="zp-nav__group" data-nav-group>
+                                        <button class="zp-nav__item" type="button" aria-expanded="false" aria-controls="nav-list-{{ loop.index }}" data-nav-trigger>
+                                            {{ item.label }}<svg class="zp-nav__chevron" aria-hidden="true"><use href="#i-chevron"/></svg>
+                                        </button>
+                                        <div class="zp-nav__dropdown" id="nav-list-{{ loop.index }}" data-nav-dropdown hidden>
+                                            <ul class="zp-nav__list">
+                                                {% for child in children %}
+                                                    <li>{% include 'public/partials/nav-link.html.twig' with {item: child} only %}</li>
+                                                {% endfor %}
+                                            </ul>
+                                            {% if item.url not in children|map(child => child.url) %}
+                                                <a class="zp-nav__all" href="{{ item.url }}">Все {{ item.label|lower }}<svg class="size-4 shrink-0" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <a class="zp-nav__item" href="{{ item.url }}">{{ item.label }}</a>
+                                {% endif %}
                             {% endfor %}
                         </nav>
                     {% endif %}
@@ -109,10 +131,10 @@
                     <div class="zp-header__actions">
                         <a class="zp-header__phone" href="{{ site.phone_href }}">
                             <svg class="size-5 shrink-0 text-brand-500" aria-hidden="true"><use href="#i-phone"/></svg>
-                            <span class="hidden lg:inline">{{ site.phone }}</span>
-                            <span class="sr-only lg:hidden">Позвонить: {{ site.phone }}</span>
+                            <span class="hidden min-[1800px]:inline">{{ site.phone }}</span>
+                            <span class="sr-only min-[1800px]:hidden">Позвонить: {{ site.phone }}</span>
                         </a>
-                        <a class="zp-btn zp-btn--primary zp-btn--sm hidden md:inline-flex" href="#lead-form" data-lead-cta>Рассчитать стоимость</a>
+                        <a class="zp-btn zp-btn--primary zp-btn--sm hidden md:max-xl:inline-flex min-[1440px]:inline-flex" href="#lead-form" data-lead-cta>Рассчитать стоимость</a>
                         <button class="zp-burger" type="button" aria-expanded="false" aria-controls="mobile-nav" data-nav-toggle>
                             <svg class="size-6" aria-hidden="true" data-icon-open><use href="#i-menu"/></svg>
                             <svg class="hidden size-6" aria-hidden="true" data-icon-close><use href="#i-close"/></svg>
@@ -120,22 +142,56 @@
                         </button>
                     </div>
                 </div>
+            </header>
 
-                <div class="zp-drawer" id="mobile-nav" data-nav-panel hidden>
-                    <nav class="zp-container zp-drawer__nav" aria-label="Мобильная навигация">
+            {# Боковое меню телефона: панель справа под большим пальцем, страница за ней затемнена.
+               Вне <header>: у шапки backdrop-filter, из-за него fixed-потомок считался бы от шапки, а не от экрана. #}
+            <div class="zp-drawer" id="mobile-nav" data-nav-panel role="dialog" aria-modal="true" aria-label="Меню сайта" hidden>
+                <div class="zp-drawer__backdrop" data-nav-close aria-hidden="true"></div>
+                <div class="zp-drawer__sheet">
+                    <div class="zp-drawer__top">
+                        <span class="zp-drawer__title">Меню</span>
+                        <button class="zp-burger" type="button" data-nav-close>
+                            <svg class="size-6" aria-hidden="true"><use href="#i-close"/></svg>
+                            <span class="sr-only">Закрыть меню</span>
+                        </button>
+                    </div>
+                    <nav class="zp-drawer__nav" aria-label="Мобильная навигация">
                         {% for item in header_menu %}
-                            <a href="{{ item.url }}">{{ item.label }}<svg class="size-4 text-graphite/70" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+                            {% set children = item.children ?? [] %}
+                            {% if children %}
+                                {# Раздел — аккордеон: первый раскрыт, остальные по нажатию. #}
+                                <details class="zp-drawer__group" {{ loop.first ? 'open' }}>
+                                    <summary>
+                                        <span class="flex min-w-0 items-center gap-3"><svg class="size-6 shrink-0 text-ink" aria-hidden="true"><use href="#{{ menu_icon(item.label, item.url) }}"/></svg>{{ item.label }}</span>
+                                        <svg class="zp-drawer__chevron" aria-hidden="true"><use href="#i-chevron"/></svg>
+                                    </summary>
+                                    <ul class="zp-drawer__sub">
+                                        {% for child in children %}
+                                            <li><a href="{{ child.url }}">{{ child.label }}</a></li>
+                                        {% endfor %}
+                                        {% if item.url not in children|map(child => child.url) %}
+                                            <li><a class="zp-drawer__all" href="{{ item.url }}">Все {{ item.label|lower }}</a></li>
+                                        {% endif %}
+                                    </ul>
+                                </details>
+                            {% else %}
+                                <a href="{{ item.url }}">
+                                    <span class="flex min-w-0 items-center gap-3"><svg class="size-6 shrink-0 text-ink" aria-hidden="true"><use href="#{{ menu_icon(item.label, item.url) }}"/></svg>{{ item.label }}</span>
+                                    <svg class="size-4 shrink-0 text-graphite/70" aria-hidden="true"><use href="#i-arrow"/></svg>
+                                </a>
+                            {% endif %}
                         {% endfor %}
                     </nav>
-                    <div class="zp-container zp-drawer__foot">
-                        <a class="zp-btn zp-btn--primary w-full" href="#lead-form" data-nav-close>Рассчитать стоимость</a>
+                    <div class="zp-drawer__foot">
+                        <a class="zp-btn zp-btn--primary w-full" href="#lead-form">Рассчитать стоимость</a>
                         <a class="zp-btn zp-btn--ghost w-full" href="{{ site.phone_href }}">
                             <svg class="size-5" aria-hidden="true"><use href="#i-phone"/></svg>{{ site.phone }}
                         </a>
                         <p class="text-center text-sm text-graphite">{{ site.city }} · {{ site.delivery }}</p>
                     </div>
                 </div>
-            </header>
+            </div>
         {% endblock %}
 
         <div id="content" tabindex="-1">
@@ -184,12 +240,14 @@
         {% endblock %}
 
         {# Мобильная панель связи: всегда под большим пальцем, исчезает, когда на экране уже форма заявки. #}
-        <div class="zp-callbar" data-callbar>
-            <a class="zp-btn zp-btn--ghost" href="{{ site.phone_href }}">
-                <svg class="size-5" aria-hidden="true"><use href="#i-phone"/></svg>Позвонить
-            </a>
-            <a class="zp-btn zp-btn--primary" href="#lead-form">Рассчитать</a>
-        </div>
+        {% block site_callbar %}
+            <div class="zp-callbar" data-callbar>
+                <a class="zp-btn zp-btn--ghost" href="{{ site.phone_href }}">
+                    <svg class="size-5" aria-hidden="true"><use href="#i-phone"/></svg>Позвонить
+                </a>
+                <a class="zp-btn zp-btn--primary" href="#lead-form">Рассчитать</a>
+            </div>
+        {% endblock %}
 
         {% block javascripts %}
             {{ vite_entry_script_tags('assets/site/app.ts') }}

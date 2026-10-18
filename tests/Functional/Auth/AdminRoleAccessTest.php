@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Functional\Auth;
 
 use App\Module\Auth\Domain\Security\AdminPermission;
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Module\User\Domain\Entity\AdminUser;
 use App\Tests\Support\Database\SchemaTestHelper;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
@@ -153,7 +153,9 @@ final class AdminRoleAccessTest extends WebTestCase
 
         $client->request('GET', '/admin/api/me');
 
-        self::assertResponseRedirects('/admin/login');
+        // Admin API без сессии отвечает 401 JSON, а не редиректом на форму входа (его fetch принял бы за успех).
+        self::assertResponseStatusCodeSame(401);
+        self::assertStringContainsString('"code":"UNAUTHORIZED"', (string) $client->getResponse()->getContent());
     }
 
     /**
@@ -173,6 +175,8 @@ final class AdminRoleAccessTest extends WebTestCase
             AdminPermission::BLOCKS_CLONE,
             AdminPermission::MEDIA_UPLOAD,
             AdminPermission::CATALOG_VIEW,
+            AdminPermission::PORTFOLIO_VIEW,
+            AdminPermission::PORTFOLIO_MANAGE,
         ]];
         yield 'seo' => ['ROLE_SEO', [
             AdminPermission::PAGES_VIEW,
@@ -181,6 +185,7 @@ final class AdminRoleAccessTest extends WebTestCase
             AdminPermission::PAGES_VIEW_REVISIONS,
             AdminPermission::SEO_EDIT,
             AdminPermission::SEO_APPROVE,
+            AdminPermission::PORTFOLIO_VIEW,
         ]];
         yield 'manager' => ['ROLE_MANAGER', [
             AdminPermission::LEADS_VIEW,

@@ -933,22 +933,22 @@ AI-агент **обязан** читать документацию по пра
 | Доменная модель                             | `docs/05-domain-model.md`, `docs/10-domain-layer.md`                                         |
 | Структура модулей                           | `docs/06-module-architecture.md`, `docs/43-module-development-guide.md`                      |
 | Roadmap / extension points                  | `docs/45-roadmap-and-extension-points.md`                                                    |
-| Запуск / install / local dev                | `docs/33-local-development.md`, `docs/INSTALL.md`, `README.md`                                |
-| Deployment / VPS                            | `docs/34-deployment.md`, `docs/37-runbooks.md`, `docs/35-cicd.md`, `docs/DEPLOY.md`          |
+| Запуск / install / local dev                | `docs/33-local-development.md`, `README.md`                                |
+| Deployment / VPS                            | `docs/34-deployment.md`, `docs/37-runbooks.md`, `docs/35-cicd.md`                            |
 | Backups                                     | `docs/36-backup-restore.md`                                                                  |
 | Database schema                             | `docs/17-doctrine-and-database.md`, `docs/18-migrations.md`, `docs/05-domain-model.md`       |
 | API контракт                                | `docs/14-api-area.md`, `docs/30-error-handling.md`                                           |
 | SEO behavior                                | `docs/26-seo-architecture.md`                                                                |
 | Admin behavior / редактор                   | `docs/12-admin-area.md`, `docs/ADMIN_GUIDE.md`, `docs/CONTENT_EDITOR_GUIDE.md`               |
-| Security / RBAC                             | `docs/20-security-and-access-control.md`, `docs/ROLES.md`                                    |
+| Security / RBAC                             | `docs/20-security-and-access-control.md`                                    |
 | Cache                                       | `docs/23-cache.md`                                                                 |
 | Messenger / queues                          | `docs/24-messenger-and-queues.md`, `docs/37-runbooks.md`                                     |
-| Files / uploads                             | `docs/25-files-and-uploads.md`, `docs/UPLOAD_SECURITY.md`                                    |
-| Env / config                                | `docs/27-config-and-env.md`, `.env.example`, `docs/DEPLOY_VARIABLES.md`                      |
+| Files / uploads                             | `docs/25-files-and-uploads.md`                                    |
+| Env / config                                | `docs/27-config-and-env.md`, `.env.local.example`                      |
 | Logging / observability                     | `docs/28-logging-observability.md`                                                           |
 | Healthchecks                                | `docs/29-healthchecks.md`                                                                    |
 | Error handling                              | `docs/30-error-handling.md`                                                                  |
-| Testing strategy                            | `docs/31-testing-strategy.md`, `docs/TESTING.md`                                              |
+| Testing strategy                            | `docs/31-testing-strategy.md`                                              |
 | Coding standards                            | `docs/38-coding-standards.md`                                                                |
 | AI / Cursor правила                         | `docs/39-agent-guide.md`, `docs/40-cursor-rules.md`                                          |
 | Troubleshooting                             | `docs/44-troubleshooting.md`                                                                 |

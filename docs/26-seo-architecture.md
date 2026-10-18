@@ -16,7 +16,7 @@
 
 1. **Публичный сайт всегда SSR.** Робот Google/Yandex получает готовый HTML без необходимости исполнять JS. Никакой SPA для публичной зоны.
 2. **URL — контракт с поисковиком.** Любая смена `Page.path` сопровождается `Redirect 301` со старого пути на новый.
-3. **Только опубликованный + индексируемый контент попадает в `sitemap.xml`.** Drafts/archived/soft-deleted — никогда.
+3. **Только опубликованный + индексируемый + публичный контент попадает в `sitemap.xml`.** Drafts/archived/soft-deleted и страницы с видимостью «скрытая» или «по ссылке» — никогда.
 4. **Один URL — одна каноническая страница.** Дубли по querystring, trailing slash, host вариантам — резолвятся через canonical и/или 301.
 5. **Robots зависит от окружения.** На staging/preview всегда `Disallow: /`. На production — управляемый.
 6. **Admin/API/Dev-зоны не индексируются никогда.** На уровне роутинга, response-header (`X-Robots-Tag: noindex,nofollow`), `<meta>` и nginx (для dev).
@@ -133,8 +133,8 @@
 | Переменная Twig | Источник |
 |---|---|
 | `meta_description` | `page.metaDescription` |
-| `meta_robots` | `'index, follow'` или `'noindex, nofollow'` (на основе `page.isIndexable`) |
-| `canonical_url` | `page.canonicalUrl` или `absolute_url` от `page.path` |
+| `meta_robots` | `'index, follow'` или `'noindex, nofollow'` (на основе `page.isIndexable`: флаг индексации и видимость «публичная») |
+| `canonical_url` | `page.canonicalUrl` или `absolute_url` от текущего `Page.path` (не от адреса в snapshot ревизии) |
 | `og_type`, `og_title`, `og_description`, `og_image` | соответствующие поля `Page`, с fallback'ами |
 | `json_ld_blocks` | базовый `SchemaOrgBuilder::webPage()` + редакторские `page.jsonLd` блоки |
 

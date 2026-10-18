@@ -1,7 +1,17 @@
 {# Первый экран. Если страница начинается с него, он выводит H1 страницы (page_h1); иначе — заголовок из поля title. #}
 {% set heading = page_h1 ?? (block.content.title ?? block.name) %}
 {% set eyebrow = page_h1 is not empty and (block.content.title ?? '') is not empty and block.content.title != page_h1 ? block.content.title : '' %}
-{% set lines = (block.content.text ?? '')|split("\n")|map(line => line|trim|trim('-•– '))|filter(line => line is not empty) %}
+{# Маркер «–», «•» или «-» в начале строки убирается посимвольно (slice): побайтовый trim с маской «–•» портил кириллицу. #}
+{% set lines = [] %}
+{% for raw in (block.content.text ?? '')|split("\n") %}
+    {% set line = raw|trim %}
+    {% if line starts with '–' or line starts with '•' or line starts with '-' %}
+        {% set line = line|slice(1)|trim %}
+    {% endif %}
+    {% if line is not empty %}
+        {% set lines = lines|merge([line]) %}
+    {% endif %}
+{% endfor %}
 {% set cta = block.content.cta ?? {} %}
 {% set cta_href = (cta.href ?? '') in ['', '#', '#lead'] ? '#lead-form' : cta.href %}
 {% set image = block.content.image ?? '' %}

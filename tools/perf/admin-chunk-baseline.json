@@ -1,7 +1,9 @@
 {
-  "admin-entry": 289874,
-  "page-editor-route": 4434,
-  "rich-text-runtime": 166144,
-  "vendor-tiptap": 188303,
-  "vendor-prosemirror": 234527
+  "admin-initial": 467615,
+  "admin-entry": 236252,
+  "vendor-react": 194958,
+  "page-editor-route": 57106,
+  "rich-text-runtime": 107542,
+  "vendor-tiptap": 185476,
+  "vendor-prosemirror": 230600
 }

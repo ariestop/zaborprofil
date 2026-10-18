@@ -54,4 +54,5 @@
 - Никаких прямых `fetch` в route-level страницах без уважительной причины.
 - Любые повторяемые query/mutation должны иметь общий helper и query key.
 - Ошибки 401/403/404/422/500 обрабатываются через единый тип `ApiError`.
+- `401` и ответ после редиректа (форма входа) означают истёкшую сессию: клиент бросает `ApiError` со статусом `401` и вызывает `notifySessionExpired()`; уведомление показывает `SessionExpiredNotice`.
 - Server validation ошибки должны прокидываться в RHF через `applyServerValidationErrors`.

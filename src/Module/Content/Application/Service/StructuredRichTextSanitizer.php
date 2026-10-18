@@ -19,7 +19,8 @@ use Symfony\Component\HtmlSanitizer\HtmlSanitizerInterface;
  */
 final readonly class StructuredRichTextSanitizer
 {
-    private const string ALLOWED_TAGS = '<p><br><strong><b><em><i><u><ul><ol><li><h2><h3><h4><blockquote><a><span>';
+    // Те же теги, что у app.rich_text_sanitizer (config/packages/html_sanitizer.yaml): иначе этот шаг вырезал бы их раньше.
+    private const string ALLOWED_TAGS = '<p><br><strong><b><em><i><u><ul><ol><li><h2><h3><h4><blockquote><a><span><sup><sub>';
 
     public function __construct(
         #[Target('app.rich_text_sanitizer')]

@@ -4,7 +4,7 @@
  */
 import { applyLeadPlan } from './leadForm'
 
-const DESKTOP_NAV_QUERY = '(min-width: 1024px)'
+const DESKTOP_NAV_QUERY = '(min-width: 1280px)'
 
 export function initMobileNav(root: ParentNode = document): void {
     const toggle = root.querySelector<HTMLButtonElement>('[data-nav-toggle]')
@@ -22,23 +22,138 @@ export function initMobileNav(root: ParentNode = document): void {
         iconOpen?.classList.toggle('hidden', open)
         iconClose?.classList.toggle('hidden', !open)
         document.documentElement.classList.toggle('overflow-hidden', open)
+        if (open) {
+            panel.querySelector<HTMLElement>('button[data-nav-close]')?.focus()
+        }
     }
 
     toggle.addEventListener('click', () => setOpen(panel.hidden))
     panel.addEventListener('click', (event) => {
-        if ((event.target as HTMLElement).closest('a') !== null) {
+        const target = event.target as HTMLElement
+        if (target.closest('[data-nav-close]') !== null) {
+            setOpen(false)
+            toggle.focus()
+        } else if (target.closest('a') !== null) {
             setOpen(false)
         }
     })
     document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && !panel.hidden) {
+        if (panel.hidden) {
+            return
+        }
+        if (event.key === 'Escape') {
             setOpen(false)
             toggle.focus()
+
+            return
+        }
+        // Фокус не уходит за панель: Tab с последнего элемента — на первый, Shift+Tab с первого — на последний.
+        if (event.key === 'Tab') {
+            const items = Array.from(
+                panel.querySelectorAll<HTMLElement>('a[href], button:not([disabled])'),
+            )
+            const first = items[0]
+            const last = items[items.length - 1]
+            if (first === undefined || last === undefined) {
+                return
+            }
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault()
+                last.focus()
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault()
+                first.focus()
+            }
         }
     })
     window.matchMedia?.(DESKTOP_NAV_QUERY).addEventListener('change', (event) => {
         if (event.matches) {
             setOpen(false)
+        }
+    })
+}
+
+/**
+ * Выпадающие списки разделов в шапке (вариант меню B). Открываются кликом, наведением мыши и с клавиатуры
+ * (Enter, пробел, стрелка вниз); закрываются по Esc, клику мимо и уходу фокуса. Одновременно открыт один список.
+ */
+export function initNavDropdowns(root: ParentNode = document): void {
+    const groups = Array.from(root.querySelectorAll<HTMLElement>('[data-nav-group]'))
+    const entries = groups.flatMap((group) => {
+        const trigger = group.querySelector<HTMLButtonElement>('[data-nav-trigger]')
+        const dropdown = group.querySelector<HTMLElement>('[data-nav-dropdown]')
+
+        return trigger !== null && dropdown !== null ? [{ group, trigger, dropdown }] : []
+    })
+    if (entries.length === 0) {
+        return
+    }
+
+    const hoverable = window.matchMedia?.('(hover: hover) and (pointer: fine)').matches ?? false
+    let closeTimer: number | undefined
+
+    const links = (dropdown: HTMLElement): HTMLAnchorElement[] =>
+        Array.from(dropdown.querySelectorAll<HTMLAnchorElement>('a[href]'))
+
+    const setOpen = (entry: (typeof entries)[number], open: boolean): void => {
+        if (open) {
+            entries.filter((other) => other !== entry).forEach((other) => setOpen(other, false))
+        }
+        entry.dropdown.hidden = !open
+        entry.trigger.setAttribute('aria-expanded', String(open))
+    }
+
+    const closeAll = (): void => entries.forEach((entry) => setOpen(entry, false))
+
+    for (const entry of entries) {
+        const { group, trigger, dropdown } = entry
+
+        // Мышью список уже открыт наведением — клик его не закрывает; с клавиатуры (detail 0) и пальцем клик переключает.
+        trigger.addEventListener('click', (event) =>
+            setOpen(entry, hoverable && event.detail > 0 ? true : dropdown.hidden),
+        )
+        trigger.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowDown') {
+                event.preventDefault()
+                setOpen(entry, true)
+                links(dropdown)[0]?.focus()
+            }
+        })
+        dropdown.addEventListener('keydown', (event) => {
+            const items = links(dropdown)
+            const index = items.indexOf(document.activeElement as HTMLAnchorElement)
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                event.preventDefault()
+                const step = event.key === 'ArrowDown' ? 1 : -1
+                items[(index + step + items.length) % items.length]?.focus()
+            }
+        })
+        group.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && !dropdown.hidden) {
+                setOpen(entry, false)
+                trigger.focus()
+            }
+        })
+        group.addEventListener('focusout', (event) => {
+            if (!group.contains(event.relatedTarget as Node | null)) {
+                setOpen(entry, false)
+            }
+        })
+
+        if (hoverable) {
+            group.addEventListener('mouseenter', () => {
+                window.clearTimeout(closeTimer)
+                setOpen(entry, true)
+            })
+            group.addEventListener('mouseleave', () => {
+                closeTimer = window.setTimeout(() => setOpen(entry, false), 150)
+            })
+        }
+    }
+
+    document.addEventListener('click', (event) => {
+        if (!entries.some(({ group }) => group.contains(event.target as Node))) {
+            closeAll()
         }
     })
 }
@@ -351,23 +466,31 @@ export function initOfficeStatus(root: ParentNode = document, now: Date = new Da
 }
 
 /** Кнопки «скопировать» у адреса и реквизитов: копируют в буфер и на секунду меняют вид кнопки. */
+/** Копирует текст в буфер; без Clipboard API (старый браузер, http) — через скрытое поле. Возвращает успех. */
+export async function copyText(value: string): Promise<boolean> {
+    try {
+        await navigator.clipboard.writeText(value)
+
+        return true
+    } catch {
+        const field = document.createElement('textarea')
+        field.value = value
+        field.setAttribute('readonly', '')
+        field.style.position = 'fixed'
+        field.style.opacity = '0'
+        document.body.append(field)
+        field.select()
+        const copied = document.execCommand('copy')
+        field.remove()
+
+        return copied
+    }
+}
+
 export function initCopyButtons(root: ParentNode = document): void {
     root.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((button) => {
         button.addEventListener('click', async () => {
-            const value = button.dataset.copy ?? ''
-            try {
-                await navigator.clipboard.writeText(value)
-            } catch {
-                const field = document.createElement('textarea')
-                field.value = value
-                field.setAttribute('readonly', '')
-                field.style.position = 'fixed'
-                field.style.opacity = '0'
-                document.body.append(field)
-                field.select()
-                document.execCommand('copy')
-                field.remove()
-            }
+            await copyText(button.dataset.copy ?? '')
             const label = button.getAttribute('aria-label') ?? ''
             button.dataset.copied = 'true'
             button.setAttribute('aria-label', 'Скопировано')
@@ -484,6 +607,8 @@ export function initPriceMatrices(root: ParentNode = document): void {
             const more = panel.querySelector<HTMLButtonElement>('[data-pm-more]')
             const moreWrap = panel.querySelector<HTMLElement>('[data-pm-more-wrap]')
             const limit = Number(list?.dataset.pmLimit ?? 0)
+            // Подпись строк группы: «Профиль» у профнастила, «Высота панели» у 3D забора.
+            const rowsLabel = panel.dataset.pmRowsLabel?.trim() || 'Профиль'
             let expanded = false
 
             const render = (): void => {
@@ -520,13 +645,13 @@ export function initPriceMatrices(root: ParentNode = document): void {
                     const order = option.querySelector<HTMLElement>('[data-pm-order]')
                     if (order !== null) {
                         const details = order.dataset.details ?? ''
-                        order.dataset.leadPlan = `${order.dataset.title ?? ''}${details !== '' ? ` (${details})` : ''}, профиль ${row}`
+                        order.dataset.leadPlan = `${order.dataset.title ?? ''}${details !== '' ? ` (${details})` : ''}, ${rowsLabel.toLocaleLowerCase('ru')} ${row}`
                     }
                 })
 
                 if (count !== null) {
                     count.textContent =
-                        shown > 0 ? `Профиль ${row}: ${pluralizeOptions(shown)}` : ''
+                        shown > 0 ? `${rowsLabel} ${row}: ${pluralizeOptions(shown)}` : ''
                 }
                 if (moreWrap !== null && more !== null) {
                     const hiddenCount = limit > 0 && !expanded ? Math.max(0, shown - limit) : 0

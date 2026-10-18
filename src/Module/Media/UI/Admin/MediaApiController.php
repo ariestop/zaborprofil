@@ -5,17 +5,15 @@ declare(strict_types=1);
 namespace App\Module\Media\UI\Admin;
 
 use App\Module\Auth\Domain\Security\AdminPermission;
-use App\Module\Media\Application\Service\MediaOptimizer;
+use App\Module\Media\Application\Upload\MediaUploadHandler;
 use App\Module\Media\Application\Usage\MediaUsageFinder;
 use App\Module\Media\Application\Usage\MediaUsageIndex;
 use App\Module\Media\Application\Usage\MediaUsageReference;
 use App\Module\Media\Domain\Entity\MediaAsset;
 use App\Module\Media\Domain\Repository\MediaAssetRepositoryInterface;
-use App\Shared\Infrastructure\Upload\UploadValidator;
 use App\Shared\UI\Http\AdminApiErrorResponder;
 use App\Shared\UI\Http\AdminApiResponses;
 use InvalidArgumentException;
-use RuntimeException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -28,10 +26,9 @@ final readonly class MediaApiController
 {
     public function __construct(
         private MediaAssetRepositoryInterface $assets,
-        private UploadValidator $uploadValidator,
+        private MediaUploadHandler $uploads,
         private AuthorizationCheckerInterface $authorizationChecker,
         private string $mediaUploadDir,
-        private MediaOptimizer $mediaOptimizer,
         private AdminApiErrorResponder $errors,
         private MediaUsageFinder $usageFinder,
     ) {
@@ -113,51 +110,15 @@ final readonly class MediaApiController
                 return $this->errors->validation('Uploaded file exceeds the allowed size.', 'FILE_TOO_LARGE');
             }
 
-            $validated = $this->uploadValidator->validate($file);
-            $folder = MediaAsset::normalizeFolder($this->optionalFormString($request, 'folder'));
-            $fileHash = hash_file('sha256', $file->getPathname());
-            if ($fileHash === false) {
-                throw new RuntimeException('Uploaded file hash cannot be calculated.');
-            }
-
-            $duplicate = $this->assets->findOneByFileHash($fileHash);
-            if ($duplicate instanceof MediaAsset) {
-                return new JsonResponse($duplicate->toArray() + [
+            $result = $this->uploads->upload($file, $this->optionalFormString($request, 'folder'));
+            if ($result->duplicate) {
+                return new JsonResponse($result->asset->toArray() + [
                     'duplicate' => true,
-                    'usageCount' => $this->usageFinder->index()->count($duplicate),
+                    'usageCount' => $this->usageFinder->index()->count($result->asset),
                 ]);
             }
 
-            if (!is_dir($this->mediaUploadDir) && !mkdir($this->mediaUploadDir, 0775, true) && !is_dir($this->mediaUploadDir)) {
-                throw new RuntimeException('Media upload directory cannot be created.');
-            }
-            $storedFile = $file->move($this->mediaUploadDir, $validated->safeFilename);
-            $publicPath = '/uploads/media/'.$validated->safeFilename;
-            $optimized = $this->mediaOptimizer->optimize(
-                $storedFile->getPathname(),
-                $publicPath,
-                $validated->mimeType,
-                $validated->width,
-                $validated->height,
-            );
-
-            $asset = new MediaAsset(
-                $file->getClientOriginalName(),
-                $validated->safeFilename,
-                $publicPath,
-                $validated->mimeType,
-                $optimized->size,
-                $optimized->width,
-                $optimized->height,
-                $optimized->variants,
-                $fileHash,
-            );
-            if ($folder !== null) {
-                $asset->updateMetadata(null, null, null, $folder);
-            }
-            $this->assets->save($asset);
-
-            return new JsonResponse($asset->toArray() + ['duplicate' => false, 'usageCount' => 0], 201);
+            return new JsonResponse($result->asset->toArray() + ['duplicate' => false, 'usageCount' => 0], 201);
         } catch (Throwable $exception) {
             return $this->errors->fromThrowable($exception, 'Admin Media API');
         }

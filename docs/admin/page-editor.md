@@ -35,11 +35,12 @@
 - **Контент** — рабочее место блоков: структура страницы, предпросмотр «как на сайте» и поля выбранного блока (подробно — [page-builder](page-builder.md)). Вкладка занимает всю ширину экрана (`fullBleed` в `route-config.ts`), остальные вкладки — карточка шириной до `max-w-5xl`.
 - **SEO** — `metaTitle`, `metaDescription` со счётчиками длины, превью сниппета (из B1), canonical, OG-заголовок/описание/изображение (MediaPicker из C1), JSON-LD (только в расширенном режиме) и SEO-аудит страницы.
 - **Настройки** — название, H1, тип, шаблон, slug, path, родитель, порядок, видимость, индексация и быстрые смены статуса (вернуть в черновик, снять с публикации, в архив, удалить).
+  Адрес, видимость и индексация опубликованной страницы действуют сразу после сохранения, без переопубликации; что значит каждое значение видимости, подсказано под полем (подробно — [CONTENT_ENGINE](../CONTENT_ENGINE.md)).
 - **История** — ревизии, сравнение с текущей версией и восстановление выбранной версии.
 
 Шапка: название и статус страницы, адрес (`path`), ссылка «К списку страниц», индикатор сохранения, кнопки «Предпросмотр», «Сохранить» (также `Ctrl/Cmd+S`), «Опубликовать» и меню «Другие действия со страницей» (стрелка рядом с «Опубликовать»): «Публикация и расписание…», «Сохранить страницу как шаблон» (право `pages.manage_templates`) и «Режим JSON (для разработчика)».
 
-Слоты для публикационного workflow (D1) расположены в `admin/features/page-editor/slots.tsx`: `PagePublishingSlot` (шапка) и `PageRevisionsSlot` (вкладка «История»). Реализация D1 подключена в этих компонентах из `admin/features/publishing/`: пункт меню «Публикация и расписание…» открывает панель workflow (`PagePublishingSlot` с `hideTrigger` и `openSignal`; перед открытием сохраняются правки), вкладка «История» дополнена сравнением ревизий с текущей версией. Подробности: [50-publishing-workflow](../50-publishing-workflow.md).
+Слот публикационного workflow (D1) — `PagePublishingSlot` в `admin/features/page-editor/slots.tsx`: пункт меню «Публикация и расписание…» открывает панель workflow (`hideTrigger` и `openSignal`; перед открытием сохраняются правки). Вкладка «История версий» (`RevisionsTab`) — один список `RevisionHistory` из `admin/features/publishing/` со сравнением ревизии с текущей версией и откатом. Подробности: [50-publishing-workflow](../50-publishing-workflow.md).
 
 ## Сохранение и автосохранение
 
@@ -51,6 +52,7 @@
 - Невалидные данные автосохранением не отправляются: индикатор показывает ошибку, пока поле не будет исправлено.
 - «Опубликовать» и «Предпросмотр» сначала сохраняют все накопленные правки. Предпросмотр открывает окно синхронно по клику (чтобы его не блокировал браузер) и затем перенаправляет его на подписанную ссылку `GET /preview-link`.
 - Серверные ошибки валидации (`422`) подсвечиваются на полях, а редактор переключается на вкладку с ошибкой.
+- Новый блок получает id в браузере, а сервер при первом сохранении — свой ULID. Редактор запоминает соответствие и в следующих `PUT /builder` отправляет серверный id (`admin/features/page-editor/block-ids.ts`), иначе сервер удалял бы блок и создавал заново при каждом сохранении. В самом редакторе id не меняются: от них зависят React-ключи, и смена перемонтировала бы открытый редактор текста.
 
 ## Защита от потери правок
 
@@ -61,7 +63,7 @@
 
 ## Конфликты правок и восстановление черновика (D2)
 
-**Оптимистичная блокировка блоков.** `GET /builder` и ответ `PUT /builder` содержат поле `version` — хэш содержимого блоков (`BuilderDocumentVersion`: id, тип, порядок, включённость, `content`, `settings`; не зависит от порядка ключей JSON и служебных меток времени). Редактор запоминает версию и отправляет её в `PUT /builder` как `baseVersion`. Если блоки успели изменить в другой вкладке или другим пользователем, backend отвечает `409` с кодом `EDIT_CONFLICT` и актуальными `version` и `updatedAt`, ничего не записывая. Без `baseVersion` проверка не выполняется (обратная совместимость для скриптов и старых клиентов).
+**Оптимистичная блокировка блоков.** `GET /builder` и ответ `PUT /builder` содержат поле `version` — хэш содержимого блоков (`BuilderDocumentVersion`: id, тип, имя, порядок, включённость, `content`, `settings`; не зависит от порядка ключей JSON и служебных меток времени). Редактор запоминает версию и отправляет её в `PUT /builder` как `baseVersion`. Если блоки успели изменить в другой вкладке или другим пользователем, backend отвечает `409` с кодом `EDIT_CONFLICT` и актуальными `version` и `updatedAt`, ничего не записывая. Без `baseVersion` проверка не выполняется (обратная совместимость для скриптов и старых клиентов). Проверка и запись идут в одной транзакции под блокировкой строки страницы (`PageRepositoryInterface::getForUpdate()`, `SELECT … FOR UPDATE`): второе почти одновременное сохранение с той же `baseVersion` ждёт фиксации первого и получает `409`, а не затирает его правки.
 
 В редакторе конфликт открывает диалог «Страница изменена другим пользователем»:
 
@@ -94,6 +96,6 @@
 
 - Vitest: `admin/features/page-editor/*.spec.ts(x)` (форма и схема, индикатор, автосохранение с fake timers, LeaveGuard, переключение вкладок, рабочее место блоков `ContentTab.spec.tsx`), `admin/features/page-editor/workspace/*.spec.ts`, `admin/routes/route-config.spec.ts`.
 - Playwright (`tests/e2e/admin-smoke.spec.ts`): создание страницы → правка SEO → сохранение → предпросмотр → предупреждение при уходе; старый URL `/builder` → «Добавить блок» → заполнение полей → сохранение; DnD блоков в структуре.
-- PHPUnit (MySQL 8.4): `tests/Functional/Content/AdminContentApiTest.php`, `tests/Functional/Content/PageEditConflictApiTest.php` (версия, `409 EDIT_CONFLICT`, edit-lock), `tests/Unit/Content/BuilderDocumentVersionTest.php`, `tests/Unit/Content/PageEditLockServiceTest.php`.
+- PHPUnit (MySQL 8.4): `tests/Functional/Content/AdminContentApiTest.php`, `tests/Functional/Content/PageEditConflictApiTest.php` (версия, `409 EDIT_CONFLICT`, edit-lock), `tests/Unit/Content/BuilderDocumentVersionTest.php`, `tests/Unit/Content/PageEditLockServiceTest.php`, `tests/Integration/Content/BuilderSaveRowLockTest.php` (блокировка строки страницы при сохранении).
 
 Ключевые модули: `admin/features/page-editor/*`, `admin/features/pages-list/*`, `admin/pages/PageEditorPage.tsx`, `admin/pages/PageCreatePage.tsx`, `admin/pages/PagesPage.tsx`, `admin/entities/page/api.ts`.

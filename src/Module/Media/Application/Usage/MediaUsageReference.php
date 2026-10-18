@@ -12,6 +12,7 @@ final readonly class MediaUsageReference
     public const string TYPE_CATEGORY = 'category';
     public const string TYPE_MENU_ITEM = 'menu_item';
     public const string TYPE_SETTING = 'setting';
+    public const string TYPE_PORTFOLIO = 'portfolio';
 
     /**
      * @param string      $path      публичный путь файла в `/uploads/media/...`, найденный в источнике

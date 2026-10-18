@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Functional\Admin;
 
-use App\Module\User\Infrastructure\Doctrine\Entity\AdminUser;
+use App\Module\User\Domain\Entity\AdminUser;
 use App\Tests\Support\Database\SchemaTestHelper;
 use Doctrine\ORM\EntityManagerInterface;
 use LogicException;
@@ -47,6 +47,7 @@ final class AdminSpaShellTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('#admin-app');
         self::assertSelectorExists('meta[name="admin-csrf-token"]');
+        self::assertSelectorNotExists('[data-callbar]');
     }
 
     public function testAnonymousUserIsRedirectedToLoginForAdminShellRoute(): void
@@ -122,6 +123,8 @@ final class AdminSpaShellTest extends WebTestCase
         yield 'page detail' => ['/admin/pages/demo-page'];
         yield 'builder' => ['/admin/pages/demo-page/builder'];
         yield 'media' => ['/admin/media'];
+        yield 'portfolio' => ['/admin/portfolio'];
+        yield 'portfolio project' => ['/admin/portfolio/01hzportfolio0000000000000'];
         yield 'seo' => ['/admin/seo'];
         yield 'crm' => ['/admin/crm'];
         yield 'settings' => ['/admin/settings'];
