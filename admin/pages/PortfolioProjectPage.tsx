@@ -135,7 +135,7 @@ function ProjectForm({ project, initialCategoryId }: { project: PortfolioProject
       })
       if (project === null) {
         bypass()
-        navigate(`/admin/portfolio/${result.id}`, { replace: true })
+        void navigate(`/admin/portfolio/${result.id}`, { replace: true })
       }
       return result
     } catch (error) {

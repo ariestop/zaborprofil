@@ -148,7 +148,7 @@ export default function CrmPage() {
     const firstId = items[0]?.id
     useEffect(() => {
         if (!selected && firstId !== undefined && isDesktop()) {
-            navigate(leadHref(firstId), { replace: true })
+            void navigate(leadHref(firstId), { replace: true })
         }
     }, [selected, firstId, navigate, leadHref])
 
@@ -166,7 +166,7 @@ export default function CrmPage() {
                 : Math.min(items.length - 1, Math.max(0, currentIndex + step))
         const next = items[nextIndex]
         if (next !== undefined && next.id !== leadId) {
-            navigate(leadHref(next.id))
+            void navigate(leadHref(next.id))
         }
     }
 
@@ -197,7 +197,7 @@ export default function CrmPage() {
         if (selected && lead.id === leadId && !statusMatchesTab(params.status, status)) {
             const index = items.findIndex((item) => item.id === lead.id)
             const neighbour = items[index + 1] ?? items[index - 1]
-            navigate(neighbour === undefined ? listHref : leadHref(neighbour.id), { replace: true })
+            void navigate(neighbour === undefined ? listHref : leadHref(neighbour.id), { replace: true })
         }
     }
 
@@ -548,7 +548,7 @@ export default function CrmPage() {
                     setCreateOpen(false)
                     push({ title: 'Заявка создана', description: name })
                     setSearchText('')
-                    navigate(`/admin/crm/${id}`)
+                    void navigate(`/admin/crm/${id}`)
                 }}
             />
         </>

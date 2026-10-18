@@ -328,7 +328,7 @@ export default function DashboardPage() {
                 onCreated={(id, name) => {
                     setCreateOpen(false)
                     push({ title: 'Заявка создана', description: name })
-                    navigate(`/admin/crm/${id}`)
+                    void navigate(`/admin/crm/${id}`)
                 }}
             />
         </>

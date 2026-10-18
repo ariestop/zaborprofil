@@ -29,7 +29,7 @@ beforeEach(() => {
   apiRequest.mockReset()
   apiRequest.mockImplementation((url: string, options?: { method?: string, body?: Record<string, unknown> }) => {
     if (url === '/admin/api/menu/items' && options?.method === 'POST') {
-      return Promise.resolve(item('new', String(options.body?.label ?? ''), 30))
+      return Promise.resolve(item('new', (options.body?.label as string | undefined) ?? '', 30))
     }
     if (url === '/admin/api/menu/items') {
       return Promise.resolve({ items, positions: [{ value: 'header', label: 'Шапка сайта' }, { value: 'footer', label: 'Подвал' }, { value: 'service', label: 'Верхняя строка' }] })

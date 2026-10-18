@@ -17,21 +17,28 @@ import {
 import { initPortfolioGalleries, initPortfolioRows, initPortfolioViewToggle } from './portfolio'
 import { initPortfolioLikes, initPortfolioShare, initPortfolioTracks } from './portfolio-social'
 
+/** Значение текстового поля формы; файл или отсутствующее поле дают fallback. */
+function field(data: FormData, name: string, fallback = ''): string {
+    const value = data.get(name)
+
+    return typeof value === 'string' ? value : fallback
+}
+
 function formPayload(form: HTMLFormElement): Record<string, unknown> {
     const data = new FormData(form)
 
     return {
-        source: String(data.get('source') ?? 'public_page_form'),
-        name: String(data.get('name') ?? '').trim(),
-        phone: String(data.get('phone') ?? '').trim(),
-        email: String(data.get('email') ?? '') || null,
-        message: String(data.get('message') ?? '').trim() || null,
+        source: field(data, 'source', 'public_page_form'),
+        name: field(data, 'name').trim(),
+        phone: field(data, 'phone').trim(),
+        email: field(data, 'email') || null,
+        message: field(data, 'message').trim() || null,
         consent: data.get('consent') === 'on',
-        consentText: String(data.get('consentText') ?? ''),
-        website: String(data.get('website') ?? ''),
-        formLoadedAt: String(data.get('formLoadedAt') ?? ''),
-        pageUrl: String(data.get('pageUrl') || window.location.href),
-        policyUrl: String(data.get('policyUrl') ?? '/privacy/'),
+        consentText: field(data, 'consentText'),
+        website: field(data, 'website'),
+        formLoadedAt: field(data, 'formLoadedAt'),
+        pageUrl: field(data, 'pageUrl') || window.location.href,
+        policyUrl: field(data, 'policyUrl', '/privacy/'),
         utm: collectUtm(),
     }
 }
