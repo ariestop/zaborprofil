@@ -8,10 +8,10 @@
 
 | Сервис | Образ | Назначение | Порт хоста |
 |---|---|---|---|
-| `app` | build `docker/php/Dockerfile` (`php:8.5-fpm-bookworm`) | PHP-FPM + Composer + Symfony | через nginx |
+| `app` | build `docker/php/Dockerfile` (`php:8.5-fpm-bookworm`, Node.js 26.12.0, Composer 2.10.3 из `composer/composer:2.10.3-bin`) | PHP-FPM + Composer + Symfony | через nginx |
 | `nginx` | `nginx:1.30.0-alpine` | Web server | `80` (`HTTP_PORT`) |
 | `mysql` | `mysql:8.4` | БД (InnoDB, utf8mb4, `utf8mb4_0900_ai_ci`; конфиг `docker/mysql/my.cnf`, init — `docker/mysql/init.sh`) | `13306` (`MYSQL_PORT`) |
-| `node` | build `docker/node/Dockerfile` (`node:25.9.0-bookworm`) | Vite/npm | dev server `5173` (`VITE_PORT`) |
+| `node` | build `docker/node/Dockerfile` (`node:26.12.0-bookworm`) | Vite/npm | dev server `5173` (`VITE_PORT`) |
 | `mailpit` | `axllent/mailpit:latest` | SMTP test inbox | `8025` (`MAILPIT_PORT`) |
 | `adminer` | `adminer:latest` | UI для MySQL (default server `mysql`) | `8080` (`ADMINER_PORT`) |
 

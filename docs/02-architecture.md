@@ -177,7 +177,7 @@ System_Boundary(s, "zaborprofil") {
     Container(worker, "Messenger Worker", "PHP CLI", "Async jobs")
     ContainerDb(mysql, "MySQL", "8.4", "Контент, messenger_messages")
     ContainerDb(fscache, "Filesystem cache", "var/cache/<env>/pools/app", "Cache pools, native PHP sessions в var/sessions")
-    Container(node, "Vite build", "Node 25.9", "Pre-build assets, dev only")
+    Container(node, "Vite build", "Node 26.12", "Pre-build assets, dev only")
     Container(smtp, "SMTP / Mailpit", "", "Письма")
     Container(tg, "Telegram bot", "", "Critical alerts")
 }

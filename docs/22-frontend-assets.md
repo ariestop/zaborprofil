@@ -2,12 +2,13 @@
 
 ## Стек
 
-- **Vite 7** — bundler.
+- **Vite 8** — bundler.
 - **React 19 + TypeScript** — admin SPA.
 - **Tailwind CSS 4** + `@tailwindcss/typography` (конфигурация в CSS, без `tailwind.config.ts`).
-- **TypeScript 5.8**, `tsc --noEmit` для типов.
+- **TypeScript 6.0**, `tsc --noEmit` для типов.
 - **PostCSS** с плагином `@tailwindcss/postcss` (префиксы добавляет сам Tailwind 4).
-- **Node.js >= 25.9.0**, npm >= 11.12.1.
+- **Node.js >= 26.12.0**, npm >= 11.20.0 (поле `engines` в `package.json`).
+- **Vitest 3.2** + jsdom 30 для unit-тестов, ESLint 10.
 
 См. [ADMIN_FRONTEND.md](ADMIN_FRONTEND.md) для деталей admin shell.
 
@@ -152,6 +153,16 @@ npm run build
 - [ ] CSP проверен, если добавляются inline-handlers.
 - [ ] `tsc --noEmit` не ругается.
 - [ ] Цвета, шрифты, логотип и компоненты соответствуют [50-brand-system](50-brand-system.md) (чек-лист в разделе 13).
+
+## Обновление зависимостей (октябрь 2026)
+
+Все npm-пакеты обновлены до последних версий, `package-lock.json` пересобран с нуля. Осознанные исключения и решения:
+
+- **TypeScript 6.0, а не 7.** `@typescript-eslint` 8.x поддерживает TypeScript `<6.1`; переходить на 7.x — после выхода совместимого `typescript-eslint`.
+- **Vitest 3.2.7, а не 5.x.** В Vitest 4+ coverage-v8 считает ветви по AST: на том же коде branches падает с 81% до 58% при пороге 70% (`vitest.config.ts`). Порог не понижается; переход на Vitest 5 — отдельным решением вместе с пересчётом порогов. Для Vitest 3 оставлен override `tinypool ^2.1.2` (закрывает critical-advisory); moderate-advisory `@vitest/mocker` касается только тестового окружения.
+- **Override `postcss-selector-parser ^7.1.6` для `@tailwindcss/typography`** — закрывает moderate-advisory (квадратичный разбор селекторов).
+- **TanStack Table 9.** `DataTable` (`admin/shared/ui/data-table.tsx`) переведён на `useTable` с явными features (`rowPaginationFeature` + `createPaginatedRowModel`). Колонки создаются через `createColumnHelper<DataTableFeatures, T>()`. Сортировка v8 не подключалась к UI и убрана.
+- **TypeScript 6 DOM-типы:** `HTMLElement.hidden` теперь `boolean | "until-found"`, поэтому сравнение — `hidden !== false`.
 
 ## Связанные документы
 

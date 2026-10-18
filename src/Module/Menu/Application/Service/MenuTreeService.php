@@ -66,7 +66,7 @@ final readonly class MenuTreeService
                     throw new InvalidArgumentException('Пункт с подпунктами нельзя вложить в другой пункт: сначала перенесите подпункты.');
                 }
 
-                $item->place($position, $parent, $input->sortOrder ?? ($moved ? $this->nextSortOrder($position, $parent) : $item->sortOrder()));
+                $item->place($position, $parent, $input->sortOrder ?? $this->nextSortOrder($position, $parent));
                 // Раздел переносится в другую позицию вместе с подпунктами.
                 foreach ($children as $child) {
                     $child->place($position, $item->id(), $child->sortOrder());

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createColumnHelper } from '@tanstack/react-table'
-import { PageHeader, Card, Input, Select, Button, DataTable, ErrorState, PageLoadingState, ConfirmDialog, Dialog } from '../shared/ui'
+import { PageHeader, Card, Input, Select, Button, DataTable, type DataTableFeatures, ErrorState, PageLoadingState, ConfirmDialog, Dialog } from '../shared/ui'
 import {
   useAdminUsersQuery,
   useChangeOwnPasswordMutation,
@@ -180,7 +180,7 @@ export default function UsersPage() {
     }
   }
 
-  const columnHelper = createColumnHelper<AdminUserItem>()
+  const columnHelper = createColumnHelper<DataTableFeatures, AdminUserItem>()
   const availableRoles = usersQuery.data?.availableRoles ?? []
   const roleOptions = availableRoles.map((role) => ({ value: role, label: roleLabel(role) }))
   const columns = [

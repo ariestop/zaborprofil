@@ -1757,7 +1757,7 @@ Mutating-изменения **разбиваются** на серию additive-
 
 ### 24.10 Не путать local Docker и production VPS
 
-- Версии в Docker = версии прода (PHP 8.5+, MySQL 8.4+, Node 25.9+, Nginx 1.30+).
+- Версии в Docker = версии прода (PHP 8.5+, MySQL 8.4+, Node 26.12+, Nginx 1.30+).
 - Конфиги (Nginx, PHP-FPM) — не общие. Local — упрощённый, prod — собранный из `deploy/*`.
 
 ### 24.11 Связанные документы
@@ -1928,7 +1928,7 @@ client → Nginx :443 → static? yes → отдать; нет → fastcgi_pass 
 
 ### 27.4 Node / npm version
 
-- Node 25.9+, npm 11.12+.
+- Node 26.12+, npm 11.20+.
 - `setup-node` action с фиксированной версией.
 - `npm ci` (а не `npm install`) для воспроизводимости.
 
@@ -2508,7 +2508,7 @@ cache.<name>:
 
 - `docker-compose.yml` — все сервисы поднимаются после `make build && make up`.
 - Не использовать в prod.
-- Версии образов жёсткие (`mysql:8.4`, `nginx:1.30.0-alpine`, `node:25.9.0-bookworm`, `php:8.5-fpm-bookworm`).
+- Версии образов жёсткие (`mysql:8.4`, `nginx:1.30.0-alpine`, `node:26.12.0-bookworm`, `php:8.5-fpm-bookworm`).
 
 ### 32.16 P16. Новый модуль
 

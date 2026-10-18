@@ -53,9 +53,7 @@ final readonly class AssetBuildApiController
             return AdminApiResponses::badRequest('Invalid JSON payload.');
         }
 
-        if ($payload === null) {
-            $payload = [];
-        }
+        $payload ??= [];
 
         if (!\is_array($payload)) {
             return AdminApiResponses::badRequest('Invalid request payload.');

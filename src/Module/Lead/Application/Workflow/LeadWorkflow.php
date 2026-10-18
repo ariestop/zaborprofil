@@ -141,7 +141,7 @@ final readonly class LeadWorkflow
                 ?? throw new InvalidArgumentException('Assignee must be an active user who can work with leads.');
         }
 
-        $newId = $assignee === null ? null : $assignee->id;
+        $newId = $assignee?->id;
         $oldId = $lead->assigneeId() === null ? null : (string) $lead->assigneeId();
         if ($newId === $oldId) {
             return $lead;

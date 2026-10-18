@@ -1,4 +1,4 @@
-FROM node:25.9.0-bookworm
+FROM node:26.12.0-bookworm
 
 RUN install -d -o root -g root /var/www/html
 

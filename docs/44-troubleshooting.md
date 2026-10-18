@@ -22,7 +22,7 @@ Native Linux: `apt install php8.5-mysql` (пакет содержит `pdo_mysql
 
 ### `npm install` падает на `tailwindcss/typography`
 
-См. [33-local-development](33-local-development.md). Решение — `npm install` после `node -v >= 25.9.0`.
+См. [33-local-development](33-local-development.md). Решение — `npm install` после `node -v >= 26.12.0`.
 
 ### `Cannot find module '@tailwindcss/typography'` в IDE
 
