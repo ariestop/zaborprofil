@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 import { ApiError, apiRequest } from '../shared/api/client'
 import type { AssetBuildStatus } from '../types/api'
 
@@ -319,8 +319,15 @@ export default function AssetBuildWidget() {
         }).format(new Date(value))
     }
 
-    useEffect(() => {
+    // useEffectEvent: эффекты видят свежие функции, но перезапускаются только от своих зависимостей.
+    const onMount = useEffectEvent(() => {
         void loadStatus()
+    })
+    const onWidgetStateChange = useEffectEvent(() => persistWidgetState())
+    const onBuildStatusChange = useEffectEvent(() => scheduleReloadAfterSuccess())
+
+    useEffect(() => {
+        onMount()
         return () => {
             stopPolling()
             if (reloadTimer.current !== null) {
@@ -330,11 +337,11 @@ export default function AssetBuildWidget() {
     }, [])
 
     useEffect(() => {
-        persistWidgetState()
+        onWidgetStateChange()
     }, [isExpanded, isCollapsed])
 
     useEffect(() => {
-        scheduleReloadAfterSuccess()
+        onBuildStatusChange()
     }, [status.status, shouldReloadAfterBuild])
 
     useEffect(() => {

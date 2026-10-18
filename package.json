@@ -16,7 +16,7 @@
     "test:frontend:coverage": "vitest run --coverage",
     "test:e2e:smoke": "playwright test tests/e2e/admin-smoke.spec.ts",
     "test:e2e": "playwright test",
-    "lint:admin": "oxlint --type-aware admin/app admin/routes admin/layouts admin/pages admin/modules admin/features admin/entities admin/widgets admin/shared",
+    "lint:admin": "oxlint --type-aware admin",
     "lint:site": "oxlint --type-aware assets",
     "lint:frontend": "oxlint --type-aware assets admin",
     "check:chunks": "node tools/perf/check-admin-chunks.mjs",
