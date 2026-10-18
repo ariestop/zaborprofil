@@ -48,6 +48,7 @@ import { LinkIcon } from "@/components/tiptap-icons/link-icon"
 import { useIsBreakpoint } from "@/hooks/use-is-breakpoint"
 import { useWindowSize } from "@/hooks/use-window-size"
 import { useCursorVisibility } from "@/hooks/use-cursor-visibility"
+import { useRefRect } from "@/hooks/use-element-rect"
 
 // --- Styles ---
 import "@/components/tiptap-templates/simple/simple-editor.scss"
@@ -184,20 +185,19 @@ export function SimpleEditor({ content, onChange }: SimpleEditorProps) {
     },
   })
 
+  // Высота тулбара измеряется хуком (на телефоне тулбар закрывает курсор), а не чтением ref в рендере.
+  const toolbarRect = useRefRect(toolbarRef, { enabled: isMobile })
   const rect = useCursorVisibility({
     editor,
-    overlayHeight: toolbarRef.current?.getBoundingClientRect().height ?? 0,
+    overlayHeight: toolbarRect.height,
   })
 
   useEffect(() => {
     document.documentElement.classList.remove("dark")
   }, [])
 
-  useEffect(() => {
-    if (!isMobile && mobileView !== "main") {
-      setMobileView("main")
-    }
-  }, [isMobile, mobileView])
+  // На широком экране мобильный экран ссылки не показывается — без setState в эффекте.
+  const toolbarView = isMobile ? mobileView : "main"
 
   useEffect(() => {
     if (!editor) {
@@ -215,15 +215,9 @@ export function SimpleEditor({ content, onChange }: SimpleEditorProps) {
       <EditorContext.Provider value={{ editor }}>
         <Toolbar
           ref={toolbarRef}
-          style={{
-            ...(isMobile
-              ? {
-                  bottom: `calc(100% - ${height - rect.y}px)`,
-                }
-              : {}),
-          }}
+          style={isMobile ? { bottom: `calc(100% - ${height - rect.y}px)` } : {}}
         >
-          {mobileView === "main" ? (
+          {toolbarView === "main" ? (
             <MainToolbarContent
               onLinkClick={() => setMobileView("link")}
               isMobile={isMobile}
