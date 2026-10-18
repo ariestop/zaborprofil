@@ -38,6 +38,7 @@
 | `DATABASE_URL` | `mysql://user:pass@host:3306/db?serverVersion=8.4&charset=utf8mb4` | везде |
 | `MESSENGER_TRANSPORT_DSN` | `doctrine://default?auto_setup=0` (prod) | везде |
 | `MAILER_DSN` | `smtp://...` или `null://null` для dev без почты | везде |
+| `MAILER_FROM` | отправитель писем сайта, например `"Сайт zaborprofil.ru <noreply@zaborprofil.ru>"`; адрес должен быть разрешён SMTP-серверу (SPF/DKIM домена). Без отправителя Symfony Mailer письма не отправляет | везде |
 | `SITE_URL` | `https://zaborprofil.ru` или `http://localhost` | везде |
 | `DEFAULT_URI` | `https://zaborprofil.ru` | для CLI генерации URL |
 
