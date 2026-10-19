@@ -163,7 +163,7 @@ npm run build
 - **Vitest 5, Vite 8, React 19.3** (отдельным шагом после первого обновления). В Vitest 4+ coverage-v8 считает ветви по AST: тот же код даёт 58% вместо 81% в Vitest 3. Порог branches в `vitest.config.ts` пересчитан с 70% на 58% по новому подсчёту (текущий уровень с округлением вниз: регресс покрытия по-прежнему валит проверку). Override `tinypool` больше не нужен — в Vitest 5 его нет. `vendor-react` с React 19.3 на Vite 8 — 203 КБ при бюджете 210 КБ.
 - **Override `postcss-selector-parser ^7.1.6` для `@tailwindcss/typography`** — закрывает moderate-advisory (квадратичный разбор селекторов).
 - **TanStack Table 9.** `DataTable` (`admin/shared/ui/data-table.tsx`) переведён на `useTable` с явными features (`rowPaginationFeature` + `createPaginatedRowModel`). Колонки создаются через `createColumnHelper<DataTableFeatures, T>()`. Сортировка v8 не подключалась к UI и убрана.
-- **TypeScript 6 DOM-типы:** `HTMLElement.hidden` теперь `boolean | "until-found"`, поэтому сравнение — `hidden !== false`.
+- **DOM-типы TypeScript 6+ (сейчас 7):** `HTMLElement.hidden` теперь `boolean | "until-found"`, поэтому сравнение — `hidden !== false`.
 
 ## Связанные документы
 
