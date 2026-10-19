@@ -1,7 +1,8 @@
 import type { LeadItem, LeadStatus } from '../../types/api'
 
 export type LeadSortField = 'createdAt' | 'updatedAt' | 'name' | 'status' | 'source'
-export type LeadAssigneeFilter = 'all' | 'me' | 'none' | string
+// `string & {}` — id менеджера; так литералы не поглощаются типом string и остаются в подсказках.
+export type LeadAssigneeFilter = 'all' | 'me' | 'none' | (string & {})
 
 export interface LeadFilters {
   q: string

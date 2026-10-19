@@ -4,7 +4,7 @@
 
 - PHP `>=8.5`. Используются: readonly properties, `final readonly class`, intersection / union types, enums, first-class callable, `#[Override]` (целевое 8.4+).
 - TypeScript `>=5.8`. `strict: true`.
-- Node `>=25.9.0`.
+- Node `>=26.12.0`.
 
 ## Стиль PHP
 
@@ -117,7 +117,7 @@ final class CreatePageHandler
 
 - `strict: true`.
 - Файлы UI-компонентов админки — `*.tsx`.
-- ESLint + Prettier (целевое — пока через `tsc --noEmit`).
+- Oxlint (`.oxlintrc.json`, проверки по типам через `oxlint-tsgolint`) + `tsc --noEmit` (TypeScript 7); Prettier — `npm run format:check`.
 - API клиент типизирован, не `any`.
 
 ## Имена коммитов

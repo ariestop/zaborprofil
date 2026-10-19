@@ -44,7 +44,7 @@
 #### Frontend job
 
 1. Checkout.
-2. Setup Node 25.9.0.
+2. Setup Node 26.12.0.
 3. `npm ci`.
 4. `npm audit --audit-level=high`.
 5. `npm run typecheck`.
@@ -77,7 +77,7 @@
 - Триггеры: push в ветку `dev` и `workflow_dispatch` (вход `ref`).
 - `concurrency: deploy-staging-beget` (`cancel-in-progress: false`), environment `staging`.
 - Две задачи. `build` — без секретов (код выкладываемой ветки, `npm ci` с install-скриптами пакетов, сторонние actions): быстрые проверки и сборка frontend, архив передаётся артефактом на 1 день. `deploy` — environment `staging`, только скрипты `tools/deploy` из коммита workflow и готовый архив; секреты (`DEPLOY_*`, `STAGING_BASIC_AUTH`) передаются в `env` только тех шагов, где нужны. Checkout без `persist-credentials`.
-- Шаги: проверка наличия секретов (`DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`; без них деплой пропускается с предупреждением), быстрые проверки (`php -l`, `bash -n`), сборка frontend (Node 25.9.0) в `frontend-build.tar.gz`, загрузка архива и запуск `tools/deploy/deploy-beget.sh` через SSH stdin, smoke-check (без пароля 401, с `STAGING_BASIC_AUTH` — 200 и `X-Robots-Tag: noindex`; для временно открытого staging — анонимный 200 с `noindex`, `robots.txt` `Disallow: /` и закрытый `/admin`, с предупреждением) и прогрев публичных страниц. На сервере: MySQL 8.4 (`pdo_mysql`), файловый кэш в `shared/cache`, сессии в `shared/sessions`, Redis не нужен.
+- Шаги: проверка наличия секретов (`DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`; без них деплой пропускается с предупреждением), быстрые проверки (`php -l`, `bash -n`), сборка frontend (Node 26.12.0) в `frontend-build.tar.gz`, загрузка архива и запуск `tools/deploy/deploy-beget.sh` через SSH stdin, smoke-check (без пароля 401, с `STAGING_BASIC_AUTH` — 200 и `X-Robots-Tag: noindex`; для временно открытого staging — анонимный 200 с `noindex`, `robots.txt` `Disallow: /` и закрытый `/admin`, с предупреждением) и прогрев публичных страниц. На сервере: MySQL 8.4 (`pdo_mysql`), файловый кэш в `shared/cache`, сессии в `shared/sessions`, Redis не нужен.
 - Полный CI не ждёт: он запускается отдельным workflow `CI` (push в `dev` и PR в `dev` включены).
 - Production этим workflow не деплоится.
 
@@ -102,7 +102,7 @@ Concurrency: `deploy-${{ github.ref }}; cancel-in-progress: false`.
 #### Job `build-frontend`
 
 - Зависит от `verify-ci`.
-- Setup Node 25.9.0, `npm ci`, `npm run build` (включает `tsc --noEmit`).
+- Setup Node 26.12.0, `npm ci`, `npm run build` (включает `tsc --noEmit`).
 - Упаковывает `public_html/build/` и файл `BUILD_COMMIT` (SHA сборки) в `frontend-build.tar.gz` и сохраняет как artifact `frontend-build`.
 - Один и тот же архив уходит и на staging, и на production: собирается один раз, на VPS Node.js не нужен.
 

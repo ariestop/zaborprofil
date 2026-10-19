@@ -45,7 +45,7 @@ beforeEach(() => {
   apiRequest.mockReset()
   apiRequest.mockImplementation((url: string, options?: { method?: string, body?: Record<string, unknown> }) => {
     if (url === '/admin/api/content/pages' && options?.method === 'POST') {
-      return Promise.resolve(makePageItem({ id: 'page-new', title: String(options.body?.title ?? '') }))
+      return Promise.resolve(makePageItem({ id: 'page-new', title: (options.body?.title as string | undefined) ?? '' }))
     }
     if (url === '/admin/api/content/pages') {
       return Promise.resolve({ pages })

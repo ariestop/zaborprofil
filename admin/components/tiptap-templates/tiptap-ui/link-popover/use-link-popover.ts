@@ -107,18 +107,14 @@ export function shouldShowLinkButton(props: {
  */
 export function useLinkHandler(props: LinkHandlerProps) {
   const { editor, onSetLink } = props
-  const [url, setUrl] = useState<string | null>(null)
+  const [draftUrl, setUrl] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!editor) return
-
-    // Get URL immediately on mount
-    const { href } = editor.getAttributes("link")
-
-    if (isLinkActive(editor) && url === null) {
-      setUrl(href || "")
-    }
-  }, [editor, url])
+  // Пока адрес не вводили, показываем href активной ссылки — вычисляется в рендере, без эффекта.
+  const url =
+    draftUrl ??
+    (editor && isLinkActive(editor)
+      ? ((editor.getAttributes("link").href as string | undefined) || "")
+      : null)
 
   useEffect(() => {
     if (!editor) return
@@ -195,7 +191,7 @@ export function useLinkState(props: {
   editor: Editor | null
   hideWhenUnavailable: boolean
 }) {
-  const { editor, hideWhenUnavailable = false } = props
+  const { editor, hideWhenUnavailable } = props
 
   const canSet = canSetLink(editor)
   const isActive = isLinkActive(editor)

@@ -122,7 +122,7 @@ export function SliderEditor({ block, onChange }: SliderEditorProps) {
                 <p className="mt-1 text-graphite dark:text-slate-300">
                     Первый слайд сейчас:{' '}
                     <span className="font-semibold">
-                        {String(firstSlide.title ?? '(без title)')}
+                        {typeof firstSlide.title === 'string' && firstSlide.title !== '' ? firstSlide.title : '(без title)'}
                     </span>
                     .
                 </p>

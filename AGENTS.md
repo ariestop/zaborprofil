@@ -12,8 +12,9 @@
 Минимальные зафиксированные версии runtime:
 
 - PHP `>=8.5`
-- Node.js `>=25.9.0`
-- npm `>=11.12.1` (поставляется с Node.js 25.9.0)
+- Node.js `>=26.12.0`
+- npm `>=11.20.0` (поставляется с Node.js 26.12.0)
+- Composer `>=2.10.3` (в Docker — из образа `composer/composer:2.10.3-bin`, в CI — `tools: composer:2.10.3`)
 - nginx `>=1.30.0`
 - MySQL `>=8.4` (InnoDB, utf8mb4)
 - Redis не используется: кэш приложения — файловый (Symfony `cache.adapter.filesystem`)
@@ -25,7 +26,8 @@
 - Symfony Security, Messenger, Validator, Serializer, Mailer
 - Twig для публичного SSR
 - Tailwind CSS (`@tailwindcss/typography`), Vite
-- React + TypeScript для админ-панели
+- React + TypeScript 7 для админ-панели
+- Oxlint (`.oxlintrc.json`) — линтер TS/React вместо ESLint
 - PHPUnit, PHPStan, PHP-CS-Fixer, Rector
 
 Docker используется только для local development. Staging и production должны оставаться native VPS stack: Nginx, PHP-FPM, MySQL, systemd и Git-based release deploy.

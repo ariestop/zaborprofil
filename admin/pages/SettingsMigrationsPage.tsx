@@ -3,7 +3,7 @@ import { useDialog } from '../app/providers/dialog-provider'
 import { useToast } from '../app/providers/toast-provider'
 import { useApplyMigrationMutation, useRollbackMigrationMutation, useSettingsMigrationsQuery } from '../entities/settings/api'
 import { ApiError } from '../shared/api/client'
-import { Badge, Button, Card, DataTable, ErrorState, PageHeader, PageLoadingState } from '../shared/ui'
+import { Badge, Button, Card, DataTable, type DataTableFeatures, ErrorState, PageHeader, PageLoadingState } from '../shared/ui'
 import type { MigrationItem } from '../types/api'
 
 export default function SettingsMigrationsPage() {
@@ -12,7 +12,7 @@ export default function SettingsMigrationsPage() {
   const rollbackMigration = useRollbackMigrationMutation()
   const { confirm } = useDialog()
   const { push } = useToast()
-  const columnHelper = createColumnHelper<MigrationItem>()
+  const columnHelper = createColumnHelper<DataTableFeatures, MigrationItem>()
 
   const columns = [
     columnHelper.accessor('version', { header: 'Версия' }),

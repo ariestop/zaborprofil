@@ -57,8 +57,8 @@ AI-агент обязан:
 - Nginx >= 1.30.0
 - PHP >= 8.5
 - Symfony >= 8.1
-- Node.js >= 25.9.0
-- npm >= 11.12.1
+- Node.js >= 26.12.0
+- npm >= 11.20.0
 - MySQL >= 8.4 (InnoDB, utf8mb4)
 - кэш: Symfony Cache на файловой системе (`cache.adapter.filesystem`), Redis не используется
 

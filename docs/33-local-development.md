@@ -29,8 +29,8 @@ sudo apt install -y make
 Native (без Docker, опционально, для OSPanel/диагностики):
 
 - PHP 8.5 + extensions `ctype, iconv, intl, mbstring, pdo_mysql`.
-- Composer 2.
-- Node.js 25.9.0 / npm 11.12.1.
+- Composer 2.10.3.
+- Node.js 26.12.0 / npm 11.20.0.
 - MySQL 8.4.
 
 ## Первый запуск (Docker)
@@ -238,7 +238,7 @@ make npm-dev          # vite на :5173
 - Cursor / VS Code:
   - PHP Intelephense / Phpactor;
   - Twig syntax;
-  - ESLint / TypeScript;
+  - Oxc (Oxlint) / TypeScript;
   - Volar для Vue.
 
 ## Pre-commit (целевое)

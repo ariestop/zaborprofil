@@ -1,7 +1,8 @@
 FROM php:8.5-fpm-bookworm
 
-COPY --from=node:25.9.0-bookworm /usr/local/bin/node /usr/local/bin/node
-COPY --from=node:25.9.0-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
+COPY --from=node:26.12.0-bookworm /usr/local/bin/node /usr/local/bin/node
+COPY --from=node:26.12.0-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
+COPY --from=composer/composer:2.10.3-bin /composer /usr/local/bin/composer
 
 ARG UID=1000
 ARG GID=1000
@@ -23,7 +24,6 @@ RUN apt-get update \
     && docker-php-ext-install intl pdo_mysql zip \
     && pecl install xdebug \
     && docker-php-ext-enable xdebug \
-    && curl -fsSL https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
     && curl -1sLf https://dl.cloudsmith.io/public/symfony/stable/setup.deb.sh | bash \
     && apt-get install -y --no-install-recommends symfony-cli \
     && ln -sf /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
