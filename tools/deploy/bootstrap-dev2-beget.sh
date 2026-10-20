@@ -34,16 +34,13 @@ candidate_dir="$APP_DIR"
 if [[ ! -f "$APP_DIR/.env.local" ]]; then
   candidate_dir="$config_dir"
 fi
-(
-  APP_DIR="$candidate_dir"
-  staging_preflight
-  [[ "$(env_value SITE_URL || true)" == https://dev2.zaborprofil.ru ]] || fail "Неверный SITE_URL dev2."
-  [[ "$(env_value DEFAULT_URI || true)" == https://dev2.zaborprofil.ru ]] || fail "Неверный DEFAULT_URI dev2."
-  dev2_db="$(env_value DATABASE_URL || true)"
-  dev1_db="$(APP_DIR="$dev1_dir" env_value DATABASE_URL || true)"
-  [[ -n "$dev1_db" ]] || fail "Не найдена конфигурация dev для проверки разделения БД."
-  [[ "$(database_name_from_url "$dev1_db")" != "$(database_name_from_url "$dev2_db")" ]] || fail "dev2 должна использовать отдельную БД."
-)
+APP_DIR="$candidate_dir" staging_preflight
+[[ "$(APP_DIR="$candidate_dir" env_value SITE_URL || true)" == https://dev2.zaborprofil.ru ]] || fail "Неверный SITE_URL dev2."
+[[ "$(APP_DIR="$candidate_dir" env_value DEFAULT_URI || true)" == https://dev2.zaborprofil.ru ]] || fail "Неверный DEFAULT_URI dev2."
+dev2_db="$(APP_DIR="$candidate_dir" env_value DATABASE_URL || true)"
+dev1_db="$(APP_DIR="$dev1_dir" env_value DATABASE_URL || true)"
+[[ -n "$dev1_db" ]] || fail "Не найдена конфигурация dev для проверки разделения БД."
+[[ "$(database_name_from_url "$dev1_db")" != "$(database_name_from_url "$dev2_db")" ]] || fail "dev2 должна использовать отдельную БД."
 
 if [[ ! -d "$APP_DIR/.git" ]]; then
   # Сохраняем только известные стартовые файлы хостинга; произвольный сайт не перезаписываем.
