@@ -85,8 +85,20 @@ jobs:
           cd ..
           bash -n tooling/tools/deploy/deploy-beget.sh
           bash -n tooling/tools/deploy/check-dev2-beget.sh
+          bash -n tooling/tools/deploy/bootstrap-dev2-beget.sh
+          shellcheck -x tooling/tools/deploy/bootstrap-dev2-beget.sh
           shellcheck -x tooling/tools/deploy/check-dev2-beget.sh tooling/tests/shell/check-dev2-beget.sh
           bash tooling/tests/shell/check-dev2-beget.sh
+          config_probe="$(mktemp)"
+          DEV2_DATABASE_URL='mysql://sample:encoded%40password@localhost:3306/dev2_probe?serverVersion=8.4&charset=utf8mb4' DEV2_BASIC_AUTH='preview:test-only' php tooling/tools/deploy/create-dev2-env.php "$config_probe"
+          grep -qx 'APP_ENV=staging' "$config_probe"
+          grep -qx 'STAGING_AUTH_ENABLED=1' "$config_probe"
+          test "$(stat -c '%a' "$config_probe")" = 600
+          if DEV2_DATABASE_URL='invalid' DEV2_BASIC_AUTH='preview:test-only' php tooling/tools/deploy/create-dev2-env.php "$config_probe" 2>/dev/null; then
+            echo "::error::Invalid database URL was accepted"
+            exit 1
+          fi
+          rm -f -- "$config_probe"
 
       - name: Setup Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -143,7 +155,7 @@ jobs:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           STAGING_PATH: ${{ secrets.DEV2_STAGING_PATH || vars.DEV2_STAGING_PATH || '~/dev2.zaborprofil.ru' }}
-          HAS_BASIC_AUTH: ${{ secrets.DEV2_STAGING_BASIC_AUTH != '' }}
+          HAS_BASIC_AUTH: ${{ (secrets.DEV2_STAGING_BASIC_AUTH != '' || secrets.STAGING_BASIC_AUTH != '') }}
         run: |
           set -euo pipefail
           missing=()
@@ -219,6 +231,36 @@ jobs:
           EOF
           chmod 600 ~/.ssh/config
 
+      - name: Setup PHP for private configuration
+        if: steps.config.outputs.configured == 'true'
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        with:
+          php-version: '8.5'
+          coverage: none
+
+      - name: Bootstrap independent dev2 application
+        if: steps.config.outputs.configured == 'true'
+        env:
+          DEV2_DATABASE_URL: ${{ secrets.DEV2_DATABASE_URL }}
+          DEV2_BASIC_AUTH: ${{ secrets.DEV2_STAGING_BASIC_AUTH || secrets.STAGING_BASIC_AUTH }}
+          STAGING_PATH: ${{ secrets.DEV2_STAGING_PATH || vars.DEV2_STAGING_PATH || '~/dev2.zaborprofil.ru' }}
+          DEV1_PATH: ${{ secrets.STAGING_PATH || vars.STAGING_PATH || '~/dev.zaborprofil.ru' }}
+        run: |
+          set -euo pipefail
+          umask 077
+          config_file="$(mktemp)"
+          trap 'rm -f -- "$config_file"' EXIT
+          php tooling/tools/deploy/create-dev2-env.php "$config_file"
+          remote_dir="\$HOME/.deploy-tmp/dev2-bootstrap-$BUILD_SHA"
+          # Секреты идут только по SSH stdin, не через аргументы команды или логи.
+          # shellcheck disable=SC2029
+          ssh deploy-target "umask 077 && mkdir -p \"$remote_dir\" && cat > \"$remote_dir/.env.local\"" <"$config_file"
+          remote_env="DEPLOY_SOURCE_ONLY=1 DEPLOY_PATH=$(printf '%q' "$STAGING_PATH")"
+          remote_env+=" DEV1_PATH=$(printf '%q' "$DEV1_PATH") BUILD_SHA=$BUILD_SHA"
+          remote_env+=" DEV2_CONFIG_DIR=\"$remote_dir\""
+          # shellcheck disable=SC2029
+          cat tooling/tools/deploy/deploy-beget.sh tooling/tools/deploy/bootstrap-dev2-beget.sh | ssh deploy-target "$remote_env bash -s"
+
       - name: Check independent dev2 environment
         if: steps.config.outputs.configured == 'true'
         env:
@@ -255,7 +297,7 @@ jobs:
       - name: Smoke check
         if: steps.config.outputs.configured == 'true'
         env:
-          STAGING_BASIC_AUTH: ${{ secrets.DEV2_STAGING_BASIC_AUTH }}
+          STAGING_BASIC_AUTH: ${{ secrets.DEV2_STAGING_BASIC_AUTH || secrets.STAGING_BASIC_AUTH }}
         run: |
           set -euo pipefail
           url="${STAGING_URL%/}"
@@ -319,7 +361,7 @@ jobs:
         if: steps.config.outputs.configured == 'true' && steps.config.outputs.basic_auth == 'true'
         continue-on-error: true
         env:
-          STAGING_BASIC_AUTH: ${{ secrets.DEV2_STAGING_BASIC_AUTH }}
+          STAGING_BASIC_AUTH: ${{ secrets.DEV2_STAGING_BASIC_AUTH || secrets.STAGING_BASIC_AUTH }}
         run: |
           url="${STAGING_URL%/}"
           for path in / /sitemap.xml /robots.txt; do
