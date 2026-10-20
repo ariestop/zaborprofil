@@ -42,6 +42,11 @@ dev1_db="$(APP_DIR="$dev1_dir" env_value DATABASE_URL || true)"
 [[ -n "$dev1_db" ]] || fail "Не найдена конфигурация dev для проверки разделения БД."
 [[ "$(database_name_from_url "$dev1_db")" != "$(database_name_from_url "$dev2_db")" ]] || fail "dev2 должна использовать отдельную БД."
 
+# Владелец разрешил доверять только этому проверенному каталогу dev2.
+if ! git config --global --get-all safe.directory | grep -Fxq -- "$app_real"; then
+  git config --global --add safe.directory "$app_real"
+fi
+
 if [[ ! -d "$APP_DIR/.git" ]]; then
   # Владелец подтвердил 2026-10-20: public_html dev2 содержит только заглушку.
   # Переносим её целиком в закрытую резервную папку, без удаления и обхода симлинков.
@@ -53,13 +58,26 @@ if [[ ! -d "$APP_DIR/.git" ]]; then
     [[ ! -L "$entry" && ( -f "$entry" || -d "$entry" ) ]] || fail "Необычный файл в public_html; первичная настройка остановлена."
   done < <(find "$APP_DIR/public_html" -mindepth 1 -maxdepth 1 -print0)
   backup_dir="$APP_DIR/.dev2-bootstrap-backup"
-  [[ ! -e "$backup_dir" ]] || fail "Найдена предыдущая резервная копия bootstrap; требуется проверка."
-  mkdir -m 700 "$backup_dir"
+  if [[ -e "$backup_dir" ]]; then
+    [[ -d "$backup_dir" && ! -L "$backup_dir" ]] || fail "Неверный каталог резервной копии."
+    [[ -z "$(find "$APP_DIR/public_html" -mindepth 1 -maxdepth 1 -print -quit)" ]] || fail "Повторный bootstrap: public_html должен быть пуст."
+  else
+    mkdir -m 700 "$backup_dir"
+  fi
   while IFS= read -r -d '' entry; do
     mv -- "$entry" "$backup_dir/"
   done < <(find "$APP_DIR/public_html" -mindepth 1 -maxdepth 1 -print0)
   git -C "$APP_DIR" init -q
-  git -C "$APP_DIR" remote add origin https://github.com/ariestop/zaborprofil.git
+fi
+
+# Продолжаем также после прерванного git init: резервную копию не трогаем.
+if ! git -C "$APP_DIR" rev-parse --verify HEAD >/dev/null 2>&1; then
+  origin="$(git -C "$APP_DIR" remote get-url origin 2>/dev/null || true)"
+  if [[ -z "$origin" ]]; then
+    git -C "$APP_DIR" remote add origin https://github.com/ariestop/zaborprofil.git
+  else
+    [[ "$origin" == https://github.com/ariestop/zaborprofil.git ]] || fail "Неожиданный origin dev2."
+  fi
   git -C "$APP_DIR" fetch --quiet --depth=1 origin "$sha"
   git -C "$APP_DIR" checkout --quiet -b staging-deployed "$sha"
   printf '%s\n' "dev2: git-клон подготовлен; стартовые файлы сохранены в .dev2-bootstrap-backup."
