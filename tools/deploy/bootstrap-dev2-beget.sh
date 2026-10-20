@@ -43,14 +43,14 @@ dev1_db="$(APP_DIR="$dev1_dir" env_value DATABASE_URL || true)"
 [[ "$(database_name_from_url "$dev1_db")" != "$(database_name_from_url "$dev2_db")" ]] || fail "dev2 должна использовать отдельную БД."
 
 if [[ ! -d "$APP_DIR/.git" ]]; then
-  # Сохраняем только известные стартовые файлы хостинга; произвольный сайт не перезаписываем.
+  # Владелец подтвердил 2026-10-20: public_html dev2 содержит только заглушку.
+  # Переносим её целиком в закрытую резервную папку, без удаления и обхода симлинков.
   while IFS= read -r -d '' entry; do
     case "${entry##*/}" in public_html|.env.local|.dev2-bootstrap-backup) ;; *) fail "Каталог dev2 содержит посторонние файлы; нужна проверка владельцем." ;; esac
   done < <(find "$APP_DIR" -mindepth 1 -maxdepth 1 -print0)
   mkdir -p "$APP_DIR/public_html"
   while IFS= read -r -d '' entry; do
-    case "${entry##*/}" in index.html|index.php|.htaccess|robots.txt|favicon.ico) ;; *) fail "public_html не пуст: исходные файлы сохранены, требуется проверка владельцем." ;; esac
-    [[ -f "$entry" && ! -L "$entry" ]] || fail "Необычный файл в public_html; первичная настройка остановлена."
+    [[ ! -L "$entry" && ( -f "$entry" || -d "$entry" ) ]] || fail "Необычный файл в public_html; первичная настройка остановлена."
   done < <(find "$APP_DIR/public_html" -mindepth 1 -maxdepth 1 -print0)
   backup_dir="$APP_DIR/.dev2-bootstrap-backup"
   [[ ! -e "$backup_dir" ]] || fail "Найдена предыдущая резервная копия bootstrap; требуется проверка."
