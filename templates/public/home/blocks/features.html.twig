@@ -1,0 +1,41 @@
+{% set items = (block.content.items ?? [])|filter(item => (item.title ?? '') is not empty) %}
+{% set project = portfolio_projects([], '', 1)|first %}
+{% set cover = project ? project.cover : null %}
+<section class="zp-home-craft" data-block-type="features">
+    <div class="zp-container zp-home-craft__grid">
+        <div class="zp-home-craft__copy">
+            <p class="zp-home-kicker">Конструкция и комплектация</p>
+            <h2>За внешним видом —<br>продуманная конструкция</h2>
+            <p class="zp-home-craft__intro">Покажем узлы и объясним, что входит в комплектацию вашего ограждения.</p>
+            <div class="zp-home-craft__topics">
+                <a href="#home-cost"><svg aria-hidden="true"><use href="#i-zp-fence"/></svg><span>Основание<br>и опоры</span></a>
+                <a href="#home-choice" data-home-choice><svg aria-hidden="true"><use href="#i-zp-shield"/></svg><span>Покрытие<br>и цвет</span></a>
+                <a href="#lead-form" data-lead-plan="Подбор ворот и калитки к ограждению"><svg aria-hidden="true"><use href="#i-zp-measure"/></svg><span>Ворота<br>и калитка</span></a>
+            </div>
+            <a class="zp-home-link" href="#home-cost">Из чего складывается стоимость <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+            {% if items is not empty %}
+                <details class="zp-home-craft__facts">
+                    <summary>{{ (block.content.title ?? '') ?: 'Как мы работаем с вашим заказом' }} <svg aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+                    <ul>
+                        {% for item in items %}
+                            <li><h3>{{ item.title }}</h3>{% if (item.text ?? '') is not empty %}<p>{{ item.text }}</p>{% endif %}</li>
+                        {% endfor %}
+                    </ul>
+                </details>
+            {% endif %}
+        </div>
+        {% if cover %}
+            <figure class="zp-home-craft__media">
+                {{ responsive_image(cover.src, {alt: cover.caption, fallback_alt: project.title, class: 'zp-home-photo', sizes: '(min-width: 1024px) 50vw, 100vw'}) }}
+                <figcaption><a href="{{ project.path }}">{{ project.title }} <span aria-hidden="true">↗</span></a></figcaption>
+            </figure>
+        {% else %}
+            <div class="zp-home-craft__guide">
+                <svg aria-hidden="true"><use href="#i-zp-measure"/></svg>
+                <h3>Начнём с размеров участка</h3>
+                <p>Длина, высота, расположение ворот и пожелания к внешнему виду помогут определить состав заказа.</p>
+                <a class="zp-btn zp-btn--outline-light" href="#lead-form">Обсудить комплектацию</a>
+            </div>
+        {% endif %}
+    </div>
+</section>

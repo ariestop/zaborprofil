@@ -187,6 +187,24 @@ final class PublicPortfolioTest extends WebTestCase
         self::assertSame('', trim($this->block(['category' => 'vorota'])), 'Пустой блок не выводится.');
     }
 
+    public function testHomeProjectsUsePublishedWorksAndPassContextToLeadForm(): void
+    {
+        $renderer = self::getContainer()->get(TwigBlockRenderer::class);
+        self::assertInstanceOf(TwigBlockRenderer::class, $renderer);
+        $html = $renderer->render(new PageBlockView('home-projects', 'portfolio-projects', 'Наши работы', 0, [
+            'projectIds' => [$this->projects['grafit'], $this->projects['chernovik']],
+            'limit' => 6,
+        ], []), homeDesign: true);
+
+        self::assertStringContainsString('class="zp-home-project"', $html, 'Используется шаблон главной.');
+        self::assertStringContainsString('src="/uploads/media/grafit-2.jpg"', $html, 'Обложка из реального проекта.');
+        self::assertStringContainsString('42 м', $html);
+        self::assertStringContainsString('Саратов', $html);
+        self::assertStringContainsString('data-lead-plan="Хочу похожий: Жалюзи графит — /portfolio/zabor-jaluzi/grafit/"', $html);
+        self::assertStringContainsString('href="#lead-form"', $html);
+        self::assertStringNotContainsString('chernovik', $html, 'Неопубликованный проект не появляется на главной.');
+    }
+
     private function html(string $path): string
     {
         $this->client->request('GET', $path);

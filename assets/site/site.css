@@ -5,6 +5,7 @@
 @import 'tailwindcss' source(none);
 @import '../shared/styles/theme.css';
 @import '../shared/styles/fonts.css';
+@import './home.css';
 
 /*
   Шкала текста публичного сайта по брендбуку (docs/50-brand-system.md, раздел 5):

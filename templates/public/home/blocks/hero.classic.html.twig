@@ -1,0 +1,40 @@
+{# SEO H1 и описание — из CMS. Крупная фраза задаёт визуальную идею утверждённой концепции №3. #}
+{% set image = block.content.image ?? '' %}
+{% set heading = page_h1 ?? (block.content.title ?? block.name) %}
+<section class="zp-hero zp-home-hero" data-block-type="hero.classic">
+    {% if image is not empty %}
+        {{ responsive_image(image, {
+            alt: block.content.imageAlt ?? null,
+            decorative: (block.content.imageAlt ?? '') is empty,
+            class: 'zp-home-hero__image',
+            sizes: '100vw',
+            priority: above_fold|default(false)
+        }) }}
+    {% endif %}
+    <div class="zp-container zp-home-hero__inner">
+        <div class="zp-home-hero__copy">
+            {% if page_h1 is not empty %}
+                <h1 class="zp-home-kicker">{{ heading }}</h1>
+            {% else %}
+                <h2 class="zp-home-kicker">{{ heading }}</h2>
+            {% endif %}
+            <p class="zp-home-hero__title">Хороший забор<br>видно в деталях</p>
+            {% if (block.content.subtitle ?? '') is not empty %}
+                <p class="zp-home-hero__description">{{ block.content.subtitle }}</p>
+            {% else %}
+                <p class="zp-home-hero__description">Подберём конструкцию, изготовим и установим ограждение на вашем участке.</p>
+            {% endif %}
+            <div class="zp-home-actions">
+                <a class="zp-btn zp-btn--primary" href="#home-choice" data-home-choice>Выбрать забор <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+                <a class="zp-btn zp-btn--outline-light" href="#lead-form" data-lead-cta>Получить расчёт <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+            </div>
+            <p class="zp-home-hero__note">Расчёт по размерам и комплектации вашего участка.</p>
+            {% if (block.content.text ?? '') is not empty %}
+                <details class="zp-home-hero__facts">
+                    <summary>Условия изготовления и доставки <svg aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+                    <p>{{ block.content.text|nl2br }}</p>
+                </details>
+            {% endif %}
+        </div>
+    </div>
+</section>

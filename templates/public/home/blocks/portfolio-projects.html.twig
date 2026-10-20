@@ -1,0 +1,54 @@
+{# Реальные опубликованные проекты из CMS: никаких демонстрационных размеров и сгенерированных объектов. #}
+{% set projects = portfolio_projects(block.content.projectIds ?? [], block.content.category ?? '', block.content.limit ?? 6) %}
+{% if projects is not empty %}
+<section class="zp-section zp-home-projects" data-block-type="portfolio-projects">
+    <div class="zp-container">
+        <div class="zp-home-section-head">
+            <div>
+                <p class="zp-home-kicker">Портфолио</p>
+                <h2 class="zp-h2">{{ (block.content.title ?? '') ?: 'Ограждения в архитектуре дома' }}</h2>
+                {% if (block.content.subtitle ?? '') is not empty %}<p class="zp-lead">{{ block.content.subtitle }}</p>{% endif %}
+            </div>
+            <a class="zp-home-link" href="/portfolio/">Все работы <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        </div>
+        <div class="zp-home-projects__grid">
+            {% for project in projects %}
+                {% set cover = project.cover %}
+                <article class="zp-home-project">
+                    <a class="zp-home-project__image" href="{{ project.path }}" aria-label="Посмотреть проект: {{ project.title }}">
+                        {% if cover %}
+                            {{ responsive_image(cover.src, {
+                                alt: cover.caption,
+                                fallback_alt: project.title,
+                                class: 'zp-home-photo',
+                                sizes: loop.first ? '(min-width: 1024px) 50vw, 100vw' : '(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw'
+                            }) }}
+                        {% else %}
+                            <span class="zp-home-project__empty">{{ project.category.shortTitle }}</span>
+                        {% endif %}
+                    </a>
+                    <div class="zp-home-project__body">
+                        <p class="zp-home-kicker">{{ project.category.shortTitle }}</p>
+                        <h3><a href="{{ project.path }}">{{ project.title }}</a></h3>
+                        {% if project.specs is not empty %}
+                            <ul class="zp-home-specs" aria-label="Характеристики проекта">
+                                {% for spec in project.specs|slice(0, 3) %}
+                                    <li><span>{{ spec.label }}:</span> {{ spec.value }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                        {% set place = [project.place, project.year]|filter(v => v)|join(' · ') %}
+                        {% if place %}<p class="zp-home-muted">{{ place }}</p>{% endif %}
+                        {% set excerpt = (project.summary ?? project.description)|pf_excerpt(130) %}
+                        {% if excerpt %}<p class="zp-home-project__summary">{{ excerpt }}</p>{% endif %}
+                        <div class="zp-home-project__actions">
+                            <a class="zp-home-link" href="{{ project.path }}">О проекте <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+                            <a class="zp-btn zp-btn--ghost" href="#lead-form" data-lead-plan="Хочу похожий: {{ project.title }} — {{ project.path }}" aria-label="Хочу похожий забор: {{ project.title }}">Хочу похожий <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+                        </div>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}

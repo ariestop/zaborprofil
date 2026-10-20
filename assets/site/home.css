@@ -1,0 +1,673 @@
+/*
+ * Главная, концепция №3 «Объекты и мастерство».
+ * Только токены «Периметра»; общие компоненты и внутренние страницы не переопределяются.
+ */
+@layer components {
+    .zp-home-page .zp-container {
+        max-width: 88rem;
+        padding-inline: clamp(1rem, 3vw, 3rem);
+    }
+    .zp-home-page .zp-header {
+        background: var(--color-night);
+        border-color: color-mix(in srgb, var(--color-surface) 16%, transparent);
+        backdrop-filter: none;
+    }
+    .zp-home-page .zp-nav__item {
+        color: var(--color-surface);
+    }
+    .zp-home-page .zp-nav__item:hover,
+    .zp-home-page .zp-nav__item[aria-expanded='true'] {
+        color: var(--color-ink);
+        background: var(--color-brand-100);
+    }
+    .zp-home-page .zp-header__phone,
+    .zp-home-page .zp-header .zp-burger {
+        color: var(--color-surface);
+        background: transparent;
+    }
+    .zp-home-page .zp-header__phone:hover,
+    .zp-home-page .zp-header .zp-burger:hover {
+        background: color-mix(in srgb, var(--color-surface) 12%, transparent);
+    }
+    .zp-home {
+        background: var(--color-surface);
+    }
+    .zp-home-group,
+    .zp-home [id] {
+        scroll-margin-top: 6rem;
+    }
+    .zp-home .zp-section {
+        padding-block: clamp(2.75rem, 5vw, 5rem);
+    }
+    .zp-home .zp-h2,
+    .zp-home-craft h2,
+    .zp-home-contact h2 {
+        font-size: clamp(1.75rem, 3.1vw, 2.75rem);
+        line-height: 1.15;
+        letter-spacing: -0.035em;
+        font-weight: 750;
+        text-wrap: balance;
+    }
+    .zp-home-kicker {
+        font-family: var(--font-cond);
+        font-size: 1.0625rem;
+        font-weight: 600;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+    }
+    .zp-home-section-head {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem 2rem;
+        margin-bottom: 2rem;
+    }
+    .zp-home-section-head .zp-home-kicker {
+        margin-bottom: 0.65rem;
+        color: var(--color-brand-700);
+    }
+    .zp-home-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.875rem;
+    }
+    .zp-home-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        min-height: 3rem;
+        font-size: 1.0625rem;
+        font-weight: 600;
+        color: var(--color-brand-700);
+        text-decoration: underline;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 0.3em;
+    }
+    .zp-home-link:hover {
+        color: var(--color-brand-900);
+    }
+    .zp-home-link svg,
+    .zp-home summary svg {
+        width: 1.25rem;
+        height: 1.25rem;
+        flex-shrink: 0;
+    }
+    .zp-home a:focus-visible,
+    .zp-home summary:focus-visible,
+    .zp-home-page .zp-header a:focus-visible,
+    .zp-home-page .zp-header button:focus-visible {
+        outline: 3px solid var(--color-focus);
+        outline-offset: 4px;
+        border-radius: var(--radius-btn);
+    }
+    .zp-home a,
+    .zp-home p,
+    .zp-home h3 {
+        overflow-wrap: anywhere;
+    }
+    .zp-home-photo {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .zp-home-muted {
+        color: var(--color-graphite);
+    }
+
+    /* Первый экран: настоящий снимок из CMS, контрастная подложка и один SEO H1. */
+    .zp-home .zp-home-hero {
+        background: var(--color-night);
+        color: var(--color-surface);
+    }
+    .zp-home-hero__image {
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 65% center;
+    }
+    .zp-home-hero::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background: color-mix(in srgb, var(--color-night) 40%, transparent);
+    }
+    .zp-home-hero__inner {
+        display: flex;
+        align-items: center;
+        min-height: min(48rem, 90svh);
+        padding-block: clamp(3rem, 6vw, 6rem);
+    }
+    .zp-home-hero__copy {
+        max-width: 48rem;
+        padding: clamp(1.25rem, 2.5vw, 2.5rem);
+        background: color-mix(in srgb, var(--color-night) 86%, transparent);
+        border-left: 3px solid var(--color-brand-300);
+    }
+    .zp-home-hero .zp-home-kicker {
+        margin-bottom: 1.25rem;
+        color: var(--color-brand-200);
+        line-height: 1.5;
+    }
+    .zp-home-hero__title {
+        margin: 0;
+        font-family: var(--font-heading);
+        font-size: clamp(2.125rem, 5vw, 4.75rem);
+        font-weight: 800;
+        letter-spacing: -0.045em;
+        line-height: 1.07;
+    }
+    .zp-home-hero__description {
+        max-width: 37rem;
+        margin-top: 1.5rem;
+        font-size: clamp(1.0625rem, 1.5vw, 1.375rem);
+        line-height: 1.6;
+    }
+    .zp-home-hero .zp-home-actions {
+        margin-top: 2rem;
+    }
+    .zp-home-hero__note {
+        margin-top: 1rem;
+        font-size: 1.0625rem;
+    }
+    .zp-home-hero__facts {
+        margin-top: 0.75rem;
+    }
+    .zp-home-hero__facts summary {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        min-height: 3rem;
+        cursor: pointer;
+        list-style: none;
+        color: var(--color-brand-200);
+    }
+    .zp-home-hero__facts p {
+        padding-block: 0.5rem;
+        line-height: 1.7;
+    }
+
+    /* Короткая навигация вместо второго рекламного блока. */
+    .zp-home-wayfinding {
+        background: var(--color-night);
+        color: var(--color-surface);
+    }
+    .zp-home-wayfinding .zp-container {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 2rem;
+    }
+    .zp-home-wayfinding a {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        min-height: 5rem;
+        border-bottom: 2px solid color-mix(in srgb, var(--color-surface) 28%, transparent);
+        padding-block: 0.8rem;
+    }
+    .zp-home-wayfinding a:hover {
+        border-color: var(--color-brand-300);
+    }
+    .zp-home-wayfinding span {
+        color: var(--color-brand-200);
+        font-family: var(--font-cond);
+        font-size: 1.4rem;
+    }
+
+    /* Отдельные ссылки проекта и заявки: растянутая ссылка не перекрывает кнопки. */
+    .zp-home-projects__grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 2.5rem 1.5rem;
+    }
+    .zp-home-project {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    .zp-home-project:first-child {
+        grid-column: span 2;
+    }
+    .zp-home-project__image {
+        display: block;
+        height: clamp(17rem, 27vw, 25rem);
+        overflow: hidden;
+        border-radius: var(--radius-card);
+        background: var(--color-surface-strong);
+    }
+    .zp-home-project__empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        padding: 1.5rem;
+        color: var(--color-graphite);
+    }
+    .zp-home-project__body {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        align-items: start;
+        gap: 0.65rem;
+        padding-top: 1.25rem;
+    }
+    .zp-home-project__body .zp-home-kicker {
+        color: var(--color-brand-700);
+    }
+    .zp-home-project h3,
+    .zp-home-product h3 {
+        font-size: clamp(1.25rem, 1.6vw, 1.5rem);
+        font-weight: 700;
+        line-height: 1.3;
+        letter-spacing: -0.02em;
+    }
+    .zp-home-project__summary {
+        color: var(--color-graphite);
+        line-height: 1.6;
+    }
+    .zp-home-project__actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem 1.25rem;
+        margin-top: auto;
+        padding-top: 0.5rem;
+    }
+    .zp-home-specs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem 1rem;
+        color: var(--color-graphite);
+        font-family: var(--font-cond);
+        font-size: 1.125rem;
+    }
+
+    .zp-home-craft {
+        background: var(--color-night);
+        color: var(--color-surface);
+    }
+    .zp-home-craft__grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: clamp(2rem, 4vw, 4rem);
+        padding-block: clamp(2.75rem, 4vw, 4rem);
+        align-items: center;
+    }
+    .zp-home-craft .zp-home-kicker,
+    .zp-home-contact .zp-home-kicker {
+        color: var(--color-brand-200);
+        margin-bottom: 1rem;
+    }
+    .zp-home-craft__intro {
+        max-width: 36rem;
+        margin-top: 1.25rem;
+        font-size: 1.125rem;
+        line-height: 1.65;
+    }
+    .zp-home-craft__topics {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+        margin-block: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid color-mix(in srgb, var(--color-surface) 28%, transparent);
+    }
+    .zp-home-craft__topics a {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.8rem;
+        min-height: 3rem;
+    }
+    .zp-home-craft__topics svg,
+    .zp-home-craft__guide > svg {
+        width: 2.75rem;
+        height: 2.75rem;
+        color: var(--color-brand-200);
+    }
+    .zp-home-craft .zp-home-link {
+        color: var(--color-brand-200);
+    }
+    .zp-home-craft__media {
+        position: relative;
+        min-width: 0;
+        align-self: stretch;
+        min-height: 24rem;
+    }
+    .zp-home-craft__media > img,
+    .zp-home-craft__media > picture {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: var(--radius-card);
+        overflow: hidden;
+    }
+    .zp-home-craft__media figcaption {
+        position: absolute;
+        inset: auto 1rem 1rem;
+        padding: 0.8rem 1rem;
+        background: var(--color-night);
+        border-radius: var(--radius-btn);
+    }
+    .zp-home-craft__media figcaption a {
+        display: flex;
+        min-height: 3rem;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+    .zp-home-craft__guide {
+        padding: 2rem;
+        border: 1px solid color-mix(in srgb, var(--color-surface) 28%, transparent);
+        border-radius: var(--radius-card);
+    }
+    .zp-home-craft__guide h3 {
+        margin-top: 1rem;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    .zp-home-craft__guide p {
+        margin-block: 1rem 1.5rem;
+        line-height: 1.65;
+    }
+    .zp-home-craft__facts {
+        margin-top: 1rem;
+    }
+    .zp-home-craft__facts summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        min-height: 3rem;
+        cursor: pointer;
+        list-style: none;
+    }
+    .zp-home-craft__facts ul {
+        display: grid;
+        gap: 1.25rem;
+        padding-top: 1rem;
+    }
+    .zp-home-craft__facts h3 {
+        font-size: 1.125rem;
+        font-weight: 600;
+    }
+    .zp-home-craft__facts p {
+        margin-top: 0.5rem;
+    }
+
+    .zp-home-products {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+        gap: 2rem 1.25rem;
+    }
+    .zp-home-product {
+        display: flex;
+        flex-direction: column;
+        align-items: start;
+        gap: 0.7rem;
+        min-width: 0;
+    }
+    .zp-home-product__media {
+        position: relative;
+        display: block;
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        overflow: hidden;
+        border-radius: var(--radius-card);
+        background: var(--color-surface-strong);
+    }
+    .zp-home-product > p {
+        color: var(--color-graphite);
+    }
+    .zp-home-product > .zp-home-product__price {
+        color: var(--color-brand-800);
+        font-family: var(--font-cond);
+        font-size: 1.5rem;
+        font-weight: 800;
+    }
+    .zp-home-product > .zp-home-link {
+        margin-top: auto;
+    }
+    .zp-home-catalog > .zp-container > .zp-home-link {
+        margin-top: 1.5rem;
+    }
+    .zp-home-accessories {
+        margin-top: 2rem;
+    }
+
+    .zp-home-choice-wrap {
+        padding-bottom: 2.5rem;
+    }
+    .zp-home-choice {
+        border: 1px solid var(--color-line);
+        border-radius: var(--radius-card);
+        background: var(--color-brand-50);
+        overflow: hidden;
+    }
+    .zp-home-choice > summary {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem 2rem;
+        min-height: 4.75rem;
+        padding: 1rem 1.5rem;
+        list-style: none;
+        cursor: pointer;
+        font-weight: 600;
+    }
+    .zp-home-choice__action {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: var(--color-brand-700);
+    }
+    .zp-home-choice__body {
+        padding: 1.5rem;
+        border-top: 1px solid var(--color-line);
+    }
+    .zp-home-choice__body h2 {
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    .zp-home-choice__options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+        gap: 1rem;
+        margin-block: 1.5rem;
+    }
+    .zp-home-choice__options > a {
+        display: grid;
+        gap: 0.5rem;
+        padding: 1.25rem;
+        min-height: 6rem;
+        border: 1px solid var(--color-line-strong);
+        border-radius: var(--radius-btn);
+        background: var(--color-surface);
+    }
+    .zp-home-choice__options > a:hover {
+        border-color: var(--color-brand-700);
+    }
+    .zp-home-choice__options > a > span {
+        color: var(--color-brand-700);
+    }
+
+    .zp-home-steps ol {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+    .zp-home-steps li {
+        display: flex;
+        align-items: start;
+        gap: 1rem;
+        border-top: 1px solid var(--color-line-strong);
+        padding-top: 1.5rem;
+    }
+    .zp-home-steps__number {
+        font-family: var(--font-cond);
+        font-size: 2rem;
+        line-height: 1;
+        color: var(--color-brand-700);
+    }
+    .zp-home-steps h3 {
+        font-size: 1.125rem;
+        font-weight: 700;
+    }
+    .zp-home-steps p {
+        margin-top: 0.65rem;
+        color: var(--color-graphite);
+        line-height: 1.6;
+    }
+    .zp-home-extra-cta__inner {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem 2rem;
+        padding-block: 1.5rem;
+        border-block: 1px solid var(--color-line-strong);
+    }
+    .zp-home-extra-cta h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    .zp-home-extra-cta p {
+        margin-top: 0.6rem;
+        color: var(--color-graphite);
+    }
+    .zp-home .zp-home-cost {
+        padding-block: 1.5rem;
+    }
+    .zp-home-reading {
+        margin-block: 1rem;
+    }
+    .zp-home-disclosure {
+        border-block: 1px solid var(--color-line-strong);
+    }
+    .zp-home-disclosure > summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        min-height: 3.5rem;
+        padding-block: 1rem;
+        list-style: none;
+        cursor: pointer;
+        font-weight: 600;
+    }
+    .zp-home-disclosure__body {
+        padding-block: 0.5rem 1.5rem;
+    }
+    .zp-home-disclosure__body p {
+        max-width: 60rem;
+        margin-bottom: 1rem;
+        color: var(--color-graphite);
+        line-height: 1.7;
+    }
+    .zp-home summary::-webkit-details-marker {
+        display: none;
+    }
+    .zp-home details[open] > summary > svg,
+    .zp-home-choice[open] .zp-home-choice__action svg {
+        transform: rotate(180deg);
+    }
+    .zp-home-reading .zp-section {
+        padding-top: 1rem;
+        padding-bottom: 2rem;
+    }
+    .zp-home-contact {
+        padding-block: clamp(2.75rem, 4vw, 4rem);
+        background: var(--color-night);
+        color: var(--color-surface);
+    }
+    .zp-home-contact__inner {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 2rem;
+    }
+    .zp-home-contact h2 + p {
+        margin-top: 1rem;
+    }
+
+    @media (max-width: 63.99rem) {
+        .zp-home-projects__grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .zp-home-project:first-child {
+            grid-column: span 2;
+        }
+        .zp-home-craft__grid {
+            grid-template-columns: 1fr;
+        }
+        .zp-home-craft__media {
+            min-height: 22rem;
+        }
+    }
+    @media (max-width: 39.99rem) {
+        .zp-home-hero__inner {
+            min-height: auto;
+            padding-block: 2rem;
+        }
+        .zp-home-hero__copy {
+            padding: 1.25rem;
+        }
+        .zp-home .zp-home-actions {
+            flex-direction: column;
+            width: 100%;
+        }
+        .zp-home .zp-btn {
+            white-space: normal;
+            text-align: center;
+            line-height: 1.35;
+            padding-block: 0.75rem;
+        }
+        .zp-home-wayfinding .zp-container {
+            gap: 0.75rem;
+        }
+        .zp-home-wayfinding a {
+            flex-direction: column;
+            align-items: start;
+            justify-content: center;
+            gap: 0.25rem;
+            font-size: 1.0625rem;
+        }
+        .zp-home-projects__grid {
+            grid-template-columns: 1fr;
+        }
+        .zp-home-project:first-child {
+            grid-column: auto;
+        }
+        .zp-home-project__image {
+            height: auto;
+            aspect-ratio: 4 / 3;
+        }
+        .zp-home-project__actions {
+            width: 100%;
+            justify-content: space-between;
+        }
+        .zp-home-craft__topics {
+            grid-template-columns: 1fr;
+        }
+        .zp-home-craft__topics a {
+            flex-wrap: nowrap;
+        }
+        .zp-home-choice > summary {
+            justify-content: start;
+        }
+        .zp-home-contact .zp-home-actions,
+        .zp-home-contact .zp-btn {
+            width: 100%;
+        }
+    }
+}

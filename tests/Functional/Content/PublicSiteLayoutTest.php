@@ -125,6 +125,54 @@ final class PublicSiteLayoutTest extends WebTestCase
         self::assertCount(1, $crawler->filter('#lead-form'), 'Форма заявки не должна дублироваться внизу страницы.');
     }
 
+    public function testHomeDesignPreservesCmsContentAndLeadForm(): void
+    {
+        $client = self::createClient();
+        $this->createPage('/', 'Заборы в Саратове под ключ', [
+            [BlockType::HeroClassic, ['title' => 'Производство', 'subtitle' => 'Описание из CMS']],
+            [BlockType::Portfolio, ['title' => 'Каталог из CMS', 'items' => [
+                ['title' => 'Жалюзи', 'href' => '/zabor-jaluzi/', 'price' => 'от 3 400 ₽/м²'],
+                ['title' => 'Заглушки', 'href' => '/zaglushki-plastik/', 'price' => 'от 5 ₽/шт.'],
+            ]]],
+            [BlockType::Features, ['title' => 'Преимущества из CMS', 'items' => [
+                ['title' => 'Монтаж', 'text' => 'Уникальное описание преимущества'],
+            ]]],
+            [BlockType::Steps, ['title' => 'Этапы из CMS', 'items' => [
+                ['title' => 'Расчёт', 'text' => 'Уточнение комплектации'],
+            ]]],
+            [BlockType::Gallery, ['title' => 'Объекты из CMS', 'items' => [
+                ['src' => '/img/logo.svg', 'alt' => 'Тестовый объект'],
+            ]]],
+            [BlockType::RichText, ['html' => '<p>Сохранённый текст о компании</p>']],
+            [BlockType::ContactForm, ['title' => 'Получить расчёт']],
+        ], 'home');
+
+        $crawler = $client->request('GET', '/');
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->filter('body.zp-home-page'));
+        self::assertCount(1, $crawler->filter('h1'));
+        self::assertSame('Заборы в Саратове под ключ', $crawler->filter('h1')->text());
+        self::assertSame([
+            'home-intro', 'home-projects', 'home-craft', 'home-catalog', 'home-process',
+        ], $crawler->filter('.zp-home-group')->each(static fn ($node): ?string => $node->attr('id')));
+        self::assertCount(7, $crawler->filter('.zp-home [data-block-type]'), 'Все CMS-блоки отрисованы один раз.');
+        self::assertStringContainsString('Описание из CMS', $crawler->filter('.zp-home-hero')->text());
+        self::assertStringContainsString('Уникальное описание преимущества', $crawler->filter('.zp-home-craft')->text());
+        self::assertStringContainsString('Сохранённый текст о компании', $crawler->filter('.zp-home-reading')->text());
+        self::assertStringContainsString('от 3 400 ₽/м²', $crawler->filter('.zp-home-catalog')->text());
+        self::assertCount(1, $crawler->filter('.zp-home-accessories h3 a[href="/zaglushki-plastik/"]'));
+        self::assertCount(0, $crawler->filter('.zp-home-catalog > .zp-container > .zp-home-products a[href="/zaglushki-plastik/"]'));
+        self::assertCount(1, $crawler->filter('#home-choice'));
+        self::assertNull($crawler->filter('#home-choice')->attr('open'));
+        self::assertCount(1, $crawler->filter('#home-choice a[href="/zabor-jaluzi/"]'));
+        self::assertCount(0, $crawler->filter('#home-choice input[type="tel"]'));
+        self::assertCount(1, $crawler->filter('#lead-form'));
+        self::assertSame('/api/leads', $crawler->filter('#lead-form form')->attr('action'));
+        self::assertCount(1, $crawler->filter('#lead-form input[name="consent"]'));
+        self::assertCount(1, $crawler->filter('#lead-form input[name="website"]'));
+    }
+
     public function testPageWithoutFirstScreenGetsStandaloneHeadingAndBottomForm(): void
     {
         $client = self::createClient();
@@ -135,6 +183,7 @@ final class PublicSiteLayoutTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertCount(1, $crawler->filter('h1'));
         self::assertCount(0, $crawler->filter('.zp-hero'));
+        self::assertCount(0, $crawler->filter('.zp-home'), 'Внутренние страницы сохраняют прежний шаблон.');
         self::assertCount(1, $crawler->filter('#lead-form'));
     }
 

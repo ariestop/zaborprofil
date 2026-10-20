@@ -49,9 +49,13 @@
             </div>
         {% endif %}
 
-        {% for block in blocks %}
-            {{ block|raw }}
-        {% endfor %}
+        {% if page.path == '/' %}
+            {% include 'public/home/layout.html.twig' %}
+        {% else %}
+            {% for block in blocks %}
+                {{ block|raw }}
+            {% endfor %}
+        {% endif %}
 
         {# Если форма заявки уже стоит среди блоков, вторая внизу страницы не нужна. #}
         {% set has_inline_lead_form = false %}

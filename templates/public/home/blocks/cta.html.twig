@@ -1,0 +1,14 @@
+{% set href = block.content.cta.href ?? '#lead-form' %}
+{% if href in ['', '#', '#lead'] %}{% set href = '#lead-form' %}{% endif %}
+<section class="zp-section zp-home-extra-cta" data-block-type="cta">
+    <div class="zp-container zp-home-extra-cta__inner">
+        <div>
+            <h2>{{ block.content.title ?? block.name }}</h2>
+            {% if (block.content.subtitle ?? '') is not empty %}<p>{{ block.content.subtitle }}</p>{% endif %}
+            {% if (block.content.text ?? '') is not empty %}<p>{{ block.content.text }}</p>{% endif %}
+        </div>
+        {% if (block.content.cta.label ?? '') is not empty %}
+            <a class="zp-home-link" href="{{ href }}">{{ block.content.cta.label }} <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        {% endif %}
+    </div>
+</section>
