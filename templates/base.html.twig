@@ -61,7 +61,7 @@
             {{ vite_entry_link_tags('assets/site/app.ts') }}
         {% endblock %}
     </head>
-    {% set is_home_design = page is defined and page.path == '/' %}
+    {% set is_home_design = page.path is defined and page.path == '/' %}
     <body class="zp-body{{ is_home_design ? ' zp-home-page' : '' }}">
         {% include 'public/partials/icons.html.twig' %}
         <a class="zp-skip" href="#content">Перейти к содержимому</a>

@@ -71,7 +71,7 @@
             {# Длинное описание остаётся доступно читателю и поисковику в SSR, без повторного рекламного экрана. #}
             <div class="zp-container zp-home-reading">
                 <details class="zp-home-disclosure">
-                    <summary>{{ block.name ?: 'О компании и ограждениях' }} <svg aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+                    <summary>{{ (block.content.title ?? '') ?: 'О компании и ограждениях' }} <svg aria-hidden="true"><use href="#i-chevron"/></svg></summary>
                     {{ blocks[loop.index0]|raw }}
                 </details>
             </div>

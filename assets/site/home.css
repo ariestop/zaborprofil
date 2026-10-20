@@ -29,6 +29,12 @@
     .zp-home-page .zp-header .zp-burger:hover {
         background: color-mix(in srgb, var(--color-surface) 12%, transparent);
     }
+    .zp-home-page .zp-callbar .zp-btn {
+        min-width: 0;
+        padding-inline: 0.75rem;
+        white-space: normal;
+        line-height: 1.3;
+    }
     .zp-home {
         background: var(--color-surface);
     }
