@@ -324,10 +324,10 @@
     margin-bottom: calc(8 * var(--ref-unit));
 }
 .ref-page h2 {
-    font-size: calc(35 * var(--ref-unit));
-    font-weight: 700;
+    font-size: calc(36 * var(--ref-unit));
+    font-weight: 800;
     line-height: 1.04;
-    letter-spacing: -0.035em;
+    letter-spacing: -0.01em;
 }
 .ref-projects {
     padding-block: calc(20 * var(--ref-unit)) calc(13 * var(--ref-unit));
@@ -380,9 +380,9 @@
     overflow: hidden;
 }
 .ref-project h3 {
-    font-size: calc(18 * var(--ref-unit));
+    font-size: calc(19 * var(--ref-unit));
     font-weight: 700;
-    letter-spacing: -0.025em;
+    letter-spacing: -0.01em;
     line-height: 1.2;
     margin-top: calc(7 * var(--ref-unit));
 }
