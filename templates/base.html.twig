@@ -61,7 +61,8 @@
             {{ vite_entry_link_tags('assets/site/app.ts') }}
         {% endblock %}
     </head>
-    <body class="zp-body">
+    {% set is_home_design = page.path is defined and page.path == '/' %}
+    <body class="{% block body_class %}zp-body{{ is_home_design ? ' zp-home-page' : '' }}{% endblock %}">
         {% include 'public/partials/icons.html.twig' %}
         <a class="zp-skip" href="#content">Перейти к содержимому</a>
 
@@ -94,8 +95,8 @@
                     <a class="zp-logo" href="/" aria-label="{{ site.name }} — на главную">
                         <picture>
                             {# Брендбук «Периметр»: уже 200 px — компактный логотип без дескриптора. #}
-                            <source media="(max-width: 639px)" srcset="/img/logo-compact.svg" width="160" height="23">
-                            <img src="/img/logo.svg" width="230" height="34" alt="{{ site.name }}: {{ site.tagline|lower }}" decoding="async" fetchpriority="high">
+                            <source media="(max-width: 639px)" srcset="{{ is_home_design ? '/img/logo-compact-white.svg' : '/img/logo-compact.svg' }}" width="160" height="23">
+                            <img src="{{ is_home_design ? '/img/logo-white.svg' : '/img/logo.svg' }}" width="230" height="34" alt="{{ site.name }}: {{ site.tagline|lower }}" decoding="async" fetchpriority="high">
                         </picture>
                     </a>
 
@@ -134,7 +135,7 @@
                             <span class="hidden min-[1800px]:inline">{{ site.phone }}</span>
                             <span class="sr-only min-[1800px]:hidden">Позвонить: {{ site.phone }}</span>
                         </a>
-                        <a class="zp-btn zp-btn--primary zp-btn--sm hidden md:max-xl:inline-flex min-[1440px]:inline-flex" href="#lead-form" data-lead-cta>Рассчитать стоимость</a>
+                        <a class="zp-btn zp-btn--primary zp-btn--sm hidden md:max-xl:inline-flex min-[1440px]:inline-flex" href="#lead-form" data-lead-cta>{{ is_home_design ? 'Получить расчёт' : 'Рассчитать стоимость' }}</a>
                         <button class="zp-burger" type="button" aria-expanded="false" aria-controls="mobile-nav" data-nav-toggle>
                             <svg class="size-6" aria-hidden="true" data-icon-open><use href="#i-menu"/></svg>
                             <svg class="hidden size-6" aria-hidden="true" data-icon-close><use href="#i-close"/></svg>
@@ -184,7 +185,7 @@
                         {% endfor %}
                     </nav>
                     <div class="zp-drawer__foot">
-                        <a class="zp-btn zp-btn--primary w-full" href="#lead-form">Рассчитать стоимость</a>
+                        <a class="zp-btn zp-btn--primary w-full" href="#lead-form">{{ is_home_design ? 'Получить расчёт' : 'Рассчитать стоимость' }}</a>
                         <a class="zp-btn zp-btn--ghost w-full" href="{{ site.phone_href }}">
                             <svg class="size-5" aria-hidden="true"><use href="#i-phone"/></svg>{{ site.phone }}
                         </a>
@@ -245,7 +246,7 @@
                 <a class="zp-btn zp-btn--ghost" href="{{ site.phone_href }}">
                     <svg class="size-5" aria-hidden="true"><use href="#i-phone"/></svg>Позвонить
                 </a>
-                <a class="zp-btn zp-btn--primary" href="#lead-form">Рассчитать</a>
+                <a class="zp-btn zp-btn--primary" href="#lead-form">{{ is_home_design ? 'Получить расчёт' : 'Рассчитать' }}</a>
             </div>
         {% endblock %}
 

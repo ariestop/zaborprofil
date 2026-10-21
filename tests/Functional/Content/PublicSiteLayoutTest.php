@@ -108,7 +108,7 @@ final class PublicSiteLayoutTest extends WebTestCase
         self::assertSame(1, $drawer->filter(':scope > a[href="/contacts/"]')->count());
     }
 
-    public function testFirstScreenBlockOutputsPageHeadingExactlyOnce(): void
+    public function testReferenceHomeOutputsOneHeadingAndOneLeadForm(): void
     {
         $client = self::createClient();
         $this->createPage('/', 'Заборы в Саратове под ключ', [
@@ -120,9 +120,50 @@ final class PublicSiteLayoutTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertCount(1, $crawler->filter('h1'));
-        self::assertSame('Заборы в Саратове под ключ', trim($crawler->filter('h1')->text()));
-        self::assertGreaterThan(0, $crawler->filter('.zp-hero h1')->count());
+        self::assertStringContainsString('Хороший забор', $crawler->filter('h1')->text());
+        self::assertGreaterThan(0, $crawler->filter('.ref-hero h1')->count());
         self::assertCount(1, $crawler->filter('#lead-form'), 'Форма заявки не должна дублироваться внизу страницы.');
+    }
+
+    public function testReferenceHomeHasWorkingTargetsAndExistingLeadFormContract(): void
+    {
+        $client = self::createClient();
+        $this->createPage('/', 'Заборы в Саратове под ключ', [
+            [BlockType::HeroClassic, ['title' => 'Производство', 'subtitle' => 'Описание из CMS']],
+            [BlockType::Portfolio, ['title' => 'Каталог из CMS', 'items' => [
+                ['title' => 'Жалюзи', 'href' => '/zabor-jaluzi/', 'price' => 'от 3 400 ₽/м²'],
+                ['title' => 'Заглушки', 'href' => '/zaglushki-plastik/', 'price' => 'от 5 ₽/шт.'],
+            ]]],
+            [BlockType::Features, ['title' => 'Преимущества из CMS', 'items' => [
+                ['title' => 'Монтаж', 'text' => 'Уникальное описание преимущества'],
+            ]]],
+            [BlockType::Steps, ['title' => 'Этапы из CMS', 'items' => [
+                ['title' => 'Расчёт', 'text' => 'Уточнение комплектации'],
+            ]]],
+            [BlockType::Gallery, ['title' => 'Объекты из CMS', 'items' => [
+                ['src' => '/img/logo.svg', 'alt' => 'Тестовый объект'],
+            ]]],
+            [BlockType::RichText, ['html' => '<p>Сохранённый текст о компании</p>']],
+            [BlockType::ContactForm, ['title' => 'Получить расчёт']],
+        ], 'home');
+
+        $crawler = $client->request('GET', '/');
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->filter('body.ref-page'));
+        self::assertCount(1, $crawler->filter('h1'));
+        self::assertCount(4, $crawler->filter('.ref-product'));
+        self::assertCount(3, $crawler->filter('.ref-project'));
+        foreach ($crawler->filter('a[data-ref-open]')->each(static fn ($node): ?string => $node->attr('data-ref-open')) as $target) {
+            self::assertNotNull($target);
+            self::assertCount(1, $crawler->filter('dialog#'.$target));
+        }
+        self::assertCount(1, $crawler->filter('#ref-enquiry #lead-form'));
+        self::assertStringContainsString('визуализации', $crawler->filter('.ref-projects__aside')->text());
+        self::assertCount(1, $crawler->filter('#lead-form'));
+        self::assertSame('/api/leads', $crawler->filter('#lead-form form')->attr('action'));
+        self::assertCount(1, $crawler->filter('#lead-form input[name="consent"]'));
+        self::assertCount(1, $crawler->filter('#lead-form input[name="website"]'));
     }
 
     public function testPageWithoutFirstScreenGetsStandaloneHeadingAndBottomForm(): void
@@ -135,6 +176,7 @@ final class PublicSiteLayoutTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertCount(1, $crawler->filter('h1'));
         self::assertCount(0, $crawler->filter('.zp-hero'));
+        self::assertCount(0, $crawler->filter('.zp-home'), 'Внутренние страницы сохраняют прежний шаблон.');
         self::assertCount(1, $crawler->filter('#lead-form'));
     }
 

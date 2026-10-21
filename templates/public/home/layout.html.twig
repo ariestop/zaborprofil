@@ -1,0 +1,100 @@
+{#
+    Главная: первый экран → объекты → конструкция → каталог → процесс → дополнительные блоки → контакт.
+    Контент, изображения, ссылки, цены и обёртки аудитории остаются из CMS. Внутри группы сохраняется порядок редактора.
+    Каждый опубликованный блок выводится ровно один раз, включая неизвестные будущие типы.
+#}
+{% set groups = [
+    ['hero', 'hero.classic', 'hero.minimal'],
+    ['portfolio-projects', 'gallery'],
+    ['features', 'feature_grid', 'text-with-image', 'text_image'],
+    ['portfolio', 'fence-types'],
+    ['steps']
+] %}
+{% set primary_types = [] %}
+{% for group in groups %}{% set primary_types = primary_types|merge(group) %}{% endfor %}
+{% set late_types = ['contact-form', 'cta_form', 'faq', 'rich-text', 'seo_text', 'text'] %}
+{% set sections = [
+    {id: 'home-intro', label: 'Первый экран'},
+    {id: 'home-projects', label: 'Готовый результат'},
+    {id: 'home-craft', label: 'Детали монтажа'},
+    {id: 'home-catalog', label: 'Конструкции'},
+    {id: 'home-process', label: 'Как мы работаем'}
+] %}
+{% set available = [] %}
+{% for index, group in groups %}
+    {% set matching = page.blocks|filter(b => b.type in group) %}
+    {% if matching is not empty %}{% set available = available|merge([sections[index].id]) %}{% endif %}
+{% endfor %}
+
+<div class="zp-home">
+    {% for index, group in groups %}
+        {% if sections[index].id in available %}
+            <div id="{{ sections[index].id }}" class="zp-home-group" aria-label="{{ sections[index].label }}">
+                {% for block in page.blocks %}
+                    {% if block.type in group %}{{ blocks[loop.index0]|raw }}{% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
+        {% if index == 3 %}{% include 'public/home/choice.html.twig' %}{% endif %}
+        {% if loop.first %}
+            <nav class="zp-home-wayfinding" aria-label="Быстрый выбор раздела">
+                <div class="zp-container">
+                    <a href="{{ 'home-catalog' in available ? '#home-catalog' : '/zabor-jaluzi/' }}"><span aria-hidden="true">01</span> Конструкции</a>
+                    <a href="{{ 'home-craft' in available ? '#home-craft' : '#home-cost' }}"><span aria-hidden="true">02</span> Детали монтажа</a>
+                    <a href="{{ 'home-projects' in available ? '#home-projects' : '/portfolio/' }}"><span aria-hidden="true">03</span> Готовый результат</a>
+                </div>
+            </nav>
+        {% endif %}
+    {% endfor %}
+
+    {% for block in page.blocks %}
+        {% if block.type not in primary_types and block.type not in late_types %}
+            {{ blocks[loop.index0]|raw }}
+        {% endif %}
+    {% endfor %}
+
+    <section class="zp-home-cost zp-section" id="home-cost" aria-labelledby="home-cost-title">
+        <div class="zp-container">
+            <details class="zp-home-disclosure">
+                <summary id="home-cost-title">Из чего складывается стоимость <svg aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+                <div class="zp-home-disclosure__body">
+                    <p>Сравнивайте одинаковую комплектацию: материал и покрытие, длину и высоту ограждения, опоры и основание, ворота и калитку, доставку и монтаж.</p>
+                    <p>Цена материала за м² или за штуку — не стоимость готового забора за погонный метр. Итоговый расчёт подготовим после уточнения размеров и состава работ.</p>
+                    <a class="zp-home-link" href="#lead-form" data-lead-plan="Расчёт ограждения с пояснением комплектации">Получить подробный расчёт <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+                </div>
+            </details>
+        </div>
+    </section>
+
+    {% for block in page.blocks %}
+        {% if block.type in ['rich-text', 'seo_text', 'text'] %}
+            {# Длинное описание остаётся доступно читателю и поисковику в SSR, без повторного рекламного экрана. #}
+            <div class="zp-container zp-home-reading">
+                <details class="zp-home-disclosure">
+                    <summary>{{ (block.content.title ?? '') ?: 'О компании и ограждениях' }} <svg aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+                    {{ blocks[loop.index0]|raw }}
+                </details>
+            </div>
+        {% elseif block.type == 'faq' %}
+            {{ blocks[loop.index0]|raw }}
+        {% endif %}
+    {% endfor %}
+
+    <section class="zp-home-contact" aria-labelledby="home-contact-title">
+        <div class="zp-container zp-home-contact__inner">
+            <div>
+                <p class="zp-home-kicker">Ваш следующий шаг</p>
+                <h2 id="home-contact-title">Покажите нам ваш участок</h2>
+                <p>Обсудим размеры, конструкцию и состав работ.</p>
+            </div>
+            <div class="zp-home-actions">
+                <a class="zp-btn zp-btn--primary" href="#lead-form" data-lead-cta>Получить расчёт <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+                <a class="zp-btn zp-btn--outline-light" href="{{ site.phone_href }}"><svg aria-hidden="true"><use href="#i-phone"/></svg>{{ site.phone }}</a>
+            </div>
+        </div>
+    </section>
+
+    {% for block in page.blocks %}
+        {% if block.type in ['contact-form', 'cta_form'] %}{{ blocks[loop.index0]|raw }}{% endif %}
+    {% endfor %}
+</div>

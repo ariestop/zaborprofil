@@ -35,9 +35,16 @@ final readonly class TwigBlockRenderer
     /**
      * @param string|null $pageHeading H1 страницы; передаётся только первому блоку страницы
      */
-    public function render(PageBlockView $block, bool $aboveFold = false, ?string $pageHeading = null): string
+    public function render(PageBlockView $block, bool $aboveFold = false, ?string $pageHeading = null, bool $homeDesign = false): string
     {
         $template = \sprintf('public/blocks/%s.html.twig', $block->type);
+        // Главная использует отдельную композицию; внутренние страницы и неизвестные блоки сохраняют свой шаблон.
+        if ($homeDesign) {
+            $homeTemplate = \sprintf('public/home/blocks/%s.html.twig', $block->type);
+            if ($this->twig->getLoader()->exists($homeTemplate)) {
+                $template = $homeTemplate;
+            }
+        }
         $context = [
             'block' => $block,
             'above_fold' => $aboveFold,

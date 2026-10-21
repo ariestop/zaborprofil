@@ -1,0 +1,19 @@
+{% set items = (block.content.items ?? [])|filter(item => (item.title ?? '') is not empty) %}
+{% if items is not empty %}
+<section class="zp-section zp-home-steps" data-block-type="steps"{% if (block.settings.anchor ?? '') is not empty %} id="{{ block.settings.anchor }}"{% endif %}>
+    <div class="zp-container">
+        <h2 class="zp-h2">{{ (block.content.title ?? '') ?: 'Понятный путь к готовому забору' }}</h2>
+        <ol>
+            {% for item in items %}
+                <li>
+                    <span class="zp-home-steps__number" aria-hidden="true">{{ '%02d'|format(loop.index) }}</span>
+                    <div>
+                        <h3>{{ item.title }}</h3>
+                        {% if (item.text ?? '') is not empty %}<p>{{ item.text }}</p>{% endif %}
+                    </div>
+                </li>
+            {% endfor %}
+        </ol>
+    </div>
+</section>
+{% endif %}

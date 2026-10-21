@@ -1,0 +1,34 @@
+{# Каталог редактируется в CMS; мелкие комплектующие вынесены из ряда ограждений. #}
+{% set works = (block.content.items ?? [])|filter(item => (item.title ?? '') is not empty) %}
+{% set accessory_paths = ['/zaglushki-plastik/', '/krepezh-3d-zabor/'] %}
+{% set fences = works|filter(item => (item.href ?? '') not in accessory_paths) %}
+{% set accessories = works|filter(item => (item.href ?? '') in accessory_paths) %}
+{% if works is not empty %}
+<section class="zp-section zp-home-catalog" data-block-type="portfolio"{% if (block.settings.anchor ?? '') is not empty %} id="{{ block.settings.anchor }}"{% endif %}>
+    <div class="zp-container">
+        <div class="zp-home-section-head">
+            <div>
+                <p class="zp-home-kicker">Конструкции ограждений</p>
+                <h2 class="zp-h2">{{ (block.content.title ?? '') ?: 'Выберите свой характер ограждения' }}</h2>
+            </div>
+            <a class="zp-home-link" href="#home-choice" data-home-choice>Помочь с выбором <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        </div>
+        <div class="zp-home-products">
+            {% for item in fences %}
+                {% include 'public/home/product.html.twig' with {item: item} only %}
+            {% endfor %}
+        </div>
+        {% if accessories is not empty %}
+            <details class="zp-home-disclosure zp-home-accessories">
+                <summary>Комплектующие для ограждений <svg aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+                <div class="zp-home-products zp-home-disclosure__body">
+                    {% for item in accessories %}
+                        {% include 'public/home/product.html.twig' with {item: item} only %}
+                    {% endfor %}
+                </div>
+            </details>
+        {% endif %}
+        <a class="zp-home-link" href="#home-cost">Что входит в стоимость забора <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+    </div>
+</section>
+{% endif %}

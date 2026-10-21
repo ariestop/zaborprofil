@@ -49,7 +49,7 @@ final class PagePreviewController extends AbstractController
         $headingInFirstBlock = false;
         foreach ($page->enabledBlocks() as $index => $block) {
             $view = PageBlockView::fromBlock($block);
-            $blocks[] = $blockRenderer->render($view, $index === 0, $index === 0 ? $page->h1() : null);
+            $blocks[] = $blockRenderer->render($view, $index === 0, $index === 0 ? $page->h1() : null, $page->path() === '/');
             if ($index === 0) {
                 $headingInFirstBlock = $blockRenderer->consumesPageHeading($view->type);
             }

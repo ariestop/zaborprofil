@@ -1,0 +1,25 @@
+{% set href = item.href ?? '' %}
+{% set linked = href is not empty and href != '#' %}
+{% set uses = {
+    '/zabor-jaluzi/': 'Для приватности и современного фасада',
+    '/gorizont/': 'Для открытого вида и горизонтальных линий',
+    '/zabor-iz-euroshtaketnika/': 'Для дома, дачи и сада',
+    '/zabor-iz-profnastila/': 'Для сплошного ограждения участка',
+    '/zabor-3d-setka/': 'Для открытых территорий и обзора'
+} %}
+<article class="zp-home-product">
+    {% if (item.image ?? item.src ?? '') is not empty %}
+        {% if linked %}<a class="zp-home-product__media" href="{{ href }}" aria-label="Посмотреть: {{ item.title }}">{% else %}<div class="zp-home-product__media">{% endif %}
+            {{ responsive_image(item.image ?? item.src, {alt: item.alt ?? null, fallback_alt: item.title, class: 'zp-home-photo', sizes: '(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw'}) }}
+            {% if (item.badge ?? '') is not empty %}<span class="zp-product__badge">{{ item.badge }}</span>{% endif %}
+        {% if linked %}</a>{% else %}</div>{% endif %}
+    {% endif %}
+    <h3>{% if linked %}<a href="{{ href }}">{{ item.title }}</a>{% else %}{{ item.title }}{% endif %}</h3>
+    {% if (item.text ?? uses[href] ?? '') is not empty %}<p>{{ item.text ?? uses[href] }}</p>{% endif %}
+    {% set specs = (item.specs ?? []) is iterable ? (item.specs ?? [])|filter(spec => spec is not empty) : [] %}
+    {% if specs is not empty %}
+        <ul class="zp-home-specs" aria-label="Характеристики">{% for spec in specs %}<li>{{ spec }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% if (item.price ?? '') is not empty %}<p class="zp-home-product__price">{{ item.price }}</p>{% endif %}
+    {% if linked %}<a class="zp-home-link" href="{{ href }}">Посмотреть конструкцию <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>{% endif %}
+</article>

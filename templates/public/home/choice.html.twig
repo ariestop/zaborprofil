@@ -1,0 +1,35 @@
+{# Небольшой подбор раскрывается только по запросу; без JS работает нативный details. #}
+{% set choices = [] %}
+{% for block in page.blocks %}
+    {% if block.type == 'portfolio' %}
+        {% for item in block.content.items ?? [] %}
+            {% if (item.href ?? '') is not empty and item.href != '#' and (item.title ?? '') is not empty and item.href not in ['/zaglushki-plastik/', '/krepezh-3d-zabor/'] %}
+                {% set choices = choices|merge([item]) %}
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+{% endfor %}
+{% set purposes = {
+    '/zabor-jaluzi/': 'Хочу больше приватности',
+    '/gorizont/': 'Нравятся горизонтальные линии',
+    '/zabor-iz-euroshtaketnika/': 'Выбираю забор для сада',
+    '/zabor-iz-profnastila/': 'Нужно сплошное ограждение',
+    '/zabor-3d-setka/': 'Хочу сохранить обзор'
+} %}
+<div class="zp-container zp-home-choice-wrap">
+    <details class="zp-home-choice" id="home-choice" data-home-choice-panel>
+        <summary><span>Не знаете, что выбрать?</span><span class="zp-home-choice__action">Помочь с выбором <svg aria-hidden="true"><use href="#i-chevron"/></svg></span></summary>
+        <div class="zp-home-choice__body">
+            <h2>Что важно для вашего участка?</h2>
+            <p>Выберите близкую задачу — откроется описание подходящей конструкции. Номер телефона для просмотра не нужен.</p>
+            {% if choices is not empty %}
+                <div class="zp-home-choice__options">
+                    {% for item in choices %}
+                        <a href="{{ item.href }}"><strong>{{ purposes[item.href] ?? 'Хочу узнать об этом варианте' }}</strong><span>{{ item.title }} <span aria-hidden="true">→</span></span></a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            <a class="zp-home-link" href="#lead-form" data-lead-plan="Нужна помощь с выбором ограждения для участка">Обсудить участок со специалистом <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        </div>
+    </details>
+</div>

@@ -39,7 +39,7 @@ final class PublicPageController extends AbstractController
 
         $blocks = [];
         foreach ($page->blocks as $index => $block) {
-            $blocks[] = $blockRenderer->render($block, $index === 0, $index === 0 ? $page->h1 : null);
+            $blocks[] = $blockRenderer->render($block, $index === 0, $index === 0 ? $page->h1 : null, $page->path === '/');
         }
         $headingInFirstBlock = $page->blocks !== [] && $blockRenderer->consumesPageHeading($page->blocks[array_key_first($page->blocks)]->type);
 

@@ -1,0 +1,385 @@
+name: Deploy dev2 (Beget)
+
+# Быстрый staging-стенд https://dev2.zaborprofil.ru: push в ветку `dev2` -> Beget по SSH.
+# Полный CI не ждём (он идёт отдельным workflow `CI`): здесь только быстрые проверки,
+# сборка frontend (на Beget нет Node.js) и деплой. Production этим workflow не затрагивается.
+# Описание: docs/53-dev2-staging.md
+# SSH-секреты используются из существующего environment staging; каталог, URL и БД dev2 отдельные.
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - dev2
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Ветка, тег или SHA для выкладки на staging
+        required: false
+        default: dev2
+        type: string
+
+concurrency:
+  group: deploy-dev2-beget
+  cancel-in-progress: false
+
+jobs:
+  # Сборка — без секретов: здесь выполняется код выкладываемой ветки (npm ci с install-скриптами пакетов,
+  # vite.config, tsc) и сторонние actions. SSH-ключ и пароль стенда сюда не попадают; готовая сборка
+  # передаётся в deploy артефактом.
+  build:
+    name: Build ${{ github.event_name == 'workflow_dispatch' && inputs.ref || 'dev2' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.ref == 'refs/heads/dev2' && (github.event_name == 'workflow_dispatch' || !github.event.deleted)
+    outputs:
+      sha: ${{ steps.pin.outputs.sha }}
+    env:
+      REQUESTED_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.ref || github.sha }}
+
+    steps:
+      - name: Check ref
+        run: |
+          set -euo pipefail
+          if ! [[ "$REQUESTED_REF" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]*$ ]]; then
+            echo "::error::Недопустимый ref: $REQUESTED_REF"
+            exit 1
+          fi
+
+      - name: Checkout target
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ env.REQUESTED_REF }}
+          path: target
+          persist-credentials: false
+
+      - name: Checkout deploy tooling
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          path: tooling
+          sparse-checkout: |
+            tools/deploy
+            tests/shell
+          sparse-checkout-cone-mode: true
+          persist-credentials: false
+
+      - name: Pin commit
+        id: pin
+        working-directory: target
+        run: echo "sha=$(git rev-parse HEAD)" >>"$GITHUB_OUTPUT"
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        with:
+          php-version: '8.5'
+          coverage: none
+
+      - name: Quick syntax checks
+        run: |
+          set -euo pipefail
+          cd target
+          git ls-files -z -- '*.php' bin/console | xargs -0 -r -n 50 -P 4 php -d display_errors=stderr -l >/dev/null
+          cd ..
+          bash -n tooling/tools/deploy/deploy-beget.sh
+          bash -n tooling/tools/deploy/check-dev2-beget.sh
+          bash -n tooling/tools/deploy/bootstrap-dev2-beget.sh
+          shellcheck -x tooling/tools/deploy/bootstrap-dev2-beget.sh
+          shellcheck -x tooling/tools/deploy/check-dev2-beget.sh tooling/tests/shell/check-dev2-beget.sh
+          bash tooling/tests/shell/check-dev2-beget.sh
+          config_probe="$(mktemp)"
+          DEV2_DATABASE_URL='mysql://sample:encoded%40password@localhost:3306/dev2_probe?serverVersion=8.4&charset=utf8mb4' DEV2_BASIC_AUTH='preview:test-only' php tooling/tools/deploy/create-dev2-env.php "$config_probe"
+          grep -qx 'APP_ENV=staging' "$config_probe"
+          grep -qx 'STAGING_AUTH_ENABLED=1' "$config_probe"
+          test "$(stat -c '%a' "$config_probe")" = 600
+          if DEV2_DATABASE_URL='invalid' DEV2_BASIC_AUTH='preview:test-only' php tooling/tools/deploy/create-dev2-env.php "$config_probe" 2>/dev/null; then
+            echo "::error::Invalid database URL was accepted"
+            exit 1
+          fi
+          rm -f -- "$config_probe"
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 26.12.0
+          cache: npm
+          cache-dependency-path: target/package-lock.json
+
+      - name: Build frontend
+        working-directory: target
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run build
+          test -f public_html/build/.vite/manifest.json
+
+      - name: Package frontend build
+        run: |
+          set -euo pipefail
+          mkdir dist
+          cp -r target/public_html/build dist/build
+          printf '%s\n' "${{ steps.pin.outputs.sha }}" >dist/BUILD_COMMIT
+          tar -czf frontend-build.tar.gz -C dist .
+
+      # Сборка публична (её отдаёт сайт), поэтому артефакт не раскрывает ничего нового.
+      - name: Store frontend build
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: frontend-build-${{ steps.pin.outputs.sha }}
+          path: frontend-build.tar.gz
+          retention-days: 1
+          if-no-files-found: error
+
+  # Деплой: только скрипты из коммита workflow (tools/deploy) и готовый архив, без npm и кода ветки.
+  # Секреты передаются в env только тех шагов, где они нужны.
+  deploy:
+    name: Deploy dev2.zaborprofil.ru
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: staging
+      url: https://dev2.zaborprofil.ru/
+
+    env:
+      STAGING_URL: https://dev2.zaborprofil.ru/
+      BUILD_SHA: ${{ needs.build.outputs.sha }}
+
+    steps:
+      - name: Check configuration
+        id: config
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          STAGING_PATH: ${{ secrets.DEV2_STAGING_PATH || vars.DEV2_STAGING_PATH || '~/dev2.zaborprofil.ru' }}
+          HAS_BASIC_AUTH: ${{ (secrets.DEV2_STAGING_BASIC_AUTH != '' || secrets.STAGING_BASIC_AUTH != '') }}
+        run: |
+          set -euo pipefail
+          missing=()
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY; do
+            if [[ -z "${!name}" ]]; then
+              missing+=("$name")
+            fi
+          done
+          if ((${#missing[@]} > 0)); then
+            echo "::error::Деплой невозможен: не заданы секреты GitHub Actions: ${missing[*]}. См. docs/49-beget-staging-deploy.md."
+            echo "configured=false" >>"$GITHUB_OUTPUT"
+            exit 1
+          fi
+          if ! [[ "$STAGING_PATH" =~ ^[A-Za-z0-9._~/-]+$ ]]; then
+            echo "::error::STAGING_PATH содержит недопустимые символы."
+            exit 1
+          fi
+          if ! [[ "$BUILD_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Сборка не вернула SHA коммита."
+            exit 1
+          fi
+          echo "configured=true" >>"$GITHUB_OUTPUT"
+          echo "basic_auth=$HAS_BASIC_AUTH" >>"$GITHUB_OUTPUT"
+
+      - name: Checkout deploy tooling
+        if: steps.config.outputs.configured == 'true'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          path: tooling
+          sparse-checkout: |
+            tools/deploy
+            tests/shell
+          sparse-checkout-cone-mode: true
+          persist-credentials: false
+
+      - name: Fetch frontend build
+        if: steps.config.outputs.configured == 'true'
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: frontend-build-${{ env.BUILD_SHA }}
+
+      - name: Configure SSH
+        if: steps.config.outputs.configured == 'true'
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" >~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          if [[ -n "$DEPLOY_KNOWN_HOSTS" ]]; then
+            printf '%s\n' "$DEPLOY_KNOWN_HOSTS" >~/.ssh/known_hosts
+          else
+            echo "::warning::DEPLOY_KNOWN_HOSTS не задан: ключ хоста берётся через ssh-keyscan без проверки подлинности."
+            ssh-keyscan -p "$DEPLOY_PORT" -H "$DEPLOY_HOST" >~/.ssh/known_hosts 2>/dev/null
+          fi
+          chmod 644 ~/.ssh/known_hosts
+          cat >~/.ssh/config <<EOF
+          Host deploy-target
+            HostName $DEPLOY_HOST
+            User $DEPLOY_USER
+            Port $DEPLOY_PORT
+            IdentityFile ~/.ssh/deploy_key
+            IdentitiesOnly yes
+            StrictHostKeyChecking yes
+            BatchMode yes
+            ServerAliveInterval 30
+          EOF
+          chmod 600 ~/.ssh/config
+
+      - name: Setup PHP for private configuration
+        if: steps.config.outputs.configured == 'true'
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        with:
+          php-version: '8.5'
+          coverage: none
+
+      - name: Bootstrap independent dev2 application
+        if: steps.config.outputs.configured == 'true'
+        env:
+          DEV2_DATABASE_URL: ${{ secrets.DEV2_DATABASE_URL }}
+          DEV2_BASIC_AUTH: ${{ secrets.DEV2_STAGING_BASIC_AUTH || secrets.STAGING_BASIC_AUTH }}
+          STAGING_PATH: ${{ secrets.DEV2_STAGING_PATH || vars.DEV2_STAGING_PATH || '~/dev2.zaborprofil.ru' }}
+          DEV1_PATH: ${{ secrets.STAGING_PATH || vars.STAGING_PATH || '~/dev.zaborprofil.ru' }}
+        run: |
+          set -euo pipefail
+          umask 077
+          config_file="$(mktemp)"
+          trap 'rm -f -- "$config_file"' EXIT
+          php tooling/tools/deploy/create-dev2-env.php "$config_file"
+          remote_dir="\$HOME/.deploy-tmp/dev2-bootstrap-$BUILD_SHA"
+          # Секреты идут только по SSH stdin, не через аргументы команды или логи.
+          # shellcheck disable=SC2029
+          ssh deploy-target "umask 077 && mkdir -p \"$remote_dir\" && cat > \"$remote_dir/.env.local\"" <"$config_file"
+          remote_env="DEPLOY_SOURCE_ONLY=1 DEPLOY_PATH=$(printf '%q' "$STAGING_PATH")"
+          remote_env+=" DEV1_PATH=$(printf '%q' "$DEV1_PATH") BUILD_SHA=$BUILD_SHA"
+          remote_env+=" DEV2_CONFIG_DIR=\"$remote_dir\""
+          # shellcheck disable=SC2029
+          cat tooling/tools/deploy/deploy-beget.sh tooling/tools/deploy/bootstrap-dev2-beget.sh | ssh deploy-target "$remote_env bash -s"
+
+      - name: Check independent dev2 environment
+        if: steps.config.outputs.configured == 'true'
+        env:
+          STAGING_PATH: ${{ secrets.DEV2_STAGING_PATH || vars.DEV2_STAGING_PATH || '~/dev2.zaborprofil.ru' }}
+          DEV1_PATH: ${{ secrets.STAGING_PATH || vars.STAGING_PATH || '~/dev.zaborprofil.ru' }}
+        run: |
+          set -euo pipefail
+          remote_env="DEPLOY_SOURCE_ONLY=1 DEPLOY_PATH=$(printf '%q' "$STAGING_PATH")"
+          remote_env+=" DEV1_PATH=$(printf '%q' "$DEV1_PATH")"
+          # Общие функции только загружаются; проверка не изменяет сервер или БД.
+          # shellcheck disable=SC2029
+          cat tooling/tools/deploy/deploy-beget.sh tooling/tools/deploy/check-dev2-beget.sh | ssh deploy-target "$remote_env bash -s"
+
+      - name: Upload frontend build
+        if: steps.config.outputs.configured == 'true'
+        run: |
+          set -euo pipefail
+          remote_archive="\$HOME/.deploy-tmp/frontend-build-dev2-${BUILD_SHA}.tar.gz"
+          # shellcheck disable=SC2029
+          ssh deploy-target "umask 077 && mkdir -p \"\$HOME/.deploy-tmp\" && cat > \"$remote_archive\"" <frontend-build.tar.gz
+
+      - name: Deploy over SSH
+        if: steps.config.outputs.configured == 'true'
+        env:
+          STAGING_PATH: ${{ secrets.DEV2_STAGING_PATH || vars.DEV2_STAGING_PATH || '~/dev2.zaborprofil.ru' }}
+        run: |
+          set -euo pipefail
+          sha="$BUILD_SHA"
+          remote_env="DEPLOY_PATH=$(printf '%q' "$STAGING_PATH")"
+          remote_env+=" FRONTEND_BUILD_ARCHIVE=\"\$HOME/.deploy-tmp/frontend-build-dev2-${sha}.tar.gz\""
+          # shellcheck disable=SC2029
+          ssh deploy-target "$remote_env bash -s -- $(printf '%q' "$sha")" <tooling/tools/deploy/deploy-beget.sh
+
+      - name: Smoke check
+        if: steps.config.outputs.configured == 'true'
+        env:
+          STAGING_BASIC_AUTH: ${{ secrets.DEV2_STAGING_BASIC_AUTH || secrets.STAGING_BASIC_AUTH }}
+        run: |
+          set -euo pipefail
+          url="${STAGING_URL%/}"
+          curl_opts=(-sS --retry 5 --retry-delay 5 --retry-all-errors --max-time 30)
+
+          status="$(curl "${curl_opts[@]}" -o /dev/null -D /tmp/anon.headers -w '%{http_code}' "$url/")"
+          if [[ "$status" == "401" ]] && grep -qi '^www-authenticate: *basic' /tmp/anon.headers; then
+            echo "::error::dev2 должен открываться без Basic Auth."
+            exit 1
+          elif [[ "$(curl "${curl_opts[@]}" -o /dev/null -D /tmp/anon.headers -w '%{http_code}' "$url/health/live")" == "200" ]]; then
+            # Открытый staging допустим только как временный режим (STAGING_AUTH_ENABLED=0 + STAGING_ALLOW_PUBLIC=1
+            # в .env.local, который деплой-скрипт проверяет на сервере). Индексация при этом должна быть закрыта.
+            echo "::warning::Staging открыт без пароля (Basic Auth выключен). Вернуть пароль: docs/49-beget-staging-deploy.md."
+            if ! grep -qi '^x-robots-tag:.*noindex' /tmp/anon.headers; then
+              echo "::error::Открытый staging без X-Robots-Tag: noindex."
+              exit 1
+            fi
+            robots="$(curl "${curl_opts[@]}" "$url/robots.txt")"
+            if ! grep -qix 'Disallow: /' <<<"$robots"; then
+              echo "::error::Открытый staging: /robots.txt не содержит 'Disallow: /'."
+              exit 1
+            fi
+            admin_status="$(curl "${curl_opts[@]}" -o /dev/null -w '%{http_code}' "$url/admin/dashboard")"
+            if [[ "$admin_status" != "302" && "$admin_status" != "401" && "$admin_status" != "403" ]]; then
+              echo "::error::Открытый staging: /admin/dashboard без входа ответил $admin_status, ожидался редирект на форму входа."
+              exit 1
+            fi
+            echo "Открытый staging: noindex, robots.txt Disallow: / и защита /admin подтверждены."
+            exit 0
+          else
+            echo "::error::Без пароля staging ответил $status на /, ожидался 401 с WWW-Authenticate: Basic (или 200 на /health/live для временно открытого staging). Стенд может быть настроен неверно."
+            exit 1
+          fi
+
+          if [[ -z "$STAGING_BASIC_AUTH" ]]; then
+            echo "::notice::STAGING_BASIC_AUTH не задан: проверка с паролем пропущена."
+            exit 0
+          fi
+
+          status="$(curl "${curl_opts[@]}" -u "$STAGING_BASIC_AUTH" -o /dev/null -D /tmp/auth.headers -w '%{http_code}' "$url/health/live")"
+          if [[ "$status" != "200" ]]; then
+            echo "::error::/health/live с паролем ответил $status, ожидался 200."
+            exit 1
+          fi
+          if ! grep -qi '^x-robots-tag:.*noindex' /tmp/auth.headers; then
+            echo "::error::В ответе нет X-Robots-Tag: noindex."
+            exit 1
+          fi
+
+          status="$(curl "${curl_opts[@]}" -u "$STAGING_BASIC_AUTH" -o /dev/null -w '%{http_code}' "$url/admin/login")"
+          if [[ "$status" != "200" ]]; then
+            echo "::error::/admin/login ответил $status, ожидался 200."
+            exit 1
+          fi
+
+          ready="$(curl "${curl_opts[@]}" -u "$STAGING_BASIC_AUTH" -o /dev/null -w '%{http_code}' "$url/health/ready" || true)"
+          if [[ "$ready" != "200" ]]; then
+            echo "::warning::/health/ready ответил $ready (проверьте БД MySQL и каталоги shared/cache, shared/sessions на стенде)."
+          fi
+
+      - name: Warm up public pages
+        if: steps.config.outputs.configured == 'true' && steps.config.outputs.basic_auth == 'true'
+        continue-on-error: true
+        env:
+          STAGING_BASIC_AUTH: ${{ secrets.DEV2_STAGING_BASIC_AUTH || secrets.STAGING_BASIC_AUTH }}
+        run: |
+          url="${STAGING_URL%/}"
+          for path in / /sitemap.xml /robots.txt; do
+            curl -sS -o /dev/null -w "%{http_code} $path\n" --max-time 30 -u "$STAGING_BASIC_AUTH" "$url$path" || true
+          done
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## Deploy dev2 (Beget)"
+            echo
+            if [[ "${{ steps.config.outputs.configured }}" == "true" ]]; then
+              echo "- Коммит: \`${BUILD_SHA}\`"
+              echo "- URL: ${STAGING_URL}"
+              echo "- Лог на сервере: \`var/log/deploy.log\`, история: \`var/log/deploy-history.log\`"
+            else
+              echo "Деплой пропущен: не заданы секреты \`DEPLOY_HOST\`, \`DEPLOY_USER\`, \`DEPLOY_SSH_KEY\`."
+            fi
+          } >>"$GITHUB_STEP_SUMMARY"
