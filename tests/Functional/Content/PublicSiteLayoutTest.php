@@ -154,8 +154,9 @@ final class PublicSiteLayoutTest extends WebTestCase
         self::assertCount(1, $crawler->filter('h1'));
         self::assertCount(4, $crawler->filter('.ref-product'));
         self::assertCount(3, $crawler->filter('.ref-project'));
-        foreach ($crawler->filter('a[data-ref-open]') as $link) {
-            self::assertCount(1, $crawler->filter('dialog#'.$link->getAttribute('data-ref-open')));
+        foreach ($crawler->filter('a[data-ref-open]')->each(static fn ($node): ?string => $node->attr('data-ref-open')) as $target) {
+            self::assertNotNull($target);
+            self::assertCount(1, $crawler->filter('dialog#'.$target));
         }
         self::assertCount(1, $crawler->filter('#ref-enquiry #lead-form'));
         self::assertStringContainsString('визуализации', $crawler->filter('.ref-projects__aside')->text());
