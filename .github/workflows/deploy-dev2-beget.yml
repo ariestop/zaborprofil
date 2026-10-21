@@ -305,7 +305,8 @@ jobs:
 
           status="$(curl "${curl_opts[@]}" -o /dev/null -D /tmp/anon.headers -w '%{http_code}' "$url/")"
           if [[ "$status" == "401" ]] && grep -qi '^www-authenticate: *basic' /tmp/anon.headers; then
-            echo "Basic Auth включён: без пароля staging отвечает 401."
+            echo "::error::dev2 должен открываться без Basic Auth."
+            exit 1
           elif [[ "$(curl "${curl_opts[@]}" -o /dev/null -D /tmp/anon.headers -w '%{http_code}' "$url/health/live")" == "200" ]]; then
             # Открытый staging допустим только как временный режим (STAGING_AUTH_ENABLED=0 + STAGING_ALLOW_PUBLIC=1
             # в .env.local, который деплой-скрипт проверяет на сервере). Индексация при этом должна быть закрыта.

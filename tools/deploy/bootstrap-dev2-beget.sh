@@ -90,3 +90,14 @@ if [[ ! -f "$APP_DIR/.env.local" ]]; then
 else
   printf '%s\n' "dev2: существующая конфигурация сохранена."
 fi
+
+# По запросу владельца dev2 открыт для просмотра без браузерного Basic Auth.
+# Меняем только два флага; пароль админки и остальные секреты сохраняются.
+if [[ "$(env_value STAGING_AUTH_ENABLED || true)" != 0 || "$(env_value STAGING_ALLOW_PUBLIC || true)" != 1 ]]; then
+  cp -p -- "$APP_DIR/.env.local" "$APP_DIR/.env.local.before-public"
+  chmod 600 "$APP_DIR/.env.local.before-public"
+  sed -i '/^STAGING_AUTH_ENABLED=/d; /^STAGING_ALLOW_PUBLIC=/d' "$APP_DIR/.env.local"
+  printf '\nSTAGING_AUTH_ENABLED=0\nSTAGING_ALLOW_PUBLIC=1\n' >> "$APP_DIR/.env.local"
+  chmod 600 "$APP_DIR/.env.local"
+fi
+staging_preflight
