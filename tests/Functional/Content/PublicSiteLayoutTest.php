@@ -108,7 +108,7 @@ final class PublicSiteLayoutTest extends WebTestCase
         self::assertSame(1, $drawer->filter(':scope > a[href="/contacts/"]')->count());
     }
 
-    public function testFirstScreenBlockOutputsPageHeadingExactlyOnce(): void
+    public function testReferenceHomeOutputsOneHeadingAndOneLeadForm(): void
     {
         $client = self::createClient();
         $this->createPage('/', 'Заборы в Саратове под ключ', [
@@ -120,12 +120,12 @@ final class PublicSiteLayoutTest extends WebTestCase
 
         self::assertResponseIsSuccessful();
         self::assertCount(1, $crawler->filter('h1'));
-        self::assertSame('Заборы в Саратове под ключ', trim($crawler->filter('h1')->text()));
-        self::assertGreaterThan(0, $crawler->filter('.zp-hero h1')->count());
+        self::assertStringContainsString('Хороший забор', $crawler->filter('h1')->text());
+        self::assertGreaterThan(0, $crawler->filter('.ref-hero h1')->count());
         self::assertCount(1, $crawler->filter('#lead-form'), 'Форма заявки не должна дублироваться внизу страницы.');
     }
 
-    public function testHomeDesignPreservesCmsContentAndLeadForm(): void
+    public function testReferenceHomeHasWorkingTargetsAndExistingLeadFormContract(): void
     {
         $client = self::createClient();
         $this->createPage('/', 'Заборы в Саратове под ключ', [
@@ -150,23 +150,15 @@ final class PublicSiteLayoutTest extends WebTestCase
         $crawler = $client->request('GET', '/');
 
         self::assertResponseIsSuccessful();
-        self::assertCount(1, $crawler->filter('body.zp-home-page'));
+        self::assertCount(1, $crawler->filter('body.ref-page'));
         self::assertCount(1, $crawler->filter('h1'));
-        self::assertSame('Заборы в Саратове под ключ', $crawler->filter('h1')->text());
-        self::assertSame([
-            'home-intro', 'home-projects', 'home-craft', 'home-catalog', 'home-process',
-        ], $crawler->filter('.zp-home-group')->each(static fn ($node): ?string => $node->attr('id')));
-        self::assertCount(7, $crawler->filter('.zp-home [data-block-type]'), 'Все CMS-блоки отрисованы один раз.');
-        self::assertStringContainsString('Описание из CMS', $crawler->filter('.zp-home-hero')->text());
-        self::assertStringContainsString('Уникальное описание преимущества', $crawler->filter('.zp-home-craft')->text());
-        self::assertStringContainsString('Сохранённый текст о компании', $crawler->filter('.zp-home-reading')->text());
-        self::assertStringContainsString('от 3 400 ₽/м²', $crawler->filter('.zp-home-catalog')->text());
-        self::assertCount(1, $crawler->filter('.zp-home-accessories h3 a[href="/zaglushki-plastik/"]'));
-        self::assertCount(0, $crawler->filter('.zp-home-catalog > .zp-container > .zp-home-products a[href="/zaglushki-plastik/"]'));
-        self::assertCount(1, $crawler->filter('#home-choice'));
-        self::assertNull($crawler->filter('#home-choice')->attr('open'));
-        self::assertCount(1, $crawler->filter('#home-choice a[href="/zabor-jaluzi/"]'));
-        self::assertCount(0, $crawler->filter('#home-choice input[type="tel"]'));
+        self::assertCount(4, $crawler->filter('.ref-product'));
+        self::assertCount(3, $crawler->filter('.ref-project'));
+        foreach ($crawler->filter('a[data-ref-open]') as $link) {
+            self::assertCount(1, $crawler->filter('dialog#'.$link->getAttribute('data-ref-open')));
+        }
+        self::assertCount(1, $crawler->filter('#ref-enquiry #lead-form'));
+        self::assertStringContainsString('визуализации', $crawler->filter('.ref-projects__aside')->text());
         self::assertCount(1, $crawler->filter('#lead-form'));
         self::assertSame('/api/leads', $crawler->filter('#lead-form form')->attr('action'));
         self::assertCount(1, $crawler->filter('#lead-form input[name="consent"]'));

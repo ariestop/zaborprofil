@@ -1,6 +1,7 @@
 import './site.css'
 import { initAudienceSwitch } from './audience'
 import { initHomeChoice } from './home'
+import { initReferenceHome } from './reference'
 import { initFenceConfigurators } from './configurator'
 import { collectUtm, formatPhone, initLeadFormContext, validateLeadFields } from './leadForm'
 import {
@@ -136,6 +137,7 @@ function initLeadForm(form: HTMLFormElement): void {
 document.querySelectorAll<HTMLFormElement>('.js-lead-form').forEach(initLeadForm)
 
 initHomeChoice()
+initReferenceHome()
 initMobileNav()
 initNavDropdowns()
 initCallbar()

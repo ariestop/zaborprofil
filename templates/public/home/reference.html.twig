@@ -1,0 +1,134 @@
+{% extends 'base.html.twig' %}
+{% block body_class %}zp-body ref-page{% endblock %}
+{% block title %}Заборы в Саратове — производство и монтаж | {{ site.name }}{% endblock %}
+{% block meta_description %}<meta name="description" content="Подберём конструкцию, изготовим и установим ограждение на вашем участке. Жалюзи, ранчо, евроштакетник и 3D-сетка в Саратове.">{% endblock %}
+{% block canonical_url %}<link rel="canonical" href="{{ site_url|trim('/', 'right') }}/">{% endblock %}
+{% block site_header %}
+<header class="ref-header">
+    <div class="ref-wrap ref-header__inner">
+        {% include 'public/home/reference-logo.html.twig' %}
+        <nav class="ref-nav" aria-label="Основная навигация">
+            <a href="#home-catalog">Заборы <span aria-hidden="true">⌄</span></a>
+            <a href="#home-projects">Портфолио</a>
+            <a href="#home-craft">Производство</a>
+            <a href="#contacts">Контакты</a>
+        </nav>
+        <a class="ref-phone" href="{{ site.phone_href }}"><svg aria-hidden="true"><use href="#i-phone"/></svg>{{ site.phone }}</a>
+        <button class="ref-menu-toggle" type="button" aria-label="Открыть меню" aria-expanded="false" aria-controls="ref-mobile-menu"><span></span><span></span><span></span></button>
+    </div>
+    <nav id="ref-mobile-menu" class="ref-mobile-menu" aria-label="Мобильная навигация" hidden>
+        <a href="#home-catalog">Заборы</a><a href="#home-projects">Портфолио</a><a href="#home-craft">Производство</a><a href="#contacts">Контакты</a><a href="{{ site.phone_href }}">{{ site.phone }}</a>
+    </nav>
+</header>
+{% endblock %}
+{% block body %}
+<main class="ref-home">
+    <section class="ref-hero" aria-labelledby="ref-title">
+        <img class="ref-hero__image" src="/img/home-reference/hero.webp" width="2336" height="1008" alt="" fetchpriority="high">
+        <div class="ref-wrap ref-hero__content">
+            <p class="ref-eyebrow">Производство и монтаж заборов · Саратов и область</p>
+            <h1 id="ref-title">Хороший забор<br>видно в деталях</h1>
+            <p class="ref-hero__intro">Подберём конструкцию, изготовим<br class="ref-desktop-break"> и установим ограждение на вашем участке.</p>
+            <div class="ref-actions">
+                <a class="ref-button ref-button--green" href="#home-catalog">Выбрать забор <span aria-hidden="true">→</span></a>
+                <a class="ref-button ref-button--light" href="#lead-form">Получить расчёт <span aria-hidden="true">↗</span></a>
+            </div>
+            <p class="ref-hero__note">Расчёт по размерам и комплектации вашего участка.</p>
+        </div>
+        <span class="ref-caption">Визуализация</span>
+    </section>
+    <nav class="ref-wayfinding" aria-label="Разделы главной">
+        <div class="ref-wrap">
+            <a href="#home-catalog"><span>01</span>Конструкции</a>
+            <a href="#home-craft"><span>02</span>Детали монтажа</a>
+            <a href="#home-projects"><span>03</span>Готовый результат</a>
+        </div>
+    </nav>
+    <section class="ref-projects" id="home-projects" aria-labelledby="ref-projects-title">
+        <div class="ref-wrap ref-section-heading">
+            <h2 class="ref-rule" id="ref-projects-title">Ограждения в архитектуре дома</h2>
+            <div class="ref-projects__aside"><p>Примеры проектов · визуализации</p><a class="ref-link" href="/portfolio/">Все работы ↗</a></div>
+        </div>
+        <div class="ref-projects__grid">
+            <article class="ref-project ref-project--large">
+                <a href="#ref-project-ranch" data-ref-open="ref-project-ranch" aria-label="Подробнее: Ранчо у современного дома">{% include 'public/home/reference-media.html.twig' with {crop: '23 550 456 224', description: 'Визуализация: горизонтальный забор ранчо у современного дома'} %}</a>
+                <h3>Ранчо у современного дома</h3>
+                <p>40 м · высота 1,8 м · графит<br>В примере: секции, ворота и калитка</p>
+                <div class="ref-project__actions"><a class="ref-link" href="#ref-project-ranch" data-ref-open="ref-project-ranch">Подробнее о проекте <span aria-hidden="true">→</span></a><a class="ref-button" href="#lead-form" data-lead-plan="Хочу похожий: Ранчо у современного дома">Хочу похожий <span aria-hidden="true">↗</span></a></div>
+            </article>
+            <article class="ref-project">
+                <a href="#home-craft" aria-label="Подробнее о конструкции">{% include 'public/home/reference-media.html.twig' with {crop: '490 550 206 224', description: 'Крупный план стыка горизонтальных ламелей и металлической опоры'} %}</a>
+                <h3>Детали конструкции</h3><p>Опоры, крепления и стыки</p>
+            </article>
+            <article class="ref-project">
+                <a href="#ref-picket" data-ref-open="ref-picket" aria-label="Подробнее: Евроштакетник для сада">{% include 'public/home/reference-media.html.twig' with {crop: '708 550 240 224', description: 'Визуализация: евроштакетник под дерево рядом с цветущим садом'} %}</a>
+                <h3>Евроштакетник для сада</h3><p>Пример: высота 1,8 м</p>
+                <a class="ref-button" href="#lead-form" data-lead-plan="Хочу похожий: Евроштакетник для сада">Хочу похожий <span aria-hidden="true">↗</span></a>
+            </article>
+        </div>
+    </section>
+    <section class="ref-craft" id="home-craft" aria-labelledby="ref-craft-title">
+        <div class="ref-craft__copy">
+            <h2 class="ref-rule" id="ref-craft-title">За внешним видом —<br>продуманная конструкция</h2>
+            <p>Покажем узлы и объясним, что входит<br class="ref-desktop-break"> в комплектацию вашего ограждения.</p>
+            <div class="ref-topics">
+                <a href="#ref-foundation" data-ref-open="ref-foundation"><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M7 37V9l13-4 16 3v29M4 38h35M7 11l13 2 16-3M14 13v24m6-24v24m10-25v25M20 5v8"/></svg><span>Основание<br>и опоры <i>→</i></span></a>
+                <a href="#ref-coating" data-ref-open="ref-coating"><svg viewBox="0 0 44 44" aria-hidden="true"><path d="m4 14 18-10 18 10-18 10Zm0 9 18 10 18-10M4 31l18 10 18-10"/></svg><span>Покрытие<br>и цвет <i>→</i></span></a>
+                <a href="#ref-gates" data-ref-open="ref-gates"><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M3 3h3v38H3Zm35 0h3v38h-3ZM6 9h32M6 35h32M11 9v26m5-26v26m6-26v26m5-26v26m6-26v26"/></svg><span>Ворота<br>и калитка <i>→</i></span></a>
+            </div>
+            <a class="ref-craft__cost" href="#ref-cost" data-ref-open="ref-cost">Из чего складывается стоимость <span aria-hidden="true">→</span></a>
+        </div>
+        <figure class="ref-craft__image">{% include 'public/home/reference-media.html.twig' with {crop: '494 902 477 240', description: 'Иллюстрация: опорная пластина стойки ограждения с креплениями'} %}<figcaption class="ref-caption">Иллюстрация</figcaption></figure>
+    </section>
+    <section class="ref-catalog ref-wrap" id="home-catalog" aria-labelledby="ref-catalog-title">
+        <h2 class="ref-rule" id="ref-catalog-title">Выберите свой характер ограждения</h2>
+        <div class="ref-catalog__grid">
+            {% set products = [
+                {id: 'blinds', title: 'Жалюзи', text: 'Для приватности\nи современного фасада', crop: '38 1214 212 92'},
+                {id: 'ranch', title: 'Ранчо', text: 'Для открытого вида\nи горизонтальных линий', crop: '263 1214 216 92'},
+                {id: 'picket', title: 'Евроштакетник', text: 'Для дома, дачи и сада', crop: '493 1214 214 92'},
+                {id: 'mesh', title: '3D-сетка', text: 'Для открытых территорий\nи обзора', crop: '720 1214 214 92'}
+            ] %}
+            {% for item in products %}
+                <article class="ref-product">
+                    <a href="#ref-{{ item.id }}" data-ref-open="ref-{{ item.id }}" aria-label="Подробнее: {{ item.title }}">{% include 'public/home/reference-media.html.twig' with {crop: item.crop, description: 'Визуализация ограждения: ' ~ item.title} %}</a>
+                    <h3>{{ item.title }}</h3><p>{{ item.text|nl2br }}</p><a class="ref-link" href="#ref-{{ item.id }}" data-ref-open="ref-{{ item.id }}">Подробнее <span aria-hidden="true">→</span></a>
+                </article>
+            {% endfor %}
+        </div>
+    </section>
+    <div class="ref-help"><span>Не знаете, что выбрать?</span><a class="ref-button ref-button--green" href="#lead-form" data-lead-plan="Помогите выбрать ограждение для участка">Помочь с выбором <span aria-hidden="true">→</span></a></div>
+    <section class="ref-process ref-wrap" aria-label="Как мы работаем">
+        {% set steps = [
+            {icon: 'chat', title: 'Познакомимся\nс участком', text: 'Вы расскажете о задачах,\nмы уточним детали.'},
+            {icon: 'document', title: 'Согласуем\nкомплектацию', text: 'Подберём конструкцию,\nцвет и необходимые элементы.'},
+            {icon: 'gear', title: 'Изготовим', text: 'Производим элементы\nпо согласованной спецификации.'},
+            {icon: 'truck', title: 'Установим', text: 'Аккуратный и профессиональный\nмонтаж на вашем участке.'}
+        ] %}
+        {% for step in steps %}<div class="ref-step"><svg aria-hidden="true"><use href="#ref-i-{{ step.icon }}"/></svg><div><span class="ref-step__number">0{{ loop.index }}</span><h3>{{ step.title|nl2br }}</h3><p>{{ step.text|nl2br }}</p></div></div>{% endfor %}
+    </section>
+    <section class="ref-contact" id="contacts" aria-labelledby="ref-contact-title"><div class="ref-wrap ref-contact__inner"><div><h2 class="ref-rule" id="ref-contact-title">Покажите нам ваш участок</h2><p>Обсудим размеры, конструкцию и состав работ.</p></div><div class="ref-actions"><a class="ref-button ref-button--green" href="#lead-form">Получить расчёт <span aria-hidden="true">→</span></a><a class="ref-button ref-button--light" href="{{ site.phone_href }}"><svg aria-hidden="true"><use href="#i-phone"/></svg>Связаться по телефону</a></div></div></section>
+</main>
+<svg class="ref-symbols" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
+    <symbol id="ref-i-chat" viewBox="0 0 44 44"><path d="M24 22H13l-7 6v-8H3V5h25v11M17 18h24v18h-6v6l-7-6H17Z"/></symbol>
+    <symbol id="ref-i-document" viewBox="0 0 44 44"><path d="M10 3h17l8 8v29H10ZM27 3v9h8M16 19h13M16 25h13M16 31h10"/></symbol>
+    <symbol id="ref-i-gear" viewBox="0 0 44 44"><path d="m18 3-1 5-4 2-5-2-4 7 4 4v5l-4 4 4 7 5-2 4 2 1 5h8l1-5 4-2 5 2 4-7-4-4v-5l4-4-4-7-5 2-4-2-1-5Z"/><circle cx="22" cy="22" r="7"/></symbol>
+    <symbol id="ref-i-truck" viewBox="0 0 44 44"><path d="M3 7h25v25H15M3 7v25h3m22-20h7l6 10v10h-4M28 22h13M15 32h14"/><circle cx="10" cy="33" r="5"/><circle cx="33" cy="33" r="5"/></symbol>
+</defs></svg>
+<dialog class="ref-dialog" id="ref-enquiry" aria-label="Получить расчёт"><button class="ref-dialog__close" type="button" data-ref-close aria-label="Закрыть">×</button>{% include 'public/partials/lead_form.html.twig' %}</dialog>
+{% set details = [
+    {id: 'project-ranch', title: 'Ранчо у современного дома', text: 'Визуализация возможного решения: графитовые горизонтальные секции, ворота и калитка. В примере — 40 метров ограждения высотой 1,8 метра. Конструкцию и комплектацию подберём по размерам вашего участка.', crop: '23 550 456 224'},
+    {id: 'blinds', title: 'Забор жалюзи', text: 'Наклонные металлические ламели создают приватность и современный силуэт ограждения. Подберём высоту, покрытие, цвет и комплектацию под архитектуру дома.', crop: '38 1214 212 92'},
+    {id: 'ranch', title: 'Забор ранчо', text: 'Горизонтальные линии и открытый вид. Ширину ламелей, расстояние между ними и цвет согласуем с вами перед изготовлением.', crop: '263 1214 216 92'},
+    {id: 'picket', title: 'Евроштакетник для сада', text: 'Металлический штакетник для дома, дачи и сада. Выберите цвет, высоту, расстояние между планками и одностороннее или двустороннее заполнение.', crop: '708 550 240 224'},
+    {id: 'mesh', title: '3D-сетка', text: 'Панельное ограждение для открытых территорий. Сохраняет обзор и пропускает свет; комплектация зависит от высоты, длины и условий монтажа.', crop: '720 1214 214 92'},
+    {id: 'foundation', title: 'Основание и опоры', text: 'Выбор опор и способа крепления зависит от грунта, перепада высот и ветровой нагрузки. Перед расчётом уточним условия участка и объясним предлагаемое решение.'},
+    {id: 'coating', title: 'Покрытие и цвет', text: 'Подберём покрытие и цвет к фасаду, кровле и ландшафту. Фактический оттенок согласуем по образцу: изображение на экране может отличаться.'},
+    {id: 'gates', title: 'Ворота и калитка', text: 'Уточним ширину проезда, расположение входа, направление открывания и необходимость автоматики. Согласуем единое оформление с секциями забора.'},
+    {id: 'cost', title: 'Из чего складывается стоимость', text: 'Длина и высота ограждения, тип заполнения, покрытие, опоры и основание, ворота и калитка, доставка и монтаж. Подготовим расчёт с перечнем элементов и работ после уточнения размеров.'}
+] %}
+{% for detail in details %}<dialog class="ref-dialog ref-detail" id="ref-{{ detail.id }}" aria-labelledby="ref-{{ detail.id }}-title"><button class="ref-dialog__close" type="button" data-ref-close aria-label="Закрыть">×</button>{% if detail.crop is defined %}{% include 'public/home/reference-media.html.twig' with {crop: detail.crop, description: 'Визуализация: ' ~ detail.title} %}{% endif %}<h2 id="ref-{{ detail.id }}-title">{{ detail.title }}</h2><p>{{ detail.text }}</p><a class="ref-button ref-button--green" href="#lead-form" data-lead-plan="{{ detail.title }}">Обсудить мой участок <span aria-hidden="true">→</span></a></dialog>{% endfor %}
+<noscript><p class="ref-wrap">Для расчёта позвоните <a href="{{ site.phone_href }}">{{ site.phone }}</a>. Для открытия подробностей и формы включите JavaScript.</p></noscript>
+{% endblock %}
+{% block site_footer %}<footer class="ref-footer"><div class="ref-wrap ref-footer__inner">{% include 'public/home/reference-logo.html.twig' %}<nav class="ref-nav" aria-label="Навигация в подвале"><a href="#home-catalog">Заборы</a><a href="#home-projects">Портфолио</a><a href="#home-craft">Производство</a><a href="#contacts">Контакты</a></nav><a class="ref-phone" href="{{ site.phone_href }}"><svg aria-hidden="true"><use href="#i-phone"/></svg>{{ site.phone }}</a></div></footer>{% endblock %}
+{% block site_callbar %}{% endblock %}
